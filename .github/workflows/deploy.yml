@@ -33,9 +33,30 @@ jobs:
           npm run build
 
       - name: Setup SSH Keys
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          # Create askpass script to feed passphrase to ssh-add non-interactively
+          cat << 'EOF' > /tmp/askpass.sh
+#!/bin/bash
+echo "$SSH_PASSPHRASE"
+EOF
+          chmod 755 /tmp/askpass.sh
+
+          export SSH_ASKPASS=/tmp/askpass.sh
+          export DISPLAY=dummy:0
+          export SSH_ASKPASS_REQUIRE=force
+
+          eval $(ssh-agent -s)
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+
+          # Persist ssh-agent environment for subsequent steps
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> $GITHUB_ENV
 
       - name: Deploy Exclusively to public_html/siakad.mts
         env:
