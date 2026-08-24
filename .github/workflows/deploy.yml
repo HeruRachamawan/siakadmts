@@ -57,7 +57,7 @@ jobs:
 
       - name: Deploy Exclusively to public_html/siakad.mts
         env:
-          REMOTE_HOST: ${{ secrets.SSH_HOST || '202.155.137.33' }}
+          REMOTE_HOST: "202.155.137.33"
           REMOTE_USER: ${{ secrets.SSH_USER || 'masnomod' }}
           CUSTOM_PORT: ${{ secrets.SSH_PORT }}
         run: |
