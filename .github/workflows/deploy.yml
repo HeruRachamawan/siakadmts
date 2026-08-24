@@ -32,27 +32,45 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy to cPanel via SSH / Rsync
-        uses: easingthemes/ssh-deploy@v5.0.3
+      - name: Setup SSH Keys
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          ARGS: "-rlgoDzvc -i"
-          SOURCE: "/"
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy Exclusively to public_html/siakad.mts
+        env:
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USER || 'masnomod' }}
-          REMOTE_PORT: ${{ secrets.SSH_PORT || '2222' }}
-          TARGET: "/home/masnomod/public_html/siakad.mts"
-          EXCLUDE: "/.git/, /.github/, /node_modules/, /.env, /storage/logs/*, /storage/framework/cache/*, /storage/framework/sessions/*, /storage/framework/views/*"
+          CUSTOM_PORT: ${{ secrets.SSH_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
 
-      - name: Execute Post-Deployment Commands in cPanel
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER || 'masnomod' }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          port: ${{ secrets.SSH_PORT || 2222 }}
-          script: |
+          # Auto-detect responsive SSH Port (specified port, 22, or 2222)
+          PORT="22"
+          if [ -n "$CUSTOM_PORT" ]; then
+            PORT="$CUSTOM_PORT"
+          elif nc -z -v -w5 "$REMOTE_HOST" 22 2>/dev/null; then
+            PORT="22"
+          elif nc -z -v -w5 "$REMOTE_HOST" 2222 2>/dev/null; then
+            PORT="2222"
+          fi
+          echo "Connecting to $REMOTE_HOST on port $PORT as $REMOTE_USER..."
+
+          # Rsync STRICTLY to /home/masnomod/public_html/siakad.mts/
+          rsync -avz -e "ssh -4 -p $PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='.env' \
+            --exclude='storage/logs/*' \
+            --exclude='storage/framework/cache/*' \
+            --exclude='storage/framework/sessions/*' \
+            --exclude='storage/framework/views/*' \
+            ./ ${REMOTE_USER}@${REMOTE_HOST}:/home/masnomod/public_html/siakad.mts/
+
+          # Execute Laravel optimization strictly in siakad.mts directory
+          ssh -4 -p $PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${REMOTE_USER}@${REMOTE_HOST} << 'EOF'
             cd /home/masnomod/public_html/siakad.mts
             php artisan migrate --force || true
             php artisan storage:link || true
@@ -60,3 +78,4 @@ jobs:
             php artisan config:cache || true
             php artisan route:cache || true
             php artisan view:cache || true
+          EOF
