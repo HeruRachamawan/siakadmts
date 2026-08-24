@@ -41,10 +41,7 @@ jobs:
           chmod 700 ~/.ssh
 
           # Create askpass script to feed passphrase to ssh-add non-interactively
-          cat << 'EOF' > /tmp/askpass.sh
-#!/bin/bash
-echo "$SSH_PASSPHRASE"
-EOF
+          printf '#!/bin/bash\necho "$SSH_PASSPHRASE"\n' > /tmp/askpass.sh
           chmod 755 /tmp/askpass.sh
 
           export SSH_ASKPASS=/tmp/askpass.sh
@@ -91,12 +88,12 @@ EOF
             ./ ${REMOTE_USER}@${REMOTE_HOST}:/home/masnomod/public_html/siakad.mts/
 
           # Execute Laravel optimization strictly in siakad.mts directory
-          ssh -4 -p $PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${REMOTE_USER}@${REMOTE_HOST} << 'EOF'
-            cd /home/masnomod/public_html/siakad.mts
-            php artisan migrate --force || true
-            php artisan storage:link || true
-            php artisan optimize:clear
-            php artisan config:cache || true
-            php artisan route:cache || true
+          ssh -4 -p $PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${REMOTE_USER}@${REMOTE_HOST} "
+            cd /home/masnomod/public_html/siakad.mts &&
+            php artisan migrate --force || true &&
+            php artisan storage:link || true &&
+            php artisan optimize:clear &&
+            php artisan config:cache || true &&
+            php artisan route:cache || true &&
             php artisan view:cache || true
-          EOF
+          "
