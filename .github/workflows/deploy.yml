@@ -64,13 +64,17 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
+          # Resolve host to show IP diagnostics
+          RESOLVED_IP=$(getent hosts "$REMOTE_HOST" | awk '{print $1}' | head -n 1)
+          echo "Host $REMOTE_HOST resolves to IP: $RESOLVED_IP"
+
           # Auto-detect responsive SSH port across common hosting ports
           TARGET_PORT=""
           if [ -n "$CUSTOM_PORT" ]; then
             TARGET_PORT="$CUSTOM_PORT"
             echo "Using configured SSH_PORT: $TARGET_PORT"
           else
-            echo "Searching for active SSH port on server..."
+            echo "Searching for active SSH port on server ($RESOLVED_IP)..."
             for p in 22 2222 65002 2200 1022; do
               if timeout 3 bash -c "</dev/tcp/$REMOTE_HOST/$p" 2>/dev/null; then
                 echo "=> Active port detected: $p"
