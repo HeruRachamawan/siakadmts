@@ -1,0 +1,264 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../**/*.vue';
+
+@theme {
+    --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    --font-inter: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    --font-jakarta: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-poppins: 'Poppins', system-ui, sans-serif;
+    --font-lexend: 'Plus Jakarta Sans', 'Lexend', system-ui, sans-serif;
+}
+
+@layer utilities {
+    body {
+        font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+        letter-spacing: -0.015em;
+        @apply bg-[#F8FAFC] text-slate-900 antialiased selection:bg-emerald-600 selection:text-white;
+        background-image: 
+            radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.04) 0px, transparent 50%),
+            radial-gradient(at 0% 100%, rgba(14, 165, 233, 0.03) 0px, transparent 50%);
+        background-attachment: fixed;
+    }
+
+    /* Modern Typography */
+    .font-inter { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; }
+    .font-lexend { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+    
+    /* Fresh Premium Glass Card */
+    .fresh-card {
+        @apply bg-white/95 backdrop-blur-sm rounded-3xl border border-slate-200/80 shadow-xs transition-all duration-300 hover:shadow-md hover:border-emerald-200/80;
+    }
+    
+    .shadcn-card {
+        @apply bg-white rounded-2xl border border-slate-200/80 shadow-xs transition-all duration-200 hover:border-emerald-300 hover:shadow-sm;
+    }
+    
+    /* Navigation Link (Shadcn Sidebar Style with Emerald Theme) */
+    .nav-link {
+        @apply flex items-center gap-3 px-3.5 py-2.5 text-slate-600 font-semibold text-xs rounded-xl mx-2 my-0.5 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-800 outline-none focus:outline-none;
+    }
+    .nav-link-active {
+        @apply bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30 hover:bg-emerald-700 hover:text-white;
+    }
+    .nav-link-active svg {
+        @apply text-white;
+    }
+    .nav-section {
+        @apply px-3.5 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest mx-2 mt-4 mb-1.5;
+    }
+    
+    /* Buttons */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-900 shadow-xs hover:bg-slate-50 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+    }
+    .btn-primary {
+        @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-sm shadow-emerald-600/25 hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+    }
+    .btn-accent {
+        @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-sm shadow-emerald-600/25 hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+    }
+    .btn-danger {
+        @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-rose-600 text-white shadow-sm shadow-rose-600/25 hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-600 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+    }
+    .btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-900 hover:bg-slate-200/80 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+    }
+    .btn-outline {
+        @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white text-slate-900 hover:bg-slate-50 hover:border-slate-300 transition-all duration-150 cursor-pointer;
+    }
+    
+    /* Inputs */
+    .form-input {
+        @apply flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 shadow-2xs transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-emerald-500 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+    
+    /* Badges */
+    .badge {
+        @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2;
+    }
+    .badge-primary {
+        @apply border-transparent bg-emerald-600 text-white hover:bg-emerald-700;
+    }
+    .badge-secondary {
+        @apply border-transparent bg-slate-100 text-slate-900 hover:bg-slate-200;
+    }
+    .badge-outline {
+        @apply text-slate-950 border-slate-200 bg-white;
+    }
+    .badge-success {
+        @apply border-emerald-200 bg-emerald-50 text-emerald-800;
+    }
+    .badge-warning {
+        @apply border-amber-200 bg-amber-50 text-amber-800;
+    }
+    .badge-danger {
+        @apply border-rose-200 bg-rose-50 text-rose-800;
+    }
+    
+    /* Sleek Thin Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+    
+    .custom-scrollbar-dark::-webkit-scrollbar {
+        width: 4px;
+    }
+    .custom-scrollbar-dark::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar-dark::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 9999px;
+    }
+    .custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+        background: #cbd5e1;
+    }
+}
+
+/* ========================================================
+   GLOBAL PRINT ENGINE STYLES (Clean & Accurate Page Prints)
+   ======================================================== */
+@media print {
+    /* 1. Sembunyikan semua elemen navigasi, header, sidebar, tombol, overlay */
+    nav,
+    aside,
+    header,
+    .no-print,
+    #debug-err,
+    button:not(.allow-print),
+    .btn,
+    .fixed,
+    .toast-container,
+    footer {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* 2. Reset struktur body, app, dan container */
+    html,
+    body,
+    #app {
+        background: #ffffff !important;
+        background-image: none !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        overflow: visible !important;
+    }
+
+    /* 3. Reset flex layout agar tidak membatasi ukuran kertas */
+    .flex,
+    .h-screen,
+    .min-h-screen,
+    main,
+    .overflow-y-auto,
+    .overflow-hidden,
+    .bg-\[\#F8FAFC\],
+    .bg-\[\#F4F7F6\],
+    .bg-slate-50 {
+        display: block !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* 4. Hapus padding dan batasan lebar dari content area */
+    .p-8,
+    .p-6,
+    .max-w-\[1400px\],
+    .max-w-7xl,
+    .mx-auto {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    /* 5. Hilangkan shadow, background box, dan rounded corner agar seperti kertas fisik murni */
+    .shadow-sm,
+    .shadow-md,
+    .shadow-lg,
+    .shadow-xl,
+    .shadow-2xs,
+    .shadow-xs,
+    .rounded-\[2\.5rem\],
+    .rounded-\[2rem\],
+    .rounded-3xl,
+    .rounded-2xl,
+    .rounded-xl,
+    .border {
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* 6. Pastikan area cetak memenuhi lebar kertas dan margin rapi */
+    #print-schedule-area,
+    #print-students-area,
+    #print-teachers-area,
+    #print-card-area,
+    #print-calendar-area,
+    .print-area {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        background: #ffffff !important;
+    }
+
+    /* 7. Kontras tinggi untuk cetak tabel dan garis kop */
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    table, th, td {
+        border-color: #334155 !important;
+    }
+
+    th {
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+        font-weight: 800 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Page Setup */
+    @page {
+        margin: 8mm 12mm 8mm 12mm;
+        size: auto;
+    }
+
+    .page-break {
+        page-break-after: always;
+        break-after: page;
+    }
+}
