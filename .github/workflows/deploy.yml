@@ -32,12 +32,12 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy to cPanel via CI/CD (Only public_html/siakad.mts)
+      - name: Deploy to cPanel via FTP (Target: public_html/siakad.mts)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: 202.155.137.33
-          username: masnomod
-          password: ${{ secrets.SSH_PASSPHRASE }}
+          server: ${{ secrets.SSH_HOST || '202.155.137.33' }}
+          username: ${{ secrets.FTP_USERNAME || 'masnomod' }}
+          password: ${{ secrets.FTP_PASSWORD || secrets.SSH_PASSPHRASE }}
           server-dir: /public_html/siakad.mts/
           exclude: |
             **/.git*
