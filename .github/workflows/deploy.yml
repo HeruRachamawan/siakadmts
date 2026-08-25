@@ -36,7 +36,6 @@ jobs:
         uses: easingthemes/ssh-deploy@v5.0.3
         with:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: "masnomod"
           REMOTE_PORT: "2222"
