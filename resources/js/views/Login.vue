@@ -317,16 +317,9 @@ const selectedRoleTab = ref('admin');
 
 function setDemoRole(role) {
   selectedRoleTab.value = role;
-  if (role === 'admin') {
-    form.username = 'admin';
-    form.password = 'password';
-  } else if (role === 'teacher') {
-    form.username = 'guru';
-    form.password = 'password';
-  } else {
-    form.username = 'siswa';
-    form.password = 'password';
-  }
+  form.username = '';
+  form.password = '';
+  error.value = '';
 }
 
 const showResetModal = ref(false);
@@ -379,8 +372,8 @@ onMounted(async () => {
 });
 
 const form = reactive({
-  username: 'admin',
-  password: 'password',
+  username: '',
+  password: '',
 });
 
 async function onSubmit() {
