@@ -33,15 +33,13 @@
           <!-- Center Menu -->
           <div class="hidden lg:flex space-x-1 xl:space-x-2">
             <a href="#beranda" class="nav-item" :class="scrolled ? 'nav-scrolled' : 'nav-top'">Beranda</a>
-            <a href="#profil" class="nav-item" :class="scrolled ? 'nav-scrolled' : 'nav-top'">Profil</a>
-            <a href="#program" class="nav-item" :class="scrolled ? 'nav-scrolled' : 'nav-top'">Program</a>
+            <a href="#profil" class="nav-item" :class="scrolled ? 'nav-scrolled' : 'nav-top'">Profil & Visi Misi</a>
             <a href="#guru" class="nav-item" :class="scrolled ? 'nav-scrolled' : 'nav-top'">Dewan Guru</a>
             <a href="#wali-kelas" class="nav-item" :class="scrolled ? 'nav-scrolled' : 'nav-top'">Wali Kelas</a>
             <a href="#prestasi" class="nav-item" :class="scrolled ? 'nav-scrolled' : 'nav-top'">Prestasi</a>
             <a href="#berita" class="nav-item" :class="scrolled ? 'nav-scrolled' : 'nav-top'">Berita</a>
             <a href="#fasilitas" class="nav-item" :class="scrolled ? 'nav-scrolled' : 'nav-top'">Sarana</a>
             <a href="#galeri" class="nav-item" :class="scrolled ? 'nav-scrolled' : 'nav-top'">Galeri</a>
-            <a href="#faq" class="nav-item" :class="scrolled ? 'nav-scrolled' : 'nav-top'">FAQ</a>
           </div>
 
           <!-- Right side: Login & Mobile Toggle -->
@@ -78,14 +76,12 @@
         <div v-if="isMobileMenuOpen" class="lg:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl shadow-xl border-t border-slate-200 py-4 px-4 flex flex-col space-y-1">
           <a href="#beranda" @click="closeMobileMenu" class="mobile-nav-link">Beranda</a>
           <a href="#profil" @click="closeMobileMenu" class="mobile-nav-link">Profil & Visi Misi</a>
-          <a href="#program" @click="closeMobileMenu" class="mobile-nav-link">Program Unggulan</a>
           <a href="#guru" @click="closeMobileMenu" class="mobile-nav-link">Dewan Guru</a>
           <a href="#wali-kelas" @click="closeMobileMenu" class="mobile-nav-link">Wali Kelas</a>
           <a href="#prestasi" @click="closeMobileMenu" class="mobile-nav-link">Prestasi Siswa</a>
           <a href="#berita" @click="closeMobileMenu" class="mobile-nav-link">Berita & Informasi</a>
           <a href="#fasilitas" @click="closeMobileMenu" class="mobile-nav-link">Sarana & Prasarana</a>
           <a href="#galeri" @click="closeMobileMenu" class="mobile-nav-link">Galeri Foto</a>
-          <a href="#faq" @click="closeMobileMenu" class="mobile-nav-link">Tanya Jawab (FAQ)</a>
           
           <div class="pt-2 mt-2 border-t border-slate-100 sm:hidden">
             <RouterLink to="/login" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-xl shadow-md">
@@ -196,46 +192,7 @@
       </div>
     </section>
 
-    <!-- 3. Interactive Program Unggulan Showcase (NEW INTERACTIVE SECTION) -->
-    <section id="program" class="py-20 bg-white relative border-t border-slate-200/80 font-inter">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <div class="text-center max-w-3xl mx-auto space-y-2.5">
-          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
-            <Sparkles class="w-3.5 h-3.5 text-emerald-600" />
-            <span>Keunggulan Kompetitif</span>
-          </div>
-          <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Program Unggulan Madrasah</h2>
-          <p class="text-slate-600 text-xs sm:text-sm font-normal">Kurikulum integratif yang memadukan nilai keagamaan islam, sains modern, dan teknologi informasi digital.</p>
-        </div>
-
-        <!-- Interactive Program Tabs & Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div
-            v-for="(prog, pIdx) in flagshipPrograms"
-            :key="pIdx"
-            @mousemove="handleCardTilt"
-            @mouseleave="resetCardTilt"
-            class="interactive-tilt-card bg-slate-50/70 p-6 rounded-3xl border border-slate-200/80 hover:border-emerald-400 hover:bg-white hover:shadow-xl transition-all duration-300 flex flex-col justify-between group cursor-pointer"
-          >
-            <div class="space-y-4">
-              <div class="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-white shadow-md transition-transform group-hover:scale-110" :class="prog.bgColor">
-                <component :is="prog.icon" class="w-6 h-6" />
-              </div>
-              <div>
-                <h3 class="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">{{ prog.title }}</h3>
-                <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">{{ prog.description }}</p>
-              </div>
-            </div>
-            <div class="pt-4 mt-4 border-t border-slate-200/60 flex items-center justify-between text-xs font-bold text-emerald-700">
-              <span>{{ prog.tag }}</span>
-              <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 4. Dewan Guru Section with Live Interactive Search -->
+    <!-- 3. Dewan Guru Section with Live Interactive Search -->
     <section id="guru" class="py-20 bg-slate-50/80 relative border-t border-slate-200/80 font-inter">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -511,50 +468,7 @@
       </div>
     </section>
 
-    <!-- 9. Interactive FAQ Accordion Section (NEW) -->
-    <section id="faq" class="py-20 bg-white relative border-t border-slate-200/80 font-inter">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <div class="text-center space-y-2.5">
-          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
-            <BookOpen class="w-3.5 h-3.5 text-emerald-600" />
-            <span>Pusat Informasi</span>
-          </div>
-          <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Tanya Jawab (FAQ)</h2>
-          <p class="text-slate-600 text-xs sm:text-sm font-normal">Pertanyaan yang sering diajukan mengenai sistem akademik, presensi online, dan kurikulum madrasah.</p>
-        </div>
-
-        <div class="space-y-3.5">
-          <div
-            v-for="(faq, fIndex) in faqs"
-            :key="fIndex"
-            class="rounded-2xl border transition-all duration-200 overflow-hidden bg-slate-50/50"
-            :class="activeFaq === fIndex ? 'border-emerald-400 bg-white shadow-md' : 'border-slate-200/80 hover:border-slate-300'"
-          >
-            <button
-              @click="activeFaq = (activeFaq === fIndex ? null : fIndex)"
-              class="w-full p-5 text-left flex items-center justify-between gap-4 font-bold text-sm text-slate-900 cursor-pointer"
-            >
-              <span class="flex items-center gap-2.5">
-                <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-xs flex items-center justify-center font-bold">Q{{ fIndex + 1 }}</span>
-                {{ faq.q }}
-              </span>
-              <ChevronRight
-                class="w-4 h-4 text-emerald-600 flex-shrink-0 transition-transform duration-200"
-                :class="activeFaq === fIndex ? 'rotate-90' : ''"
-              />
-            </button>
-            <div
-              v-show="activeFaq === fIndex"
-              class="px-5 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100"
-            >
-              {{ faq.a }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 10. Lokasi & Kontak Google Maps (White Canvas) -->
+    <!-- 9. Lokasi & Kontak Google Maps (White Canvas) -->
     <section id="lokasi" class="py-20 bg-slate-50/60 text-slate-900 border-t border-slate-200/80 relative overflow-hidden font-inter">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-12">
         
