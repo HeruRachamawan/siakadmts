@@ -32,72 +32,19 @@ jobs:
           npm ci
           npm run build
 
-      - name: Setup SSH Keys
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-
-          # Create askpass script to feed passphrase to ssh-add non-interactively
-          printf '#!/bin/bash\necho "$SSH_PASSPHRASE"\n' > /tmp/askpass.sh
-          chmod 755 /tmp/askpass.sh
-
-          export SSH_ASKPASS=/tmp/askpass.sh
-          export DISPLAY=dummy:0
-          export SSH_ASKPASS_REQUIRE=force
-
-          eval $(ssh-agent -s)
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-
-          # Persist ssh-agent environment for subsequent steps
-          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
-          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> $GITHUB_ENV
-
-      - name: Deploy Exclusively to public_html/siakad.mts
-        env:
-          REMOTE_HOST: "202.155.137.33"
-          REMOTE_USER: ${{ secrets.SSH_USER || 'masnomod' }}
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-
-          echo "Installing nmap for comprehensive port discovery..."
-          sudo apt-get update -qq && sudo apt-get install -y -qq nmap
-
-          echo "--- SCANNING OPEN PORTS ON $REMOTE_HOST ---"
-          nmap -Pn -sT -p 21,22,80,443,1022,2082,2083,2086,2087,2095,2096,2200,2222,65002,65432 $REMOTE_HOST
-
-          # Detect port running SSH
-          DETECTED_PORT=$(nmap -Pn -sT -p 21,22,1022,2200,2222,65002,65432 $REMOTE_HOST | grep -E '^[0-9]+/tcp.*open' | head -n 1 | cut -d'/' -f1)
-
-          if [ -z "$DETECTED_PORT" ]; then
-            echo "No standard open SSH port detected, checking port 22..."
-            DETECTED_PORT="22"
-          else
-            echo "Found active open port on server: $DETECTED_PORT"
-          fi
-
-          echo "Attempting rsync to $REMOTE_HOST on port $DETECTED_PORT..."
-
-          rsync -avz -e "ssh -4 -p $DETECTED_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15" \
-            --exclude='.git/' \
-            --exclude='.github/' \
-            --exclude='node_modules/' \
-            --exclude='.env' \
-            --exclude='storage/logs/*' \
-            --exclude='storage/framework/cache/*' \
-            --exclude='storage/framework/sessions/*' \
-            --exclude='storage/framework/views/*' \
-            ./ ${REMOTE_USER}@${REMOTE_HOST}:/home/masnomod/public_html/siakad.mts/
-
-          ssh -4 -p $DETECTED_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 ${REMOTE_USER}@${REMOTE_HOST} "
-            cd /home/masnomod/public_html/siakad.mts &&
-            php artisan migrate --force || true &&
-            php artisan storage:link || true &&
-            php artisan optimize:clear &&
-            php artisan config:cache || true &&
-            php artisan route:cache || true &&
-            php artisan view:cache || true
-          "
+      - name: Deploy to cPanel via CI/CD (Only public_html/siakad.mts)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: 202.155.137.33
+          username: masnomod
+          password: ${{ secrets.SSH_PASSPHRASE }}
+          server-dir: /public_html/siakad.mts/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.env
+            **/storage/logs/**
+            **/storage/framework/cache/**
+            **/storage/framework/sessions/**
+            **/storage/framework/views/**
