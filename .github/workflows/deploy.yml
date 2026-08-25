@@ -32,13 +32,14 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy to cPanel via SSH Deploy
+      - name: Deploy to cPanel via DomaiNesia SSH (Port 2222)
         uses: easingthemes/ssh-deploy@v5.0.3
         with:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: "masnomod"
-          REMOTE_PORT: "22"
+          REMOTE_PORT: "2222"
           TARGET: "~/public_html/siakad.mts"
           SSH_CMD_ARGS: "-4 -o StrictHostKeyChecking=no"
           ARGS: "-rlgoDzvc -i"
@@ -52,7 +53,7 @@ jobs:
           username: "masnomod"
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          port: 22
+          port: 2222
           script: |
             cd ~/public_html/siakad.mts
             php artisan migrate --force || true
