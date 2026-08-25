@@ -31,7 +31,7 @@
       </div>
     </div>
 
-    <!-- Mode Selector for Admin (Pendaftar vs Pengaturan Panitia) -->
+    <!-- Mode Selector for Admin (Pendaftar vs Pengaturan Panitia vs Jadwal) -->
     <div v-if="isAdmin" class="border-b border-slate-200 flex items-center gap-4">
       <button
         @click="activeAdminTab = 'applicants'"
@@ -45,7 +45,14 @@
         class="pb-3 text-xs font-bold transition-all relative cursor-pointer"
         :class="activeAdminTab === 'committee' ? 'text-emerald-700 border-b-2 border-emerald-600' : 'text-slate-500 hover:text-slate-800'"
       >
-        <span>Penugasan Panitia Guru PPDB</span>
+        <span>Penugasan Panitia Guru</span>
+      </button>
+      <button
+        @click="activeAdminTab = 'settings'; fetchPpdbSettings()"
+        class="pb-3 text-xs font-bold transition-all relative cursor-pointer"
+        :class="activeAdminTab === 'settings' ? 'text-emerald-700 border-b-2 border-emerald-600' : 'text-slate-500 hover:text-slate-800'"
+      >
+        <span>⚙️ Jadwal & Status Pendaftaran</span>
       </button>
     </div>
 
@@ -263,6 +270,85 @@
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- SECTION 3: PPDB SCHEDULE & OPEN/CLOSE SETTINGS (ADMIN ONLY) -->
+    <div v-if="activeAdminTab === 'settings' && isAdmin" class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-6 max-w-3xl">
+      <div class="border-b border-slate-100 pb-4">
+        <h3 class="text-base font-bold text-slate-900">Pengaturan Periode & Buka/Tutup PPDB</h3>
+        <p class="text-xs text-slate-500">Atur saklar buka/tutup pendaftaran manual atau tetapkan jadwal rentang tanggal dan kuota siswa baru.</p>
+      </div>
+
+      <form @submit.prevent="savePpdbSettings" class="space-y-6">
+        
+        <!-- Master Status Toggle Card -->
+        <div class="p-5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+             :class="settingsForm.ppdb_is_open ? 'bg-emerald-50/70 border-emerald-300' : 'bg-rose-50/70 border-rose-300'">
+          <div class="space-y-1">
+            <div class="text-xs font-bold uppercase tracking-wider" :class="settingsForm.ppdb_is_open ? 'text-emerald-800' : 'text-rose-800'">
+              Status Utama Pendaftaran: {{ settingsForm.ppdb_is_open ? '🟢 DIBUKA (Aktif)' : '🔴 DITUTUP (Nonaktif)' }}
+            </div>
+            <p class="text-xs text-slate-600">
+              {{ settingsForm.ppdb_is_open ? 'Formulir online dapat diakses dan menerima pendaftaran baru dari publik.' : 'Formulir pendaftaran publik dikunci. Calon siswa hanya bisa mengecek status pengumuman.' }}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            @click="settingsForm.ppdb_is_open = !settingsForm.ppdb_is_open"
+            class="px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer flex-shrink-0"
+            :class="settingsForm.ppdb_is_open ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-rose-600 hover:bg-rose-700 text-white'"
+          >
+            {{ settingsForm.ppdb_is_open ? 'Tutup Pendaftaran' : 'Buka Pendaftaran' }}
+          </button>
+        </div>
+
+        <!-- Details Inputs -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2 space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Nama Gelombang / Periode</label>
+            <input v-model="settingsForm.ppdb_batch_name" type="text" placeholder="Contoh: Gelombang 1 / Jalur Prestasi..." class="form-input text-xs" />
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Tanggal Mulai Buka (Opsional)</label>
+            <input v-model="settingsForm.ppdb_start_date" type="date" class="form-input text-xs" />
+            <p class="text-[10px] text-slate-400">Kosongkan jika pendaftaran langsung dibuka.</p>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Tanggal Batas Akhir Tutup (Opsional)</label>
+            <input v-model="settingsForm.ppdb_end_date" type="date" class="form-input text-xs" />
+            <p class="text-[10px] text-slate-400">Otomatis tertutup jika tanggal ini lewat.</p>
+          </div>
+
+          <div class="sm:col-span-2 space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Batas Kuota Maksimal Pendaftar (Opsional)</label>
+            <input v-model="settingsForm.ppdb_quota" type="number" min="1" placeholder="Contoh: 120 (Kosongkan jika tanpa batas kuota)" class="form-input text-xs" />
+            <p class="text-[10px] text-slate-400">Saat ini terdaftar: {{ stats.total || 0 }} calon siswa.</p>
+          </div>
+
+          <div class="sm:col-span-2 space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Pesan Pengumuman Saat Ditutup</label>
+            <textarea
+              v-model="settingsForm.ppdb_closed_message"
+              rows="3"
+              placeholder="Tuliskan pesan penjelasan untuk calon wali murid saat pendaftaran ditutup..."
+              class="form-input text-xs"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+          <button
+            type="submit"
+            :disabled="savingSettings"
+            class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50"
+          >
+            {{ savingSettings ? 'Menyimpan Pengaturan...' : 'Simpan Pengaturan PPDB' }}
+          </button>
+        </div>
+      </form>
     </div>
 
     <!-- DETAIL & VERIFICATION MODAL -->
@@ -603,8 +689,51 @@ async function toggleCommittee(t) {
   }
 }
 
+// PPDB Schedule & Settings
+const settingsForm = reactive({
+  ppdb_is_open: true,
+  ppdb_batch_name: 'Gelombang 1',
+  ppdb_start_date: '',
+  ppdb_end_date: '',
+  ppdb_quota: null,
+  ppdb_closed_message: '',
+});
+const savingSettings = ref(false);
+
+async function fetchPpdbSettings() {
+  try {
+    const res = await api.get('/admin/ppdb/settings');
+    const d = res.data || res || {};
+    settingsForm.ppdb_is_open = d.is_open_manual !== undefined ? !!d.is_open_manual : (d.is_open !== undefined ? !!d.is_open : true);
+    settingsForm.ppdb_batch_name = d.batch_name || 'Gelombang 1';
+    settingsForm.ppdb_start_date = d.start_date || '';
+    settingsForm.ppdb_end_date = d.end_date || '';
+    settingsForm.ppdb_quota = d.quota || null;
+    settingsForm.ppdb_closed_message = d.closed_message || '';
+  } catch (err) {
+    console.error('Failed to load PPDB settings', err);
+  }
+}
+
+async function savePpdbSettings() {
+  savingSettings.value = true;
+  try {
+    const res = await api.post('/admin/ppdb/settings', settingsForm);
+    toast.success(res.data?.message || res.message || 'Pengaturan PPDB berhasil disimpan!');
+    await fetchPpdbSettings();
+    await fetchData();
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal menyimpan pengaturan PPDB.');
+  } finally {
+    savingSettings.value = false;
+  }
+}
+
 onMounted(() => {
   fetchData();
+  if (isAdmin.value) {
+    fetchPpdbSettings();
+  }
 });
 </script>
 

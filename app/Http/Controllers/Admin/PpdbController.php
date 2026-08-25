@@ -281,4 +281,48 @@ class PpdbController extends BaseController
         $status = $teacher->is_ppdb_committee ? 'ditetapkan sebagai Panitia PPDB' : 'dinonaktifkan dari Panitia PPDB';
         return $this->success($teacher, "Guru {$teacher->full_name} berhasil {$status}.");
     }
+
+    /**
+     * Get PPDB schedule, status, and quota settings
+     */
+    public function getSettings()
+    {
+        $this->authorizeAccess();
+
+        $status = \App\Http\Controllers\Public\PpdbPublicController::getPpdbOpenStatus();
+        return $this->success($status);
+    }
+
+    /**
+     * Update PPDB schedule, status, and quota settings
+     */
+    public function updateSettings(Request $request)
+    {
+        $this->authorizeAccess();
+
+        $request->validate([
+            'ppdb_is_open' => ['required', 'boolean'],
+            'ppdb_batch_name' => ['nullable', 'string', 'max:100'],
+            'ppdb_start_date' => ['nullable', 'date'],
+            'ppdb_end_date' => ['nullable', 'date'],
+            'ppdb_quota' => ['nullable', 'integer', 'min:0'],
+            'ppdb_closed_message' => ['nullable', 'string'],
+        ]);
+
+        $keys = [
+            'ppdb_is_open' => $request->boolean('ppdb_is_open') ? '1' : '0',
+            'ppdb_batch_name' => $request->ppdb_batch_name ?: 'Gelombang 1',
+            'ppdb_start_date' => $request->ppdb_start_date ?: '',
+            'ppdb_end_date' => $request->ppdb_end_date ?: '',
+            'ppdb_quota' => $request->filled('ppdb_quota') ? (string)$request->ppdb_quota : '',
+            'ppdb_closed_message' => $request->ppdb_closed_message ?: '',
+        ];
+
+        foreach ($keys as $k => $v) {
+            \App\Models\Setting::updateOrCreate(['key' => $k], ['value' => $v]);
+        }
+
+        $freshStatus = \App\Http\Controllers\Public\PpdbPublicController::getPpdbOpenStatus();
+        return $this->success($freshStatus, 'Pengaturan periode dan status PPDB berhasil disimpan!');
+    }
 }

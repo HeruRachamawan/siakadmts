@@ -81,9 +81,60 @@
         </button>
       </div>
 
+      <!-- PPDB CLOSED ANNOUNCEMENT BANNER (IF REGISTRATION CLOSED) -->
+      <div v-if="activeTab === 'register' && info?.ppdb_status && !info?.ppdb_status?.is_open" class="bg-white rounded-3xl border border-rose-200 shadow-xl p-8 sm:p-12 text-center space-y-5 animate-fade-in">
+        <div class="w-16 h-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-inner">
+          <AlertCircle class="w-8 h-8" />
+        </div>
+        <div class="space-y-2 max-w-lg mx-auto">
+          <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider">
+            Pendaftaran Sedang Ditutup
+          </div>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-900">
+            {{ info?.ppdb_status?.status_reason || 'Pendaftaran PPDB Belum Dibuka' }}
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+            {{ info?.ppdb_status?.closed_message || 'Pendaftaran Peserta Didik Baru saat ini belum dibuka / telah ditutup. Silakan pantau terus website resmi madrasah untuk informasi periode berikutnya.' }}
+          </p>
+        </div>
+
+        <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            type="button"
+            @click="activeTab = 'status'"
+            class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Search class="w-4 h-4" />
+            <span>Cek Status Siswa yang Sudah Mendaftar</span>
+          </button>
+          <a
+            v-if="info?.school_phone"
+            :href="`https://wa.me/${cleanPhone(info.school_phone)}?text=Halo%20Panitia%20PPDB%20MTs%20Al-Hasanah,%20saya%20ingin%20bertanya%20jadwal%20pendaftaran%20siswa%20baru.`"
+            target="_blank"
+            class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>Hubungi Panitia via WhatsApp</span>
+          </a>
+        </div>
+      </div>
+
       <!-- TAB 1: FORMULIR PENDAFTARAN (WIZARD STEPS) -->
-      <div v-if="activeTab === 'register'" class="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+      <div v-else-if="activeTab === 'register'" class="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
         
+        <!-- Batch & Quota Indicator -->
+        <div v-if="info?.ppdb_status" class="bg-emerald-950 text-emerald-100 px-6 py-3 flex flex-col sm:flex-row items-center justify-between text-xs font-medium gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Periode: <strong>{{ info.ppdb_status.batch_name }}</strong></span>
+            <span v-if="info.ppdb_status.start_date && info.ppdb_status.end_date" class="text-emerald-300/80">
+              ({{ info.ppdb_status.start_date }} s/d {{ info.ppdb_status.end_date }})
+            </span>
+          </div>
+          <div v-if="info.ppdb_status.quota" class="text-emerald-300 text-[11px]">
+            Kuota Tersedia: {{ info.ppdb_status.total_applicants }} / {{ info.ppdb_status.quota }} Siswa
+          </div>
+        </div>
+
         <!-- Step Indicators -->
         <div class="grid grid-cols-3 border-b border-slate-100 bg-slate-50/70 p-3 sm:p-4 text-center text-xs font-semibold text-slate-500">
           <div :class="currentStep >= 1 ? 'text-emerald-700 font-bold' : ''" class="flex items-center justify-center gap-2">
@@ -548,6 +599,13 @@ function getStorageUrl(path) {
   if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
   const clean = path.replace(/^\/?storage\//, '').replace(/^\//, '');
   return `/storage/${clean}`;
+}
+
+function cleanPhone(phone) {
+  if (!phone) return '';
+  let clean = phone.replace(/[^0-9]/g, '');
+  if (clean.startsWith('0')) clean = '62' + clean.slice(1);
+  return clean;
 }
 
 async function submitRegistration() {

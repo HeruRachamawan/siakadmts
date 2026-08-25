@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BaseController;
 use App\Models\AcademicYear;
 use App\Models\PpdbApplicant;
 use App\Models\Setting;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -13,13 +14,63 @@ use Illuminate\Support\Str;
 class PpdbPublicController extends BaseController
 {
     /**
-     * Get active academic years for PPDB
+     * Check if PPDB is currently open based on settings, dates, and quota
+     */
+    public static function getPpdbOpenStatus(): array
+    {
+        $settings = Setting::pluck('value', 'key')->all();
+        
+        $isOpenManual = isset($settings['ppdb_is_open']) ? filter_var($settings['ppdb_is_open'], FILTER_VALIDATE_BOOLEAN) : true;
+        $batchName = $settings['ppdb_batch_name'] ?? 'Gelombang 1';
+        $startDate = $settings['ppdb_start_date'] ?? null;
+        $endDate = $settings['ppdb_end_date'] ?? null;
+        $quota = isset($settings['ppdb_quota']) && is_numeric($settings['ppdb_quota']) && (int)$settings['ppdb_quota'] > 0 ? (int)$settings['ppdb_quota'] : null;
+        $closedMessage = $settings['ppdb_closed_message'] ?? 'Pendaftaran Peserta Didik Baru (PPDB) saat ini sedang ditutup. Silakan pantau website resmi atau hubungi panitia madrasah untuk informasi gelombang berikutnya.';
+
+        $totalApplicants = PpdbApplicant::count();
+        $today = Carbon::today();
+
+        $isOpen = $isOpenManual;
+        $statusReason = 'Pendaftaran Dibuka';
+
+        if (!$isOpenManual) {
+            $isOpen = false;
+            $statusReason = 'Pendaftaran ditutup oleh panitia madrasah.';
+        } elseif ($startDate && Carbon::parse($startDate)->gt($today)) {
+            $isOpen = false;
+            $formattedStart = Carbon::parse($startDate)->isoFormat('D MMMM Y');
+            $statusReason = "Pendaftaran belum dibuka (Akan dibuka pada {$formattedStart}).";
+        } elseif ($endDate && Carbon::parse($endDate)->lt($today)) {
+            $isOpen = false;
+            $formattedEnd = Carbon::parse($endDate)->isoFormat('D MMMM Y');
+            $statusReason = "Batas waktu pendaftaran telah berakhir pada {$formattedEnd}.";
+        } elseif ($quota && $totalApplicants >= $quota) {
+            $isOpen = false;
+            $statusReason = "Kuota pendaftaran telah terpenuhi (Maksimal {$quota} siswa).";
+        }
+
+        return [
+            'is_open' => $isOpen,
+            'is_open_manual' => $isOpenManual,
+            'status_reason' => $statusReason,
+            'batch_name' => $batchName,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'quota' => $quota,
+            'total_applicants' => $totalApplicants,
+            'closed_message' => $closedMessage,
+        ];
+    }
+
+    /**
+     * Get active academic years and PPDB info for public
      */
     public function getInfo()
     {
         $activeYear = AcademicYear::where('is_active', true)->first() ?: AcademicYear::latest('id')->first();
         $allYears = AcademicYear::orderByDesc('year')->get();
         $settings = Setting::pluck('value', 'key')->all();
+        $ppdbStatus = self::getPpdbOpenStatus();
 
         return $this->success([
             'active_academic_year' => $activeYear,
@@ -28,6 +79,7 @@ class PpdbPublicController extends BaseController
             'school_address' => $settings['school_address'] ?? '',
             'school_phone' => $settings['school_phone'] ?? '',
             'school_logo' => $settings['app_logo'] ?? '',
+            'ppdb_status' => $ppdbStatus,
         ]);
     }
 
@@ -36,6 +88,12 @@ class PpdbPublicController extends BaseController
      */
     public function register(Request $request)
     {
+        // Enforce open status validation
+        $status = self::getPpdbOpenStatus();
+        if (!$status['is_open']) {
+            return $this->error($status['status_reason'] . ' ' . $status['closed_message'], 422);
+        }
+
         $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
             'nisn' => ['nullable', 'string', 'max:20'],

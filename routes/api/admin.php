@@ -73,6 +73,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('admin.
 
     // PPDB Management Routes (Admin & Panitia)
     Route::get('ppdb', [\App\Http\Controllers\Admin\PpdbController::class, 'index']);
+    Route::get('ppdb/settings', [\App\Http\Controllers\Admin\PpdbController::class, 'getSettings']);
+    Route::post('ppdb/settings', [\App\Http\Controllers\Admin\PpdbController::class, 'updateSettings']);
     Route::get('ppdb/{id}', [\App\Http\Controllers\Admin\PpdbController::class, 'show']);
     Route::post('ppdb/{id}/process', [\App\Http\Controllers\Admin\PpdbController::class, 'process']);
     Route::post('ppdb/{id}/enroll', [\App\Http\Controllers\Admin\PpdbController::class, 'enroll']);
