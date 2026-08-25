@@ -43,18 +43,10 @@
           </div>
 
           <!-- Right side: Login & Mobile Toggle -->
-          <div class="flex items-center gap-2 sm:gap-3">
-            <RouterLink
-              to="/ppdb"
-              class="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs font-extrabold bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl shadow-md transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
-            >
-              <UserPlus class="w-3.5 h-3.5 text-slate-950" />
-              <span>PPDB Online</span>
-            </RouterLink>
-
+          <div class="flex items-center gap-3">
             <RouterLink
               to="/login"
-              class="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+              class="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
             >
               <LogIn class="w-4 h-4" />
               <span>Masuk Portal</span>
