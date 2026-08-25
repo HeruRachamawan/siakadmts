@@ -32,16 +32,16 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy to cPanel via SSH / Rsync (Target: public_html/siakad.mts)
+      - name: Deploy to cPanel via SSH
         uses: easingthemes/ssh-deploy@v5.0.3
-        with:
+        env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
           ARGS: "-rlgoDzvc -i"
           SOURCE: "/"
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
-          REMOTE_USER: ${{ secrets.SSH_USER || 'masnomod' }}
-          REMOTE_PORT: ${{ secrets.SSH_PORT || 22 }}
+          REMOTE_USER: "masnomod"
+          REMOTE_PORT: "22"
           TARGET: "~/public_html/siakad.mts"
           EXCLUDES: "/.git/, /.github/, /node_modules/, /.env, /storage/logs/*, /storage/framework/cache/*, /storage/framework/sessions/*, /storage/framework/views/*"
 
@@ -50,10 +50,10 @@ jobs:
         continue-on-error: true
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER || 'masnomod' }}
+          username: "masnomod"
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          port: ${{ secrets.SSH_PORT || 22 }}
+          port: 22
           script: |
             cd ~/public_html/siakad.mts
             php artisan migrate --force || true
