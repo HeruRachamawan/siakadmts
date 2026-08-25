@@ -43,10 +43,18 @@
           </div>
 
           <!-- Right side: Login & Mobile Toggle -->
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <RouterLink
+              to="/ppdb"
+              class="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs font-extrabold bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl shadow-md transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              <UserPlus class="w-3.5 h-3.5 text-slate-950" />
+              <span>PPDB Online</span>
+            </RouterLink>
+
             <RouterLink
               to="/login"
-              class="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+              class="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
             >
               <LogIn class="w-4 h-4" />
               <span>Masuk Portal</span>
@@ -74,6 +82,9 @@
         leave-to-class="opacity-0 -translate-y-4"
       >
         <div v-if="isMobileMenuOpen" class="lg:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl shadow-xl border-t border-slate-200 py-4 px-4 flex flex-col space-y-1">
+          <RouterLink to="/ppdb" @click="closeMobileMenu" class="mobile-nav-link text-emerald-800 font-bold bg-emerald-50 border border-emerald-200">
+            ✨ Pendaftaran Siswa Baru (PPDB Online)
+          </RouterLink>
           <a href="#beranda" @click="closeMobileMenu" class="mobile-nav-link">Beranda</a>
           <a href="#profil" @click="closeMobileMenu" class="mobile-nav-link">Profil & Visi Misi</a>
           <a href="#guru" @click="closeMobileMenu" class="mobile-nav-link">Dewan Guru</a>
@@ -770,7 +781,8 @@ import {
   Search,
   GraduationCap,
   Award,
-  Globe
+  Globe,
+  UserPlus
 } from 'lucide-vue-next';
 
 // Logo fallback state

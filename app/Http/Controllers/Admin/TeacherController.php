@@ -90,6 +90,7 @@ class TeacherController extends BaseController
             'gender' => $request->gender,
             'phone' => $request->phone,
             'position' => $request->position,
+            'is_ppdb_committee' => (bool) $request->input('is_ppdb_committee', false),
         ]);
 
         if ($request->hasFile('photo')) {
@@ -120,7 +121,7 @@ class TeacherController extends BaseController
         ]);
 
         $teacher->update($request->only([
-            'nip', 'full_name', 'gender', 'phone', 'position',
+            'nip', 'full_name', 'gender', 'phone', 'position', 'is_ppdb_committee'
         ]));
 
         if ($request->hasFile('photo')) {

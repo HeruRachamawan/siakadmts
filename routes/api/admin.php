@@ -70,4 +70,13 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('admin.
     Route::get('teacher-attendance-requests', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'getPendingRequests']);
     Route::get('teacher-presensi-qr', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'getSchoolQr']);
     Route::post('teacher-attendance-monitoring/scan-teacher-card', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'scanTeacherCard']);
+
+    // PPDB Management Routes (Admin & Panitia)
+    Route::get('ppdb', [\App\Http\Controllers\Admin\PpdbController::class, 'index']);
+    Route::get('ppdb/{id}', [\App\Http\Controllers\Admin\PpdbController::class, 'show']);
+    Route::post('ppdb/{id}/process', [\App\Http\Controllers\Admin\PpdbController::class, 'process']);
+    Route::post('ppdb/{id}/enroll', [\App\Http\Controllers\Admin\PpdbController::class, 'enroll']);
+    Route::delete('ppdb/{id}', [\App\Http\Controllers\Admin\PpdbController::class, 'destroy']);
+    Route::get('ppdb-teachers-committee', [\App\Http\Controllers\Admin\PpdbController::class, 'getTeachersCommittee']);
+    Route::post('ppdb-teachers-committee/{id}/toggle', [\App\Http\Controllers\Admin\PpdbController::class, 'toggleTeacherCommittee']);
 });

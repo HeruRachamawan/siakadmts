@@ -52,4 +52,10 @@ Route::middleware(['auth:sanctum', 'role:teacher,admin'])->prefix('teacher')->na
     Route::get('presensi/requests', [\App\Http\Controllers\Teacher\TeacherAttendanceController::class, 'requests']);
     Route::post('presensi/requests', [\App\Http\Controllers\Teacher\TeacherAttendanceController::class, 'submitRequest']);
     Route::get('presensi/recap', [\App\Http\Controllers\Teacher\TeacherAttendanceController::class, 'recap']);
+
+    // PPDB Committee Access for Assigned Teachers
+    Route::get('ppdb', [\App\Http\Controllers\Admin\PpdbController::class, 'index']);
+    Route::get('ppdb/{id}', [\App\Http\Controllers\Admin\PpdbController::class, 'show']);
+    Route::post('ppdb/{id}/process', [\App\Http\Controllers\Admin\PpdbController::class, 'process']);
+    Route::post('ppdb/{id}/enroll', [\App\Http\Controllers\Admin\PpdbController::class, 'enroll']);
 });

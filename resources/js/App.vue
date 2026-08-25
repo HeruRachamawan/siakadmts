@@ -9,6 +9,7 @@
           :isCollapsed="isCollapsed"
           :isMobileSidebarOpen="isMobileSidebarOpen"
           :isHomeroomTeacher="isHomeroomTeacher"
+          :isPpdbCommittee="isPpdbCommittee"
           :pendingResetRequestsCount="pendingResetRequests.length"
           :getImageUrl="getImageUrl"
           @close-mobile-sidebar="isMobileSidebarOpen = false"
@@ -453,6 +454,10 @@ const myPasswordResetRequests = ref([]);
 const seenTeacherNotifIds = ref(JSON.parse(localStorage.getItem('seen_teacher_notif_ids') || '[]'));
 const seenTeacherPassNotifIds = ref(JSON.parse(localStorage.getItem('seen_teacher_pass_notif_ids') || '[]'));
 const isHomeroomTeacher = ref(localStorage.getItem('is_homeroom_teacher') === 'true');
+const isPpdbCommittee = computed(() => {
+  if (user.value?.role === 'admin') return true;
+  return !!(user.value?.teacher?.is_ppdb_committee || user.value?.is_ppdb_committee);
+});
 
 async function checkTeacherHomeroom() {
   if (user.value?.role === 'teacher') {

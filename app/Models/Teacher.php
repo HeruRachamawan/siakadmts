@@ -8,7 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Teacher extends Model
 {
-    protected $fillable = ['user_id', 'nip', 'full_name', 'gender', 'phone', 'position', 'photo'];
+    protected $fillable = ['user_id', 'nip', 'full_name', 'gender', 'phone', 'position', 'photo', 'is_ppdb_committee'];
+
+    protected $casts = [
+        'is_ppdb_committee' => 'boolean',
+    ];
 
     protected $appends = ['photo_url', 'qr_card_payload'];
 

@@ -37,12 +37,14 @@ const galleryFields = () => [
 
 const routes = [
     { path: '/', component: () => import('../views/public/Home.vue') },
+    { path: '/ppdb', component: () => import('../views/public/PpdbRegister.vue') },
     { path: '/login', component: () => import('../views/Login.vue'), meta: { requiresGuest: true } },
     { path: '/register', component: () => import('../views/Register.vue'), meta: { requiresGuest: true } },
     { path: '/dashboard', component: () => import('../views/DashboardHome.vue'), meta: { requiresAuth: true } },
 
     // Admin Routes
     { path: '/admin/dashboard', component: () => import('../views/AdminDashboard.vue'), meta: { requiresAuth: true, role: 'admin' } },
+    { path: '/admin/ppdb', component: () => import('../views/AdminPpdb.vue'), meta: { requiresAuth: true, role: 'admin' } },
     { path: '/admin/users', component: () => import('../components/CrudPage.vue'), meta: { requiresAuth: true, role: 'admin' }, props: { endpoint: 'admin/users', resource: 'admin/users', title: 'Pengguna', formFields: userFields(), fields: userFields(), columns: [
         { label: 'Nama', field: 'name' },
         { label: 'Email', field: 'email' },
@@ -129,6 +131,7 @@ const routes = [
 
     // Teacher Routes
     { path: '/teacher/dashboard', component: () => import('../views/TeacherDashboard.vue'), meta: { requiresAuth: true, role: 'teacher' } },
+    { path: '/teacher/ppdb', component: () => import('../views/AdminPpdb.vue'), meta: { requiresAuth: true, role: 'teacher' } },
     { path: '/teacher/profile', component: () => import('../views/TeacherProfile.vue'), meta: { requiresAuth: true, role: 'teacher' } },
     { path: '/teacher/presensi', component: () => import('../views/TeacherPresensi.vue'), meta: { requiresAuth: true, role: 'teacher' } },
     { path: '/teacher/presensi-recap', component: () => import('../views/TeacherAttendanceRecap.vue'), meta: { requiresAuth: true, role: 'teacher' } },

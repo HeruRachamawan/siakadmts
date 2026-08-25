@@ -141,6 +141,21 @@
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Tahun Ajaran</span>
             </Transition>
           </RouterLink>
+
+          <!-- Penerimaan Siswa Baru (PPDB) -->
+          <RouterLink
+            v-if="user?.role === 'admin'"
+            to="/admin/ppdb"
+            :title="isCollapsed ? 'Penerimaan Siswa (PPDB)' : ''"
+            class="nav-link bg-emerald-50/50 text-emerald-800 border border-emerald-200/60 font-semibold"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <UserPlus class="w-4 h-4 flex-shrink-0 text-emerald-600" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Penerimaan Siswa (PPDB)</span>
+            </Transition>
+          </RouterLink>
         </template>
 
         <!-- 3. PRESENSI & KEHADIRAN GURU -->
@@ -251,6 +266,21 @@
             <Calendar class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Kalender Akademik</span>
+            </Transition>
+          </RouterLink>
+
+          <!-- Panitia PPDB (Jika Ditugaskan) -->
+          <RouterLink
+            v-if="user?.teacher?.is_ppdb_committee || isPpdbCommittee"
+            to="/teacher/ppdb"
+            :title="isCollapsed ? 'Panitia PPDB' : ''"
+            class="nav-link bg-emerald-50/50 text-emerald-800 border border-emerald-200/60 font-semibold"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <UserPlus class="w-4 h-4 flex-shrink-0 text-emerald-600" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Panitia PPDB</span>
             </Transition>
           </RouterLink>
 
@@ -544,7 +574,8 @@ import {
   KeyRound,
   Settings,
   LogOut,
-  School
+  School,
+  UserPlus
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -553,6 +584,7 @@ const props = defineProps({
   isCollapsed: Boolean,
   isMobileSidebarOpen: Boolean,
   isHomeroomTeacher: Boolean,
+  isPpdbCommittee: Boolean,
   pendingResetRequestsCount: {
     type: Number,
     default: 0
