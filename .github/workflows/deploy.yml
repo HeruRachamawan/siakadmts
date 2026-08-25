@@ -32,20 +32,33 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy to cPanel via FTP (Port 21)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Deploy to cPanel via SSH Deploy
+        uses: easingthemes/ssh-deploy@v5.0.3
         with:
-          server: "lombardia.id.rapidplex.com"
-          username: ${{ secrets.FTP_USERNAME || 'masnomod' }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: 21
-          server-dir: "/public_html/siakad.mts/"
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/.env
-            **/storage/logs/**
-            **/storage/framework/cache/**
-            **/storage/framework/sessions/**
-            **/storage/framework/views/**
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
+          ARGS: "-rlgoDzvc -i"
+          SOURCE: "/"
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: "masnomod"
+          REMOTE_PORT: "22"
+          TARGET: "~/public_html/siakad.mts"
+          EXCLUDES: "/.git/, /.github/, /node_modules/, /.env, /storage/logs/*, /storage/framework/cache/*, /storage/framework/sessions/*, /storage/framework/views/*"
+
+      - name: Execute Post-Deployment Commands in cPanel
+        uses: appleboy/ssh-action@v1.0.3
+        continue-on-error: true
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: "masnomod"
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: 22
+          script: |
+            cd ~/public_html/siakad.mts
+            php artisan migrate --force || true
+            php artisan storage:link || true
+            php artisan optimize:clear || true
+            php artisan config:cache || true
+            php artisan route:cache || true
+            php artisan view:cache || true
