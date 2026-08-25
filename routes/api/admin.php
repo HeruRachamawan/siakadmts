@@ -68,6 +68,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('admin.
     Route::post('teacher-attendance-monitoring/update', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'updateAttendance']);
     Route::post('teacher-attendance-monitoring/reset', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'resetAttendance']);
     Route::get('teacher-attendance-requests', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'getPendingRequests']);
+    Route::post('teacher-attendance-requests/{id}/process', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'processRequest']);
     Route::get('teacher-presensi-qr', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'getSchoolQr']);
     Route::post('teacher-attendance-monitoring/scan-teacher-card', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'scanTeacherCard']);
 

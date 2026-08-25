@@ -733,12 +733,14 @@ async function switchMode(mode) {
 }
 
 async function startScanner() {
+  if (scannerTransitioning) return;
+  scannerTransitioning = true;
   scannerError.value = '';
 
-  // Check if secure context is required
-  const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   if (!window.isSecureContext && !isLocal) {
     scannerError.value = 'Kamera live memerlukan koneksi HTTPS di peramban HP. Gunakan fitur "Unggah / Foto Gambar QR" di bawah untuk presensi.';
+    scannerTransitioning = false;
     return;
   }
 
@@ -746,6 +748,7 @@ async function startScanner() {
     const devices = await Html5Qrcode.getCameras();
     if (!devices || devices.length === 0) {
       scannerError.value = 'Kamera tidak ditemukan pada perangkat Anda.';
+      scannerTransitioning = false;
       return;
     }
     cameras.value = devices;
@@ -762,11 +765,11 @@ async function startScanner() {
       html5QrCode = new Html5Qrcode("teacher-qr-reader");
     }
 
-    if (isScanning.value) {
+    if (html5QrCode.isScanning) {
       try {
         await html5QrCode.stop();
       } catch (e) {
-        console.warn(e);
+        // ignore
       }
     }
 
@@ -780,30 +783,37 @@ async function startScanner() {
       async (decodedText) => {
         await handleQrScanned(decodedText);
       },
-      (errorMessage) => {}
+      () => {}
     );
     isScanning.value = true;
   } catch (err) {
-    console.error('Camera Scanner Error:', err);
-    scannerError.value = 'Peramban HP membatasi kamera live tanpa HTTPS. Silakan gunakan tombol "Unggah / Foto QR" di bawah.';
-    isScanning.value = false;
+    console.warn('Camera Scanner Notice:', err);
+    if (!html5QrCode?.isScanning) {
+      scannerError.value = 'Peramban HP membatasi kamera live tanpa HTTPS. Silakan gunakan tombol "Unggah / Foto QR" di bawah.';
+      isScanning.value = false;
+    }
+  } finally {
+    scannerTransitioning = false;
   }
 }
 
 async function stopScanner() {
-  if (html5QrCode && isScanning.value) {
+  if (scannerTransitioning) return;
+  if (html5QrCode && (isScanning.value || html5QrCode.isScanning)) {
+    scannerTransitioning = true;
     try {
       await html5QrCode.stop();
     } catch (err) {
       console.warn('Error stopping scanner:', err);
     } finally {
       isScanning.value = false;
+      scannerTransitioning = false;
     }
   }
 }
 
 async function switchCamera() {
-  if (cameras.value.length <= 1) return;
+  if (cameras.value.length <= 1 || scannerTransitioning) return;
   selectedCameraIndex.value = (selectedCameraIndex.value + 1) % cameras.value.length;
   await stopScanner();
   try {
