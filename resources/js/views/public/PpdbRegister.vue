@@ -204,12 +204,11 @@
                 <textarea v-model="form.address" rows="2" placeholder="Nama jalan, RT/RW, Desa/Kelurahan, Kecamatan..." class="form-input text-xs"></textarea>
               </div>
             </div>
-
-            <div class="flex justify-end pt-4 border-t border-slate-100">
+          <div class="flex justify-end pt-4 border-t border-slate-100">
               <button
                 type="button"
                 @click="goToStep(2)"
-                class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                class="w-full sm:w-auto px-6 py-3 sm:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Lanjut ke Data Orang Tua</span>
                 <ArrowRight class="w-4 h-4" />
@@ -220,62 +219,59 @@
           <!-- STEP 2: ORANG TUA & SEKOLAH ASAL -->
           <div v-show="currentStep === 2" class="space-y-5 animate-fade-in">
             <div class="border-b border-slate-100 pb-3">
-              <h3 class="text-base font-bold text-slate-900">Data Sekolah Asal & Orang Tua / Wali</h3>
-              <p class="text-xs text-slate-500">Informasi SD/MI asal serta kontak orang tua atau wali calon siswa.</p>
+              <h3 class="text-base font-bold text-slate-900">Data Orang Tua & Sekolah Asal</h3>
+              <p class="text-xs text-slate-500">Informasi sekolah asal SD/MI serta data ayah, ibu, atau wali murid.</p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="sm:col-span-2 space-y-1.5">
-                <label class="block text-xs font-semibold text-slate-700">Nama Sekolah Asal (SD / MI)</label>
-                <input v-model="form.previous_school" type="text" placeholder="Contoh: SD Negeri 01 Ciomas / MI Al-Hidayah..." class="form-input text-xs" />
+                <label class="block text-xs font-semibold text-slate-700">Sekolah Asal (SD/MI) <span class="text-rose-500">*</span></label>
+                <input v-model="form.previous_school" type="text" placeholder="Contoh: SDN 1 Kedungwuni / MI Al-Falah..." class="form-input text-xs" required />
               </div>
 
-              <!-- Ayah -->
+              <!-- Data Ayah -->
               <div class="space-y-1.5">
-                <label class="block text-xs font-semibold text-slate-700">Nama Ayah Kandung</label>
-                <input v-model="form.father_name" type="text" placeholder="Nama ayah..." class="form-input text-xs" />
+                <label class="block text-xs font-semibold text-slate-700">Nama Lengkap Ayah</label>
+                <input v-model="form.father_name" type="text" placeholder="Nama ayah kandung..." class="form-input text-xs" />
               </div>
-
               <div class="space-y-1.5">
                 <label class="block text-xs font-semibold text-slate-700">Pekerjaan Ayah</label>
-                <input v-model="form.father_job" type="text" placeholder="Pekerjaan ayah..." class="form-input text-xs" />
+                <input v-model="form.father_job" type="text" placeholder="PNS, Wiraswasta, Petani, dll..." class="form-input text-xs" />
               </div>
 
-              <!-- Ibu -->
+              <!-- Data Ibu -->
               <div class="space-y-1.5">
-                <label class="block text-xs font-semibold text-slate-700">Nama Ibu Kandung</label>
-                <input v-model="form.mother_name" type="text" placeholder="Nama ibu..." class="form-input text-xs" />
+                <label class="block text-xs font-semibold text-slate-700">Nama Lengkap Ibu</label>
+                <input v-model="form.mother_name" type="text" placeholder="Nama ibu kandung..." class="form-input text-xs" />
               </div>
-
               <div class="space-y-1.5">
                 <label class="block text-xs font-semibold text-slate-700">Pekerjaan Ibu</label>
-                <input v-model="form.mother_job" type="text" placeholder="Pekerjaan ibu..." class="form-input text-xs" />
+                <input v-model="form.mother_job" type="text" placeholder="IRT, Guru, Pedagang, dll..." class="form-input text-xs" />
               </div>
 
-              <!-- Wali (Opsional) -->
+              <!-- Data Wali (Opsional) -->
               <div class="space-y-1.5">
                 <label class="block text-xs font-semibold text-slate-700">Nama Wali (Jika Tinggal Bersama Wali)</label>
-                <input v-model="form.guardian_name" type="text" placeholder="Nama wali..." class="form-input text-xs" />
+                <input v-model="form.guardian_name" type="text" placeholder="Nama wali murid..." class="form-input text-xs" />
               </div>
-
               <div class="space-y-1.5">
                 <label class="block text-xs font-semibold text-slate-700">No. HP / WA Wali</label>
-                <input v-model="form.guardian_phone" type="tel" placeholder="Nomor HP wali..." class="form-input text-xs" />
+                <input v-model="form.guardian_phone" type="tel" placeholder="Nomor kontak wali..." class="form-input text-xs" />
               </div>
             </div>
 
-            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+            <div class="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-100">
               <button
                 type="button"
                 @click="currentStep = 1"
-                class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer"
+                class="w-full sm:w-auto px-5 py-3 sm:py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all text-center cursor-pointer"
               >
                 Kembali
               </button>
               <button
                 type="button"
                 @click="currentStep = 3"
-                class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                class="w-full sm:w-auto px-6 py-3 sm:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Lanjut ke Upload Berkas</span>
                 <ArrowRight class="w-4 h-4" />
@@ -336,18 +332,18 @@
               </label>
             </div>
 
-            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+            <div class="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-100">
               <button
                 type="button"
                 @click="currentStep = 2"
-                class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer"
+                class="w-full sm:w-auto px-5 py-3 sm:py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all text-center cursor-pointer"
               >
                 Kembali
               </button>
               <button
                 type="submit"
                 :disabled="submitting || !agreement"
-                class="px-7 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                class="w-full sm:w-auto px-7 py-3.5 sm:py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <div v-if="submitting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 <CheckCircle2 v-else class="w-4 h-4" />
