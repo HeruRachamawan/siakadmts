@@ -645,10 +645,26 @@ async function rejectResetRequest(id) {
 
 const appSettings = ref({});
 
+function updateFavicon(url) {
+  if (!url) return;
+  const fullUrl = getImageUrl(url);
+  let links = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']");
+  links.forEach(l => l.href = fullUrl);
+  if (links.length === 0) {
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.href = fullUrl;
+    document.head.appendChild(link);
+  }
+}
+
 async function loadSettings() {
   try {
     const res = await api.get('/public');
     appSettings.value = res?.settings || res || {};
+    if (appSettings.value?.app_logo) {
+      updateFavicon(appSettings.value.app_logo);
+    }
   } catch (error) {
     console.error('Failed to load settings:', error);
     appSettings.value = {};
