@@ -36,14 +36,13 @@ jobs:
         uses: easingthemes/ssh-deploy@v5.0.3
         with:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
-          ARGS: "-rlgoDzvc -i"
-          SOURCE: "/"
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: "masnomod"
           REMOTE_PORT: "22"
           TARGET: "~/public_html/siakad.mts"
-          EXCLUDES: "/.git/, /.github/, /node_modules/, /.env, /storage/logs/*, /storage/framework/cache/*, /storage/framework/sessions/*, /storage/framework/views/*"
+          SSH_CMD_ARGS: "-4 -o StrictHostKeyChecking=no"
+          ARGS: "-rlgoDzvc -i"
+          EXCLUDE: "/.git/, /.github/, /node_modules/, /.env, /storage/logs/*, /storage/framework/cache/*, /storage/framework/sessions/*, /storage/framework/views/*"
 
       - name: Execute Post-Deployment Commands in cPanel
         uses: appleboy/ssh-action@v1.0.3
