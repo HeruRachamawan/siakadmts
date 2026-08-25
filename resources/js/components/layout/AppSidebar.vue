@@ -20,7 +20,13 @@
            :class="isCollapsed ? 'justify-center px-0' : 'px-4'">
         <div class="flex items-center gap-3 min-w-0">
           <div class="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center shadow-xs border border-emerald-700/50 flex-shrink-0 overflow-hidden p-1.5">
-            <img v-if="appSettings?.app_logo" :src="getImageUrl(appSettings.app_logo)" class="w-full h-full object-contain filter drop-shadow" alt="Logo" />
+            <img 
+              v-if="appSettings?.app_logo && !logoError" 
+              :src="resolveImageUrl(appSettings.app_logo)" 
+              @error="logoError = true"
+              class="w-full h-full object-contain filter drop-shadow" 
+              alt="Logo" 
+            />
             <School v-else class="w-5 h-5 text-white" />
           </div>
           <Transition name="label-fade">
@@ -513,6 +519,7 @@
 </template>
 
 <script setup>
+import { ref, watch } from 'vue';
 import {
   LayoutDashboard,
   UserCheck,
@@ -540,7 +547,7 @@ import {
   School
 } from 'lucide-vue-next';
 
-defineProps({
+const props = defineProps({
   user: Object,
   appSettings: Object,
   isCollapsed: Boolean,
@@ -554,4 +561,22 @@ defineProps({
 });
 
 defineEmits(['close-mobile-sidebar', 'logout', 'open-reset-requests']);
+
+const logoError = ref(false);
+
+watch(() => props.appSettings?.app_logo, () => {
+  logoError.value = false;
+});
+
+const resolveImageUrl = (path) => {
+  if (props.getImageUrl && typeof props.getImageUrl === 'function') {
+    return props.getImageUrl(path);
+  }
+  if (!path) return '';
+  if (typeof path !== 'string') return '';
+  if (path.startsWith('http') || path.startsWith('data:')) return path;
+  if (path.startsWith('/storage/')) return path;
+  if (path.startsWith('storage/')) return '/' + path;
+  return '/storage/' + path.replace(/^\//, '');
+};
 </script>
