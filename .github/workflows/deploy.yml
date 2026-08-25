@@ -28,11 +28,12 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Build Frontend
+      - name: Build Frontend & Pack Storage Assets
         run: |
           npm ci
           npm run build
           tar -czf build.tar.gz public/build
+          tar -czf storage_public.tar.gz -C storage/app/public .
 
       - name: 1. Deploy Backend (Sync Repository to cPanel)
         uses: appleboy/ssh-action@master
@@ -67,7 +68,7 @@ jobs:
             # Install vendor dependencies on cPanel
             composer install --no-dev --optimize-autoloader --no-interaction
 
-      - name: 2. Upload Frontend Artifacts (SCP)
+      - name: 2. Upload Artifacts (Frontend & Storage Images)
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -75,7 +76,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: 64000
-          source: "build.tar.gz"
+          source: "build.tar.gz,storage_public.tar.gz"
           target: "public_html/siakad.mts/"
 
       - name: 3. Finalize Deployment & Optimize Laravel
@@ -95,12 +96,20 @@ jobs:
             tar -xzf build.tar.gz
             rm -f build.tar.gz
 
+            # Extract Storage Public Assets (Logo, Guru, Siswa, Fasilitas)
+            mkdir -p storage/app/public
+            tar -xzf storage_public.tar.gz -C storage/app/public/
+            rm -f storage_public.tar.gz
+
+            # Re-create Storage Link cleanly
+            rm -rf public/storage
+            php artisan storage:link
+
             # Laravel Optimization & Migrations
-            php artisan storage:link || true
-            php artisan optimize:clear || true
+            php artisan optimize:clear
             php artisan config:cache || true
             php artisan route:cache || true
             php artisan view:cache || true
             php artisan migrate --force || true
 
-            echo "✅ Deployment ke public_html/siakad.mts Berhasil!"
+            echo "✅ Deployment & Media Storage ke public_html/siakad.mts Berhasil!"

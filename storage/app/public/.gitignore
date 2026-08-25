@@ -1,2 +1,9 @@
-*
+# Ignore files except directories
+!*/
+!teachers/**
+!students/**
+!settings/**
+!facilities/**
+!achievements/**
+!galleries/**
 !.gitignore
