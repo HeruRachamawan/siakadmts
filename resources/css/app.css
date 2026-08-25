@@ -7,7 +7,8 @@
 @source '../**/*.vue';
 
 @theme {
-    --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    --font-sans: 'Outfit', 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    --font-outfit: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
     --font-inter: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
     --font-jakarta: 'Plus Jakarta Sans', system-ui, sans-serif;
     --font-poppins: 'Poppins', system-ui, sans-serif;
@@ -26,6 +27,7 @@
     }
 
     /* Modern Typography */
+    .font-outfit { font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif; }
     .font-inter { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; }
     .font-lexend { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
     
