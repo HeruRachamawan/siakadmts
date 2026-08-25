@@ -2,11 +2,12 @@ name: Deploy to cPanel (siakad.mts)
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,37 +28,75 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install NPM Dependencies & Build Assets
+      - name: Build Frontend
         run: |
           npm ci
           npm run build
+          tar -czf build.tar.gz public/build
 
-      - name: Deploy to cPanel via DomaiNesia SSH (Port 2222)
-        uses: easingthemes/ssh-deploy@v5.0.3
-        with:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ secrets.SSH_HOST }}
-          REMOTE_USER: "masnomod"
-          REMOTE_PORT: "2222"
-          TARGET: "~/public_html/siakad.mts"
-          SSH_CMD_ARGS: "-4 -o StrictHostKeyChecking=no"
-          ARGS: "-rlgoDzvc -i"
-          EXCLUDE: "/.git/, /.github/, /node_modules/, /.env, /storage/logs/*, /storage/framework/cache/*, /storage/framework/sessions/*, /storage/framework/views/*"
-
-      - name: Execute Post-Deployment Commands in cPanel
-        uses: appleboy/ssh-action@v1.0.3
-        continue-on-error: true
+      - name: 1. Deploy Backend (Clone / Pull Repository)
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: "masnomod"
+          username: masnomod
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          port: 2222
+          port: 64000
           script: |
-            cd ~/public_html/siakad.mts
-            php artisan migrate --force || true
+            set -e
+            APP_DIR="public_html/siakad.mts"
+            REPO="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+
+            mkdir -p ~/$APP_DIR
+            cd ~/$APP_DIR
+
+            if [ ! -d ".git" ]; then
+              echo "Initializing Git Repository on cPanel..."
+              git clone --branch main $REPO .
+            else
+              echo "Pulling latest changes on cPanel..."
+              git remote set-url origin $REPO
+              git fetch origin main
+              git reset --hard origin/main
+            fi
+
+            # Install vendor dependencies on cPanel
+            composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: 2. Upload Frontend Artifacts (SCP)
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: masnomod
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: 64000
+          source: "build.tar.gz"
+          target: "public_html/siakad.mts/"
+
+      - name: 3. Finalize Deployment & Optimize Laravel
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: masnomod
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: 64000
+          script: |
+            set -e
+            APP_DIR="public_html/siakad.mts"
+            cd ~/$APP_DIR
+
+            # Extract Frontend Assets
+            tar -xzf build.tar.gz
+            rm -f build.tar.gz
+
+            # Laravel Optimization & Migrations
             php artisan storage:link || true
-            php artisan optimize:clear || true
+            php artisan optimize:clear
             php artisan config:cache || true
             php artisan route:cache || true
             php artisan view:cache || true
+            php artisan migrate --force || true
+
+            echo "✅ Deployment ke public_html/siakad.mts Berhasil!"
