@@ -34,7 +34,7 @@ jobs:
           npm run build
           tar -czf build.tar.gz public/build
 
-      - name: 1. Deploy Backend (Clone / Pull Repository)
+      - name: 1. Deploy Backend (Sync Repository to cPanel)
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -51,8 +51,12 @@ jobs:
             cd ~/$APP_DIR
 
             if [ ! -d ".git" ]; then
-              echo "Initializing Git Repository on cPanel..."
-              git clone --branch main $REPO .
+              echo "Initializing Git Repository in existing folder..."
+              git init
+              git remote add origin $REPO || git remote set-url origin $REPO
+              git fetch origin main
+              git reset --hard origin/main
+              git branch -M main || true
             else
               echo "Pulling latest changes on cPanel..."
               git remote set-url origin $REPO
@@ -93,7 +97,7 @@ jobs:
 
             # Laravel Optimization & Migrations
             php artisan storage:link || true
-            php artisan optimize:clear
+            php artisan optimize:clear || true
             php artisan config:cache || true
             php artisan route:cache || true
             php artisan view:cache || true
