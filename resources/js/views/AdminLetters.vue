@@ -245,6 +245,30 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination Bar -->
+        <div v-if="pagination.last_page > 1" class="px-6 py-3 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
+          <div>
+            Menampilkan halaman <span class="font-bold text-slate-900">{{ pagination.current_page }}</span> dari <span class="font-bold text-slate-900">{{ pagination.last_page }}</span> (Total {{ pagination.total }} surat)
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button
+              :disabled="pagination.current_page <= 1"
+              @click="fetchLetters(pagination.current_page - 1)"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
+            >
+              &larr; Sebelumnya
+            </button>
+            <span class="px-2 font-bold text-emerald-800">{{ pagination.current_page }}</span>
+            <button
+              :disabled="pagination.current_page >= pagination.last_page"
+              @click="fetchLetters(pagination.current_page + 1)"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
+            >
+              Selanjutnya &rarr;
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -338,6 +362,30 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div v-if="pagination.last_page > 1" class="px-6 py-3 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
+          <div>
+            Menampilkan halaman <span class="font-bold text-slate-900">{{ pagination.current_page }}</span> dari <span class="font-bold text-slate-900">{{ pagination.last_page }}</span> (Total {{ pagination.total }} surat)
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button
+              :disabled="pagination.current_page <= 1"
+              @click="fetchLetters(pagination.current_page - 1)"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
+            >
+              &larr; Sebelumnya
+            </button>
+            <span class="px-2 font-bold text-indigo-800">{{ pagination.current_page }}</span>
+            <button
+              :disabled="pagination.current_page >= pagination.last_page"
+              @click="fetchLetters(pagination.current_page + 1)"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
+            >
+              Selanjutnya &rarr;
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -813,26 +861,40 @@ const selectedStudentPreview = computed(() => {
   return studentList.value.find(s => s.id == certForm.student_id);
 });
 
+const pagination = reactive({
+  current_page: 1,
+  last_page: 1,
+  total: 0,
+  per_page: 15,
+});
+
 let debounceTimer = null;
 function debouncedFetch() {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
-    fetchLetters();
+    fetchLetters(1);
   }, 350);
 }
 
-async function fetchLetters() {
+async function fetchLetters(page = 1) {
   loading.value = true;
   try {
     const params = {
       type: activeTab.value === 'outgoing' ? 'outgoing' : 'incoming',
       search: filters.search || undefined,
       status: filters.status !== 'all' ? filters.status : undefined,
+      page: page,
     };
     const res = await api.get('admin/letters', { params });
     const data = res?.data || res;
     letters.value = data?.letters?.data || data?.letters || [];
     stats.value = data?.stats || {};
+    if (data?.letters) {
+      pagination.current_page = data.letters.current_page || 1;
+      pagination.last_page = data.letters.last_page || 1;
+      pagination.total = data.letters.total || letters.value.length;
+      pagination.per_page = data.letters.per_page || 15;
+    }
   } catch (error) {
     console.error('Error fetching letters:', error);
     toast.error('Gagal memuat data persuratan.');

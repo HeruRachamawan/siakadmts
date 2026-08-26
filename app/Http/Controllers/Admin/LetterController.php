@@ -53,7 +53,8 @@ class LetterController extends BaseController
             });
         }
 
-        $letters = $query->orderByDesc('letter_date')->orderByDesc('id')->paginate($request->input('per_page', 15));
+        $sortDirection = $request->input('direction', 'asc');
+        $letters = $query->orderBy('letter_date', $sortDirection)->orderBy('id', $sortDirection)->paginate($request->input('per_page', 15));
 
         // Aggregate statistics
         $stats = [
