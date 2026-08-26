@@ -611,10 +611,12 @@
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { api } from '../api';
 import { useToast } from '../composables/useToast';
+import { useConfirm } from '../composables/useConfirm';
 import QRCode from 'qrcode';
 import { Html5Qrcode } from 'html5-qrcode';
 
 const toast = useToast();
+const { confirm } = useConfirm();
 const loading = ref(true);
 const savingSettings = ref(false);
 const showSettingsModal = ref(false);
@@ -708,9 +710,15 @@ async function saveAttendanceEdit() {
 }
 
 async function confirmResetAttendance(t) {
-  if (!confirm(`Apakah Anda yakin ingin me-reset status presensi ${t.full_name} pada tanggal ${selectedDate.value} ke Belum Absen?`)) {
-    return;
-  }
+  const isConfirmed = await confirm({
+    title: 'Reset Presensi Guru',
+    message: `Apakah Anda yakin ingin me-reset status presensi "${t.full_name}" pada tanggal ${selectedDate.value} ke status "Belum Absen"?`,
+    confirmText: 'Ya, Reset',
+    cancelText: 'Batal',
+    type: 'warning'
+  });
+  if (!isConfirmed) return;
+
   try {
     const res = await api.post('admin/teacher-attendance-monitoring/reset', {
       teacher_id: t.teacher_id,

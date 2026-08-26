@@ -610,6 +610,9 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { api } from '../api';
 import { useAuthStore } from '../stores/auth';
 import { useToast } from '../composables/useToast';
+import { useConfirm } from '../composables/useConfirm';
+
+const { confirm } = useConfirm();
 import {
   UserPlus,
   RefreshCw,
@@ -737,7 +740,15 @@ async function submitEnroll() {
 }
 
 async function deleteApplicant(id) {
-  if (!confirm('Apakah Anda yakin ingin menghapus data calon siswa ini?')) return;
+  const isConfirmed = await confirm({
+    title: 'Hapus Calon Siswa',
+    message: 'Apakah Anda yakin ingin menghapus data calon siswa ini?',
+    confirmText: 'Ya, Hapus',
+    cancelText: 'Batal',
+    type: 'danger'
+  });
+  if (!isConfirmed) return;
+
   try {
     await api.delete(`/admin/ppdb/${id}`);
     toast.success('Data calon siswa berhasil dihapus.');

@@ -828,8 +828,10 @@ import {
 } from 'lucide-vue-next';
 import { api } from '../api';
 import { useToast } from '../composables/useToast';
+import { useConfirm } from '../composables/useConfirm';
 
 const toast = useToast();
+const { confirm } = useConfirm();
 
 const activeTab = ref('incoming');
 const loading = ref(false);
@@ -1058,7 +1060,15 @@ function onSelectCertStudent() {
 }
 
 async function deleteLetter(item) {
-  if (!confirm(`Yakin ingin menghapus surat nomor agenda "${item.agenda_number}"?`)) return;
+  const isConfirmed = await confirm({
+    title: 'Hapus Data Surat',
+    message: `Apakah Anda yakin ingin menghapus surat nomor agenda "${item.agenda_number}" (${item.reference_number || item.subject})?`,
+    confirmText: 'Ya, Hapus',
+    cancelText: 'Batal',
+    type: 'danger'
+  });
+  if (!isConfirmed) return;
+
   try {
     await api.delete(`admin/letters/${item.id}`);
     toast.success('Surat berhasil dihapus.');
