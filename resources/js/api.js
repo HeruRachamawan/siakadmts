@@ -107,6 +107,7 @@ export const api = {
   post: (url, data) => axios.post(url, data).then((r) => r.data),
   put: (url, data) => axios.put(url, data).then((r) => r.data),
   del: (url) => axios.delete(url).then((r) => r.data),
+  delete: (url, config) => axios.delete(url, config).then((r) => r.data),
   postForm: (url, data) => axios.post(url, data, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data),
   putForm: (url, data) => {
     // Laravel doesn't support PUT multipart, use POST with _method spoofing
