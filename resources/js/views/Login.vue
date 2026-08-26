@@ -106,36 +106,41 @@
               type="button"
               @click="setDemoRole('admin')"
               :class="[selectedRoleTab === 'admin' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800 font-medium']"
-              class="flex-1 py-1.5 text-xs rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              class="flex-1 py-1.5 text-[11px] sm:text-xs rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer"
             >
-              <ShieldCheck class="w-3.5 h-3.5" />
-              <span>Admin</span>
+              <ShieldCheck class="w-3.5 h-3.5 text-emerald-600" />
+              <span>Admin & Staf</span>
             </button>
             <button
               type="button"
               @click="setDemoRole('teacher')"
               :class="[selectedRoleTab === 'teacher' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800 font-medium']"
-              class="flex-1 py-1.5 text-xs rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              class="flex-1 py-1.5 text-[11px] sm:text-xs rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer"
             >
-              <UserCheck class="w-3.5 h-3.5" />
+              <UserCheck class="w-3.5 h-3.5 text-indigo-600" />
               <span>Guru</span>
             </button>
             <button
               type="button"
               @click="setDemoRole('student')"
               :class="[selectedRoleTab === 'student' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800 font-medium']"
-              class="flex-1 py-1.5 text-xs rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              class="flex-1 py-1.5 text-[11px] sm:text-xs rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer"
             >
-              <GraduationCap class="w-3.5 h-3.5" />
+              <GraduationCap class="w-3.5 h-3.5 text-purple-600" />
               <span>Siswa</span>
             </button>
+          </div>
+
+          <div v-if="selectedRoleTab === 'admin'" class="text-[11px] text-slate-500 bg-slate-50 border border-slate-200/60 rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+            <ShieldCheck class="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+            <span>Untuk akun <b>Superadmin, Operator TU, & Waka Kurikulum</b></span>
           </div>
 
           <form @submit.prevent="onSubmit" class="space-y-4">
             <!-- Username Input -->
             <div class="space-y-1.5">
               <label class="block text-xs font-semibold text-slate-700">
-                {{ selectedRoleTab === 'student' ? 'NISN Siswa' : (selectedRoleTab === 'teacher' ? 'NIP / Username Guru' : 'Username Administrator') }}
+                {{ selectedRoleTab === 'student' ? 'NISN Siswa' : (selectedRoleTab === 'teacher' ? 'NIP / Username Guru' : 'Username / Email Akun') }}
               </label>
               <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-slate-900 transition-colors">
