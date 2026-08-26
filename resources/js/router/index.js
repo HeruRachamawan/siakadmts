@@ -3,6 +3,8 @@ import { useAuthStore } from '../stores/auth';
 
 function roleDashboard(r) {
     if (r === 'admin') return '/admin/dashboard';
+    if (r === 'operator') return '/operator/dashboard';
+    if (r === 'kurikulum') return '/kurikulum/dashboard';
     if (r === 'teacher') return '/teacher/dashboard';
     if (r === 'student') return '/student/dashboard';
     return '/login';
@@ -12,9 +14,11 @@ const userFields = () => [
     { name: 'name', label: 'Nama Pengguna', type: 'text' },
     { name: 'email', label: 'Email', type: 'email' },
     { name: 'password', label: 'Password', type: 'password' },
-    { name: 'role', label: 'Peran', type: 'select', options: [
-        { value: 'admin', label: 'Admin' },
-        { value: 'teacher', label: 'Guru' },
+    { name: 'role', label: 'Peran Akun', type: 'select', options: [
+        { value: 'admin', label: 'Administrator (Superadmin)' },
+        { value: 'operator', label: 'Operator / Tata Usaha (TU)' },
+        { value: 'kurikulum', label: 'Waka Kurikulum' },
+        { value: 'teacher', label: 'Guru Mata Pelajaran' },
         { value: 'student', label: 'Siswa' },
     ] },
 ];
@@ -42,20 +46,28 @@ const routes = [
     { path: '/register', component: () => import('../views/Register.vue'), meta: { requiresGuest: true, title: 'Registrasi Akun' } },
     { path: '/dashboard', component: () => import('../views/DashboardHome.vue'), meta: { requiresAuth: true, title: 'Dashboard' } },
 
-    // Admin Routes
+    // Operator TU Dedicated Routes
+    { path: '/operator/dashboard', component: () => import('../views/OperatorDashboard.vue'), meta: { requiresAuth: true, roles: ['operator', 'admin'], title: 'Dashboard Operator TU' } },
+    { path: '/operator/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['operator', 'admin'], title: 'Buku Agenda Persuratan' } },
+
+    // Waka Kurikulum Dedicated Routes
+    { path: '/kurikulum/dashboard', component: () => import('../views/KurikulumDashboard.vue'), meta: { requiresAuth: true, roles: ['kurikulum', 'admin'], title: 'Dashboard Waka Kurikulum' } },
+
+    // Admin & Shared Routes
     { path: '/admin/dashboard', component: () => import('../views/AdminDashboard.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Dashboard Admin' } },
-    { path: '/admin/ppdb', component: () => import('../views/AdminPpdb.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Penerimaan Siswa (PPDB)' } },
+    { path: '/admin/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator'], title: 'Buku Agenda Persuratan' } },
+    { path: '/admin/ppdb', component: () => import('../views/AdminPpdb.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator'], title: 'Penerimaan Siswa (PPDB)' } },
     { path: '/admin/users', component: () => import('../components/CrudPage.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Manajemen Pengguna' }, props: { endpoint: 'admin/users', resource: 'admin/users', title: 'Pengguna', formFields: userFields(), fields: userFields(), columns: [
         { label: 'Nama', field: 'name' },
         { label: 'Email', field: 'email' },
         { label: 'Peran', field: 'role' },
     ], hideFields: ['password'] } },
-    { path: '/admin/students', component: () => import('../views/AdminStudents.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Manajemen Data Siswa' } },
-    { path: '/admin/teachers', component: () => import('../views/AdminTeachers.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Manajemen Data Guru' } },
-    { path: '/admin/classes', component: () => import('../views/AdminClasses.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Manajemen Kelas' } },
-    { path: '/admin/subjects', component: () => import('../views/AdminSubjects.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Mata Pelajaran' } },
-    { path: '/admin/schedules', component: () => import('../views/AdminSchedules.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Jadwal Pelajaran' } },
-    { path: '/admin/print-center', component: () => import('../views/AdminPrintCenter.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Pusat Cetak Dokumen' } },
+    { path: '/admin/students', component: () => import('../views/AdminStudents.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum'], title: 'Manajemen Data Siswa' } },
+    { path: '/admin/teachers', component: () => import('../views/AdminTeachers.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum'], title: 'Manajemen Data Guru' } },
+    { path: '/admin/classes', component: () => import('../views/AdminClasses.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Manajemen Kelas' } },
+    { path: '/admin/subjects', component: () => import('../views/AdminSubjects.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Mata Pelajaran' } },
+    { path: '/admin/schedules', component: () => import('../views/AdminSchedules.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Jadwal Pelajaran' } },
+    { path: '/admin/print-center', component: () => import('../views/AdminPrintCenter.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator'], title: 'Pusat Cetak Dokumen' } },
     { path: '/admin/attendance-reports', component: () => import('../views/AdminAttendanceReports.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Rekap Presensi Siswa' } },
     { path: '/admin/daily-student-attendance', component: () => import('../views/AdminDailyAttendanceMonitoring.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Monitoring Presensi Siswa' } },
     { path: '/admin/teacher-presensi-monitoring', component: () => import('../views/AdminTeacherAttendanceMonitoring.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Monitoring Presensi Guru' } },
@@ -178,7 +190,11 @@ router.beforeEach(async (to) => {
         if (!auth.token) {
             return { path: '/login', query: { redirect: to.fullPath } };
         }
-        if (to.meta.role && auth.user?.role !== to.meta.role) {
+        if (to.meta.roles && Array.isArray(to.meta.roles)) {
+            if (!to.meta.roles.includes(auth.user?.role)) {
+                return roleDashboard(auth.user?.role);
+            }
+        } else if (to.meta.role && auth.user?.role !== to.meta.role) {
             return roleDashboard(auth.user?.role);
         }
     }

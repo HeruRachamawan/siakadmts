@@ -50,7 +50,7 @@
 
         <!-- Dashboard -->
         <RouterLink
-          :to="`/${user?.role === 'admin' ? 'admin' : (user?.role === 'teacher' ? 'teacher' : 'student')}/dashboard`"
+          :to="`/${user?.role === 'admin' ? 'admin' : (user?.role === 'operator' ? 'operator' : (user?.role === 'kurikulum' ? 'kurikulum' : (user?.role === 'teacher' ? 'teacher' : 'student')))}/dashboard`"
           :title="isCollapsed ? 'Dashboard' : ''"
           class="nav-link"
           :class="isCollapsed ? 'justify-center' : ''"
@@ -62,15 +62,105 @@
           </Transition>
         </RouterLink>
 
-        <!-- 2. DATA MASTER (Admin & Hanya Guru Yang Menjadi Wali Kelas) -->
-        <template v-if="user?.role === 'admin' || (user?.role === 'teacher' && isHomeroomTeacher)">
+        <!-- 2. ADMINISTRASI & PERSURATAN (Admin & Operator TU) -->
+        <template v-if="user?.role === 'admin' || user?.role === 'operator'">
+          <div v-if="!isCollapsed" class="nav-section">Administrasi & Persuratan</div>
+          <div v-else class="my-1 border-t border-slate-200/50"></div>
+
+          <!-- Buku Agenda Surat Masuk & Keluar -->
+          <RouterLink
+            :to="user?.role === 'admin' ? '/admin/letters' : '/operator/letters'"
+            :title="isCollapsed ? 'Buku Agenda Persuratan' : ''"
+            class="nav-link bg-emerald-50/60 text-emerald-800 border border-emerald-200/80 font-bold"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <FileText class="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Buku Agenda Surat</span>
+            </Transition>
+          </RouterLink>
+        </template>
+
+        <!-- 3. KURIKULUM & AKADEMIK (Admin & Kurikulum) -->
+        <template v-if="user?.role === 'kurikulum'">
+          <div v-if="!isCollapsed" class="nav-section">Kurikulum & KBM</div>
+          <div v-else class="my-1 border-t border-slate-200/50"></div>
+
+          <RouterLink
+            to="/admin/schedules"
+            :title="isCollapsed ? 'Jadwal Pelajaran' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <CalendarCheck class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Jadwal Pelajaran</span>
+            </Transition>
+          </RouterLink>
+
+          <RouterLink
+            to="/admin/subjects"
+            :title="isCollapsed ? 'Mata Pelajaran' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <BookOpen class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Mata Pelajaran</span>
+            </Transition>
+          </RouterLink>
+
+          <RouterLink
+            to="/admin/grades"
+            :title="isCollapsed ? 'Rekap Nilai Siswa' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Award class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rekap Nilai Siswa</span>
+            </Transition>
+          </RouterLink>
+
+          <RouterLink
+            to="/admin/calendar-events"
+            :title="isCollapsed ? 'Kalender Akademik' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Calendar class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Kalender Akademik</span>
+            </Transition>
+          </RouterLink>
+
+          <RouterLink
+            to="/admin/teacher-presensi-monitoring"
+            :title="isCollapsed ? 'Monitoring Absen Guru' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <MapPin class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Absen Guru</span>
+            </Transition>
+          </RouterLink>
+        </template>
+
+        <!-- 4. DATA MASTER (Admin, Operator, Kurikulum & Wali Kelas) -->
+        <template v-if="user?.role === 'admin' || user?.role === 'operator' || user?.role === 'kurikulum' || (user?.role === 'teacher' && isHomeroomTeacher)">
           <div v-if="!isCollapsed" class="nav-section">Data Master</div>
           <div v-else class="my-1 border-t border-slate-200/50"></div>
 
           <!-- Data Siswa -->
           <RouterLink
-            v-if="user?.role === 'admin' || (user?.role === 'teacher' && isHomeroomTeacher)"
-            :to="`/${user?.role === 'admin' ? 'admin' : 'teacher'}/students`"
+            :to="`/${user?.role === 'teacher' ? 'teacher' : 'admin'}/students`"
             :title="isCollapsed ? 'Data Siswa' : ''"
             class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
@@ -84,7 +174,7 @@
 
           <!-- Data Guru -->
           <RouterLink
-            v-if="user?.role === 'admin'"
+            v-if="user?.role === 'admin' || user?.role === 'operator' || user?.role === 'kurikulum'"
             to="/admin/teachers"
             :title="isCollapsed ? 'Data Guru' : ''"
             class="nav-link"
@@ -99,7 +189,7 @@
 
           <!-- Manajemen Kelas -->
           <RouterLink
-            v-if="user?.role === 'admin'"
+            v-if="user?.role === 'admin' || user?.role === 'kurikulum'"
             to="/admin/classes"
             :title="isCollapsed ? 'Manajemen Kelas' : ''"
             class="nav-link"
@@ -144,7 +234,7 @@
 
           <!-- Penerimaan Siswa Baru (PPDB) -->
           <RouterLink
-            v-if="user?.role === 'admin'"
+            v-if="user?.role === 'admin' || user?.role === 'operator'"
             to="/admin/ppdb"
             :title="isCollapsed ? 'Penerimaan Siswa (PPDB)' : ''"
             class="nav-link bg-emerald-50/50 text-emerald-800 border border-emerald-200/60 font-semibold"
@@ -575,7 +665,10 @@ import {
   Settings,
   LogOut,
   School,
-  UserPlus
+  UserPlus,
+  FileText,
+  Inbox,
+  Send
 } from 'lucide-vue-next';
 
 const props = defineProps({

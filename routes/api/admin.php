@@ -14,7 +14,10 @@ use App\Http\Controllers\Admin\TeacherController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
     Route::get('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'show'])->name('profile.show');
     Route::post('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('profile.update');
     Route::put('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update']);
@@ -82,4 +85,13 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('admin.
     Route::delete('ppdb/{id}', [\App\Http\Controllers\Admin\PpdbController::class, 'destroy']);
     Route::get('ppdb-teachers-committee', [\App\Http\Controllers\Admin\PpdbController::class, 'getTeachersCommittee']);
     Route::post('ppdb-teachers-committee/{id}/toggle', [\App\Http\Controllers\Admin\PpdbController::class, 'toggleTeacherCommittee']);
+
+    // Persuratan (Surat Masuk & Surat Keluar)
+    Route::get('letters', [\App\Http\Controllers\Admin\LetterController::class, 'index']);
+    Route::post('letters', [\App\Http\Controllers\Admin\LetterController::class, 'store']);
+    Route::get('letters/{id}', [\App\Http\Controllers\Admin\LetterController::class, 'show']);
+    Route::post('letters/{id}', [\App\Http\Controllers\Admin\LetterController::class, 'update']);
+    Route::post('letters/{id}/disposition', [\App\Http\Controllers\Admin\LetterController::class, 'updateDisposition']);
+    Route::post('letters/generate-certificate', [\App\Http\Controllers\Admin\LetterController::class, 'generateStudentCertificate']);
+    Route::delete('letters/{id}', [\App\Http\Controllers\Admin\LetterController::class, 'destroy']);
 });
