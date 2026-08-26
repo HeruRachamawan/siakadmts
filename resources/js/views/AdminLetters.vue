@@ -808,7 +808,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed, watch } from 'vue';
 import {
   FileText,
   Plus,
@@ -846,6 +846,13 @@ const filters = reactive({
   search: '',
   status: 'all',
   category: 'all'
+});
+
+// Watch tab switch to auto-refresh table data for the selected tab
+watch(activeTab, (newTab) => {
+  if (newTab === 'incoming' || newTab === 'outgoing' || newTab === 'agenda_print') {
+    fetchLetters(1);
+  }
 });
 
 const showModal = ref(false);
@@ -941,6 +948,7 @@ function openAddModal(type = 'incoming') {
   editingLetter.value = null;
   uploadedFile.value = null;
   form.type = type;
+  activeTab.value = type;
   form.reference_number = '';
   form.sender = type === 'outgoing' ? (appSettings.value?.app_name || 'MTs Al-Hasanah') : '';
   form.recipient = type === 'incoming' ? 'Kepala Madrasah' : '';
@@ -992,10 +1000,11 @@ async function submitLetterForm() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       toast.success('Surat baru berhasil dicatat dalam buku agenda!');
+      activeTab.value = form.type;
     }
 
     showModal.value = false;
-    fetchLetters();
+    fetchLetters(1);
   } catch (error) {
     console.error('Error submitting letter:', error);
     toast.error('Gagal menyimpan data surat.');
