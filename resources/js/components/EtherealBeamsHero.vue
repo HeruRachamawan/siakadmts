@@ -57,26 +57,18 @@
       <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
         <RouterLink
           to="/ppdb"
-          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-xs font-black bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg shadow-amber-400/20 transition-all duration-200 hover:-translate-y-0.5 active:scale-95 cursor-pointer"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl text-xs font-black bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg shadow-amber-400/25 transition-all duration-200 hover:-translate-y-0.5 active:scale-95 cursor-pointer"
         >
           <UserPlus class="w-4 h-4 text-slate-950" />
           <span>Daftar Siswa Baru (PPDB)</span>
-        </RouterLink>
-
-        <RouterLink
-          to="/login"
-          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition-all duration-200 hover:-translate-y-0.5 active:scale-95 group cursor-pointer"
-        >
-          <LogIn class="w-4 h-4" />
-          <span>Masuk Portal SIAKAD</span>
-          <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          <ArrowRight class="w-4 h-4 text-slate-950" />
         </RouterLink>
 
         <a
           href="#profil"
-          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-xs font-semibold bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 active:scale-95 cursor-pointer"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl text-xs font-semibold bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 active:scale-95 cursor-pointer"
         >
-          <span>Profil Madrasah</span>
+          <span>Jelajahi Profil Madrasah</span>
           <ChevronRight class="w-4 h-4 text-emerald-400" />
         </a>
       </div>
