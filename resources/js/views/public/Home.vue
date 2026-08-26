@@ -372,6 +372,66 @@
       </div>
     </section>
 
+    <!-- 6. Berita & Pengumuman Madrasah Section -->
+    <section id="berita" class="py-20 bg-slate-50/80 relative border-t border-slate-200/80 font-inter">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+              <Newspaper class="w-3.5 h-3.5 text-emerald-600" />
+              <span>Warta & Informasi</span>
+            </div>
+            <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Berita & Artikel Madrasah</h2>
+            <p class="text-slate-600 text-xs sm:text-sm font-normal">Kabar berita, agenda kegiatan, dan pengumuman resmi seputar MTs Al - Hasanah.</p>
+          </div>
+        </div>
+
+        <!-- Post Cards -->
+        <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div v-for="i in 3" :key="'p-load-'+i" class="rounded-3xl border border-slate-200/80 p-5 h-80 animate-pulse bg-white"></div>
+        </div>
+        <div v-else-if="posts.length === 0" class="text-center py-16 bg-white rounded-3xl border border-slate-200/80 shadow-xs">
+          <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <Newspaper class="w-6 h-6" />
+          </div>
+          <h4 class="font-bold text-slate-800 text-sm">Belum Ada Berita yang Diterbitkan</h4>
+          <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1">Admin madrasah dapat menambahkan warta dan artikel terbaru melalui menu Berita & Artikel di Panel Administrator.</p>
+        </div>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            v-for="post in posts"
+            :key="post.id"
+            @click="openPostModal(post)"
+            @mousemove="handleCardTilt"
+            @mouseleave="resetCardTilt"
+            class="interactive-tilt-card group bg-white rounded-3xl border border-slate-200/80 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col cursor-pointer"
+          >
+            <div class="h-48 bg-slate-100 relative overflow-hidden">
+              <img v-if="post.image" :src="getStorageUrl(post.image)" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" :alt="post.title" />
+              <div v-else class="w-full h-full bg-gradient-to-br from-emerald-800 to-teal-900 flex items-center justify-center text-white/80 p-6 text-center">
+                <Newspaper class="w-12 h-12 text-emerald-300/60" />
+              </div>
+              <div class="absolute top-3 left-3 px-3 py-1 bg-emerald-950/80 backdrop-blur-md rounded-full text-[10px] font-bold text-emerald-200 border border-emerald-700/50 uppercase tracking-wider">
+                {{ formatDate(post.created_at || new Date()) }}
+              </div>
+            </div>
+            <div class="p-6 flex flex-col flex-grow space-y-3">
+              <h3 class="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-2 leading-snug">
+                {{ post.title }}
+              </h3>
+              <p class="text-slate-600 text-xs line-clamp-3 leading-relaxed font-normal">
+                {{ post.content ? post.content.replace(/<[^>]*>?/gm, '') : 'Klik untuk membaca selengkapnya artikel berita madrasah...' }}
+              </p>
+              <div class="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-700 group-hover:text-emerald-800">
+                <span>Baca Selengkapnya</span>
+                <ArrowRight class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 7. Facilities Section (Interactive Gallery & Card Flip) -->
     <section id="fasilitas" class="py-20 bg-white relative border-t border-slate-200/80 font-inter">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
@@ -740,6 +800,45 @@
         </div>
       </div>
     </Transition>
+
+    <!-- Interactive Article Reader Modal -->
+    <Transition
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div v-if="selectedPost" class="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6" @click.self="closePostModal">
+        <div class="relative w-full max-w-3xl max-h-[90vh] bg-white border border-slate-200 rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-scale-up">
+          <!-- Close Button -->
+          <button @click="closePostModal" class="absolute top-4 right-4 z-10 w-9 h-9 bg-slate-900/70 hover:bg-slate-900 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer">
+            <XIcon class="w-5 h-5" />
+          </button>
+
+          <div class="overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-5">
+            <div class="space-y-2">
+              <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
+                <Newspaper class="w-3.5 h-3.5" />
+                <span>Warta Madrasah</span>
+                <span>&bull;</span>
+                <span>{{ formatDate(selectedPost.created_at || new Date()) }}</span>
+              </div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug">{{ selectedPost.title }}</h2>
+            </div>
+
+            <div v-if="selectedPost.image" class="h-64 sm:h-80 rounded-2xl overflow-hidden bg-slate-100">
+              <img :src="getStorageUrl(selectedPost.image)" class="w-full h-full object-cover" :alt="selectedPost.title" />
+            </div>
+
+            <div class="text-slate-700 leading-relaxed text-xs sm:text-sm whitespace-pre-line border-t border-slate-100 pt-4 font-normal">
+              {{ selectedPost.content }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -900,6 +999,17 @@ const faqs = [
 ];
 
 const posts = ref([]);
+const selectedPost = ref(null);
+
+function openPostModal(post) {
+  selectedPost.value = post;
+  document.body.style.overflow = 'hidden';
+}
+
+function closePostModal() {
+  selectedPost.value = null;
+  document.body.style.overflow = '';
+}
 const galleries = ref([]);
 const facilities = ref([]);
 const teachers = ref([]);
