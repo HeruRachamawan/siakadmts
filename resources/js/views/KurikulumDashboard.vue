@@ -146,17 +146,15 @@ const stats = ref({});
 
 async function loadKurikulumStats() {
   try {
-    const [scheduleRes, subjectRes, teacherRes, classRes] = await Promise.all([
-      api.get('admin/schedules'),
-      api.get('admin/subjects'),
-      api.get('admin/teachers'),
-      api.get('admin/classes')
-    ]);
+    const res = await api.get('admin/dashboard');
+    const d = res?.data?.data || res?.data || res || {};
     stats.value = {
-      schedules_count: scheduleRes?.data?.schedules?.total || scheduleRes?.schedules?.length || 0,
-      subjects_count: subjectRes?.data?.subjects?.total || subjectRes?.subjects?.length || 0,
-      teachers_count: teacherRes?.data?.teachers?.total || teacherRes?.teachers?.length || 0,
-      classes_count: classRes?.data?.classes?.total || classRes?.classes?.length || 0,
+      schedules_count: d.schedules || 0,
+      subjects_count: d.subjects || 0,
+      teachers_count: d.teachers || 0,
+      classes_count: d.classes || 0,
+      students_count: d.students || 0,
+      grades_count: d.grades || 0,
     };
   } catch (err) {
     console.error('Failed to load kurikulum stats', err);

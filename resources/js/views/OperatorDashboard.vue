@@ -117,15 +117,17 @@ const stats = ref({});
 
 async function loadStats() {
   try {
-    const [letterRes, studentRes, teacherRes] = await Promise.all([
-      api.get('admin/letters'),
-      api.get('admin/students'),
-      api.get('admin/teachers')
+    const [letterRes, dashRes] = await Promise.all([
+      api.get('admin/letters').catch(() => null),
+      api.get('admin/dashboard').catch(() => null)
     ]);
+    const d = dashRes?.data?.data || dashRes?.data || dashRes || {};
+    const l = letterRes?.data?.stats || letterRes?.stats || letterRes?.data || {};
     stats.value = {
-      ...(letterRes?.data?.stats || letterRes?.stats || {}),
-      total_students: studentRes?.data?.students?.total || studentRes?.total || 0,
-      total_teachers: teacherRes?.data?.teachers?.total || teacherRes?.total || 0,
+      ...l,
+      total_students: d.students || 0,
+      total_teachers: d.teachers || 0,
+      total_classes: d.classes || 0,
     };
   } catch (err) {
     console.error('Failed loading stats', err);

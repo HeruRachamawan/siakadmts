@@ -21,6 +21,7 @@ class DashboardController extends BaseController
             'students' => Student::count(),
             'classes' => ClassRoom::count(),
             'subjects' => Subject::count(),
+            'schedules' => \App\Models\Schedule::count(),
             'grades' => Grade::count(),
             'attendances' => Attendance::count(),
             'calendar_events' => \App\Models\CalendarEvent::orderBy('start_date', 'asc')->get(),
