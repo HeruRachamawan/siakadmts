@@ -76,26 +76,26 @@
     </div>
 
     <!-- Master Timetable View -->
-    <div v-else class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100/80 overflow-hidden space-y-4">
+    <div v-else class="bg-white rounded-3xl shadow-xs border border-slate-200/80 overflow-hidden">
       <!-- Day Switcher Sub-Header -->
-      <div class="px-8 py-5 bg-[#111827] text-white flex flex-wrap items-center justify-between gap-4">
+      <div class="px-6 py-4 bg-slate-900 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300 font-black text-lg shadow-inner">
-            <svg class="w-5 h-5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M3 18h18M3 6h18"/></svg>
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           </div>
           <div>
-            <h3 class="font-lexend font-black text-base uppercase tracking-wider text-white">Matriks Jadwal: Hari {{ getActiveDayName() }}</h3>
-            <p class="text-xs text-slate-400 font-medium mt-0.5">Tampilan jadwal visual per kelas dan slot jam pelajaran</p>
+            <h3 class="font-bold text-sm sm:text-base text-white">Matriks Jadwal: Hari {{ getActiveDayName() }}</h3>
+            <p class="text-xs text-slate-400 font-normal">Tampilan jadwal pelajaran visual per kelas</p>
           </div>
         </div>
 
-        <!-- Day Tabs -->
-        <div class="flex p-1.5 bg-slate-800/90 rounded-2xl border border-slate-700/80 shadow-inner overflow-x-auto">
+        <!-- Day Tabs (Clean modern pills) -->
+        <div class="flex p-1 bg-slate-800/90 rounded-xl border border-slate-700/80 overflow-x-auto max-w-full">
           <button
             v-for="day in daysList"
             :key="day.key"
             @click="activeYaspinDay = day.key"
-            :class="[activeYaspinDay === day.key ? 'bg-emerald-600 text-white font-extrabold shadow-md shadow-emerald-600/30' : 'text-slate-400 hover:text-white font-semibold', 'px-4 py-2 text-xs rounded-xl transition-all cursor-pointer font-lexend whitespace-nowrap']"
+            :class="[activeYaspinDay === day.key ? 'bg-emerald-600 text-white font-bold shadow-xs' : 'text-slate-400 hover:text-slate-200 font-medium', 'px-3.5 py-1.5 text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap']"
           >
             {{ day.name }}
           </button>
@@ -103,37 +103,43 @@
       </div>
 
       <!-- Master Table -->
-      <div class="p-6 pt-0 overflow-x-auto">
-        <table class="w-full text-center border-collapse text-xs font-inter min-w-[750px]">
+      <div class="p-6 overflow-x-auto">
+        <table class="w-full text-center border-collapse text-xs min-w-[700px]">
           <thead>
-            <tr class="bg-slate-50 text-slate-700 font-black border-b border-slate-200">
-              <th class="p-3.5 w-14 font-lexend uppercase tracking-wider text-[11px] text-slate-400">NO</th>
-              <th class="p-3.5 w-44 font-lexend uppercase tracking-wider text-[11px] text-slate-400">
-                WAKTU <span class="text-emerald-600 font-extrabold">({{ activeYaspinDay === 'senin' ? 'SENIN' : 'SELASA - SABTU' }})</span>
+            <tr class="bg-slate-50 border-b border-slate-200/80 text-slate-600">
+              <th class="p-3 w-12 font-bold text-slate-500 uppercase tracking-wider text-[11px]">No</th>
+              <th class="p-3 w-40 font-bold text-slate-500 uppercase tracking-wider text-[11px]">
+                Waktu <span class="text-emerald-700 font-semibold lowercase">({{ activeYaspinDay === 'senin' ? 'senin' : 'selasa - sabtu' }})</span>
               </th>
               <!-- Column for each class -->
-              <th v-for="cls in filteredClasses" :key="cls.id" class="p-3.5 font-lexend text-sm font-black text-slate-800 bg-emerald-50/40 border-l border-slate-200/60 uppercase tracking-wide">
-                {{ cls.name }}
+              <th v-for="cls in filteredClasses" :key="cls.id" class="p-3 font-bold text-slate-800 border-l border-slate-200/70">
+                <span class="inline-block px-3 py-1 bg-emerald-50 border border-emerald-200/80 text-emerald-800 rounded-lg text-xs font-bold">
+                  {{ cls.name }}
+                </span>
               </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            <tr v-for="slot in activeYaspinSlots" :key="slot.no" class="hover:bg-slate-50/60 transition-colors">
+            <tr v-for="slot in activeYaspinSlots" :key="slot.no" class="hover:bg-slate-50/50 transition-colors">
               <!-- NO -->
-              <td class="p-3 font-bold text-slate-400 bg-slate-50/40 text-xs">{{ slot.no }}</td>
+              <td class="p-3 font-semibold text-slate-400 text-xs bg-slate-50/30">{{ slot.no }}</td>
               
               <!-- WAKTU -->
-              <td class="p-3 font-mono font-bold text-slate-700 text-xs" :class="slot.isBreak ? 'bg-amber-50/80 text-amber-900 font-black' : (slot.isGeneral ? 'bg-emerald-50/40 text-emerald-900 font-bold' : 'bg-slate-50/30')">
+              <td class="p-3 font-semibold text-slate-700 text-xs tracking-tight" :class="slot.isBreak ? 'bg-amber-50/50 text-amber-900 font-bold' : (slot.isGeneral ? 'bg-emerald-50/30 text-emerald-900 font-bold' : 'bg-slate-50/20')">
                 {{ slot.start }} - {{ slot.end }}
               </td>
 
               <!-- Merged General Event (Upacara, Tadarusan, Istirahat, Dzuhur) -->
-              <td v-if="slot.isGeneral || slot.isBreak" :colspan="filteredClasses.length || 1" class="p-3 border-l border-slate-200/60">
+              <td v-if="slot.isGeneral || slot.isBreak" :colspan="filteredClasses.length || 1" class="p-2.5 border-l border-slate-200/60">
                 <div
-                  class="py-2.5 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-center shadow-2xs border transition-all"
-                  :class="slot.isBreak ? 'bg-amber-400/20 text-amber-900 border-amber-300/60' : 'bg-emerald-500/15 text-emerald-900 border-emerald-300/60'"
+                  class="py-2 px-4 rounded-xl font-bold text-xs text-center border transition-all"
+                  :class="slot.isBreak ? 'bg-amber-50 text-amber-900 border-amber-200' : 'bg-emerald-50 text-emerald-900 border-emerald-200'"
                 >
-                  {{ slot.title }}
+                  <span v-if="slot.isBreak">☕ </span>
+                  <span v-else-if="slot.title.includes('UPACARA')">🇮🇩 </span>
+                  <span v-else-if="slot.title.includes('TADARUSAN')">📖 </span>
+                  <span v-else-if="slot.title.includes('DZUHUR')">🕌 </span>
+                  <span>{{ slot.title }}</span>
                 </div>
               </td>
 
@@ -143,20 +149,20 @@
                   <!-- Matching schedule item -->
                   <div
                     v-if="getYaspinScheduleItem(activeYaspinDay, cls.id, slot)"
-                    class="w-full h-full p-2.5 rounded-2xl border bg-white border-emerald-200/80 shadow-2xs flex flex-col justify-center items-center group relative hover:border-emerald-400 hover:shadow-md transition-all cursor-pointer"
+                    class="w-full h-full p-2.5 rounded-xl border bg-white border-slate-200/80 shadow-2xs flex flex-col justify-center items-center group relative hover:border-emerald-400 hover:shadow-xs transition-all cursor-pointer"
                   >
-                    <div class="font-extrabold text-xs text-slate-900 uppercase tracking-wide">
+                    <div class="font-bold text-xs text-slate-900 text-center leading-snug">
                       {{ getYaspinScheduleItem(activeYaspinDay, cls.id, slot).subject?.name || getYaspinScheduleItem(activeYaspinDay, cls.id, slot).activity_name }}
                     </div>
-                    <div class="text-[10px] font-bold text-emerald-700 truncate max-w-[130px] mt-0.5 flex items-center gap-1 justify-center">
+                    <div class="text-[11px] font-medium text-emerald-700 truncate max-w-[140px] mt-1 flex items-center gap-1 justify-center">
                       <svg class="w-3 h-3 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                       <span>{{ getYaspinScheduleItem(activeYaspinDay, cls.id, slot).teacher?.full_name || '-' }}</span>
                     </div>
 
                     <!-- Quick action buttons on hover -->
-                    <div class="absolute inset-0 bg-slate-900/85 backdrop-blur-xs text-white flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl p-1 z-10">
-                      <button @click.stop="editSchedule(getYaspinScheduleItem(activeYaspinDay, cls.id, slot))" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 rounded-xl text-[10px] font-bold shadow-xs cursor-pointer">Edit</button>
-                      <button @click.stop="deleteSchedule(getYaspinScheduleItem(activeYaspinDay, cls.id, slot).id)" class="px-2.5 py-1 bg-red-500 hover:bg-red-600 rounded-xl text-[10px] font-bold shadow-xs cursor-pointer">Hapus</button>
+                    <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-xs text-white flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl p-1 z-10">
+                      <button @click.stop="editSchedule(getYaspinScheduleItem(activeYaspinDay, cls.id, slot))" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 rounded-lg text-[10px] font-bold shadow-xs cursor-pointer">Edit</button>
+                      <button @click.stop="deleteSchedule(getYaspinScheduleItem(activeYaspinDay, cls.id, slot).id)" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 rounded-lg text-[10px] font-bold shadow-xs cursor-pointer">Hapus</button>
                     </div>
                   </div>
 
@@ -164,9 +170,10 @@
                   <button
                     v-else
                     @click="openYaspinSlot(activeYaspinDay, cls.id, slot)"
-                    class="w-full h-full min-h-[3.5rem] rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50 text-slate-300 hover:text-emerald-600 font-bold text-xs transition-all flex items-center justify-center cursor-pointer group/add"
+                    class="w-full h-full min-h-[48px] rounded-xl border border-dashed border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40 text-slate-300 hover:text-emerald-600 font-bold text-xs transition-all flex items-center justify-center cursor-pointer group/add"
+                    title="Klik untuk mengisi jadwal"
                   >
-                    <span class="group-hover/add:scale-125 transition-transform font-black text-sm">+</span>
+                    <span class="group-hover/add:scale-125 transition-transform text-slate-400 group-hover/add:text-emerald-600 font-bold text-sm">+</span>
                   </button>
                 </td>
               </template>
