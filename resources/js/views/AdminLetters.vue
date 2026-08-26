@@ -636,6 +636,27 @@
                 :placeholder="form.type === 'incoming' ? 'Contoh: 123/Kemenag/2026' : 'Kosongkan untuk nomor otomatis'"
                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
+
+              <!-- Hint Note for Previous Letter Number -->
+              <div v-if="form.type === 'outgoing' && stats.last_outgoing_number" class="mt-2 p-2.5 bg-amber-50/90 border border-amber-200/80 rounded-xl text-[11px] text-amber-900 leading-snug">
+                <div class="flex items-center gap-1 font-bold text-amber-950">
+                  <span>📌 Surat Keluar Terakhir:</span>
+                  <span class="font-mono text-amber-900 underline">{{ stats.last_outgoing_number }}</span>
+                </div>
+                <div v-if="stats.last_outgoing_date" class="text-[10px] text-amber-800/90 mt-0.5">
+                  Tgl Terbit: {{ stats.last_outgoing_date }}
+                </div>
+              </div>
+
+              <div v-else-if="form.type === 'incoming' && stats.last_incoming_number" class="mt-2 p-2.5 bg-emerald-50/90 border border-emerald-200/80 rounded-xl text-[11px] text-emerald-900 leading-snug">
+                <div class="flex items-center gap-1 font-bold text-emerald-950">
+                  <span>📌 Surat Masuk Terakhir:</span>
+                  <span class="font-mono text-emerald-900">{{ stats.last_incoming_number }}</span>
+                </div>
+                <div v-if="stats.last_agenda_incoming" class="text-[10px] text-emerald-800/90 mt-0.5">
+                  No. Agenda: {{ stats.last_agenda_incoming }} &bull; Tgl: {{ stats.last_incoming_date || '-' }}
+                </div>
+              </div>
             </div>
 
             <div>

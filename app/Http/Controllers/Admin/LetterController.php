@@ -56,13 +56,27 @@ class LetterController extends BaseController
         $sortDirection = $request->input('direction', 'asc');
         $letters = $query->orderBy('letter_date', $sortDirection)->orderBy('id', $sortDirection)->paginate($request->input('per_page', 15));
 
-        // Aggregate statistics
+        // Latest letters recorded for hint references
+        $lastOutgoing = Letter::where('type', 'outgoing')->whereNotNull('reference_number')->where('reference_number', '!=', '')->orderByDesc('id')->first();
+        $lastIncoming = Letter::where('type', 'incoming')->whereNotNull('reference_number')->where('reference_number', '!=', '')->orderByDesc('id')->first();
+        $lastAgendaIncoming = Letter::where('type', 'incoming')->orderByDesc('id')->value('agenda_number');
+        $lastAgendaOutgoing = Letter::where('type', 'outgoing')->orderByDesc('id')->value('agenda_number');
+
+        // Aggregate statistics & hints
         $stats = [
             'total_incoming' => Letter::where('type', 'incoming')->count(),
             'total_outgoing' => Letter::where('type', 'outgoing')->count(),
             'pending_disposition' => Letter::where('type', 'incoming')->where('status', 'pending')->count(),
             'this_month_incoming' => Letter::where('type', 'incoming')->whereMonth('letter_date', Carbon::now()->month)->whereYear('letter_date', Carbon::now()->year)->count(),
             'this_month_outgoing' => Letter::where('type', 'outgoing')->whereMonth('letter_date', Carbon::now()->month)->whereYear('letter_date', Carbon::now()->year)->count(),
+            'last_outgoing_number' => $lastOutgoing?->reference_number,
+            'last_outgoing_subject' => $lastOutgoing?->subject,
+            'last_outgoing_date' => $lastOutgoing?->letter_date ? Carbon::parse($lastOutgoing->letter_date)->translatedFormat('d F Y') : null,
+            'last_incoming_number' => $lastIncoming?->reference_number,
+            'last_incoming_subject' => $lastIncoming?->subject,
+            'last_incoming_date' => $lastIncoming?->letter_date ? Carbon::parse($lastIncoming->letter_date)->translatedFormat('d F Y') : null,
+            'last_agenda_incoming' => $lastAgendaIncoming,
+            'last_agenda_outgoing' => $lastAgendaOutgoing,
         ];
 
         return $this->success([
