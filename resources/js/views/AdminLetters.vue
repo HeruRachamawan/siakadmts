@@ -175,10 +175,10 @@
               <tr v-if="loading" class="text-center">
                 <td colspan="8" class="py-8 text-slate-400">Memuat data surat masuk...</td>
               </tr>
-              <tr v-else-if="letters.length === 0" class="text-center">
+              <tr v-else-if="incomingLetters.length === 0" class="text-center">
                 <td colspan="8" class="py-10 text-slate-400">Belum ada catatan surat masuk.</td>
               </tr>
-              <tr v-for="item in letters" :key="item.id" class="hover:bg-slate-50/60 transition-colors">
+              <tr v-for="item in incomingLetters" :key="item.id" class="hover:bg-slate-50/60 transition-colors">
                 <td class="py-3.5 px-4 font-mono font-bold text-emerald-800 whitespace-nowrap">{{ item.agenda_number }}</td>
                 <td class="py-3.5 px-4">
                   <div class="font-semibold text-slate-900 leading-snug">{{ item.reference_number || '-' }}</div>
@@ -317,10 +317,10 @@
               <tr v-if="loading" class="text-center">
                 <td colspan="7" class="py-8 text-slate-400">Memuat data surat keluar...</td>
               </tr>
-              <tr v-else-if="letters.length === 0" class="text-center">
+              <tr v-else-if="outgoingLetters.length === 0" class="text-center">
                 <td colspan="7" class="py-10 text-slate-400">Belum ada catatan surat keluar.</td>
               </tr>
-              <tr v-for="item in letters" :key="item.id" class="hover:bg-slate-50/60 transition-colors">
+              <tr v-for="item in outgoingLetters" :key="item.id" class="hover:bg-slate-50/60 transition-colors">
                 <td class="py-3.5 px-4 font-mono font-bold text-indigo-800">{{ item.agenda_number }}</td>
                 <td class="py-3.5 px-4 font-semibold text-slate-900">{{ item.reference_number }}</td>
                 <td class="py-3.5 px-4 text-slate-600">{{ formatDate(item.letter_date) }}</td>
@@ -840,6 +840,9 @@ const generatingCert = ref(false);
 const agendaPrintType = ref('incoming');
 
 const letters = ref([]);
+const incomingLetters = computed(() => letters.value.filter(l => l.type === 'incoming'));
+const outgoingLetters = computed(() => letters.value.filter(l => l.type === 'outgoing'));
+
 const stats = ref({});
 const studentList = ref([]);
 const appSettings = ref({});
