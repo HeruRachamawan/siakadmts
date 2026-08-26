@@ -1,48 +1,77 @@
 <template>
   <div class="space-y-6 font-sans">
-    <!-- Top Welcome Banner -->
-    <div class="relative overflow-hidden bg-gradient-to-r from-teal-900 via-emerald-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-emerald-800/40">
-      <div class="relative z-10 space-y-2">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-semibold backdrop-blur-md">
-          <FileText class="w-3.5 h-3.5" />
-          <span>Ruang Kerja Tata Usaha & Operator Madrasah</span>
+    <!-- Fresh Vibrant Emerald Hero Banner (Operator TU) -->
+    <div class="relative bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 text-white rounded-2xl shadow-lg shadow-emerald-700/20 overflow-hidden border border-emerald-500/40">
+      <!-- Subtle Background Mesh Grid & Glow -->
+      <div class="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:22px_22px] opacity-60 pointer-events-none"></div>
+      <div class="absolute -top-16 -right-16 w-64 h-64 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <!-- Banner Content -->
+      <div class="relative z-10 p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-5">
+          <!-- Photo Frame -->
+          <div class="w-20 h-20 sm:w-24 sm:h-24 bg-white/15 backdrop-blur-md rounded-2xl border border-white/30 p-1 flex items-center justify-center flex-shrink-0 overflow-hidden relative shadow-md">
+            <img
+              v-if="userPhoto"
+              :src="getImageUrl(userPhoto)"
+              class="w-full h-full object-cover rounded-xl shadow-inner"
+              alt="Foto Profil"
+            />
+            <div v-else class="w-full h-full rounded-xl bg-emerald-800 flex items-center justify-center text-white font-bold text-2xl uppercase">
+              {{ (auth.user?.name || 'O').charAt(0) }}
+            </div>
+            <!-- Online status indicator -->
+            <span class="absolute bottom-1 right-1 w-3.5 h-3.5 bg-emerald-300 border-2 border-emerald-800 rounded-full shadow-xs"></span>
+          </div>
+
+          <!-- Profile Details -->
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 backdrop-blur-md text-white rounded-full text-[11px] font-bold border border-white/30 shadow-xs">
+                <FileText class="w-3.5 h-3.5 text-emerald-200" />
+                <span>Tata Usaha & Operator &bull; @{{ auth.user?.username }}</span>
+              </span>
+              <span class="inline-flex items-center gap-1 px-3 py-1 bg-amber-300/20 backdrop-blur-md text-amber-100 rounded-full text-[11px] font-bold border border-amber-300/40">
+                <span>T.A. 2026/2027</span>
+              </span>
+            </div>
+
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white uppercase leading-tight drop-shadow-xs">
+              {{ auth.user?.name || 'Operator TU' }}
+            </h1>
+            <p class="text-emerald-100 text-xs sm:text-sm font-normal max-w-xl leading-relaxed">
+              Kelola agenda persuratan masuk/keluar, penerbitan surat aktif siswa, verifikasi arsip dokumen, dan cetak dokumen madrasah secara terpadu.
+            </p>
+          </div>
         </div>
-        <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">
-          Selamat Bertugas, {{ auth.user?.name || 'Operator TU' }}! 📂
-        </h1>
-        <p class="text-xs sm:text-sm text-emerald-100/80 max-w-2xl">
-          Kelola agenda persuratan masuk/keluar, penerbitan surat aktif siswa, verifikasi arsip dokumen, dan cetak dokumen madrasah secara terpadu.
-        </p>
+
+        <!-- Quick Action Shortcuts -->
+        <div class="flex flex-wrap md:flex-col lg:flex-row gap-2.5 flex-shrink-0">
+          <RouterLink
+            to="/operator/letters"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md transition-all active:scale-95"
+          >
+            <Inbox class="w-4 h-4" />
+            <span>Buku Agenda Surat</span>
+          </RouterLink>
+
+          <RouterLink
+            to="/admin/print-center"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-md transition-all active:scale-95 shadow-xs"
+          >
+            <Printer class="w-4 h-4" />
+            <span>Pusat Cetak</span>
+          </RouterLink>
+
+          <RouterLink
+            to="/admin/students"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-teal-900/80 hover:bg-teal-900 text-white border border-teal-400/40 backdrop-blur-md transition-all active:scale-95 shadow-xs"
+          >
+            <Users class="w-4 h-4" />
+            <span>Data Siswa</span>
+          </RouterLink>
+        </div>
       </div>
-
-      <!-- Quick Action Shortcuts -->
-      <div class="relative z-10 flex flex-wrap gap-2.5 pt-4">
-        <RouterLink
-          to="/operator/letters"
-          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md transition-all active:scale-95"
-        >
-          <Inbox class="w-4 h-4" />
-          <span>Buku Agenda Persuratan</span>
-        </RouterLink>
-
-        <RouterLink
-          to="/admin/print-center"
-          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md transition-all active:scale-95"
-        >
-          <Printer class="w-4 h-4" />
-          <span>Pusat Cetak Dokumen</span>
-        </RouterLink>
-
-        <RouterLink
-          to="/admin/students"
-          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md transition-all active:scale-95"
-        >
-          <Users class="w-4 h-4" />
-          <span>Data Siswa</span>
-        </RouterLink>
-      </div>
-
-      <div class="absolute right-0 top-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
     </div>
 
     <!-- Quick Bento Cards -->
@@ -98,7 +127,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import {
@@ -114,6 +143,19 @@ import AdminLetters from './AdminLetters.vue';
 
 const auth = useAuthStore();
 const stats = ref({});
+
+const userPhoto = computed(() => {
+  return auth.user?.teacher?.photo_url || auth.user?.teacher?.photo || auth.user?.avatar || null;
+});
+
+function getImageUrl(path) {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (path.startsWith('data:image')) return path;
+  const clean = path.startsWith('/') ? path : `/${path}`;
+  if (clean.startsWith('/storage/')) return clean;
+  return `/storage/${path.replace(/^\/+/, '')}`;
+}
 
 async function loadStats() {
   try {
