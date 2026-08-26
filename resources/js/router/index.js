@@ -146,19 +146,19 @@ const routes = [
         { label: 'Tahun', field: 'year' },
     ] } },
 
-    // Teacher Routes
-    { path: '/teacher/dashboard', component: () => import('../views/TeacherDashboard.vue'), meta: { requiresAuth: true, role: 'teacher', title: 'Dashboard Guru' } },
-    { path: '/teacher/ppdb', component: () => import('../views/AdminPpdb.vue'), meta: { requiresAuth: true, role: 'teacher', title: 'Panitia PPDB' } },
-    { path: '/teacher/profile', component: () => import('../views/TeacherProfile.vue'), meta: { requiresAuth: true, role: 'teacher', title: 'Profil Guru' } },
-    { path: '/teacher/presensi', component: () => import('../views/TeacherPresensi.vue'), meta: { requiresAuth: true, role: 'teacher', title: 'Presensi Guru GPS & QR' } },
-    { path: '/teacher/presensi-recap', component: () => import('../views/TeacherAttendanceRecap.vue'), meta: { requiresAuth: true, role: 'teacher', title: 'Rekap Presensi Saya' } },
-    { path: '/teacher/students', component: () => import('../views/TeacherStudents.vue'), meta: { requiresAuth: true, role: 'teacher', title: 'Data Siswa Binaan' } },
-    { path: '/teacher/homeroom-attendance', component: () => import('../views/HomeroomDailyAttendance.vue'), meta: { requiresAuth: true, role: 'teacher', title: 'Presensi Harian Wali Kelas' } },
-    { path: '/teacher/attendance', component: () => import('../views/TeacherAttendance.vue'), meta: { requiresAuth: true, role: 'teacher', title: 'Presensi Mata Pelajaran' } },
-    { path: '/teacher/attendance-reports', component: () => import('../views/AdminAttendanceReports.vue'), meta: { requiresAuth: true, role: 'teacher', title: 'Laporan Rekap Presensi' } },
-    { path: '/teacher/grades', component: () => import('../views/TeacherGrades.vue'), meta: { requiresAuth: true, role: 'teacher', title: 'Input Nilai Siswa' } },
-    { path: '/teacher/schedules', component: () => import('../views/TeacherSchedules.vue'), meta: { requiresAuth: true, role: 'teacher', title: 'Jadwal Mengajar' } },
-    { path: '/teacher/calendar', component: () => import('../views/TeacherCalendar.vue'), meta: { requiresAuth: true, role: 'teacher', title: 'Kalender Akademik' } },
+    // Teacher Routes (Accessible by Teacher, Admin, Operator, Kurikulum)
+    { path: '/teacher/dashboard', component: () => import('../views/TeacherDashboard.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Dashboard Guru' } },
+    { path: '/teacher/ppdb', component: () => import('../views/AdminPpdb.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Panitia PPDB' } },
+    { path: '/teacher/profile', component: () => import('../views/TeacherProfile.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Profil Guru' } },
+    { path: '/teacher/presensi', component: () => import('../views/TeacherPresensi.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Presensi Guru GPS & QR' } },
+    { path: '/teacher/presensi-recap', component: () => import('../views/TeacherAttendanceRecap.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Rekap Presensi Saya' } },
+    { path: '/teacher/students', component: () => import('../views/TeacherStudents.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Data Siswa Binaan' } },
+    { path: '/teacher/homeroom-attendance', component: () => import('../views/HomeroomDailyAttendance.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Presensi Harian Wali Kelas' } },
+    { path: '/teacher/attendance', component: () => import('../views/TeacherAttendance.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Presensi Mata Pelajaran' } },
+    { path: '/teacher/attendance-reports', component: () => import('../views/AdminAttendanceReports.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Laporan Rekap Presensi' } },
+    { path: '/teacher/grades', component: () => import('../views/TeacherGrades.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Input Nilai Siswa' } },
+    { path: '/teacher/schedules', component: () => import('../views/TeacherSchedules.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Jadwal Mengajar' } },
+    { path: '/teacher/calendar', component: () => import('../views/TeacherCalendar.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Kalender Akademik' } },
 
     // Student Routes
     { path: '/student/dashboard', component: () => import('../views/StudentDashboard.vue'), meta: { requiresAuth: true, role: 'student', title: 'Dashboard Siswa' } },

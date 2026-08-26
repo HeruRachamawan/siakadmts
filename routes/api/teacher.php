@@ -8,7 +8,7 @@ use App\Http\Controllers\Teacher\StudentController as TeacherStudentController;
 use App\Http\Controllers\Teacher\TranscriptController as TeacherTranscriptController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum', 'role:teacher,admin'])->prefix('teacher')->name('teacher.')->group(function () {
+Route::middleware(['auth:sanctum', 'role:teacher,admin,operator,kurikulum'])->prefix('teacher')->name('teacher.')->group(function () {
     Route::get('profile', [\App\Http\Controllers\Teacher\ProfileController::class, 'show'])->name('profile.show');
     Route::post('profile', [\App\Http\Controllers\Teacher\ProfileController::class, 'update'])->name('profile.update');
     Route::put('profile', [\App\Http\Controllers\Teacher\ProfileController::class, 'update']);

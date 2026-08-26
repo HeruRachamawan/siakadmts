@@ -249,7 +249,7 @@
         </template>
 
         <!-- 3. PRESENSI & KEHADIRAN GURU -->
-        <template v-if="user?.role === 'teacher'">
+        <template v-if="user?.role === 'teacher' || user?.teacher">
           <div v-if="!isCollapsed" class="nav-section">Kehadiran Guru (GPS)</div>
           <div v-else class="my-1 border-t border-slate-200/50"></div>
 
