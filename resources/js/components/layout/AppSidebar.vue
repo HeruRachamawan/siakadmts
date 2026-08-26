@@ -603,6 +603,20 @@
             </Transition>
           </button>
 
+          <!-- Manajemen Pengguna (Akun Staf, Guru, & User) -->
+          <RouterLink
+            to="/admin/users"
+            :title="isCollapsed ? 'Manajemen Pengguna' : ''"
+            class="nav-link bg-indigo-50/50 text-indigo-900 border border-indigo-200/60 font-semibold"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Users class="w-4 h-4 flex-shrink-0 text-indigo-600" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Manajemen Pengguna</span>
+            </Transition>
+          </RouterLink>
+
           <!-- Pengaturan Aplikasi -->
           <RouterLink
             to="/admin/settings"
@@ -668,7 +682,8 @@ import {
   UserPlus,
   FileText,
   Inbox,
-  Send
+  Send,
+  Users
 } from 'lucide-vue-next';
 
 const props = defineProps({
