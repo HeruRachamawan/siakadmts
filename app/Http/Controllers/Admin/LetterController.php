@@ -54,7 +54,7 @@ class LetterController extends BaseController
         }
 
         $sortDirection = $request->input('direction', 'asc');
-        $letters = $query->orderBy('letter_date', $sortDirection)->orderBy('id', $sortDirection)->paginate($request->input('per_page', 15));
+        $letters = $query->orderBy('agenda_number', $sortDirection)->orderBy('id', $sortDirection)->paginate($request->input('per_page', 15));
 
         // Latest letters recorded for hint references
         $lastOutgoing = Letter::where('type', 'outgoing')->whereNotNull('reference_number')->where('reference_number', '!=', '')->orderByDesc('id')->first();
