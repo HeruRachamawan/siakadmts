@@ -80,6 +80,21 @@
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Buku Agenda Surat</span>
             </Transition>
           </RouterLink>
+
+          <!-- Pusat Cetak Dokumen (Admin & Operator TU) -->
+          <RouterLink
+            v-if="user?.role === 'admin' || user?.role === 'operator'"
+            to="/admin/print-center"
+            :title="isCollapsed ? 'Pusat Cetak Dokumen' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Printer class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Pusat Cetak Dokumen</span>
+            </Transition>
+          </RouterLink>
         </template>
 
         <!-- 3. KURIKULUM & AKADEMIK (Admin & Kurikulum) -->
@@ -202,24 +217,9 @@
             </Transition>
           </RouterLink>
 
-          <!-- Mata Pelajaran -->
-          <RouterLink
-            v-if="user?.role === 'admin'"
-            to="/admin/subjects"
-            :title="isCollapsed ? 'Mata Pelajaran' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <BookOpen class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade">
-              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Mata Pelajaran</span>
-            </Transition>
-          </RouterLink>
-
           <!-- Tahun Ajaran -->
           <RouterLink
-            v-if="user?.role === 'admin'"
+            v-if="user?.role === 'admin' || user?.role === 'kurikulum'"
             to="/admin/academic-years"
             :title="isCollapsed ? 'Tahun Ajaran' : ''"
             class="nav-link"
@@ -248,8 +248,8 @@
           </RouterLink>
         </template>
 
-        <!-- 3. PRESENSI & KEHADIRAN GURU -->
-        <template v-if="user?.role === 'teacher' || user?.teacher">
+        <!-- 3. PRESENSI & KEHADIRAN GURU (Khusus Peran Teacher) -->
+        <template v-if="user?.role === 'teacher'">
           <div v-if="!isCollapsed" class="nav-section">Kehadiran Guru (GPS)</div>
           <div v-else class="my-1 border-t border-slate-200/50"></div>
 
