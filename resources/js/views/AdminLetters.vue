@@ -158,17 +158,17 @@
       <!-- Table View Desktop -->
       <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
+          <table class="w-full text-left border-collapse text-xs min-w-[850px]">
             <thead>
-              <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
-                <th class="py-3 px-4">No. Agenda</th>
-                <th class="py-3 px-4">Nomor & Tanggal Surat</th>
-                <th class="py-3 px-4">Asal Pengirim</th>
+              <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider whitespace-nowrap">
+                <th class="py-3 px-4 w-28">No. Agenda</th>
+                <th class="py-3 px-4 w-48">Nomor & Tanggal Surat</th>
+                <th class="py-3 px-4 w-44">Asal Pengirim</th>
                 <th class="py-3 px-4">Perihal</th>
-                <th class="py-3 px-4">Disposisi</th>
-                <th class="py-3 px-4">Berkas</th>
-                <th class="py-3 px-4">Status</th>
-                <th class="py-3 px-4 text-center">Aksi</th>
+                <th class="py-3 px-4 w-44">Disposisi</th>
+                <th class="py-3 px-4 w-20 text-center">Berkas</th>
+                <th class="py-3 px-4 w-36 text-center">Status</th>
+                <th class="py-3 px-4 w-28 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -179,19 +179,19 @@
                 <td colspan="8" class="py-10 text-slate-400">Belum ada catatan surat masuk.</td>
               </tr>
               <tr v-for="item in letters" :key="item.id" class="hover:bg-slate-50/60 transition-colors">
-                <td class="py-3.5 px-4 font-mono font-bold text-emerald-800">{{ item.agenda_number }}</td>
+                <td class="py-3.5 px-4 font-mono font-bold text-emerald-800 whitespace-nowrap">{{ item.agenda_number }}</td>
                 <td class="py-3.5 px-4">
-                  <div class="font-semibold text-slate-900">{{ item.reference_number || '-' }}</div>
-                  <div class="text-[11px] text-slate-500">Tgl: {{ formatDate(item.letter_date) }}</div>
+                  <div class="font-semibold text-slate-900 leading-snug">{{ item.reference_number || '-' }}</div>
+                  <div class="text-[11px] text-slate-500 whitespace-nowrap mt-0.5">Tgl: {{ formatDate(item.letter_date) }}</div>
                 </td>
                 <td class="py-3.5 px-4 font-medium text-slate-800">{{ item.sender }}</td>
-                <td class="py-3.5 px-4 max-w-xs">
+                <td class="py-3.5 px-4">
                   <span class="inline-block px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-700 rounded-md mb-1">{{ item.category }}</span>
-                  <div class="line-clamp-2 text-slate-700">{{ item.subject }}</div>
+                  <div class="line-clamp-2 text-slate-700 leading-snug">{{ item.subject }}</div>
                 </td>
                 <td class="py-3.5 px-4">
                   <div v-if="item.disposition_to" class="space-y-0.5">
-                    <span class="inline-flex items-center gap-1 font-bold text-sky-700">
+                    <span class="inline-flex items-center gap-1 font-bold text-sky-700 whitespace-nowrap">
                       <UserCheck class="w-3.5 h-3.5" />
                       {{ item.disposition_to }}
                     </span>
@@ -199,24 +199,24 @@
                   </div>
                   <span v-else class="text-slate-400 italic text-[11px]">Belum ada</span>
                 </td>
-                <td class="py-3.5 px-4">
+                <td class="py-3.5 px-4 text-center">
                   <a
                     v-if="item.file_path"
                     :href="getStorageUrl(item.file_path)"
                     target="_blank"
-                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors whitespace-nowrap"
                   >
                     <FileText class="w-3.5 h-3.5" />
                     <span>Lihat</span>
                   </a>
                   <span v-else class="text-slate-400 text-[11px]">-</span>
                 </td>
-                <td class="py-3.5 px-4">
-                  <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border" :class="item.status_badge_class">
+                <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                  <span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[11px] font-bold border shadow-xs whitespace-nowrap leading-none" :class="item.status_badge_class">
                     {{ item.status_label }}
                   </span>
                 </td>
-                <td class="py-3.5 px-4 text-center">
+                <td class="py-3.5 px-4 text-center whitespace-nowrap">
                   <div class="inline-flex items-center gap-1">
                     <button
                       @click="openDispositionModal(item)"
