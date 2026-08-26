@@ -143,9 +143,10 @@ import AdminLetters from './AdminLetters.vue';
 
 const auth = useAuthStore();
 const stats = ref({});
+const livePhoto = ref(null);
 
 const userPhoto = computed(() => {
-  return auth.user?.teacher?.photo_url || auth.user?.teacher?.photo || auth.user?.avatar || null;
+  return livePhoto.value || auth.user?.teacher?.photo_url || auth.user?.teacher?.photo || auth.user?.photo_url || auth.user?.photo || auth.user?.avatar || null;
 });
 
 function getImageUrl(path) {
@@ -159,12 +160,17 @@ function getImageUrl(path) {
 
 async function loadStats() {
   try {
-    const [letterRes, dashRes] = await Promise.all([
+    const [letterRes, dashRes, profileRes] = await Promise.all([
       api.get('admin/letters').catch(() => null),
-      api.get('admin/dashboard').catch(() => null)
+      api.get('admin/dashboard').catch(() => null),
+      api.get('teacher/profile').catch(() => null)
     ]);
     const d = dashRes?.data?.data || dashRes?.data || dashRes || {};
     const l = letterRes?.data?.stats || letterRes?.stats || letterRes?.data || {};
+    const p = profileRes?.data?.data || profileRes?.data?.teacher || profileRes?.data || {};
+    if (p.photo_url || p.photo) {
+      livePhoto.value = p.photo_url || p.photo;
+    }
     stats.value = {
       ...l,
       total_students: d.students || 0,

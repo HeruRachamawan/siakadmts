@@ -116,15 +116,42 @@ class AuthController extends BaseController
     {
         $payload = $user->only(['id', 'name', 'email', 'username', 'role']);
 
-        if ($user->role === 'teacher' && $user->teacher) {
+        if ($user->teacher) {
             $teacher = $user->teacher;
             $homeroomClasses = $teacher->classes()->get(['id', 'name', 'grade_level']);
 
             $payload['teacher_id'] = $teacher->id;
             $payload['nip'] = $teacher->nip;
             $payload['full_name'] = $teacher->full_name;
+            $payload['position'] = $teacher->position;
+            $payload['photo'] = $teacher->photo;
+            $payload['photo_url'] = $teacher->photo_url;
+            $payload['is_ppdb_committee'] = (bool) $teacher->is_ppdb_committee;
             $payload['is_homeroom_teacher'] = $homeroomClasses->isNotEmpty();
             $payload['homeroom_classes'] = $homeroomClasses;
+            $payload['teacher'] = [
+                'id' => $teacher->id,
+                'nip' => $teacher->nip,
+                'full_name' => $teacher->full_name,
+                'position' => $teacher->position,
+                'photo' => $teacher->photo,
+                'photo_url' => $teacher->photo_url,
+                'is_ppdb_committee' => (bool) $teacher->is_ppdb_committee,
+            ];
+        } elseif ($user->student) {
+            $student = $user->student;
+            $payload['student_id'] = $student->id;
+            $payload['nisn'] = $student->nisn;
+            $payload['full_name'] = $student->full_name;
+            $payload['photo'] = $student->photo;
+            $payload['photo_url'] = $student->photo_url;
+            $payload['student'] = [
+                'id' => $student->id,
+                'nisn' => $student->nisn,
+                'full_name' => $student->full_name,
+                'photo' => $student->photo,
+                'photo_url' => $student->photo_url,
+            ];
         }
 
         return $payload;
