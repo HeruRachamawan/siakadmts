@@ -606,10 +606,10 @@
         <form @submit.prevent="submitLetterForm" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Jenis Surat</label>
-              <select v-model="form.type" :disabled="!!editingLetter" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
-                <option value="incoming">Surat Masuk</option>
-                <option value="outgoing">Surat Keluar</option>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Jenis Agenda Surat</label>
+              <select v-model="form.type" :disabled="true" class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 cursor-not-allowed">
+                <option value="incoming">📥 Surat Masuk</option>
+                <option value="outgoing">📤 Surat Keluar</option>
               </select>
             </div>
 

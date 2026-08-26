@@ -18,6 +18,10 @@ class LetterController extends BaseController
      */
     public function index(Request $request)
     {
+        // Auto-heal legacy/mismatched records: ensure AG-SK (Surat Keluar) and AG-SM (Surat Masuk) are properly typed
+        Letter::where('agenda_number', 'like', 'AG-SK-%')->where('type', '!=', 'outgoing')->update(['type' => 'outgoing']);
+        Letter::where('agenda_number', 'like', 'AG-SM-%')->where('type', '!=', 'incoming')->update(['type' => 'incoming']);
+
         $query = Letter::with(['creator:id,name', 'student:id,full_name,nisn,nis,class_id', 'student.classRoom:id,name']);
 
         // Filter type
