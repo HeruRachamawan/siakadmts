@@ -11,11 +11,11 @@ function roleDashboard(r) {
 }
 
 const userFields = () => [
-    { name: 'name', label: 'Nama Pengguna', type: 'text' },
-    { name: 'email', label: 'Email', type: 'email' },
-    { name: 'password', label: 'Password', type: 'password' },
+    { name: 'name', label: 'Nama Lengkap Pengguna', type: 'text', placeholder: 'Contoh: Bapak Ahmad Fauzi, S.Pd' },
+    { name: 'username', label: 'Username Login', type: 'text', placeholder: 'Contoh: operator, kurikulum, kepsek' },
+    { name: 'password', label: 'Password', type: 'password', placeholder: 'Minimal 6 karakter' },
     { name: 'role', label: 'Peran Akun', type: 'select', options: [
-        { value: 'admin', label: 'Administrator (Superadmin)' },
+        { value: 'admin', label: 'Administrator (Superadmin / Kepala Madrasah)' },
         { value: 'operator', label: 'Operator / Tata Usaha (TU)' },
         { value: 'kurikulum', label: 'Waka Kurikulum' },
         { value: 'teacher', label: 'Guru Mata Pelajaran' },
@@ -58,9 +58,9 @@ const routes = [
     { path: '/admin/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator'], title: 'Buku Agenda Persuratan' } },
     { path: '/admin/ppdb', component: () => import('../views/AdminPpdb.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator'], title: 'Penerimaan Siswa (PPDB)' } },
     { path: '/admin/users', component: () => import('../components/CrudPage.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Manajemen Pengguna' }, props: { endpoint: 'admin/users', resource: 'admin/users', title: 'Pengguna', formFields: userFields(), fields: userFields(), columns: [
-        { label: 'Nama', field: 'name' },
-        { label: 'Email', field: 'email' },
-        { label: 'Peran', field: 'role' },
+        { label: 'Nama Pengguna', field: 'name' },
+        { label: 'Username Login', field: 'username' },
+        { label: 'Peran Akun', field: 'role' },
     ], hideFields: ['password'] } },
     { path: '/admin/students', component: () => import('../views/AdminStudents.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum'], title: 'Manajemen Data Siswa' } },
     { path: '/admin/teachers', component: () => import('../views/AdminTeachers.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum'], title: 'Manajemen Data Guru' } },

@@ -30,19 +30,22 @@ class UserController extends BaseController
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', Rule::in(['admin', 'teacher', 'student'])],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username'],
+            'password' => ['required', 'string', 'min:6'],
+            'role' => ['required', Rule::in(['admin', 'operator', 'kurikulum', 'teacher', 'student'])],
         ]);
+
+        $email = $request->email ?: ($request->username . '@siakadmts.local');
 
         $user = User::create([
             'name' => $request->name,
-            'email' => $request->email,
+            'username' => $request->username,
+            'email' => $email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
         ]);
 
-        return $this->success($user, 'Pengguna dibuat', 201);
+        return $this->success($user, 'Pengguna berhasil dibuat', 201);
     }
 
     public function show(User $user)
@@ -54,19 +57,23 @@ class UserController extends BaseController
     {
         $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'email' => ['sometimes', 'required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
-            'password' => ['sometimes', 'string', 'min:8', 'confirmed'],
-            'role' => ['sometimes', 'required', Rule::in(['admin', 'teacher', 'student'])],
+            'username' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('users', 'username')->ignore($user->id)],
+            'password' => ['nullable', 'string', 'min:6'],
+            'role' => ['sometimes', 'required', Rule::in(['admin', 'operator', 'kurikulum', 'teacher', 'student'])],
         ]);
 
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
 
-        $user->fill($request->only(['name', 'email', 'role']));
+        if ($request->filled('username') && !$request->filled('email')) {
+            $user->email = $request->username . '@siakadmts.local';
+        }
+
+        $user->fill($request->only(['name', 'username', 'role']));
         $user->save();
 
-        return $this->success($user);
+        return $this->success($user, 'Data pengguna berhasil diperbarui');
     }
 
     public function destroy(User $user)
