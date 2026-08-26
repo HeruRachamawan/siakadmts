@@ -40,13 +40,21 @@
           <BookOpen class="w-4 h-4" />
           <span>Mata Pelajaran</span>
         </RouterLink>
+
+        <RouterLink
+          to="/kurikulum/letters"
+          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md transition-all active:scale-95"
+        >
+          <FileText class="w-4 h-4 text-slate-950" />
+          <span>Buku Agenda Surat</span>
+        </RouterLink>
       </div>
 
       <div class="absolute right-0 top-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
     </div>
 
     <!-- Quick Bento Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       <RouterLink to="/admin/schedules" class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all group">
         <div class="flex items-center justify-between">
           <span class="text-xs font-semibold text-slate-500">Jadwal Aktif</span>
@@ -82,13 +90,24 @@
 
       <RouterLink to="/admin/classes" class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-amber-400 hover:shadow-md transition-all group">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-500">Rombongan Belajar</span>
+          <span class="text-xs font-semibold text-slate-500">Rombel Kelas</span>
           <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
             <Building2 class="w-4 h-4" />
           </div>
         </div>
         <p class="text-2xl font-black text-slate-900 mt-2">{{ stats.classes_count || 0 }}</p>
         <p class="text-[11px] text-slate-400 mt-0.5">Kelas terdaftar</p>
+      </RouterLink>
+
+      <RouterLink to="/kurikulum/letters" class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-emerald-400 hover:shadow-md transition-all group">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-500">Agenda Surat</span>
+          <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <FileText class="w-4 h-4" />
+          </div>
+        </div>
+        <p class="text-2xl font-black text-slate-900 mt-2">{{ stats.total_letters || 0 }}</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Surat Masuk & Keluar</p>
       </RouterLink>
     </div>
 
@@ -137,7 +156,8 @@ import {
   Award,
   BookOpen,
   Users,
-  Building2
+  Building2,
+  FileText
 } from 'lucide-vue-next';
 import { api } from '../api';
 
@@ -146,8 +166,12 @@ const stats = ref({});
 
 async function loadKurikulumStats() {
   try {
-    const res = await api.get('admin/dashboard');
-    const d = res?.data?.data || res?.data || res || {};
+    const [dashRes, letterRes] = await Promise.all([
+      api.get('admin/dashboard').catch(() => null),
+      api.get('admin/letters').catch(() => null)
+    ]);
+    const d = dashRes?.data?.data || dashRes?.data || dashRes || {};
+    const l = letterRes?.data?.stats || letterRes?.stats || letterRes?.data || {};
     stats.value = {
       schedules_count: d.schedules || 0,
       subjects_count: d.subjects || 0,
@@ -155,6 +179,7 @@ async function loadKurikulumStats() {
       classes_count: d.classes || 0,
       students_count: d.students || 0,
       grades_count: d.grades || 0,
+      total_letters: (l.total_incoming || 0) + (l.total_outgoing || 0),
     };
   } catch (err) {
     console.error('Failed to load kurikulum stats', err);

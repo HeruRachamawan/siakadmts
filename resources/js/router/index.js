@@ -52,10 +52,11 @@ const routes = [
 
     // Waka Kurikulum Dedicated Routes
     { path: '/kurikulum/dashboard', component: () => import('../views/KurikulumDashboard.vue'), meta: { requiresAuth: true, roles: ['kurikulum', 'admin'], title: 'Dashboard Waka Kurikulum' } },
+    { path: '/kurikulum/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['kurikulum', 'operator', 'admin'], title: 'Buku Agenda Persuratan' } },
 
     // Admin & Shared Routes
     { path: '/admin/dashboard', component: () => import('../views/AdminDashboard.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Dashboard Admin' } },
-    { path: '/admin/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator'], title: 'Buku Agenda Persuratan' } },
+    { path: '/admin/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum'], title: 'Buku Agenda Persuratan' } },
     { path: '/admin/ppdb', component: () => import('../views/AdminPpdb.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator'], title: 'Penerimaan Siswa (PPDB)' } },
     { path: '/admin/users', component: () => import('../components/CrudPage.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Manajemen Pengguna' }, props: { endpoint: 'admin/users', resource: 'admin/users', title: 'Pengguna', formFields: userFields(), fields: userFields(), columns: [
         { label: 'Nama Pengguna', field: 'name' },

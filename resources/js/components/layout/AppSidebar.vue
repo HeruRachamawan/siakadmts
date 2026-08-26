@@ -62,14 +62,14 @@
           </Transition>
         </RouterLink>
 
-        <!-- 2. ADMINISTRASI & PERSURATAN (Admin & Operator TU) -->
-        <template v-if="user?.role === 'admin' || user?.role === 'operator'">
+        <!-- 2. ADMINISTRASI & PERSURATAN (Admin, Operator TU, & Waka Kurikulum) -->
+        <template v-if="user?.role === 'admin' || user?.role === 'operator' || user?.role === 'kurikulum'">
           <div v-if="!isCollapsed" class="nav-section">Administrasi & Persuratan</div>
           <div v-else class="my-1 border-t border-slate-200/50"></div>
 
           <!-- Buku Agenda Surat Masuk & Keluar -->
           <RouterLink
-            :to="user?.role === 'admin' ? '/admin/letters' : '/operator/letters'"
+            :to="user?.role === 'admin' ? '/admin/letters' : (user?.role === 'kurikulum' ? '/kurikulum/letters' : '/operator/letters')"
             :title="isCollapsed ? 'Buku Agenda Persuratan' : ''"
             class="nav-link bg-emerald-50/60 text-emerald-800 border border-emerald-200/80 font-bold"
             :class="isCollapsed ? 'justify-center' : ''"
