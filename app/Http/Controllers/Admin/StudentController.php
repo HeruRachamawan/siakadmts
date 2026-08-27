@@ -373,4 +373,44 @@ class StudentController extends BaseController
             "Berhasil mengimpor $success siswa. Gagal: $failed"
         );
     }
+
+    public function impersonate(Request $request, Student $student)
+    {
+        // Strict security: Only Super Admin (role: admin) can impersonate
+        if ($request->user()->role !== 'admin') {
+            return $this->error('Akses ditolak. Fitur Login Sebagai Siswa hanya dapat digunakan oleh Super Admin.', 403);
+        }
+
+        $user = $student->user;
+        if (! $user) {
+            $user = User::where('username', $student->nisn)
+                ->orWhere('username', $student->nis)
+                ->first();
+            if ($user) {
+                $student->user_id = $user->id;
+                $student->save();
+            } else {
+                // Auto create user account for student if not exists yet
+                $username = !empty($student->nisn) ? $student->nisn : (!empty($student->nis) ? $student->nis : 'siswa_' . $student->id);
+                $user = User::create([
+                    'name' => $student->full_name,
+                    'username' => $username,
+                    'email' => $username . '@siakad.mts',
+                    'password' => Hash::make($username),
+                    'role' => 'student',
+                ]);
+                $student->user_id = $user->id;
+                $student->save();
+            }
+        }
+
+        // Generate Sanctum token for target student user
+        $token = $user->createToken('impersonation-token')->plainTextToken;
+
+        return $this->success([
+            'token' => $token,
+            'user' => \App\Http\Controllers\Auth\AuthController::formatUserPayload($user),
+            'impersonated' => true,
+        ], "Berhasil masuk sebagai siswa {$student->full_name}");
+    }
 }

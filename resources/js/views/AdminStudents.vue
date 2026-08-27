@@ -152,6 +152,16 @@
               <!-- Actions -->
               <td class="px-6 py-4">
                 <div class="flex items-center justify-center gap-1.5">
+                  <!-- Login Sebagai Siswa (Khusus Super Admin) -->
+                  <button
+                    v-if="isAdminSuper"
+                    @click="loginAsStudent(row)"
+                    title="Login Sebagai Siswa Ini (Mode Peninjauan)"
+                    class="w-8 h-8 rounded-xl flex items-center justify-center bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 border border-purple-200 transition-all shadow-2xs cursor-pointer"
+                  >
+                    <LogIn class="w-3.5 h-3.5" />
+                  </button>
+
                   <!-- View -->
                   <button
                     @click="viewDetail(row)"
@@ -255,6 +265,7 @@
       :student="detailStudent"
       @close="showDetail = false"
       @reset-password="resetPassword"
+      @impersonate="(s) => { showDetail = false; loginAsStudent(s); }"
     />
 
     <!-- Excel Import Modal -->
@@ -270,6 +281,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { api } from '../api';
 import StudentForm from '../components/StudentForm.vue';
@@ -278,10 +290,41 @@ import SkeletonTable from '../components/SkeletonTable.vue';
 import ExcelImportModal from '../components/ExcelImportModal.vue';
 import { useToast } from '../composables/useToast';
 import { useConfirm } from '../composables/useConfirm';
-import { Eye, Key, Pencil, Trash2 } from 'lucide-vue-next';
+import { useAuthStore } from '../stores/auth';
+import { Eye, Key, Pencil, Trash2, LogIn } from 'lucide-vue-next';
 
+const auth = useAuthStore();
+const router = useRouter();
 const { success, error: showError } = useToast();
 const { confirm } = useConfirm();
+
+const isAdminSuper = computed(() => {
+  return auth.activeRole === 'admin' || auth.user?.role === 'admin';
+});
+
+async function loginAsStudent(row) {
+  const studentName = row.full_name || row.user?.name || 'Siswa';
+  const isConfirmed = await confirm({
+    title: 'Login Sebagai Siswa',
+    message: `Apakah Anda ingin login dan masuk ke tampilan Portal Siswa sebagai "${studentName}"? Anda dapat kembali ke akun Super Admin kapan saja.`,
+    type: 'primary',
+    confirmText: 'Ya, Masuk Sebagai Siswa',
+    cancelText: 'Batal',
+  });
+  if (!isConfirmed) return;
+
+  try {
+    const res = await api.post(`admin/students/${row.id}/impersonate`);
+    const data = res.data?.data || res.data || res;
+    if (data.token) {
+      auth.startImpersonation(data.token, data.user);
+      success(`Berhasil login sebagai siswa ${studentName}`);
+      router.push('/student/dashboard');
+    }
+  } catch (err) {
+    showError(err.response?.data?.message || 'Gagal login sebagai siswa.');
+  }
+}
 
 const loading = ref(true);
 const exportingExcel = ref(false);

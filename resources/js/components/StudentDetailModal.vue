@@ -28,6 +28,15 @@
             </p>
 
             <div class="flex items-center justify-center sm:justify-start gap-3 mt-4">
+              <!-- Login Sebagai Siswa (Khusus Superadmin) -->
+              <button
+                v-if="isAdminSuper"
+                @click="$emit('impersonate', student)"
+                class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-purple-600/30 cursor-pointer"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                <span>Login Sebagai Siswa</span>
+              </button>
               <button @click="$emit('reset-password', student)" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/30 cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
                 Ganti Password
@@ -208,6 +217,9 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useAuthStore } from '../stores/auth';
+
 defineProps({
   student: {
     type: Object,
@@ -215,7 +227,12 @@ defineProps({
   }
 });
 
-defineEmits(['close', 'reset-password']);
+defineEmits(['close', 'reset-password', 'impersonate']);
+
+const auth = useAuthStore();
+const isAdminSuper = computed(() => {
+  return auth.activeRole === 'admin' || auth.user?.role === 'admin';
+});
 </script>
 
 <style scoped>

@@ -57,6 +57,8 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum'])
         ->name('students.reset-credentials');
     Route::post('students/{student}/assign-class', [AdminStudentController::class, 'assignClass'])
         ->name('students.assign-class');
+    Route::post('students/{student}/impersonate', [AdminStudentController::class, 'impersonate'])
+        ->name('students.impersonate');
     Route::apiResource('grades', AdminGradeController::class)->only(['index', 'show']);
     Route::get('attendance-reports', [\App\Http\Controllers\Admin\AttendanceReportController::class, 'index']);
     Route::get('attendance-monitoring', [\App\Http\Controllers\Admin\AttendanceReportController::class, 'monitoring']);
