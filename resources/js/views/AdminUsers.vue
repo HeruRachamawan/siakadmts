@@ -61,14 +61,16 @@
             @click="setScope('staff')"
             :class="[activeScope === 'staff' ? 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold', 'px-4 py-2 rounded-xl text-xs transition-all cursor-pointer flex items-center gap-2']"
           >
-            <span>🏢 Khusus Jabatan & Staf</span>
+            <Building class="w-4 h-4" />
+            <span>Khusus Jabatan & Staf</span>
             <span class="px-1.5 py-0.2 bg-white/20 rounded-md text-[10px] font-mono">{{ summary.total_staff || 0 }}</span>
           </button>
           <button
             @click="setScope('all')"
             :class="[activeScope === 'all' ? 'bg-slate-900 text-white font-bold shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold', 'px-4 py-2 rounded-xl text-xs transition-all cursor-pointer flex items-center gap-2']"
           >
-            <span>🌐 Semua Akun Sistem</span>
+            <Globe class="w-4 h-4" />
+            <span>Semua Akun Sistem</span>
             <span class="px-1.5 py-0.2 bg-white/20 rounded-md text-[10px] font-mono">{{ summary.all_users || 0 }}</span>
           </button>
         </div>
@@ -171,25 +173,48 @@
                   row.role === 'bendahara' ? 'bg-amber-100 text-amber-800 border-amber-200' :
                   row.role === 'teacher' ? 'bg-teal-100 text-teal-800 border-teal-200' :
                   'bg-slate-100 text-slate-700 border-slate-200',
-                  'px-3 py-1 rounded-full font-black text-[10px] uppercase tracking-wider border inline-flex items-center gap-1.5'
+                  'px-3 py-1 rounded-full font-bold text-[10px] uppercase tracking-wider border inline-flex items-center gap-1.5'
                 ]">
-                  <span v-if="row.role === 'admin'">👑 Super Admin</span>
-                  <span v-else-if="row.role === 'operator'">🏢 Operator TU</span>
-                  <span v-else-if="row.role === 'kurikulum'">📚 Waka Kurikulum</span>
-                  <span v-else-if="row.role === 'bendahara'">💰 Bendahara</span>
-                  <span v-else-if="row.role === 'teacher'">👨‍🏫 Guru</span>
-                  <span v-else-if="row.role === 'student'">🎓 Siswa</span>
-                  <span v-else>{{ row.role }}</span>
+                  <template v-if="row.role === 'admin'">
+                    <ShieldCheck class="w-3.5 h-3.5 text-purple-600" />
+                    <span>Super Admin</span>
+                  </template>
+                  <template v-else-if="row.role === 'operator'">
+                    <Building class="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Operator TU</span>
+                  </template>
+                  <template v-else-if="row.role === 'kurikulum'">
+                    <BookOpen class="w-3.5 h-3.5 text-blue-600" />
+                    <span>Waka Kurikulum</span>
+                  </template>
+                  <template v-else-if="row.role === 'bendahara'">
+                    <Wallet class="w-3.5 h-3.5 text-amber-600" />
+                    <span>Bendahara</span>
+                  </template>
+                  <template v-else-if="row.role === 'teacher'">
+                    <GraduationCap class="w-3.5 h-3.5 text-teal-600" />
+                    <span>Guru</span>
+                  </template>
+                  <template v-else-if="row.role === 'student'">
+                    <User class="w-3.5 h-3.5 text-slate-600" />
+                    <span>Siswa</span>
+                  </template>
+                  <template v-else>
+                    <UserCheck class="w-3.5 h-3.5 text-slate-600" />
+                    <span>{{ row.role }}</span>
+                  </template>
                 </span>
               </td>
 
               <!-- Tautan Profil Guru / Siswa (Dual-Role) -->
               <td class="px-6 py-4">
                 <div v-if="row.teacher" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-[11px] font-bold">
-                  <span>👨‍🏫 Guru: {{ row.teacher.full_name }}</span>
+                  <GraduationCap class="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
+                  <span>Guru: {{ row.teacher.full_name }}</span>
                 </div>
                 <div v-else-if="row.student" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-800 text-[11px] font-bold">
-                  <span>🎓 Siswa: {{ row.student.full_name }}</span>
+                  <User class="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                  <span>Siswa: {{ row.student.full_name }}</span>
                 </div>
                 <span v-else class="text-slate-400 text-xs italic">- Khusus Staf -</span>
               </td>
@@ -322,10 +347,10 @@
               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400"
               required
             >
-              <option value="admin">👑 Administrator (Superadmin / Kepala Madrasah)</option>
-              <option value="operator">🏢 Operator / Tata Usaha (TU)</option>
-              <option value="kurikulum">📚 Waka Kurikulum</option>
-              <option value="bendahara">💰 Bendahara / Keuangan</option>
+              <option value="admin">Administrator (Superadmin / Kepala Madrasah)</option>
+              <option value="operator">Operator / Tata Usaha (TU)</option>
+              <option value="kurikulum">Waka Kurikulum</option>
+              <option value="bendahara">Bendahara / Keuangan</option>
             </select>
           </div>
 
@@ -378,7 +403,18 @@ import { api } from '../api';
 import { useToast } from '../composables/useToast';
 import { useConfirm } from '../composables/useConfirm';
 import { useAuthStore } from '../stores/auth';
-import { Pencil, Trash2 } from 'lucide-vue-next';
+import { 
+  Pencil, 
+  Trash2, 
+  ShieldCheck, 
+  Building, 
+  BookOpen, 
+  Wallet, 
+  GraduationCap, 
+  User, 
+  Globe, 
+  UserCheck 
+} from 'lucide-vue-next';
 
 const toast = useToast();
 const { confirm } = useConfirm();
