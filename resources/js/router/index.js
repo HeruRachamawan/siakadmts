@@ -58,11 +58,7 @@ const routes = [
     { path: '/admin/dashboard', component: () => import('../views/AdminDashboard.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Dashboard Admin' } },
     { path: '/admin/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum'], title: 'Buku Agenda Persuratan' } },
     { path: '/admin/ppdb', component: () => import('../views/AdminPpdb.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator'], title: 'Penerimaan Siswa (PPDB)' } },
-    { path: '/admin/users', component: () => import('../components/CrudPage.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Manajemen Pengguna' }, props: { endpoint: 'admin/users', resource: 'admin/users', title: 'Pengguna', formFields: userFields(), fields: userFields(), columns: [
-        { label: 'Nama Pengguna', field: 'name' },
-        { label: 'Username Login', field: 'username' },
-        { label: 'Peran Akun', field: 'role' },
-    ], hideFields: ['password'] } },
+    { path: '/admin/users', component: () => import('../views/AdminUsers.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Manajemen Pengguna & Jabatan' } },
     { path: '/admin/students', component: () => import('../views/AdminStudents.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum'], title: 'Manajemen Data Siswa' } },
     { path: '/admin/teachers', component: () => import('../views/AdminTeachers.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum'], title: 'Manajemen Data Guru' } },
     { path: '/admin/classes', component: () => import('../views/AdminClasses.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Manajemen Kelas' } },
