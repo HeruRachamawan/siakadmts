@@ -41,6 +41,8 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum'])
     Route::apiResource('teachers', TeacherController::class);
     Route::post('teachers/{teacher}/reset-credentials', [TeacherController::class, 'resetCredentials'])
         ->name('teachers.reset-credentials');
+    Route::post('teachers/{teacher}/impersonate', [TeacherController::class, 'impersonate'])
+        ->name('teachers.impersonate');
     Route::apiResource('classes', ClassController::class);
     Route::post('classes/{class}/assign-students', [ClassController::class, 'assignStudents'])
         ->name('classes.assign-students');

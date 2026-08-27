@@ -6,6 +6,8 @@ export const useAuthStore = defineStore('auth', {
     user: null,
     token: localStorage.getItem('token') || null,
     activeRole: localStorage.getItem('activeRole') || null,
+    impersonatorToken: localStorage.getItem('impersonatorToken') || null,
+    impersonatorUser: JSON.parse(localStorage.getItem('impersonatorUser') || 'null'),
     loading: true,
     initialized: false,
   }),
@@ -14,6 +16,7 @@ export const useAuthStore = defineStore('auth', {
     role: (state) => state.activeRole || state.user?.role || null,
     primaryRole: (state) => state.user?.role || null,
     isAuthenticated: (state) => !!state.token && !!state.user,
+    isImpersonating: (state) => !!state.impersonatorToken,
     isDualRole: (state) => {
       if (!state.user) return false;
       const hasTeacherProfile = !!(state.user.teacher_id || state.user.teacher);
@@ -61,6 +64,30 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem('activeRole', targetRole);
     },
 
+    startImpersonation(targetUser, targetToken) {
+      this.impersonatorToken = this.token;
+      this.impersonatorUser = this.user;
+      localStorage.setItem('impersonatorToken', this.token);
+      localStorage.setItem('impersonatorUser', JSON.stringify(this.user));
+
+      this.setAuth(targetUser, targetToken);
+      this.switchRole('teacher');
+    },
+
+    stopImpersonation() {
+      if (!this.impersonatorToken) return;
+      const adminUser = this.impersonatorUser;
+      const adminToken = this.impersonatorToken;
+
+      this.impersonatorToken = null;
+      this.impersonatorUser = null;
+      localStorage.removeItem('impersonatorToken');
+      localStorage.removeItem('impersonatorUser');
+
+      this.setAuth(adminUser, adminToken);
+      this.switchRole(adminUser?.role || 'admin');
+    },
+
     async login(username, password) {
       const { data } = await axios.post('/login', { username, password });
       this.setAuth(data.data.user, data.data.token);
@@ -102,8 +129,13 @@ export const useAuthStore = defineStore('auth', {
     async logout() {
       await axios.post('/logout').catch(() => {});
       localStorage.removeItem('activeRole');
+      localStorage.removeItem('impersonatorToken');
+      localStorage.removeItem('impersonatorUser');
+      this.impersonatorToken = null;
+      this.impersonatorUser = null;
       this.setAuth(null, null);
     },
   },
 });
+
 

@@ -204,4 +204,35 @@ class TeacherController extends BaseController
 
         return $this->success(['reset' => true], 'Kredensial direset ke NUPTK');
     }
+
+    public function impersonate(Request $request, Teacher $teacher)
+    {
+        // Strict security: Only Super Admin (role: admin) can impersonate
+        if ($request->user()->role !== 'admin') {
+            return $this->error('Akses ditolak. Fitur Login Sebagai Guru hanya dapat digunakan oleh Super Admin.', 403);
+        }
+
+        $user = $teacher->user;
+        if (! $user) {
+            $user = User::where('username', $teacher->nip)
+                ->orWhere('email', $teacher->email)
+                ->first();
+            if ($user) {
+                $teacher->user_id = $user->id;
+                $teacher->save();
+            } else {
+                return $this->error('Guru ini belum memiliki akun pengguna yang terdaftar.', 422);
+            }
+        }
+
+        // Generate Sanctum token for target teacher user
+        $token = $user->createToken('impersonation-token')->plainTextToken;
+
+        return $this->success([
+            'token' => $token,
+            'user' => \App\Http\Controllers\Auth\AuthController::formatUserPayload($user),
+            'impersonated' => true,
+        ], "Berhasil masuk sebagai {$teacher->full_name}");
+    }
 }
+

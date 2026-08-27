@@ -112,7 +112,7 @@ class AuthController extends BaseController
         return $this->success($this->formatUserPayload($request->user()));
     }
 
-    private function formatUserPayload(User $user): array
+    public static function formatUserPayload(User $user): array
     {
         $payload = $user->only(['id', 'name', 'email', 'username', 'role']);
 
@@ -157,3 +157,4 @@ class AuthController extends BaseController
         return $payload;
     }
 }
+

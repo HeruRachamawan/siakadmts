@@ -1,5 +1,27 @@
 <template>
   <div>
+    <!-- STICKY FLOATING IMPERSONATION BANNER -->
+    <div
+      v-if="auth.isImpersonating"
+      class="sticky top-0 z-[100] bg-gradient-to-r from-purple-900 via-indigo-950 to-slate-900 text-white px-5 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xl border-b border-purple-400/40 no-print"
+    >
+      <div class="flex items-center gap-2.5">
+        <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider animate-pulse shadow-xs">
+          MODE PENINJAUAN SUPERADMIN
+        </span>
+        <span class="text-xs font-semibold text-purple-100">
+          Anda sedang masuk sebagai Guru: <strong class="text-white font-bold">{{ user?.name || user?.full_name }}</strong> {{ user?.nip ? `(NIP: ${user.nip})` : '' }}
+        </span>
+      </div>
+      <button
+        @click="handleStopImpersonating"
+        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white text-purple-950 hover:bg-purple-100 rounded-xl text-xs font-extrabold shadow-md transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+      >
+        <ArrowLeft class="w-3.5 h-3.5" />
+        <span>Kembali ke Superadmin</span>
+      </button>
+    </div>
+
     <template v-if="$route.meta.requiresAuth">
       <div class="flex h-screen bg-[#F8FAFC] font-inter text-slate-900 antialiased">
         <!-- Modular Sidebar -->
@@ -417,12 +439,19 @@ import AppSidebar from './components/layout/AppSidebar.vue';
 import AppHeader from './components/layout/AppHeader.vue';
 import { toastState, useToast } from './composables/useToast';
 import { api } from './api';
+import { ArrowLeft } from 'lucide-vue-next';
 
 const toast = useToast();
 const router = useRouter();
 const route = useRoute();
 const auth = useAuthStore();
 const { user } = storeToRefs(auth);
+
+function handleStopImpersonating() {
+  auth.stopImpersonation();
+  toast.success('Kembali ke sesi Superadmin.');
+  router.push('/admin/teachers');
+}
 
 const getImageUrl = (path) => {
   if (!path) return '';

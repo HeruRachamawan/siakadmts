@@ -111,6 +111,15 @@
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center justify-center gap-1.5">
+                  <!-- Login Sebagai Guru (Khusus Super Admin) -->
+                  <button
+                    v-if="isAdminSuper"
+                    @click="loginAsTeacher(row)"
+                    title="Login Sebagai Guru Ini (Mode Peninjauan)"
+                    class="w-8 h-8 rounded-xl flex items-center justify-center bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 border border-purple-200 transition-all shadow-2xs cursor-pointer"
+                  >
+                    <LogIn class="w-3.5 h-3.5" />
+                  </button>
                   <button @click="viewDetail(row)" title="Lihat Detail" class="w-8 h-8 rounded-xl flex items-center justify-center bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border border-slate-200/80 transition-all shadow-2xs cursor-pointer">
                     <Eye class="w-3.5 h-3.5" />
                   </button>
@@ -174,6 +183,7 @@
       @close="showDetail = false"
       @reset-password="(t) => { showDetail = false; resetPassword(t); }"
       @edit="(t) => { showDetail = false; edit(t); }"
+      @impersonate="(t) => { showDetail = false; loginAsTeacher(t); }"
     />
 
     <!-- Excel Import Modal -->
@@ -190,16 +200,48 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
 import { api } from '../api';
 import TeacherForm from '../components/TeacherForm.vue';
 import TeacherDetailModal from '../components/TeacherDetailModal.vue';
 import ExcelImportModal from '../components/ExcelImportModal.vue';
 import { useToast } from '../composables/useToast';
 import { useConfirm } from '../composables/useConfirm';
-import { Eye, Key, Pencil, Trash2 } from 'lucide-vue-next';
+import { Eye, Key, Pencil, Trash2, LogIn } from 'lucide-vue-next';
 
+const auth = useAuthStore();
+const router = useRouter();
 const { success, error: showError } = useToast();
 const { confirm } = useConfirm();
+
+const isAdminSuper = computed(() => {
+  return auth.primaryRole === 'admin' || auth.user?.role === 'admin';
+});
+
+async function loginAsTeacher(teacher) {
+  const isOk = await confirm({
+    title: 'Login Sebagai Guru',
+    message: `Anda akan masuk ke sesi akun Guru "${teacher.full_name}" (NIP: ${teacher.nip || '-'}). Anda dapat kembali ke akun Superadmin kapan saja lewat banner atas. Lanjutkan?`,
+    confirmText: 'Masuk Sebagai Guru',
+    cancelText: 'Batal',
+    type: 'primary'
+  });
+
+  if (!isOk) return;
+
+  try {
+    const res = await api.post(`admin/teachers/${teacher.id}/impersonate`);
+    const data = res?.data || res;
+    if (data?.token && data?.user) {
+      auth.startImpersonation(data.user, data.token);
+      success(`Berhasil masuk sebagai guru ${teacher.full_name}`);
+      router.push('/teacher/dashboard');
+    }
+  } catch (err) {
+    showError(err.response?.data?.message || 'Gagal login sebagai guru');
+  }
+}
 
 const loading = ref(true);
 const exportingExcel = ref(false);
