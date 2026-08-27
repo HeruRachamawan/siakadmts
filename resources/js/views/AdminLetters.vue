@@ -247,11 +247,11 @@
         </div>
 
         <!-- Pagination Bar -->
-        <div v-if="pagination.last_page > 1" class="px-6 py-3 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
+        <div v-if="pagination.last_page > 1" class="px-6 py-3.5 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
           <div>
             Menampilkan halaman <span class="font-bold text-slate-900">{{ pagination.current_page }}</span> dari <span class="font-bold text-slate-900">{{ pagination.last_page }}</span> (Total {{ pagination.total }} surat)
           </div>
-          <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1.5 flex-wrap">
             <button
               :disabled="pagination.current_page <= 1"
               @click="fetchLetters(pagination.current_page - 1)"
@@ -259,7 +259,21 @@
             >
               &larr; Sebelumnya
             </button>
-            <span class="px-2 font-bold text-emerald-800">{{ pagination.current_page }}</span>
+            <div class="flex items-center gap-1">
+              <button
+                v-for="p in pagination.last_page"
+                :key="p"
+                @click="fetchLetters(p)"
+                :class="[
+                  p === pagination.current_page
+                    ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                ]"
+                class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs font-semibold cursor-pointer transition-all"
+              >
+                {{ p }}
+              </button>
+            </div>
             <button
               :disabled="pagination.current_page >= pagination.last_page"
               @click="fetchLetters(pagination.current_page + 1)"
@@ -365,11 +379,11 @@
         </div>
 
         <!-- Pagination Bar -->
-        <div v-if="pagination.last_page > 1" class="px-6 py-3 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
+        <div v-if="pagination.last_page > 1" class="px-6 py-3.5 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
           <div>
             Menampilkan halaman <span class="font-bold text-slate-900">{{ pagination.current_page }}</span> dari <span class="font-bold text-slate-900">{{ pagination.last_page }}</span> (Total {{ pagination.total }} surat)
           </div>
-          <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1.5 flex-wrap">
             <button
               :disabled="pagination.current_page <= 1"
               @click="fetchLetters(pagination.current_page - 1)"
@@ -377,7 +391,21 @@
             >
               &larr; Sebelumnya
             </button>
-            <span class="px-2 font-bold text-indigo-800">{{ pagination.current_page }}</span>
+            <div class="flex items-center gap-1">
+              <button
+                v-for="p in pagination.last_page"
+                :key="p"
+                @click="fetchLetters(p)"
+                :class="[
+                  p === pagination.current_page
+                    ? 'bg-indigo-600 text-white font-bold shadow-xs'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                ]"
+                class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs font-semibold cursor-pointer transition-all"
+              >
+                {{ p }}
+              </button>
+            </div>
             <button
               :disabled="pagination.current_page >= pagination.last_page"
               @click="fetchLetters(pagination.current_page + 1)"

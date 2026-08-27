@@ -103,10 +103,15 @@ axios.interceptors.response.use(
 );
 
 export const api = {
-  get: (url, params) => axios.get(url, { params }).then((r) => r.data),
-  post: (url, data) => axios.post(url, data).then((r) => r.data),
-  put: (url, data) => axios.put(url, data).then((r) => r.data),
-  del: (url) => axios.delete(url).then((r) => r.data),
+  get: (url, config) => {
+    if (config && (config.params || config.headers || config.responseType || config.timeout)) {
+      return axios.get(url, config).then((r) => r.data);
+    }
+    return axios.get(url, { params: config }).then((r) => r.data);
+  },
+  post: (url, data, config) => axios.post(url, data, config).then((r) => r.data),
+  put: (url, data, config) => axios.put(url, data, config).then((r) => r.data),
+  del: (url, config) => axios.delete(url, config).then((r) => r.data),
   delete: (url, config) => axios.delete(url, config).then((r) => r.data),
   postForm: (url, data) => axios.post(url, data, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data),
   putForm: (url, data) => {
