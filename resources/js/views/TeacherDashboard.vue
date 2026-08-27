@@ -77,6 +77,27 @@
       </div>
     </div>
 
+    <!-- Holiday Notice Banner (Jika hari ini Libur) -->
+    <div v-if="holidayInfo.is_holiday" class="bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900 rounded-2xl p-5 text-white shadow-md flex items-center justify-between gap-4 border border-purple-400/40">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center text-2xl flex-shrink-0 backdrop-blur-md border border-white/20">
+          🏖️
+        </div>
+        <div class="space-y-0.5">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[9px] font-black uppercase">
+              {{ holidayInfo.holiday_type === 'weekly_holiday' ? 'HARI LIBUR MINGGUAN' : 'HARI LIBUR NASIONAL / PHBI' }}
+            </span>
+          </div>
+          <h3 class="text-sm font-black font-lexend text-white">{{ holidayInfo.holiday_name || 'Hari Libur Resmi' }}</h3>
+          <p class="text-[11px] text-purple-200">Bapak/Ibu Dewan Guru tidak diwajibkan melakukan presensi harian pada hari ini.</p>
+        </div>
+      </div>
+      <RouterLink to="/teacher/calendar" class="px-3.5 py-1.5 bg-white text-purple-950 hover:bg-purple-50 text-xs font-bold rounded-xl shadow-xs transition-all whitespace-nowrap">
+        Lihat Kalender &rarr;
+      </RouterLink>
+    </div>
+
     <!-- Quick Attendance Card Widget (Presensi Harian Cepat GPS) -->
     <div class="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 space-y-5">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
@@ -389,6 +410,12 @@ const loading = ref(true);
 const loadingAttendance = ref(true);
 const submittingAttendance = ref(false);
 const appSettings = ref({});
+const holidayInfo = ref({
+  is_holiday: false,
+  holiday_name: '',
+  holiday_type: '',
+  is_weekly_holiday: false,
+});
 
 const teacherInfo = reactive({
   full_name: '',
@@ -478,6 +505,7 @@ async function loadTodayAttendance() {
     const data = res?.data || res;
     todayAttendance.value = data.attendance || null;
     setting.value = data.setting || null;
+    holidayInfo.value = data.holiday_info || { is_holiday: false };
 
     detectLocation();
   } catch (err) {

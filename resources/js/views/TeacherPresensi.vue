@@ -42,6 +42,24 @@
     <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Col 1: GPS Indicator & Actions -->
       <div class="lg:col-span-2 space-y-6">
+        <!-- Floating Holiday Info Banner -->
+        <div v-if="holidayInfo.is_holiday" class="bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900 rounded-3xl p-6 text-white shadow-xl flex items-center gap-4 border border-purple-400/40">
+          <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-3xl flex-shrink-0 backdrop-blur-md border border-white/20 shadow-inner">
+            🏖️
+          </div>
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-xs">
+                {{ holidayInfo.holiday_type === 'weekly_holiday' ? 'HARI LIBUR MINGGUAN' : 'HARI LIBUR NASIONAL / PHBI' }}
+              </span>
+            </div>
+            <h3 class="text-lg font-black font-lexend text-white">{{ holidayInfo.holiday_name || 'Hari Libur Resmi' }}</h3>
+            <p class="text-xs text-purple-200/90 leading-relaxed">
+              Bapak/Ibu Dewan Guru tidak diwajibkan melakukan presensi pada hari ini. Anda tetap dapat melakukan presensi jika sedang piket/ada kegiatan sekolah.
+            </p>
+          </div>
+        </div>
+
         <!-- Status GPS Card -->
         <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-5">
           <div class="flex items-center justify-between">
@@ -604,6 +622,13 @@ const uploadProcessing = ref(false);
 const uploadedPreview = ref('');
 let html5QrCode = null;
 
+const holidayInfo = ref({
+  is_holiday: false,
+  holiday_name: '',
+  holiday_type: '',
+  is_weekly_holiday: false,
+});
+
 const setting = ref({
   max_radius_meters: 100,
   latitude: -6.20880000,
@@ -946,6 +971,7 @@ async function loadData() {
     const resToday = await api.get('teacher/presensi/today');
     setting.value = resToday?.setting || resToday?.data?.setting || setting.value;
     todayDate.value = resToday?.today_date || resToday?.data?.today_date || '';
+    holidayInfo.value = resToday?.holiday_info || resToday?.data?.holiday_info || { is_holiday: false };
     attendance.value = resToday?.attendance || resToday?.data?.attendance || null;
 
     if (attendance.value?.check_in_time && !attendance.value?.check_out_time) {

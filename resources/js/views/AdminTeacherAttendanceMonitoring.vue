@@ -49,7 +49,44 @@
           <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           <span>Atur Radius & GPS</span>
         </button>
+
+        <!-- 4. Set Hari Libur & PHBI -->
+        <button 
+          @click="openHolidaysModal" 
+          class="flex-1 sm:flex-none h-11 px-4.5 bg-gradient-to-r from-indigo-700 to-purple-700 hover:from-indigo-600 hover:to-purple-600 text-white rounded-2xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2.5 cursor-pointer border border-indigo-400/40 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+          title="Kelola Hari Libur Mingguan, Libur Nasional, dan PHBI"
+        >
+          <svg class="w-4 h-4 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <span>Set Hari Libur & PHBI</span>
+        </button>
       </div>
+    </div>
+
+    <!-- Floating Banner Info Hari Libur (Jika tanggal yang dipilih adalah hari libur) -->
+    <div v-if="holidayInfo.is_holiday" class="bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900 rounded-3xl p-6 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 border border-purple-400/40 relative overflow-hidden">
+      <div class="flex items-center gap-4 relative z-10">
+        <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-3xl flex-shrink-0 backdrop-blur-md border border-white/20 shadow-inner">
+          🏖️
+        </div>
+        <div class="space-y-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-xs">
+              {{ holidayInfo.holiday_type === 'weekly_holiday' ? 'HARI LIBUR MINGGUAN' : 'HARI LIBUR NASIONAL / PHBI' }}
+            </span>
+            <span class="text-xs font-semibold text-purple-200 font-mono">{{ selectedDate }}</span>
+          </div>
+          <h3 class="text-xl font-black font-lexend text-white">{{ holidayInfo.holiday_name || 'Hari Libur Resmi' }}</h3>
+          <p class="text-xs text-purple-200/90 leading-relaxed">
+            Pada tanggal ini seluruh dewan guru <strong class="text-white">tidak diwajibkan melakukan presensi</strong> dan tidak dihitung alpa/terlambat.
+          </p>
+        </div>
+      </div>
+      <button
+        @click="openHolidaysModal"
+        class="px-5 py-2.5 bg-white text-purple-950 hover:bg-purple-50 rounded-xl text-xs font-black transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap flex-shrink-0 relative z-10"
+      >
+        Kelola Kalender Libur &rarr;
+      </button>
     </div>
 
     <!-- Date Picker & Filter Bar -->
@@ -72,7 +109,7 @@
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
       <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-1">
         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Guru</p>
         <p class="text-2xl font-black text-slate-800 font-lexend">{{ summary.total_teachers || 0 }}</p>
@@ -99,8 +136,13 @@
       </div>
 
       <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-1">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Belum Absen</p>
-        <p class="text-2xl font-black text-slate-400 font-lexend">{{ summary.belum_absen || 0 }}</p>
+        <p class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Libur Sekolah</p>
+        <p class="text-2xl font-black text-indigo-600 font-lexend">{{ summary.libur || 0 }}</p>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-1">
+        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Belum Absen</p>
+        <p class="text-2xl font-black text-slate-700 font-lexend">{{ summary.belum_absen || 0 }}</p>
       </div>
     </div>
 
@@ -153,10 +195,11 @@
                   t.status === 'izin' ? 'bg-teal-100 text-teal-800' :
                   t.status === 'sakit' ? 'bg-rose-100 text-rose-800' :
                   t.status === 'tugas_luar' ? 'bg-cyan-100 text-cyan-800' :
+                  t.status === 'libur' ? 'bg-indigo-100 text-indigo-800 border border-indigo-200 font-bold' :
                   'bg-slate-100 text-slate-500',
                   'px-3 py-1 rounded-full font-bold text-[10px] uppercase tracking-wider'
                 ]">
-                  {{ t.status.replace('_', ' ') }}
+                  {{ t.status === 'libur' ? '🏖️ Libur' : t.status.replace('_', ' ') }}
                 </span>
               </td>
               <td class="px-6 py-4 font-medium text-slate-700">
@@ -600,6 +643,193 @@
                 <h4 class="text-sm font-bold text-white truncate mt-0.5">{{ lastScannedTeacher.full_name }}</h4>
                 <p class="text-[11px] text-emerald-200 font-mono">NIP: {{ lastScannedTeacher.nip || '-' }}</p>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Modal Kelola Hari Libur & PHBI -->
+    <div v-if="showHolidaysModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-3xl overflow-hidden max-h-[90vh] flex flex-col border border-slate-100 animate-slide-up">
+        <!-- Header -->
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/75 flex-shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div>
+              <h3 class="text-base font-black text-slate-800 font-lexend">Manajemen Hari Libur & PHBI</h3>
+              <p class="text-xs text-slate-400 font-medium">Atur libur mingguan madrasah dan kalender libur PHBI / Nasional</p>
+            </div>
+          </div>
+          <button @click="showHolidaysModal = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer transition-colors">✕</button>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex border-b border-slate-100 bg-white px-6 pt-3 gap-3 flex-shrink-0">
+          <button
+            @click="holidayActiveTab = 'weekly'"
+            :class="[holidayActiveTab === 'weekly' ? 'border-indigo-600 text-indigo-600 font-bold border-b-2 pb-2.5' : 'text-slate-400 hover:text-slate-600 pb-2.5 font-semibold text-xs', 'text-xs transition-all cursor-pointer flex items-center gap-2']"
+          >
+            <span>🗓️ Hari Libur Mingguan</span>
+          </button>
+          <button
+            @click="holidayActiveTab = 'events'"
+            :class="[holidayActiveTab === 'events' ? 'border-indigo-600 text-indigo-600 font-bold border-b-2 pb-2.5' : 'text-slate-400 hover:text-slate-600 pb-2.5 font-semibold text-xs', 'text-xs transition-all cursor-pointer flex items-center gap-2']"
+          >
+            <span>🕌 Libur Nasional, PHBI & Kalender ({{ calendarEvents.length }})</span>
+          </button>
+        </div>
+
+        <!-- Tab 1: Hari Libur Mingguan -->
+        <div v-if="holidayActiveTab === 'weekly'" class="p-6 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+          <div class="p-4 bg-indigo-50/70 border border-indigo-100 rounded-2xl space-y-2 text-xs">
+            <p class="font-bold text-indigo-900">Pilih Skema Hari Kerja & Libur Rutin Setiap Pekan:</p>
+            <p class="text-slate-600 leading-relaxed">Centang hari-hari yang menjadi hari libur tetap madrasah. Pada hari-hari tersebut, dewan guru otomatis tidak diwajibkan melakukan presensi harian.</p>
+            <div class="flex flex-wrap items-center gap-2 pt-2">
+              <span class="text-[11px] font-bold text-slate-500">Pilihan Cepat:</span>
+              <button type="button" @click="setWeeklyPreset('6days')" class="px-2.5 py-1 bg-white hover:bg-indigo-100 text-indigo-800 font-bold rounded-lg border border-indigo-200 text-[10px] transition-all cursor-pointer">
+                ⚡ 6 Hari Kerja (Libur Minggu Saja)
+              </button>
+              <button type="button" @click="setWeeklyPreset('5days')" class="px-2.5 py-1 bg-white hover:bg-indigo-100 text-indigo-800 font-bold rounded-lg border border-indigo-200 text-[10px] transition-all cursor-pointer">
+                ⚡ 5 Hari Kerja (Libur Sabtu & Minggu)
+              </button>
+              <button type="button" @click="setWeeklyPreset('pesantren')" class="px-2.5 py-1 bg-white hover:bg-indigo-100 text-indigo-800 font-bold rounded-lg border border-indigo-200 text-[10px] transition-all cursor-pointer">
+                ⚡ Libur Jumat & Minggu
+              </button>
+            </div>
+          </div>
+
+          <!-- Day Selection Checkbox Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <label
+              v-for="d in availableWeekDays"
+              :key="d.id"
+              :class="[weeklyHolidays.includes(d.id) ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100', 'p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all select-none']"
+            >
+              <div class="flex items-center gap-2.5">
+                <input
+                  type="checkbox"
+                  :value="d.id"
+                  v-model="weeklyHolidays"
+                  class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
+                />
+                <span class="text-xs font-bold">{{ d.name }}</span>
+              </div>
+              <span class="text-[10px] uppercase font-black opacity-80">{{ weeklyHolidays.includes(d.id) ? 'LIBUR' : 'MASUK' }}</span>
+            </label>
+          </div>
+
+          <div class="pt-4 flex justify-end gap-3 border-t border-slate-100">
+            <button
+              type="button"
+              @click="saveWeeklyHolidays"
+              :disabled="savingWeekly"
+              class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md transition-all cursor-pointer flex items-center gap-2"
+            >
+              <span>{{ savingWeekly ? 'Menyimpan...' : 'Simpan Hari Libur Mingguan' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Libur Nasional, PHBI & Kalender -->
+        <div v-if="holidayActiveTab === 'events'" class="p-6 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+          <!-- Top 1-Click Sync Card -->
+          <div class="p-5 bg-gradient-to-r from-emerald-900 to-teal-900 text-white rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md border border-emerald-500/30">
+            <div class="space-y-1">
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-[10px] font-black uppercase border border-emerald-400/30">
+                SINKRONISASI OTOMATIS T.A. 2026/2027
+              </span>
+              <h4 class="text-sm font-black font-lexend">Muat Libur Nasional, PHBI & Kalender Pendidikan</h4>
+              <p class="text-xs text-emerald-100/80">Otomatis mengisi Maulid Nabi, Isra Mi'raj, Idul Fitri, Idul Adha, 17 Agustus, Hari Santri, Hari Guru, dan Libur Semester.</p>
+            </div>
+            <button
+              type="button"
+              @click="syncNationalAndPhbi"
+              :disabled="syncingHolidays"
+              class="px-4.5 py-2.5 bg-white text-emerald-900 hover:bg-emerald-50 font-black rounded-xl text-xs shadow-md transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+            >
+              <span>{{ syncingHolidays ? 'Menyinkronkan...' : '⚡ Muat Otomatis Sekarang' }}</span>
+            </button>
+          </div>
+
+          <!-- Form Tambah Hari Libur Kustom -->
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
+            <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <span>+ Tambah Hari Libur Kustom / Khusus Madrasah</span>
+            </h4>
+            <form @submit.prevent="addCustomHoliday" class="space-y-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <label class="block text-[11px] font-bold text-slate-600">Tanggal Mulai *</label>
+                  <input v-model="newHolidayForm.start_date" type="date" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" required />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[11px] font-bold text-slate-600">Tanggal Selesai *</label>
+                  <input v-model="newHolidayForm.end_date" type="date" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" required />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-2 space-y-1">
+                  <label class="block text-[11px] font-bold text-slate-600">Nama Hari Libur / Keterangan *</label>
+                  <input v-model="newHolidayForm.title" type="text" placeholder="Contoh: Libur Cuti Bersama Madrasah" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" required />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[11px] font-bold text-slate-600">Kategori</label>
+                  <select v-model="newHolidayForm.type" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800">
+                    <option value="holiday">Hari Libur (PHBI / Nasional)</option>
+                    <option value="academic">Libur Semester / Akademik</option>
+                    <option value="exam">Ujian / Evaluasi</option>
+                    <option value="event">Kegiatan Khusus</option>
+                  </select>
+                </div>
+              </div>
+              <div class="flex justify-end pt-1">
+                <button type="submit" :disabled="savingNewHoliday" class="px-4.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md transition-all cursor-pointer">
+                  {{ savingNewHoliday ? 'Menyimpan...' : '+ Tambahkan ke Kalender' }}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Table of Holidays -->
+          <div class="space-y-2">
+            <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider">Daftar Hari Libur Terdaftar ({{ calendarEvents.length }} Hari)</h4>
+            <div class="border border-slate-100 rounded-2xl overflow-hidden shadow-2xs max-h-72 overflow-y-auto custom-scrollbar">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold text-[10px] uppercase">
+                  <tr>
+                    <th class="px-4 py-3">Rentang Tanggal</th>
+                    <th class="px-4 py-3">Nama Hari Libur / PHBI</th>
+                    <th class="px-4 py-3">Kategori</th>
+                    <th class="px-4 py-3 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr v-for="ev in calendarEvents" :key="ev.id" class="hover:bg-slate-50/80">
+                    <td class="px-4 py-2.5 font-mono font-bold text-slate-700 whitespace-nowrap">
+                      {{ ev.start_date === ev.end_date ? ev.start_date : `${ev.start_date} s/d ${ev.end_date}` }}
+                    </td>
+                    <td class="px-4 py-2.5 font-bold text-slate-800">{{ ev.title }}</td>
+                    <td class="px-4 py-2.5 whitespace-nowrap">
+                      <span :style="{ backgroundColor: (ev.color || '#10B981') + '22', color: ev.color || '#10B981' }" class="px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase">
+                        {{ ev.type || 'holiday' }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-2.5 text-center whitespace-nowrap">
+                      <button @click="removeHoliday(ev)" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" title="Hapus Libur">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="!calendarEvents.length">
+                    <td colspan="4" class="text-center py-8 text-slate-400 text-xs">
+                      Belum ada data hari libur. Klik "Muat Otomatis" di atas untuk mengisi kalender libur PHBI & Nasional.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -623,6 +853,143 @@ const showSettingsModal = ref(false);
 const showEditModal = ref(false);
 const savingEdit = ref(false);
 const selectedTeacherForEdit = ref(null);
+
+// Holiday Management State
+const holidayInfo = ref({
+  is_holiday: false,
+  holiday_name: '',
+  holiday_type: '',
+  is_weekly_holiday: false,
+});
+const showHolidaysModal = ref(false);
+const holidayActiveTab = ref('weekly'); // 'weekly' | 'events'
+const weeklyHolidays = ref(['sunday']);
+const calendarEvents = ref([]);
+const savingWeekly = ref(false);
+const syncingHolidays = ref(false);
+const savingNewHoliday = ref(false);
+
+const availableWeekDays = [
+  { id: 'monday', name: 'Senin' },
+  { id: 'tuesday', name: 'Selasa' },
+  { id: 'wednesday', name: 'Rabu' },
+  { id: 'thursday', name: 'Kamis' },
+  { id: 'friday', name: 'Jumat' },
+  { id: 'saturday', name: 'Sabtu' },
+  { id: 'sunday', name: 'Minggu' },
+];
+
+const newHolidayForm = reactive({
+  start_date: '',
+  end_date: '',
+  title: '',
+  type: 'holiday',
+  color: '#10B981',
+});
+
+function setWeeklyPreset(preset) {
+  if (preset === '6days') {
+    weeklyHolidays.value = ['sunday'];
+  } else if (preset === '5days') {
+    weeklyHolidays.value = ['saturday', 'sunday'];
+  } else if (preset === 'pesantren') {
+    weeklyHolidays.value = ['friday', 'sunday'];
+  }
+}
+
+async function openHolidaysModal() {
+  showHolidaysModal.value = true;
+  try {
+    const res = await api.get('admin/teacher-attendance-monitoring/holidays');
+    weeklyHolidays.value = res?.weekly_holidays || ['sunday'];
+    calendarEvents.value = res?.calendar_events || [];
+  } catch (err) {
+    console.error(err);
+    toast.error('Gagal memuat data hari libur.');
+  }
+}
+
+async function saveWeeklyHolidays() {
+  savingWeekly.value = true;
+  try {
+    const res = await api.post('admin/teacher-attendance-monitoring/weekly-holidays', {
+      weekly_holidays: weeklyHolidays.value,
+    });
+    toast.success(res.message || 'Hari libur mingguan berhasil disimpan!');
+    await loadMonitoring();
+  } catch (err) {
+    console.error(err);
+    toast.error(err.response?.data?.message || 'Gagal menyimpan hari libur mingguan.');
+  } finally {
+    savingWeekly.value = false;
+  }
+}
+
+async function syncNationalAndPhbi() {
+  const ok = await confirm({
+    title: 'Sinkronisasi Hari Libur Nasional & PHBI',
+    message: 'Apakah Anda ingin memuat otomatis seluruh daftar Hari Libur Nasional, PHBI, dan Libur Semester untuk Tahun Ajaran 2026/2027 ke Kalender Pendidikan?',
+    confirmText: 'Ya, Muat Otomatis',
+    cancelText: 'Batal',
+    type: 'primary'
+  });
+  if (!ok) return;
+
+  syncingHolidays.value = true;
+  try {
+    const res = await api.post('admin/teacher-attendance-monitoring/sync-holidays');
+    toast.success(res.message || 'Berhasil menyinkronkan libur nasional & PHBI!');
+    const hRes = await api.get('admin/teacher-attendance-monitoring/holidays');
+    calendarEvents.value = hRes?.calendar_events || [];
+    await loadMonitoring();
+  } catch (err) {
+    console.error(err);
+    toast.error(err.response?.data?.message || 'Gagal menyinkronkan hari libur.');
+  } finally {
+    syncingHolidays.value = false;
+  }
+}
+
+async function addCustomHoliday() {
+  savingNewHoliday.value = true;
+  try {
+    const res = await api.post('admin/teacher-attendance-monitoring/holidays', newHolidayForm);
+    toast.success(res.message || 'Hari libur berhasil ditambahkan!');
+    newHolidayForm.title = '';
+    newHolidayForm.start_date = '';
+    newHolidayForm.end_date = '';
+    const hRes = await api.get('admin/teacher-attendance-monitoring/holidays');
+    calendarEvents.value = hRes?.calendar_events || [];
+    await loadMonitoring();
+  } catch (err) {
+    console.error(err);
+    toast.error(err.response?.data?.message || 'Gagal menambahkan hari libur.');
+  } finally {
+    savingNewHoliday.value = false;
+  }
+}
+
+async function removeHoliday(ev) {
+  const ok = await confirm({
+    title: 'Hapus Hari Libur',
+    message: `Apakah Anda yakin ingin menghapus hari libur "${ev.title}" dari kalender?`,
+    confirmText: 'Ya, Hapus',
+    cancelText: 'Batal',
+    type: 'danger'
+  });
+  if (!ok) return;
+
+  try {
+    const res = await api.delete(`admin/teacher-attendance-monitoring/holidays/${ev.id}`);
+    toast.success(res.message || 'Hari libur dihapus.');
+    const hRes = await api.get('admin/teacher-attendance-monitoring/holidays');
+    calendarEvents.value = hRes?.calendar_events || [];
+    await loadMonitoring();
+  } catch (err) {
+    console.error(err);
+    toast.error('Gagal menghapus hari libur.');
+  }
+}
 
 const correctionRequests = ref([]);
 const processingReqId = ref(null);
@@ -774,6 +1141,7 @@ async function loadMonitoring() {
     setting.value = res?.setting || res?.data?.setting || setting.value;
     summary.value = res?.summary || res?.data?.summary || summary.value;
     teachers.value = res?.teachers || res?.data?.teachers || [];
+    holidayInfo.value = res?.holiday_info || res?.data?.holiday_info || { is_holiday: false };
 
     settingForm.latitude = setting.value.latitude;
     settingForm.longitude = setting.value.longitude;

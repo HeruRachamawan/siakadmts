@@ -16,6 +16,38 @@ class TeacherAttendanceMonitoringController extends Controller
         $date = $request->query('date', Carbon::today()->toDateString());
         $setting = SchoolSetting::getSetting();
 
+        $carbonDate = Carbon::parse($date);
+        $dayOfWeekEnglish = strtolower($carbonDate->format('l'));
+        $weeklyHolidays = $setting->weekly_holidays ?: ['sunday'];
+        
+        $isWeeklyHoliday = in_array($dayOfWeekEnglish, array_map('strtolower', $weeklyHolidays));
+        
+        // Check CalendarEvent
+        $calendarHoliday = \App\Models\CalendarEvent::where('start_date', '<=', $date)
+            ->where('end_date', '>=', $date)
+            ->first();
+
+        $isHoliday = $isWeeklyHoliday || !is_null($calendarHoliday);
+        $holidayName = null;
+        $holidayType = null;
+
+        if ($calendarHoliday) {
+            $holidayName = $calendarHoliday->title;
+            $holidayType = $calendarHoliday->type ?: 'holiday';
+        } elseif ($isWeeklyHoliday) {
+            $dayNamesIndo = [
+                'sunday' => 'Minggu',
+                'monday' => 'Senin',
+                'tuesday' => 'Selasa',
+                'wednesday' => 'Rabu',
+                'thursday' => 'Kamis',
+                'friday' => 'Jumat',
+                'saturday' => 'Sabtu',
+            ];
+            $holidayName = 'Hari Libur Mingguan (' . ($dayNamesIndo[$dayOfWeekEnglish] ?? $dayOfWeekEnglish) . ')';
+            $holidayType = 'weekly_holiday';
+        }
+
         // Get all teachers ordered chronologically
         $teachers = Teacher::with('user')->orderBy('id', 'asc')->get();
 
@@ -29,6 +61,7 @@ class TeacherAttendanceMonitoringController extends Controller
             'izin' => 0,
             'sakit' => 0,
             'tugas_luar' => 0,
+            'libur' => 0,
             'belum_absen' => 0,
         ];
 
@@ -36,7 +69,14 @@ class TeacherAttendanceMonitoringController extends Controller
 
         foreach ($teachers as $index => $t) {
             $att = $attendances->get($t->id);
-            $status = $att ? $att->status : 'belum_absen';
+            
+            if ($att) {
+                $status = $att->status;
+            } elseif ($isHoliday) {
+                $status = 'libur';
+            } else {
+                $status = 'belum_absen';
+            }
 
             if (isset($summary[$status])) {
                 $summary[$status]++;
@@ -64,8 +104,125 @@ class TeacherAttendanceMonitoringController extends Controller
         return response()->json([
             'date' => $date,
             'setting' => $setting,
+            'holiday_info' => [
+                'is_holiday' => $isHoliday,
+                'holiday_name' => $holidayName,
+                'holiday_type' => $holidayType,
+                'is_weekly_holiday' => $isWeeklyHoliday,
+            ],
             'summary' => $summary,
             'teachers' => $list,
+        ]);
+    }
+
+    public function getHolidays()
+    {
+        $setting = SchoolSetting::getSetting();
+        $holidays = \App\Models\CalendarEvent::orderBy('start_date', 'asc')->get();
+
+        return response()->json([
+            'weekly_holidays' => $setting->weekly_holidays ?: ['sunday'],
+            'calendar_events' => $holidays,
+        ]);
+    }
+
+    public function updateWeeklyHolidays(Request $request)
+    {
+        $request->validate([
+            'weekly_holidays' => 'required|array',
+            'weekly_holidays.*' => 'in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
+        ]);
+
+        $setting = SchoolSetting::getSetting();
+        $setting->weekly_holidays = $request->input('weekly_holidays');
+        $setting->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Hari libur mingguan berhasil diperbarui!',
+            'weekly_holidays' => $setting->weekly_holidays,
+        ]);
+    }
+
+    public function storeHoliday(Request $request)
+    {
+        $validated = $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'title' => 'required|string|max:255',
+            'type' => 'required|string|max:100',
+            'color' => 'nullable|string|max:30',
+        ]);
+
+        if (empty($validated['color'])) {
+            $validated['color'] = '#10B981';
+        }
+
+        $event = \App\Models\CalendarEvent::create($validated);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Hari libur \"{$event->title}\" berhasil ditambahkan!",
+            'data' => $event,
+        ]);
+    }
+
+    public function deleteHoliday($id)
+    {
+        $event = \App\Models\CalendarEvent::findOrFail($id);
+        $title = $event->title;
+        $event->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Hari libur \"{$title}\" berhasil dihapus.",
+        ]);
+    }
+
+    public function syncNationalAndPhbiHolidays()
+    {
+        $holidays = [
+            // Tahun Ajaran 2026 / 2027
+            ['start_date' => '2026-07-07', 'end_date' => '2026-07-18', 'title' => 'Libur Awal Tahun Ajaran Baru 2026/2027', 'type' => 'holiday', 'color' => '#6366F1'],
+            ['start_date' => '2026-08-17', 'end_date' => '2026-08-17', 'title' => 'HUT Kemerdekaan Republik Indonesia Ke-81', 'type' => 'holiday', 'color' => '#EF4444'],
+            ['start_date' => '2026-08-25', 'end_date' => '2026-08-25', 'title' => 'Maulid Nabi Muhammad SAW 1448 H (PHBI)', 'type' => 'holiday', 'color' => '#10B981'],
+            ['start_date' => '2026-10-22', 'end_date' => '2026-10-22', 'title' => 'Hari Santri Nasional (PHBI / Nasional)', 'type' => 'holiday', 'color' => '#059669'],
+            ['start_date' => '2026-11-25', 'end_date' => '2026-11-25', 'title' => 'Hari Guru Nasional & HUT PGRI', 'type' => 'holiday', 'color' => '#0284C7'],
+            ['start_date' => '2026-12-21', 'end_date' => '2027-01-02', 'title' => 'Libur Akhir Semester Ganjil T.A. 2026/2027', 'type' => 'holiday', 'color' => '#8B5CF6'],
+            ['start_date' => '2027-01-01', 'end_date' => '2027-01-01', 'title' => 'Tahun Baru Masehi 2027', 'type' => 'holiday', 'color' => '#3B82F6'],
+            ['start_date' => '2027-01-03', 'end_date' => '2027-01-03', 'title' => 'Hari Amal Bakti (HAB) Kementerian Agama RI', 'type' => 'holiday', 'color' => '#10B981'],
+            ['start_date' => '2027-02-05', 'end_date' => '2027-02-05', 'title' => 'Isra Mi\'raj Nabi Muhammad SAW 1448 H (PHBI)', 'type' => 'holiday', 'color' => '#10B981'],
+            ['start_date' => '2027-02-06', 'end_date' => '2027-02-06', 'title' => 'Tahun Baru Imlek 2578 Kongzili', 'type' => 'holiday', 'color' => '#F59E0B'],
+            ['start_date' => '2027-03-09', 'end_date' => '2027-03-09', 'title' => 'Hari Suci Nyepi Tahun Baru Saka 1949', 'type' => 'holiday', 'color' => '#D97706'],
+            ['start_date' => '2027-03-10', 'end_date' => '2027-03-13', 'title' => 'Libur Awal Ramadhan 1448 H (PHBI)', 'type' => 'holiday', 'color' => '#059669'],
+            ['start_date' => '2027-03-20', 'end_date' => '2027-03-28', 'title' => 'Hari Raya Idul Fitri 1448 H & Cuti Bersama (PHBI)', 'type' => 'holiday', 'color' => '#10B981'],
+            ['start_date' => '2027-03-26', 'end_date' => '2027-03-26', 'title' => 'Wafat Isa Al Masih (Jumat Agung)', 'type' => 'holiday', 'color' => '#64748B'],
+            ['start_date' => '2027-05-01', 'end_date' => '2027-05-01', 'title' => 'Hari Buruh Internasional (May Day)', 'type' => 'holiday', 'color' => '#EF4444'],
+            ['start_date' => '2027-05-06', 'end_date' => '2027-05-06', 'title' => 'Kenaikan Isa Al Masih', 'type' => 'holiday', 'color' => '#64748B'],
+            ['start_date' => '2027-05-20', 'end_date' => '2027-05-20', 'title' => 'Hari Raya Waisak 2571', 'type' => 'holiday', 'color' => '#F59E0B'],
+            ['start_date' => '2027-05-27', 'end_date' => '2027-05-29', 'title' => 'Hari Raya Idul Adha 1448 H & Hari Tasyrik (PHBI)', 'type' => 'holiday', 'color' => '#10B981'],
+            ['start_date' => '2027-06-01', 'end_date' => '2027-06-01', 'title' => 'Hari Lahir Pancasila', 'type' => 'holiday', 'color' => '#EF4444'],
+            ['start_date' => '2027-06-16', 'end_date' => '2027-06-16', 'title' => 'Tahun Baru Islam 1449 Hijriyah (PHBI)', 'type' => 'holiday', 'color' => '#10B981'],
+            ['start_date' => '2027-06-21', 'end_date' => '2027-07-10', 'title' => 'Libur Kenaikan Kelas / Akhir Tahun Pelajaran 2026/2027', 'type' => 'holiday', 'color' => '#8B5CF6'],
+        ];
+
+        $insertedCount = 0;
+        foreach ($holidays as $h) {
+            $exists = \App\Models\CalendarEvent::where('start_date', $h['start_date'])
+                ->where('title', $h['title'])
+                ->exists();
+
+            if (! $exists) {
+                \App\Models\CalendarEvent::create($h);
+                $insertedCount++;
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Berhasil menyinkronkan {$insertedCount} data Hari Libur Nasional & PHBI T.A. 2026/2027 ke Kalender Pendidikan!",
+            'inserted_count' => $insertedCount,
+            'total_holidays' => \App\Models\CalendarEvent::count(),
         ]);
     }
 

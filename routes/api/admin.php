@@ -76,6 +76,11 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum'])
     Route::post('teacher-attendance-requests/{id}/process', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'processRequest']);
     Route::get('teacher-presensi-qr', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'getSchoolQr']);
     Route::post('teacher-attendance-monitoring/scan-teacher-card', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'scanTeacherCard']);
+    Route::get('teacher-attendance-monitoring/holidays', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'getHolidays']);
+    Route::post('teacher-attendance-monitoring/weekly-holidays', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'updateWeeklyHolidays']);
+    Route::post('teacher-attendance-monitoring/holidays', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'storeHoliday']);
+    Route::delete('teacher-attendance-monitoring/holidays/{id}', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'deleteHoliday']);
+    Route::post('teacher-attendance-monitoring/sync-holidays', [\App\Http\Controllers\Admin\TeacherAttendanceMonitoringController::class, 'syncNationalAndPhbiHolidays']);
 
     // PPDB Management Routes (Admin & Panitia)
     Route::get('ppdb', [\App\Http\Controllers\Admin\PpdbController::class, 'index']);

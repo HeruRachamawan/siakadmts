@@ -44,6 +44,38 @@ class TeacherAttendanceController extends Controller
 
         $today = Carbon::today()->toDateString();
         $setting = SchoolSetting::getSetting();
+
+        $carbonDate = Carbon::today();
+        $dayOfWeekEnglish = strtolower($carbonDate->format('l'));
+        $weeklyHolidays = $setting->weekly_holidays ?: ['sunday'];
+        
+        $isWeeklyHoliday = in_array($dayOfWeekEnglish, array_map('strtolower', $weeklyHolidays));
+        
+        $calendarHoliday = \App\Models\CalendarEvent::where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->first();
+
+        $isHoliday = $isWeeklyHoliday || !is_null($calendarHoliday);
+        $holidayName = null;
+        $holidayType = null;
+
+        if ($calendarHoliday) {
+            $holidayName = $calendarHoliday->title;
+            $holidayType = $calendarHoliday->type ?: 'holiday';
+        } elseif ($isWeeklyHoliday) {
+            $dayNamesIndo = [
+                'sunday' => 'Minggu',
+                'monday' => 'Senin',
+                'tuesday' => 'Selasa',
+                'wednesday' => 'Rabu',
+                'thursday' => 'Kamis',
+                'friday' => 'Jumat',
+                'saturday' => 'Sabtu',
+            ];
+            $holidayName = 'Hari Libur Mingguan (' . ($dayNamesIndo[$dayOfWeekEnglish] ?? $dayOfWeekEnglish) . ')';
+            $holidayType = 'weekly_holiday';
+        }
+
         $attendance = TeacherAttendance::where('teacher_id', $teacher->id)
             ->where('date', $today)
             ->first();
@@ -51,6 +83,12 @@ class TeacherAttendanceController extends Controller
         return response()->json([
             'setting' => $setting,
             'today_date' => $today,
+            'holiday_info' => [
+                'is_holiday' => $isHoliday,
+                'holiday_name' => $holidayName,
+                'holiday_type' => $holidayType,
+                'is_weekly_holiday' => $isWeeklyHoliday,
+            ],
             'attendance' => $attendance,
             'teacher' => [
                 'id' => $teacher->id,
