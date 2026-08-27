@@ -64,14 +64,28 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem('activeRole', targetRole);
     },
 
-    startImpersonation(targetUser, targetToken) {
+    startImpersonation(param1, param2) {
+      let targetUser = null;
+      let targetToken = null;
+
+      if (typeof param1 === 'string' && typeof param2 === 'object') {
+        targetToken = param1;
+        targetUser = param2;
+      } else if (typeof param1 === 'object' && typeof param2 === 'string') {
+        targetUser = param1;
+        targetToken = param2;
+      } else {
+        targetUser = param1;
+        targetToken = param2;
+      }
+
       this.impersonatorToken = this.token;
       this.impersonatorUser = this.user;
       localStorage.setItem('impersonatorToken', this.token);
       localStorage.setItem('impersonatorUser', JSON.stringify(this.user));
 
       this.setAuth(targetUser, targetToken);
-      this.switchRole('teacher');
+      this.switchRole(targetUser?.role || 'teacher');
     },
 
     stopImpersonation() {

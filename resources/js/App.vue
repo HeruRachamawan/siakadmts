@@ -10,7 +10,7 @@
           MODE PENINJAUAN SUPERADMIN
         </span>
         <span class="text-xs font-semibold text-purple-100">
-          Anda sedang masuk sebagai Guru: <strong class="text-white font-bold">{{ user?.name || user?.full_name }}</strong> {{ user?.nip ? `(NIP: ${user.nip})` : '' }}
+          Anda sedang masuk sebagai {{ user?.role === 'student' ? 'Siswa' : 'Guru' }}: <strong class="text-white font-bold">{{ user?.name || user?.full_name }}</strong> {{ user?.nip ? `(NIP: ${user.nip})` : (user?.nisn ? `(NISN: ${user.nisn})` : '') }}
         </span>
       </div>
       <button
