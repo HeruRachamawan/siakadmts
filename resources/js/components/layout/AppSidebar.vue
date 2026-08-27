@@ -81,9 +81,9 @@
             </Transition>
           </RouterLink>
 
-          <!-- Pusat Cetak Dokumen (Admin & Operator TU) -->
+          <!-- Pusat Cetak Dokumen (Admin, Operator TU, & Waka Kurikulum) -->
           <RouterLink
-            v-if="user?.role === 'admin' || user?.role === 'operator'"
+            v-if="user?.role === 'admin' || user?.role === 'operator' || user?.role === 'kurikulum'"
             to="/admin/print-center"
             :title="isCollapsed ? 'Pusat Cetak Dokumen' : ''"
             class="nav-link"
