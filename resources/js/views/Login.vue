@@ -389,7 +389,7 @@ async function onSubmit() {
   try {
     const res = await authStore.login(form.username, form.password);
     const user = res.data?.user || res.data;
-    const isDual = (user?.teacher_id || user?.teacher) && ['operator', 'kurikulum', 'admin'].includes(user?.role);
+    const isDual = (user?.teacher_id || user?.teacher) && ['operator', 'kurikulum', 'admin', 'kepala_sekolah'].includes(user?.role);
 
     // If user selected the 'teacher' tab and has teacher profile, activate teacher mode
     if (selectedRoleTab.value === 'teacher' && (isDual || user?.role === 'teacher')) {
@@ -402,6 +402,7 @@ async function onSubmit() {
     let redirect = '/admin/dashboard';
     
     if (currentRole === 'admin') redirect = '/admin/dashboard';
+    else if (currentRole === 'kepala_sekolah') redirect = '/kepala-sekolah/dashboard';
     else if (currentRole === 'operator') redirect = '/operator/dashboard';
     else if (currentRole === 'kurikulum') redirect = '/kurikulum/dashboard';
     else if (currentRole === 'teacher') redirect = '/teacher/dashboard';

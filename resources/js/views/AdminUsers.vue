@@ -25,15 +25,20 @@
     </div>
 
     <!-- Summary Metrics Cards -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
       <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-1">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Staf & Jabatan</p>
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Staf</p>
         <p class="text-2xl font-black text-slate-800 font-lexend">{{ summary.total_staff || 0 }}</p>
       </div>
 
       <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-1">
         <p class="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Super Admin</p>
         <p class="text-2xl font-black text-purple-600 font-lexend">{{ summary.admin || 0 }}</p>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-1">
+        <p class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Kepala Madrasah</p>
+        <p class="text-2xl font-black text-indigo-600 font-lexend">{{ summary.kepala_sekolah || 0 }}</p>
       </div>
 
       <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-1">
@@ -47,7 +52,7 @@
       </div>
 
       <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-1">
-        <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Bendahara / Lainnya</p>
+        <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Bendahara</p>
         <p class="text-2xl font-black text-amber-600 font-lexend">{{ summary.bendahara || 0 }}</p>
       </div>
     </div>
@@ -96,7 +101,8 @@
         <div class="w-full sm:w-48">
           <select v-model="selectedRole" @change="onFilterChange" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-emerald-400/30">
             <option value="all">Semua Peran</option>
-            <option value="admin">Super Admin / Kepala</option>
+            <option value="admin">Super Admin</option>
+            <option value="kepala_sekolah">Kepala Madrasah</option>
             <option value="operator">Operator TU</option>
             <option value="kurikulum">Waka Kurikulum</option>
             <option value="bendahara">Bendahara</option>
@@ -168,6 +174,7 @@
               <td class="px-6 py-4">
                 <span :class="[
                   row.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-200' :
+                  row.role === 'kepala_sekolah' ? 'bg-indigo-100 text-indigo-800 border-indigo-200' :
                   row.role === 'operator' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
                   row.role === 'kurikulum' ? 'bg-blue-100 text-blue-800 border-blue-200' :
                   row.role === 'bendahara' ? 'bg-amber-100 text-amber-800 border-amber-200' :
@@ -178,6 +185,10 @@
                   <template v-if="row.role === 'admin'">
                     <ShieldCheck class="w-3.5 h-3.5 text-purple-600" />
                     <span>Super Admin</span>
+                  </template>
+                  <template v-else-if="row.role === 'kepala_sekolah'">
+                    <ShieldCheck class="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Kepala Madrasah</span>
                   </template>
                   <template v-else-if="row.role === 'operator'">
                     <Building class="w-3.5 h-3.5 text-emerald-600" />
@@ -347,7 +358,8 @@
               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400"
               required
             >
-              <option value="admin">Administrator (Superadmin / Kepala Madrasah)</option>
+              <option value="admin">Administrator (Superadmin)</option>
+              <option value="kepala_sekolah">Kepala Madrasah / Kepala Sekolah</option>
               <option value="operator">Operator / Tata Usaha (TU)</option>
               <option value="kurikulum">Waka Kurikulum</option>
               <option value="bendahara">Bendahara / Keuangan</option>
@@ -435,6 +447,7 @@ const activeScope = ref('staff'); // 'staff' | 'all'
 const summary = ref({
   total_staff: 0,
   admin: 0,
+  kepala_sekolah: 0,
   operator: 0,
   kurikulum: 0,
   bendahara: 0,

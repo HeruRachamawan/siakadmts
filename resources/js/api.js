@@ -121,4 +121,13 @@ export const api = {
   },
 };
 
+export function getImageUrl(path) {
+  if (!path) return '';
+  if (typeof path !== 'string') return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (path.startsWith('/storage/')) return path;
+  if (path.startsWith('storage/')) return `/${path}`;
+  return `/storage/${path}`;
+}
+
 export default api;

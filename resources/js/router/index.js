@@ -3,6 +3,7 @@ import { useAuthStore } from '../stores/auth';
 
 function roleDashboard(r) {
     if (r === 'admin') return '/admin/dashboard';
+    if (r === 'kepala_sekolah') return '/kepala-sekolah/dashboard';
     if (r === 'operator') return '/operator/dashboard';
     if (r === 'kurikulum') return '/kurikulum/dashboard';
     if (r === 'teacher') return '/teacher/dashboard';
@@ -15,9 +16,11 @@ const userFields = () => [
     { name: 'username', label: 'Username Login', type: 'text', placeholder: 'Contoh: operator, kurikulum, kepsek' },
     { name: 'password', label: 'Password', type: 'password', placeholder: 'Minimal 6 karakter' },
     { name: 'role', label: 'Peran Akun', type: 'select', options: [
-        { value: 'admin', label: 'Administrator (Superadmin / Kepala Madrasah)' },
+        { value: 'admin', label: 'Administrator (Superadmin)' },
+        { value: 'kepala_sekolah', label: 'Kepala Madrasah / Kepala Sekolah' },
         { value: 'operator', label: 'Operator / Tata Usaha (TU)' },
         { value: 'kurikulum', label: 'Waka Kurikulum' },
+        { value: 'bendahara', label: 'Bendahara' },
         { value: 'teacher', label: 'Guru Mata Pelajaran' },
         { value: 'student', label: 'Siswa' },
     ] },
@@ -46,34 +49,37 @@ const routes = [
     { path: '/register', component: () => import('../views/Register.vue'), meta: { requiresGuest: true, title: 'Registrasi Akun' } },
     { path: '/dashboard', component: () => import('../views/DashboardHome.vue'), meta: { requiresAuth: true, title: 'Dashboard' } },
 
+    // Kepala Madrasah Dedicated Route
+    { path: '/kepala-sekolah/dashboard', component: () => import('../views/KepalaSekolahDashboard.vue'), meta: { requiresAuth: true, roles: ['kepala_sekolah', 'admin'], title: 'Dashboard Kepala Madrasah' } },
+
     // Operator TU Dedicated Routes
     { path: '/operator/dashboard', component: () => import('../views/OperatorDashboard.vue'), meta: { requiresAuth: true, roles: ['operator', 'admin'], title: 'Dashboard Operator TU' } },
-    { path: '/operator/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['operator', 'admin'], title: 'Buku Agenda Persuratan' } },
+    { path: '/operator/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['operator', 'admin', 'kepala_sekolah'], title: 'Buku Agenda Persuratan' } },
 
     // Waka Kurikulum Dedicated Routes
     { path: '/kurikulum/dashboard', component: () => import('../views/KurikulumDashboard.vue'), meta: { requiresAuth: true, roles: ['kurikulum', 'admin'], title: 'Dashboard Waka Kurikulum' } },
-    { path: '/kurikulum/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['kurikulum', 'operator', 'admin'], title: 'Buku Agenda Persuratan' } },
+    { path: '/kurikulum/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['kurikulum', 'operator', 'admin', 'kepala_sekolah'], title: 'Buku Agenda Persuratan' } },
 
     // Admin & Shared Routes
     { path: '/admin/dashboard', component: () => import('../views/AdminDashboard.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Dashboard Admin' } },
-    { path: '/admin/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum'], title: 'Buku Agenda Persuratan' } },
-    { path: '/admin/ppdb', component: () => import('../views/AdminPpdb.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator'], title: 'Penerimaan Siswa (PPDB)' } },
+    { path: '/admin/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Buku Agenda Persuratan' } },
+    { path: '/admin/ppdb', component: () => import('../views/AdminPpdb.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kepala_sekolah'], title: 'Penerimaan Siswa (PPDB)' } },
     { path: '/admin/users', component: () => import('../views/AdminUsers.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Manajemen Pengguna & Jabatan' } },
-    { path: '/admin/students', component: () => import('../views/AdminStudents.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum'], title: 'Manajemen Data Siswa' } },
-    { path: '/admin/teachers', component: () => import('../views/AdminTeachers.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum'], title: 'Manajemen Data Guru' } },
-    { path: '/admin/classes', component: () => import('../views/AdminClasses.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Manajemen Kelas' } },
-    { path: '/admin/subjects', component: () => import('../views/AdminSubjects.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Mata Pelajaran' } },
-    { path: '/admin/schedules', component: () => import('../views/AdminSchedules.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Jadwal Pelajaran' } },
-    { path: '/admin/print-center', component: () => import('../views/AdminPrintCenter.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum'], title: 'Pusat Cetak Dokumen' } },
-    { path: '/admin/attendance-reports', component: () => import('../views/AdminAttendanceReports.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Rekap Presensi Siswa' } },
-    { path: '/admin/daily-student-attendance', component: () => import('../views/AdminDailyAttendanceMonitoring.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Monitoring Presensi Siswa' } },
-    { path: '/admin/teacher-presensi-monitoring', component: () => import('../views/AdminTeacherAttendanceMonitoring.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Monitoring Presensi Guru' } },
+    { path: '/admin/students', component: () => import('../views/AdminStudents.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Manajemen Data Siswa' } },
+    { path: '/admin/teachers', component: () => import('../views/AdminTeachers.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Manajemen Data Guru' } },
+    { path: '/admin/classes', component: () => import('../views/AdminClasses.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Manajemen Kelas' } },
+    { path: '/admin/subjects', component: () => import('../views/AdminSubjects.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Mata Pelajaran' } },
+    { path: '/admin/schedules', component: () => import('../views/AdminSchedules.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Jadwal Pelajaran' } },
+    { path: '/admin/print-center', component: () => import('../views/AdminPrintCenter.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Pusat Cetak Dokumen' } },
+    { path: '/admin/attendance-reports', component: () => import('../views/AdminAttendanceReports.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Rekap Presensi Siswa' } },
+    { path: '/admin/daily-student-attendance', component: () => import('../views/AdminDailyAttendanceMonitoring.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Monitoring Presensi Siswa' } },
+    { path: '/admin/teacher-presensi-monitoring', component: () => import('../views/AdminTeacherAttendanceMonitoring.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Monitoring Presensi Guru' } },
     { path: '/admin/settings', component: () => import('../views/AdminSettings.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Pengaturan Sekolah' } },
-    { path: '/admin/academic-years', component: () => import('../views/AdminAcademicYears.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Tahun Ajaran' } },
-    { path: '/admin/grades', component: () => import('../views/AdminGrades.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Rekap Nilai Siswa' } },
-    { path: '/admin/attendances', component: () => import('../views/AdminAttendances.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Presensi Siswa' } },
-    { path: '/admin/attendance', component: () => import('../views/TeacherAttendance.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum'], title: 'Presensi Harian' } },
-    { path: '/admin/profile', component: () => import('../views/AdminProfile.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum'], title: 'Profil Pengguna' } },
+    { path: '/admin/academic-years', component: () => import('../views/AdminAcademicYears.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Tahun Ajaran' } },
+    { path: '/admin/grades', component: () => import('../views/AdminGrades.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Rekap Nilai Siswa' } },
+    { path: '/admin/attendances', component: () => import('../views/AdminAttendances.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Presensi Siswa' } },
+    { path: '/admin/attendance', component: () => import('../views/TeacherAttendance.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Presensi Harian' } },
+    { path: '/admin/profile', component: () => import('../views/AdminProfile.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Profil Pengguna' } },
 
     { path: '/admin/posts', component: () => import('../components/CrudPage.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Berita & Informasi' }, props: { endpoint: 'admin/posts', resource: 'admin/posts', title: 'Berita & Artikel', formFields: postFields(), fields: postFields(), columns: [
         { label: 'Gambar', field: 'image' },

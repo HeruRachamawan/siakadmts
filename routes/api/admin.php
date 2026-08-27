@@ -14,7 +14,7 @@ use App\Http\Controllers\Admin\TeacherController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum'])
+Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -22,6 +22,7 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum'])
     Route::post('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('profile.update');
     Route::put('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update']);
     Route::get('dashboard', AdminDashboardController::class);
+    Route::get('kepala-sekolah/dashboard', [AdminDashboardController::class, 'kepalaSekolah']);
     
     Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index']);
     Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update']);

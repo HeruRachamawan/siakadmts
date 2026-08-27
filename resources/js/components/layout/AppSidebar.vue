@@ -48,7 +48,7 @@
             class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase"
             :class="currentRole === 'teacher' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-indigo-100 text-indigo-800 border border-indigo-200'"
           >
-            {{ currentRole === 'teacher' ? 'Dewan Guru' : (auth.primaryRole === 'kurikulum' ? 'Kurikulum' : 'Operator TU') }}
+            {{ currentRole === 'teacher' ? 'Dewan Guru' : (auth.primaryRole === 'kurikulum' ? 'Kurikulum' : (auth.primaryRole === 'kepala_sekolah' ? 'Kepala Madrasah' : 'Operator TU')) }}
           </span>
         </div>
         <button
@@ -57,7 +57,7 @@
           :class="currentRole === 'teacher' ? 'bg-white hover:bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-white hover:bg-emerald-50 text-emerald-700 border-emerald-200'"
         >
           <ArrowRightLeft class="w-3.5 h-3.5" />
-          <span>Ganti ke Mode {{ currentRole === 'teacher' ? (auth.primaryRole === 'kurikulum' ? 'Kurikulum' : 'Operator TU') : 'Guru' }}</span>
+          <span>Ganti ke Mode {{ currentRole === 'teacher' ? (auth.primaryRole === 'kurikulum' ? 'Kurikulum' : (auth.primaryRole === 'kepala_sekolah' ? 'Kepala Madrasah' : 'Operator TU')) : 'Guru' }}</span>
         </button>
       </div>
 
@@ -71,7 +71,7 @@
 
         <!-- Dashboard -->
         <RouterLink
-          :to="`/${currentRole === 'admin' ? 'admin' : (currentRole === 'operator' ? 'operator' : (currentRole === 'kurikulum' ? 'kurikulum' : (currentRole === 'teacher' ? 'teacher' : 'student')))}/dashboard`"
+          :to="`/${currentRole === 'admin' ? 'admin' : (currentRole === 'kepala_sekolah' ? 'kepala-sekolah' : (currentRole === 'operator' ? 'operator' : (currentRole === 'kurikulum' ? 'kurikulum' : (currentRole === 'teacher' ? 'teacher' : 'student'))))}/dashboard`"
           :title="isCollapsed ? 'Dashboard' : ''"
           class="nav-link"
           :class="isCollapsed ? 'justify-center' : ''"
@@ -83,8 +83,8 @@
           </Transition>
         </RouterLink>
 
-        <!-- 2. ADMINISTRASI & PERSURATAN (Admin, Operator TU, & Waka Kurikulum) -->
-        <template v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum'">
+        <!-- 2. ADMINISTRASI & PERSURATAN (Admin, Kepala Madrasah, Operator TU, & Waka Kurikulum) -->
+        <template v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum' || currentRole === 'kepala_sekolah'">
           <div v-if="!isCollapsed" class="nav-section">Administrasi & Persuratan</div>
           <div v-else class="my-1 border-t border-slate-200/50"></div>
 
@@ -188,8 +188,8 @@
           </RouterLink>
         </template>
 
-        <!-- 4. DATA MASTER (Admin, Operator, Kurikulum & Wali Kelas) -->
-        <template v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum' || (currentRole === 'teacher' && isHomeroomTeacher)">
+        <!-- 4. DATA MASTER (Admin, Kepala Madrasah, Operator, Kurikulum & Wali Kelas) -->
+        <template v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum' || currentRole === 'kepala_sekolah' || (currentRole === 'teacher' && isHomeroomTeacher)">
           <div v-if="!isCollapsed" class="nav-section">Data Master</div>
           <div v-else class="my-1 border-t border-slate-200/50"></div>
 
@@ -209,7 +209,7 @@
 
           <!-- Data Guru -->
           <RouterLink
-            v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum'"
+            v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum' || currentRole === 'kepala_sekolah'"
             to="/admin/teachers"
             :title="isCollapsed ? 'Data Guru' : ''"
             class="nav-link"
@@ -224,7 +224,7 @@
 
           <!-- Manajemen Kelas -->
           <RouterLink
-            v-if="currentRole === 'admin' || currentRole === 'kurikulum'"
+            v-if="currentRole === 'admin' || currentRole === 'kurikulum' || currentRole === 'kepala_sekolah'"
             to="/admin/classes"
             :title="isCollapsed ? 'Manajemen Kelas' : ''"
             class="nav-link"
@@ -239,7 +239,7 @@
 
           <!-- Tahun Ajaran -->
           <RouterLink
-            v-if="currentRole === 'admin' || currentRole === 'kurikulum'"
+            v-if="currentRole === 'admin' || currentRole === 'kurikulum' || currentRole === 'kepala_sekolah'"
             to="/admin/academic-years"
             :title="isCollapsed ? 'Tahun Ajaran' : ''"
             class="nav-link"
@@ -254,7 +254,7 @@
 
           <!-- Penerimaan Siswa Baru (PPDB) -->
           <RouterLink
-            v-if="currentRole === 'admin' || currentRole === 'operator'"
+            v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kepala_sekolah'"
             to="/admin/ppdb"
             :title="isCollapsed ? 'Penerimaan Siswa (PPDB)' : ''"
             class="nav-link bg-emerald-50/50 text-emerald-800 border border-emerald-200/60 font-semibold"
@@ -409,8 +409,8 @@
           </RouterLink>
         </template>
 
-        <!-- Admin Monitoring Links -->
-        <template v-if="currentRole === 'admin'">
+        <!-- Monitoring & Rekap (Admin & Kepala Madrasah) -->
+        <template v-if="currentRole === 'admin' || currentRole === 'kepala_sekolah'">
           <div v-if="!isCollapsed" class="nav-section">Monitoring & Rekap</div>
           <div v-else class="my-1 border-t border-slate-200/50"></div>
 

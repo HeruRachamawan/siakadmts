@@ -37,6 +37,7 @@ class UserController extends BaseController
         $summary = [
             'total_staff' => User::whereIn('role', ['admin', 'operator', 'kurikulum', 'bendahara', 'kepala_sekolah'])->count(),
             'admin' => User::where('role', 'admin')->count(),
+            'kepala_sekolah' => User::where('role', 'kepala_sekolah')->count(),
             'operator' => User::where('role', 'operator')->count(),
             'kurikulum' => User::where('role', 'kurikulum')->count(),
             'bendahara' => User::where('role', 'bendahara')->count(),
