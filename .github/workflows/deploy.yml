@@ -93,20 +93,24 @@ jobs:
             cd ~/$APP_DIR
 
             # Extract Frontend Assets
-            tar -xzf build.tar.gz
-            rm -f build.tar.gz
+            if [ -f "build.tar.gz" ]; then
+              tar -xzf build.tar.gz || true
+              rm -f build.tar.gz || true
+            fi
 
             # Extract Storage Public Assets (Logo, Guru, Siswa, Fasilitas)
-            mkdir -p storage/app/public
-            tar -xzf storage_public.tar.gz -C storage/app/public/
-            rm -f storage_public.tar.gz
+            if [ -f "storage_public.tar.gz" ]; then
+              mkdir -p storage/app/public
+              tar -xzf storage_public.tar.gz -C storage/app/public/ || true
+              rm -f storage_public.tar.gz || true
+            fi
 
             # Re-create Storage Link cleanly
-            rm -rf public/storage
-            php artisan storage:link
+            rm -rf public/storage || true
+            php artisan storage:link || true
 
             # Laravel Optimization & Migrations
-            php artisan optimize:clear
+            php artisan optimize:clear || true
             php artisan config:cache || true
             php artisan route:cache || true
             php artisan view:cache || true
