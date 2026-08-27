@@ -59,9 +59,20 @@
         </div>
 
         <!-- School Name & Active TA Badge Right -->
-        <div class="hidden lg:flex flex-col items-end justify-center border-l border-white/20 pl-6 space-y-1.5 flex-shrink-0">
-          <span class="text-xs font-semibold text-emerald-100 uppercase tracking-wider">{{ appSettings?.app_name || 'MTs AL - HASANAH' }}</span>
-          <span class="px-3.5 py-1.5 bg-white/20 text-white text-xs font-bold rounded-xl border border-white/30 backdrop-blur-md shadow-xs">T.A. 2026 / 2027</span>
+        <div class="flex flex-col sm:flex-row items-end justify-center gap-3 flex-shrink-0">
+          <button
+            v-if="auth.isDualRole"
+            @click="switchToStaff"
+            class="inline-flex items-center gap-2 px-3.5 py-2 bg-indigo-900/70 hover:bg-indigo-900 text-white text-xs font-bold rounded-xl border border-indigo-400/40 backdrop-blur-md shadow-xs transition-all active:scale-95 cursor-pointer"
+            :title="`Beralih ke Dashboard ${auth.primaryRole === 'kurikulum' ? 'Kurikulum' : 'Operator TU'}`"
+          >
+            <Building2 class="w-4 h-4 text-indigo-200" />
+            <span>Mode {{ auth.primaryRole === 'kurikulum' ? 'Kurikulum' : 'Operator TU' }} &rarr;</span>
+          </button>
+          <div class="hidden lg:flex flex-col items-end border-l border-white/20 pl-4 space-y-1">
+            <span class="text-xs font-semibold text-emerald-100 uppercase tracking-wider">{{ appSettings?.app_name || 'MTs AL - HASANAH' }}</span>
+            <span class="px-3.5 py-1 bg-white/20 text-white text-xs font-bold rounded-xl border border-white/30 backdrop-blur-md shadow-xs">T.A. 2026 / 2027</span>
+          </div>
         </div>
       </div>
     </div>
@@ -337,6 +348,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '../stores/auth';
 import { useToast } from '../composables/useToast';
@@ -358,7 +370,20 @@ import {
 
 const toast = useToast();
 const auth = useAuthStore();
+const router = useRouter();
 const { user } = storeToRefs(auth);
+
+function switchToStaff() {
+  const target = auth.primaryRole || 'operator';
+  auth.switchRole(target);
+  if (target === 'kurikulum') {
+    router.push('/kurikulum/dashboard');
+  } else if (target === 'operator') {
+    router.push('/operator/dashboard');
+  } else {
+    router.push('/admin/dashboard');
+  }
+}
 
 const loading = ref(true);
 const loadingAttendance = ref(true);

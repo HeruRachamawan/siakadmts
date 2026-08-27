@@ -70,6 +70,15 @@
             <Users class="w-4 h-4" />
             <span>Data Siswa</span>
           </RouterLink>
+
+          <button
+            v-if="auth.isDualRole"
+            @click="switchToTeacher"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500/30 hover:bg-emerald-500/50 text-white border border-emerald-300/40 backdrop-blur-md transition-all active:scale-95 shadow-xs cursor-pointer"
+          >
+            <GraduationCap class="w-4 h-4 text-emerald-200" />
+            <span>Mode Guru (Presensi/Nilai) &rarr;</span>
+          </button>
         </div>
       </div>
     </div>
@@ -128,7 +137,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import {
   FileText,
@@ -136,14 +145,21 @@ import {
   Send,
   Printer,
   Users,
-  UserCheck
+  UserCheck,
+  GraduationCap
 } from 'lucide-vue-next';
 import { api } from '../api';
 import AdminLetters from './AdminLetters.vue';
 
 const auth = useAuthStore();
+const router = useRouter();
 const stats = ref({});
 const livePhoto = ref(null);
+
+function switchToTeacher() {
+  auth.switchRole('teacher');
+  router.push('/teacher/dashboard');
+}
 
 const userPhoto = computed(() => {
   return livePhoto.value || auth.user?.teacher?.photo_url || auth.user?.teacher?.photo || auth.user?.photo_url || auth.user?.photo || auth.user?.avatar || null;

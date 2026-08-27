@@ -388,13 +388,24 @@ async function onSubmit() {
 
   try {
     const res = await authStore.login(form.username, form.password);
-    
-    const role = res.data?.user?.role || res.data?.role;
+    const user = res.data?.user || res.data;
+    const isDual = (user?.teacher_id || user?.teacher) && ['operator', 'kurikulum', 'admin'].includes(user?.role);
+
+    // If user selected the 'teacher' tab and has teacher profile, activate teacher mode
+    if (selectedRoleTab.value === 'teacher' && (isDual || user?.role === 'teacher')) {
+      authStore.switchRole('teacher');
+    } else if (selectedRoleTab.value === 'admin' && isDual) {
+      authStore.switchRole(user.role);
+    }
+
+    const currentRole = authStore.role;
     let redirect = '/admin/dashboard';
     
-    if (role === 'admin') redirect = '/admin/dashboard';
-    else if (role === 'teacher') redirect = '/teacher/dashboard';
-    else if (role === 'student') redirect = '/student/dashboard';
+    if (currentRole === 'admin') redirect = '/admin/dashboard';
+    else if (currentRole === 'operator') redirect = '/operator/dashboard';
+    else if (currentRole === 'kurikulum') redirect = '/kurikulum/dashboard';
+    else if (currentRole === 'teacher') redirect = '/teacher/dashboard';
+    else if (currentRole === 'student') redirect = '/student/dashboard';
 
     let target = redirect;
     if (route.query.redirect && route.query.redirect !== '/login' && route.query.redirect !== '/') {
