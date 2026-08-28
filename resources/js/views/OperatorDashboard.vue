@@ -179,13 +179,15 @@ async function loadStats() {
     const [letterRes, dashRes, profileRes] = await Promise.all([
       api.get('admin/letters').catch(() => null),
       api.get('admin/dashboard').catch(() => null),
-      api.get('teacher/profile').catch(() => null)
+      api.get('admin/profile').catch(() => null)
     ]);
     const d = dashRes?.data?.data || dashRes?.data || dashRes || {};
     const l = letterRes?.data?.stats || letterRes?.stats || letterRes?.data || {};
-    const p = profileRes?.data?.data || profileRes?.data?.teacher || profileRes?.data || {};
+    const p = profileRes?.data?.teacher || profileRes?.data?.user || profileRes?.teacher || profileRes?.user || {};
     if (p.photo_url || p.photo) {
       livePhoto.value = p.photo_url || p.photo;
+    } else {
+      livePhoto.value = null;
     }
     stats.value = {
       ...l,

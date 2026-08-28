@@ -575,18 +575,20 @@ async function loadKurikulumStats() {
     const [dashRes, letterRes, profileRes, classesRes] = await Promise.all([
       api.get('admin/dashboard').catch(() => null),
       api.get('admin/letters').catch(() => null),
-      api.get('teacher/profile').catch(() => null),
+      api.get('admin/profile').catch(() => null),
       api.get('admin/classes').catch(() => null)
     ]);
     const d = dashRes?.data?.data || dashRes?.data || dashRes || {};
     const l = letterRes?.data?.stats || letterRes?.stats || letterRes?.data || {};
-    const p = profileRes?.data?.data || profileRes?.data?.teacher || profileRes?.data || {};
+    const p = profileRes?.data?.teacher || profileRes?.data?.user || profileRes?.teacher || profileRes?.user || {};
     const cls = classesRes?.data?.data || classesRes?.data || classesRes || [];
 
     classList.value = Array.isArray(cls) ? cls : [];
 
     if (p.photo_url || p.photo) {
       livePhoto.value = p.photo_url || p.photo;
+    } else {
+      livePhoto.value = null;
     }
     stats.value = {
       schedules_count: d.schedules || 0,

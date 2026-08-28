@@ -14,11 +14,7 @@ class TeacherAttendanceController extends Controller
     private function getTeacher(Request $request)
     {
         $user = $request->user();
-        $teacher = Teacher::where('user_id', $user->id)->first();
-        if (!$teacher && $user->role === 'admin') {
-            $teacher = Teacher::first();
-        }
-        return $teacher;
+        return $user->teacher ?: Teacher::where('user_id', $user->id)->first();
     }
 
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)

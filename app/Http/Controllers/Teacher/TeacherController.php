@@ -14,12 +14,8 @@ class TeacherController extends BaseController
         $user = $request->user();
         $teacher = $user->teacher ?: Teacher::where('user_id', $user->id)->first();
 
-        if (!$teacher && in_array($user->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah'])) {
-            $teacher = Teacher::first();
-        }
-
         if (! $teacher) {
-            abort(403, 'Akun Anda bukan guru atau belum ditautkan dengan data guru.');
+            abort(403, 'Akun Anda belum ditautkan dengan data guru.');
         }
 
         return $teacher;
