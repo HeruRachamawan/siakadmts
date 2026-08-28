@@ -651,6 +651,25 @@
             </Transition>
           </RouterLink>
         </template>
+
+        <!-- 6. PROFIL & BIODATA STAF (Admin, Kurikulum, Operator, Kepala Madrasah, Bendahara) -->
+        <template v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum' || currentRole === 'kepala_sekolah' || currentRole === 'bendahara'">
+          <div v-if="!isCollapsed" class="nav-section">Akun & Profil</div>
+          <div v-else class="my-1 border-t border-slate-200/50"></div>
+
+          <RouterLink
+            to="/admin/profile"
+            :title="isCollapsed ? 'Profil & Biodata Diri' : ''"
+            class="nav-link bg-emerald-50/50 text-emerald-800 border border-emerald-200/60 font-semibold"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <UserCircle class="w-4 h-4 flex-shrink-0 text-emerald-600" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Profil & Biodata Diri</span>
+            </Transition>
+          </RouterLink>
+        </template>
       </nav>
 
       <!-- Bottom: Logout -->

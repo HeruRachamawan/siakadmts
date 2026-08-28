@@ -122,11 +122,11 @@
 
           <div class="py-1">
             <RouterLink
-              :to="`/${auth.role === 'admin' ? 'admin' : (auth.role === 'teacher' ? 'teacher' : (auth.role === 'kurikulum' ? 'kurikulum' : 'operator'))}/profile`"
+              :to="auth.role === 'student' ? '/student/profile' : (auth.role === 'teacher' ? '/teacher/profile' : '/admin/profile')"
               class="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition-colors"
             >
               <UserCircle class="w-4 h-4 text-emerald-600" />
-              <span>Profil Saya</span>
+              <span>Profil & Biodata Diri</span>
             </RouterLink>
 
             <button

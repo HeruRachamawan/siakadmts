@@ -79,7 +79,10 @@ const routes = [
     { path: '/admin/grades', component: () => import('../views/AdminGrades.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Rekap Nilai Siswa' } },
     { path: '/admin/attendances', component: () => import('../views/AdminAttendances.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Presensi Siswa' } },
     { path: '/admin/attendance', component: () => import('../views/TeacherAttendance.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Presensi Harian' } },
-    { path: '/admin/profile', component: () => import('../views/AdminProfile.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Profil Pengguna' } },
+    { path: '/admin/profile', component: () => import('../views/AdminProfile.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah', 'bendahara'], title: 'Profil & Biodata Diri' } },
+    { path: '/kurikulum/profile', redirect: '/admin/profile' },
+    { path: '/operator/profile', redirect: '/admin/profile' },
+    { path: '/kepala-sekolah/profile', redirect: '/admin/profile' },
 
     { path: '/admin/posts', component: () => import('../components/CrudPage.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Berita & Informasi' }, props: { endpoint: 'admin/posts', resource: 'admin/posts', title: 'Berita & Artikel', formFields: postFields(), fields: postFields(), columns: [
         { label: 'Gambar', field: 'image' },
