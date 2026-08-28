@@ -494,7 +494,26 @@ const filteredGroupedSchedules = computed(() => {
   const query = scheduleSearch.value.trim().toLowerCase();
   const classFilter = selectedClassFilter.value;
 
-  const filtered = schedules.value.filter(s => {
+  // Flatten general activities into per-class items if classList exists and no class_id
+  const expandedSchedules = [];
+  schedules.value.forEach(s => {
+    // If activity applies to all classes and we have classList
+    if (s.is_activity && !s.class_id && classList.value && classList.value.length > 0) {
+      classList.value.forEach(cls => {
+        expandedSchedules.push({
+          ...s,
+          id: `${s.id}-cls-${cls.id}`,
+          class_id: cls.id,
+          class_room: cls,
+          classRoom: cls,
+        });
+      });
+    } else {
+      expandedSchedules.push(s);
+    }
+  });
+
+  const filtered = expandedSchedules.filter(s => {
     // Filter by class
     if (classFilter && (s.class_id != classFilter && s.class_room?.id != classFilter && s.classRoom?.id != classFilter)) {
       return false;
@@ -516,18 +535,20 @@ const filteredGroupedSchedules = computed(() => {
   // Group by Start - End Time
   const groupsMap = {};
   filtered.forEach(item => {
-    const slot = `${(item.start_time || '00:00').substring(0, 5)} - ${(item.end_time || '00:00').substring(0, 5)}`;
+    const rawStart = (item.start_time || '00:00').substring(0, 5);
+    const rawEnd = (item.end_time || '00:00').substring(0, 5);
+    const slot = `${rawStart} - ${rawEnd}`;
     if (!groupsMap[slot]) {
       groupsMap[slot] = {
         timeSlot: slot,
-        startTime: item.start_time || '00:00',
+        startTime: rawStart,
         items: []
       };
     }
     groupsMap[slot].items.push(item);
   });
 
-  // Sort groups chronologically by start time
+  // Sort groups chronologically by start time (e.g. 07:00 -> 08:30 -> 10:10 -> 12:00)
   return Object.values(groupsMap).sort((a, b) => a.startTime.localeCompare(b.startTime));
 });
 

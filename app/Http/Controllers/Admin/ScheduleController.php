@@ -106,6 +106,8 @@ class ScheduleController extends Controller
 
     public function generateGeneralActivities(Request $request)
     {
+        $classes = ClassRoom::all();
+
         $activities = [
             // SENIN
             ['day' => 'senin', 'start_time' => '07:00', 'end_time' => '07:30', 'activity_name' => 'UPACARA BENDERA', 'activity_type' => 'upacara'],
@@ -139,33 +141,52 @@ class ScheduleController extends Controller
             ['day' => 'sabtu', 'start_time' => '12:00', 'end_time' => '12:20', 'activity_name' => "SHALAT DZUHUR BERJAMA'AH", 'activity_type' => 'religi'],
         ];
 
+        // First clean up corrupt entries like 22:31 or duplicate activity entries
+        Schedule::where('is_activity', true)
+            ->where(function($q) {
+                $q->where('start_time', '>', '18:00')
+                  ->orWhere('activity_name', 'like', '%ISTIRAHAT%')
+                  ->orWhere('activity_name', 'like', '%istirahat%')
+                  ->orWhere('activity_name', 'like', '%UPACARA%')
+                  ->orWhere('activity_name', 'like', '%upacara%')
+                  ->orWhere('activity_name', 'like', '%SHALAT%')
+                  ->orWhere('activity_name', 'like', '%sholat%')
+                  ->orWhere('activity_name', 'like', '%TADARUS%');
+            })
+            ->delete();
+
         $created = 0;
         foreach ($activities as $act) {
-            Schedule::updateOrCreate(
-                [
+            if ($classes->count() > 0) {
+                foreach ($classes as $cls) {
+                    Schedule::create([
+                        'day' => $act['day'],
+                        'start_time' => $act['start_time'],
+                        'end_time' => $act['end_time'],
+                        'activity_name' => $act['activity_name'],
+                        'activity_type' => $act['activity_type'],
+                        'is_activity' => true,
+                        'class_id' => $cls->id,
+                    ]);
+                    $created++;
+                }
+            } else {
+                Schedule::create([
                     'day' => $act['day'],
                     'start_time' => $act['start_time'],
-                    'is_activity' => true,
-                    'class_id' => null,
-                ],
-                [
                     'end_time' => $act['end_time'],
                     'activity_name' => $act['activity_name'],
                     'activity_type' => $act['activity_type'],
-                ]
-            );
-            $created++;
+                    'is_activity' => true,
+                    'class_id' => null,
+                ]);
+                $created++;
+            }
         }
-
-        // Clean up any stray single-class activity with name ISTIRAHAT or UPACARA so it doesn't duplicate
-        Schedule::where('is_activity', true)
-            ->whereNotNull('class_id')
-            ->whereIn('activity_name', ['ISTIRAHAT', 'Istirahat', 'UPACARA BENDERA', 'Upacara Bendera', "SHALAT DZUHUR BERJAMA'AH"])
-            ->delete();
 
         return response()->json([
             'status' => 'success',
-            'message' => "Berhasil menyinkronkan {$created} jadwal kegiatan resmi (Upacara, Istirahat, & Sholat) untuk semua kelas!",
+            'message' => "Berhasil menyinkronkan {$created} jadwal kegiatan resmi (Upacara, Istirahat, & Sholat) untuk seluruh kelas!",
         ]);
     }
 
