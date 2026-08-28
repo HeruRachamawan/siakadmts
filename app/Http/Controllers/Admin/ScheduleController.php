@@ -34,6 +34,9 @@ class ScheduleController extends Controller
             $query->where('is_activity', filter_var($request->is_activity, FILTER_VALIDATE_BOOLEAN));
         }
 
+        // Filter out any corrupted nighttime hours (e.g. 22:31)
+        $query->where('start_time', '<=', '18:00');
+
         $schedules = $query->orderBy('day')->orderBy('start_time')->get();
 
         return response()->json([
