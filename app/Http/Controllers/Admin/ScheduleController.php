@@ -104,6 +104,71 @@ class ScheduleController extends Controller
         ]);
     }
 
+    public function generateGeneralActivities(Request $request)
+    {
+        $activities = [
+            // SENIN
+            ['day' => 'senin', 'start_time' => '07:00', 'end_time' => '07:30', 'activity_name' => 'UPACARA BENDERA', 'activity_type' => 'upacara'],
+            ['day' => 'senin', 'start_time' => '07:30', 'end_time' => '07:50', 'activity_name' => "TADARUSAN AL-QUR'AN", 'activity_type' => 'religi'],
+            ['day' => 'senin', 'start_time' => '10:30', 'end_time' => '11:00', 'activity_name' => 'ISTIRAHAT', 'activity_type' => 'istirahat'],
+            ['day' => 'senin', 'start_time' => '12:20', 'end_time' => '12:40', 'activity_name' => "SHALAT DZUHUR BERJAMA'AH", 'activity_type' => 'religi'],
+
+            // SELASA
+            ['day' => 'selasa', 'start_time' => '07:00', 'end_time' => '07:30', 'activity_name' => "TADARUSAN AL-QUR'AN", 'activity_type' => 'religi'],
+            ['day' => 'selasa', 'start_time' => '10:10', 'end_time' => '10:40', 'activity_name' => 'ISTIRAHAT', 'activity_type' => 'istirahat'],
+            ['day' => 'selasa', 'start_time' => '12:00', 'end_time' => '12:20', 'activity_name' => "SHALAT DZUHUR BERJAMA'AH", 'activity_type' => 'religi'],
+
+            // RABU
+            ['day' => 'rabu', 'start_time' => '07:00', 'end_time' => '07:30', 'activity_name' => "TADARUSAN AL-QUR'AN", 'activity_type' => 'religi'],
+            ['day' => 'rabu', 'start_time' => '10:10', 'end_time' => '10:40', 'activity_name' => 'ISTIRAHAT', 'activity_type' => 'istirahat'],
+            ['day' => 'rabu', 'start_time' => '12:00', 'end_time' => '12:20', 'activity_name' => "SHALAT DZUHUR BERJAMA'AH", 'activity_type' => 'religi'],
+
+            // KAMIS
+            ['day' => 'kamis', 'start_time' => '07:00', 'end_time' => '07:30', 'activity_name' => "TADARUSAN AL-QUR'AN", 'activity_type' => 'religi'],
+            ['day' => 'kamis', 'start_time' => '10:10', 'end_time' => '10:40', 'activity_name' => 'ISTIRAHAT', 'activity_type' => 'istirahat'],
+            ['day' => 'kamis', 'start_time' => '12:00', 'end_time' => '12:20', 'activity_name' => "SHALAT DZUHUR BERJAMA'AH", 'activity_type' => 'religi'],
+
+            // JUMAT
+            ['day' => 'jumat', 'start_time' => '07:00', 'end_time' => '07:45', 'activity_name' => "SHOLAT DHUHA & YASINAN", 'activity_type' => 'religi'],
+            ['day' => 'jumat', 'start_time' => '09:45', 'end_time' => '10:15', 'activity_name' => 'ISTIRAHAT', 'activity_type' => 'istirahat'],
+            ['day' => 'jumat', 'start_time' => '11:00', 'end_time' => '12:30', 'activity_name' => "SHALAT JUM'AT BERJAMA'AH", 'activity_type' => 'religi'],
+
+            // SABTU
+            ['day' => 'sabtu', 'start_time' => '07:00', 'end_time' => '07:30', 'activity_name' => "TADARUSAN AL-QUR'AN", 'activity_type' => 'religi'],
+            ['day' => 'sabtu', 'start_time' => '10:10', 'end_time' => '10:40', 'activity_name' => 'ISTIRAHAT', 'activity_type' => 'istirahat'],
+            ['day' => 'sabtu', 'start_time' => '12:00', 'end_time' => '12:20', 'activity_name' => "SHALAT DZUHUR BERJAMA'AH", 'activity_type' => 'religi'],
+        ];
+
+        $created = 0;
+        foreach ($activities as $act) {
+            Schedule::updateOrCreate(
+                [
+                    'day' => $act['day'],
+                    'start_time' => $act['start_time'],
+                    'is_activity' => true,
+                    'class_id' => null,
+                ],
+                [
+                    'end_time' => $act['end_time'],
+                    'activity_name' => $act['activity_name'],
+                    'activity_type' => $act['activity_type'],
+                ]
+            );
+            $created++;
+        }
+
+        // Clean up any stray single-class activity with name ISTIRAHAT or UPACARA so it doesn't duplicate
+        Schedule::where('is_activity', true)
+            ->whereNotNull('class_id')
+            ->whereIn('activity_name', ['ISTIRAHAT', 'Istirahat', 'UPACARA BENDERA', 'Upacara Bendera', "SHALAT DZUHUR BERJAMA'AH"])
+            ->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Berhasil menyinkronkan {$created} jadwal kegiatan resmi (Upacara, Istirahat, & Sholat) untuk semua kelas!",
+        ]);
+    }
+
     private function validateSchedule(Request $request)
     {
         return $request->validate([

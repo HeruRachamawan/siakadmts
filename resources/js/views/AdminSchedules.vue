@@ -16,6 +16,19 @@
 
       <div class="flex items-center gap-2.5 flex-wrap">
         <button
+          @click="syncOfficialActivities"
+          :disabled="syncingActivities"
+          class="px-4 py-2.5 bg-amber-50 border border-amber-200 text-amber-800 font-bold rounded-xl text-xs hover:bg-amber-100 transition-colors flex items-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
+          title="Sinkronkan Otomatis Jam Upacara, Istirahat & Sholat Dzuhur untuk Semua Kelas"
+        >
+          <span v-if="!syncingActivities">✨ Sinkronkan Kegiatan Resmi</span>
+          <span v-else class="flex items-center gap-1.5">
+            <svg class="animate-spin h-3.5 w-3.5 text-amber-700" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" stroke="currentColor" stroke-width="4" d="M4 12a8 8 0 1116 0 8 8 0 01-16 0m8-4v4l3 3m0-7l-3 3"></circle></svg>
+            Menyinkronkan...
+          </span>
+        </button>
+
+        <button
           @click="exportExcelSchedules"
           class="px-4 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold rounded-xl text-xs hover:bg-emerald-100 transition-colors flex items-center gap-2 shadow-sm cursor-pointer"
         >
@@ -481,11 +494,36 @@ const settings = ref({});
 
 const loading = ref(true);
 const submitting = ref(false);
+const syncingActivities = ref(false);
 const showModal = ref(false);
 const showPrintModal = ref(false);
 const isEditing = ref(false);
 const editingId = ref(null);
 const conflictError = ref('');
+
+const syncOfficialActivities = async () => {
+  const isConfirmed = await confirm({
+    title: 'Sinkronkan Kegiatan Resmi Madrasah?',
+    message: 'Sistem akan otomatis mengatur jadwal Upacara Bendera, Tadarus, Istirahat, dan Sholat Dzuhur/Jumat untuk SEMUA KELAS sesuai standar waktu kurikulum.',
+    confirmText: 'Ya, Sinkronkan Sekarang',
+    cancelText: 'Batal',
+    type: 'primary'
+  });
+
+  if (!isConfirmed) return;
+
+  syncingActivities.value = true;
+  try {
+    const res = await api.post('admin/schedules/generate-general-activities');
+    toast.success(res?.message || 'Kegiatan resmi madrasah berhasil disinkronkan!');
+    await fetchSchedules();
+  } catch (err) {
+    console.error('Error syncing activities:', err);
+    toast.error('Gagal menyinkronkan kegiatan resmi.');
+  } finally {
+    syncingActivities.value = false;
+  }
+};
 
 const selectedClass = ref('');
 const selectedTeacher = ref('');

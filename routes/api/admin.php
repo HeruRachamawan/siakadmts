@@ -64,6 +64,7 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::get('attendance-reports', [\App\Http\Controllers\Admin\AttendanceReportController::class, 'index']);
     Route::get('attendance-monitoring', [\App\Http\Controllers\Admin\AttendanceReportController::class, 'monitoring']);
     Route::get('daily-student-attendance', [\App\Http\Controllers\Admin\DailyAttendanceMonitoringController::class, 'index']);
+    Route::post('schedules/generate-general-activities', [\App\Http\Controllers\Admin\ScheduleController::class, 'generateGeneralActivities']);
     Route::apiResource('schedules', \App\Http\Controllers\Admin\ScheduleController::class);
     Route::apiResource('posts', PostController::class);
     Route::apiResource('galleries', GalleryController::class);
