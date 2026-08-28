@@ -10,18 +10,6 @@ use Illuminate\Validation\Rule;
 
 class ProfileController extends TeacherController
 {
-    protected function resolveTeacher(Request $request): ?Teacher
-    {
-        $user = $request->user();
-        if (!$user) return null;
-
-        $teacher = $user->teacher ?: Teacher::where('user_id', $user->id)->first();
-        if (!$teacher && in_array($user->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah'])) {
-            $teacher = Teacher::first();
-        }
-        return $teacher;
-    }
-
     public function show(Request $request)
     {
         $teacher = $this->resolveTeacher($request);
