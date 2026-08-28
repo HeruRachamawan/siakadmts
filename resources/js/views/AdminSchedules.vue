@@ -564,8 +564,20 @@ const yaspinSelasaSabtuSlots = [
   { no: '8', start: '12.00', end: '12.20', isGeneral: true, title: 'SHALAT DZUHUR BERJAMA\'AH' },
 ];
 
+const yaspinJumatSlots = [
+  { no: '0', start: '07.00', end: '07.45', isGeneral: true, title: 'SHOLAT DHUHA & YASINAN' },
+  { no: '1', start: '07.45', end: '08.25', isSlot: true },
+  { no: '2', start: '08.25', end: '09.05', isSlot: true },
+  { no: '3', start: '09.05', end: '09.45', isSlot: true },
+  { no: '4', start: '09.45', end: '10.15', isBreak: true, title: 'ISTIRAHAT JUM\'AT' },
+  { no: '5', start: '10.15', end: '10.55', isSlot: true },
+  { no: '6', start: '11.00', end: '12.30', isGeneral: true, title: 'SHALAT JUM\'AT BERJAMA\'AH' },
+];
+
 const activeYaspinSlots = computed(() => {
-  return activeYaspinDay.value === 'senin' ? yaspinSeninSlots : yaspinSelasaSabtuSlots;
+  if (activeYaspinDay.value === 'senin') return yaspinSeninSlots;
+  if (activeYaspinDay.value === 'jumat') return yaspinJumatSlots;
+  return yaspinSelasaSabtuSlots;
 });
 
 const filteredClasses = computed(() => {
