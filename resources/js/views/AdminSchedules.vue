@@ -230,6 +230,48 @@
 
           <!-- Activity Form Fields -->
           <template v-if="form.is_activity">
+            <!-- Quick Activity Presets -->
+            <div class="space-y-1">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Template Cepat Kegiatan Sekolah:</label>
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  @click="applyActivityPreset('Upacara Bendera', 'upacara', '07:00', '07:45')"
+                  class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold rounded-lg transition-colors cursor-pointer"
+                >
+                  🇮🇩 Upacara
+                </button>
+                <button
+                  type="button"
+                  @click="applyActivityPreset('Istirahat', 'istirahat', '09:40', '10:10')"
+                  class="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 text-[11px] font-bold rounded-lg transition-colors cursor-pointer"
+                >
+                  ☕ Istirahat
+                </button>
+                <button
+                  type="button"
+                  @click="applyActivityPreset('Sholat Dzuhur Berjamaah', 'religi', '11:50', '12:30')"
+                  class="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-[11px] font-bold rounded-lg transition-colors cursor-pointer"
+                >
+                  🕌 Sholat Dzuhur
+                </button>
+                <button
+                  type="button"
+                  @click="applyActivityPreset('Sholat Dhuha & Tadarus', 'religi', '07:00', '07:30')"
+                  class="px-2.5 py-1 bg-teal-100 hover:bg-teal-200 text-teal-900 text-[11px] font-bold rounded-lg transition-colors cursor-pointer"
+                >
+                  📿 Dhuha & Tadarus
+                </button>
+                <button
+                  type="button"
+                  @click="applyActivityPreset('Senam Pagi & Kebersihan', 'kokurikuler', '07:00', '07:45')"
+                  class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-900 text-[11px] font-bold rounded-lg transition-colors cursor-pointer"
+                >
+                  🏃 Senam Pagi
+                </button>
+              </div>
+            </div>
+
             <div class="space-y-1">
               <label class="block text-[11px] font-bold text-slate-600 uppercase">Nama Kegiatan</label>
               <input v-model="form.activity_name" type="text" placeholder="Contoh: Upacara Bendera, Sholat Dzuhur, Pramuka" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 font-medium" required />
@@ -513,6 +555,14 @@ const openYaspinSlot = (dayKey, classId, slot) => {
   form.class_id = classId;
   form.start_time = slot.start.replace('.', ':');
   form.end_time = slot.end.replace('.', ':');
+};
+
+const applyActivityPreset = (name, type, start, end) => {
+  form.activity_name = name;
+  form.activity_type = type;
+  form.class_id = null; // Applies to All Classes
+  if (start) form.start_time = start;
+  if (end) form.end_time = end;
 };
 
 const form = reactive({
