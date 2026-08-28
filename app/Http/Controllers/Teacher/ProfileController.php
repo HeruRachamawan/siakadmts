@@ -10,15 +10,12 @@ use Illuminate\Validation\Rule;
 
 class ProfileController extends TeacherController
 {
-    protected function resolveTeacher(Request $request): Teacher
+    protected function resolveTeacher(Request $request): ?Teacher
     {
         $user = $request->user();
-        $teacher = Teacher::where('user_id', $user->id)->first();
-        if (!$teacher && $user->role === 'admin') {
+        $teacher = $user->teacher ?: Teacher::where('user_id', $user->id)->first();
+        if (!$teacher && in_array($user->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah'])) {
             $teacher = Teacher::first();
-        }
-        if (!$teacher) {
-            abort(404, 'Data profil guru tidak ditemukan.');
         }
         return $teacher;
     }
@@ -27,7 +24,7 @@ class ProfileController extends TeacherController
     {
         $teacher = $this->resolveTeacher($request);
         if (!$teacher) {
-            return $this->error('Data profil guru tidak ditemukan', 404);
+            return $this->error('Data profil guru tidak ditemukan atau belum ditautkan.', 404);
         }
 
         return $this->success([
