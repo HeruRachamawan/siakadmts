@@ -773,16 +773,95 @@ const getTargetClassesForSchedule = () => {
   return classes.value;
 };
 
+const dayTimeSlotMap = {
+  senin: {
+    '1': '07:50',
+    '2': '08:30',
+    '3': '09:10',
+    '4': '09:50',
+    '6': '11:00',
+    '7': '11:40',
+  },
+  selasa: {
+    '1': '07:30',
+    '2': '08:10',
+    '3': '08:50',
+    '4': '09:30',
+    '6': '10:40',
+    '7': '11:20',
+  },
+  rabu: {
+    '1': '07:30',
+    '2': '08:10',
+    '3': '08:50',
+    '4': '09:30',
+    '6': '10:40',
+    '7': '11:20',
+  },
+  kamis: {
+    '1': '07:30',
+    '2': '08:10',
+    '3': '08:50',
+    '4': '09:30',
+    '6': '10:40',
+    '7': '11:20',
+  },
+  jumat: {
+    '1': '07:45',
+    '2': '08:25',
+    '3': '09:05',
+    '6': '10:15',
+  },
+  sabtu: {
+    '1': '07:30',
+    '2': '08:10',
+    '3': '08:50',
+    '4': '09:30',
+    '6': '10:40',
+    '7': '11:20',
+  },
+};
+
+const lessonSlotIndexMap = {
+  '1': 0,
+  '2': 1,
+  '3': 2,
+  '4': 3,
+  '6': 4,
+  '7': 5,
+};
+
 const getSingleScheduleCell = (classId, day, slot) => {
-  return schedules.value.find(s => {
-    const isSameClass = (s.class_id == classId || s.class_id === null);
-    const isSameDay = s.day?.toLowerCase() === day.toLowerCase();
-    if (!isSameClass || !isSameDay) return false;
-    if (!s.start_time || !s.end_time) return false;
-    const sNorm = s.start_time.replace('.', ':').substring(0, 5);
-    const slotStart = slot.start.replace('.', ':');
-    return sNorm === slotStart;
-  }) || null;
+  const dayKey = (day || '').toLowerCase();
+
+  // 1. Get all subject lessons (non-activities) for this class & day, sorted chronologically
+  const dayLessons = schedules.value
+    .filter(s => {
+      const isSameClass = (s.class_id == classId || s.class_id === null);
+      const isSameDay = (s.day || '').toLowerCase() === dayKey;
+      return isSameClass && isSameDay && !s.is_activity;
+    })
+    .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+
+  // 2. Try exact match by mapped start time for this day
+  const mappedStart = dayTimeSlotMap[dayKey]?.[slot.no];
+  if (mappedStart) {
+    const foundByMapped = dayLessons.find(s => (s.start_time || '').replace('.', ':').substring(0, 5) === mappedStart);
+    if (foundByMapped) return foundByMapped;
+  }
+
+  // 3. Try matching generic slot.start
+  const genericStart = (slot.start || '').replace('.', ':').substring(0, 5);
+  const foundByGeneric = dayLessons.find(s => (s.start_time || '').replace('.', ':').substring(0, 5) === genericStart);
+  if (foundByGeneric) return foundByGeneric;
+
+  // 4. Fallback: match by lesson order index (e.g. 1st lesson = Slot 1, 2nd lesson = Slot 2, etc.)
+  const targetIndex = lessonSlotIndexMap[slot.no];
+  if (targetIndex !== undefined && dayLessons[targetIndex]) {
+    return dayLessons[targetIndex];
+  }
+
+  return null;
 };
 
 // Filtered Students for Print Tab
