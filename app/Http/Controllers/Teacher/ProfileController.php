@@ -13,6 +13,8 @@ class ProfileController extends TeacherController
     protected function resolveTeacher(Request $request): ?Teacher
     {
         $user = $request->user();
+        if (!$user) return null;
+
         $teacher = $user->teacher ?: Teacher::where('user_id', $user->id)->first();
         if (!$teacher && in_array($user->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah'])) {
             $teacher = Teacher::first();
@@ -27,15 +29,17 @@ class ProfileController extends TeacherController
             return $this->error('Data profil guru tidak ditemukan atau belum ditautkan.', 404);
         }
 
+        $user = $teacher->user ?: $request->user();
+
         return $this->success([
             'user' => [
-                'id' => $teacher->user->id ?? null,
-                'name' => $teacher->user->name ?? null,
-                'username' => $teacher->user->username ?? null,
-                'email' => $teacher->user->email ?? null,
-                'role' => $teacher->user->role ?? 'teacher',
+                'id' => $user->id ?? null,
+                'name' => $user->name ?? $teacher->full_name,
+                'username' => $user->username ?? $teacher->nip,
+                'email' => $user->email ?? null,
+                'role' => $user->role ?? 'teacher',
             ],
-            'teacher' => $teacher->load(['subjects', 'classes.academicYear']),
+            'teacher' => $teacher->loadMissing(['subjects', 'classes.academicYear']),
         ]);
     }
 
@@ -43,25 +47,21 @@ class ProfileController extends TeacherController
     {
         $teacher = $this->resolveTeacher($request);
         if (!$teacher) {
-            return $this->error('Data profil guru tidak ditemukan', 404);
+            return $this->error('Data profil guru tidak ditemukan atau belum ditautkan.', 404);
         }
 
         $request->validate([
             'full_name'    => ['sometimes', 'required', 'string', 'max:255'],
-            'nuptk'        => ['nullable', 'string', 'max:50', Rule::unique('teachers', 'nuptk')->ignore($teacher->id)],
             'nip'          => ['nullable', 'string', 'max:50', Rule::unique('teachers', 'nip')->ignore($teacher->id)],
             'gender'       => ['nullable', Rule::in(['L', 'P'])],
-            'birth_place'  => ['nullable', 'string', 'max:255'],
-            'birth_date'   => ['nullable', 'date'],
             'phone'        => ['nullable', 'string', 'max:30'],
-            'address'      => ['nullable', 'string'],
             'position'     => ['nullable', 'string', 'max:255'],
             'email'        => ['nullable', 'email', 'max:255'],
             'photo'        => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:10240'],
         ]);
 
         $updateData = $request->only([
-            'full_name', 'nuptk', 'nip', 'gender', 'birth_place', 'birth_date', 'phone', 'address', 'position'
+            'full_name', 'nip', 'gender', 'phone', 'position'
         ]);
 
         if ($request->hasFile('photo')) {
@@ -87,6 +87,6 @@ class ProfileController extends TeacherController
             }
         }
 
-        return $this->success($teacher->fresh()->load(['user', 'subjects', 'classes']), 'Profil guru berhasil diperbarui');
+        return $this->success($teacher->fresh()->loadMissing(['user', 'subjects', 'classes']), 'Profil guru berhasil diperbarui');
     }
 }
