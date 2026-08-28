@@ -377,8 +377,8 @@
             ]"
           >
             <div class="flex items-center gap-3">
-              <div :class="[getSlotBannerStyle(group).badge, 'w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-xs']">
-                {{ getSlotBannerStyle(group).icon }}
+              <div :class="[getSlotBannerStyle(group).badge, 'w-10 h-10 rounded-xl flex items-center justify-center font-bold flex-shrink-0 shadow-xs']">
+                <component :is="getSlotBannerStyle(group).iconComponent" class="w-5 h-5" />
               </div>
               <div>
                 <h4 :class="[getSlotBannerStyle(group).titleColor, 'text-sm font-black font-lexend tracking-wide uppercase']">
@@ -626,7 +626,13 @@ import {
   Phone,
   Printer,
   UserCircle,
-  Columns3
+  Columns3,
+  Coffee,
+  Flag,
+  Sparkles,
+  MoonStar,
+  DoorClosed,
+  MessageSquare
 } from 'lucide-vue-next';
 import { api } from '../api';
 
@@ -787,7 +793,7 @@ function getSlotBannerStyle(group) {
   const name = (group.items[0]?.activity_name || '').toLowerCase();
   if (name.includes('istirahat')) {
     return {
-      icon: '☕',
+      iconComponent: Coffee,
       wrapper: 'bg-gradient-to-r from-amber-50 via-amber-100/70 to-yellow-50 border-amber-300/80',
       badge: 'bg-amber-400 text-amber-950',
       titleColor: 'text-amber-900',
@@ -797,7 +803,7 @@ function getSlotBannerStyle(group) {
   }
   if (name.includes('upacara')) {
     return {
-      icon: '🇮🇩',
+      iconComponent: Flag,
       wrapper: 'bg-gradient-to-r from-rose-50 via-red-100/60 to-rose-50 border-rose-300/80',
       badge: 'bg-rose-500 text-white',
       titleColor: 'text-rose-900',
@@ -807,7 +813,7 @@ function getSlotBannerStyle(group) {
   }
   if (name.includes('sholat') || name.includes('shalat') || name.includes('tadarus') || name.includes('dhuha') || name.includes('yasin')) {
     return {
-      icon: '🕌',
+      iconComponent: MoonStar,
       wrapper: 'bg-gradient-to-r from-emerald-50 via-teal-100/60 to-emerald-50 border-emerald-300/80',
       badge: 'bg-emerald-600 text-white',
       titleColor: 'text-emerald-950',
@@ -816,7 +822,7 @@ function getSlotBannerStyle(group) {
     };
   }
   return {
-    icon: '⭐',
+    iconComponent: Sparkles,
     wrapper: 'bg-slate-50 border-slate-200',
     badge: 'bg-slate-700 text-white',
     titleColor: 'text-slate-900',
