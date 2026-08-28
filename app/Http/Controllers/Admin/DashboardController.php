@@ -25,6 +25,11 @@ class DashboardController extends BaseController
 {
     public function __invoke()
     {
+        return $this->index();
+    }
+
+    public function index()
+    {
         $data = [
             'users' => User::count(),
             'teachers' => Teacher::count(),

@@ -15,15 +15,7 @@ Route::middleware(['auth:sanctum', 'role:teacher,admin,operator,kurikulum,kepala
     Route::get('dashboard', TeacherDashboardController::class);
     Route::get('schedules', [TeacherScheduleController::class, 'index'])->name('schedules.index');
     Route::get('calendar-events', [\App\Http\Controllers\Admin\CalendarEventController::class, 'index']);
-    Route::get('classes', function () {
-        $teacher = request()->user()->teacher;
-
-        return response()->json(
-            \App\Models\ClassRoom::where('homeroom_teacher_id', $teacher->id)
-                ->with(['academicYear', 'homeroomTeacher'])
-                ->get()
-        );
-    })->name('classes');
+    Route::get('classes', [\App\Http\Controllers\Teacher\ClassController::class, 'index'])->name('classes');
 
     Route::get('students', [TeacherStudentController::class, 'index'])->name('students.index');
     Route::get('students/{student}', [TeacherStudentController::class, 'show'])->name('students.show');

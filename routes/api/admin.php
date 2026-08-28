@@ -21,8 +21,8 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::get('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'show'])->name('profile.show');
     Route::post('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('profile.update');
     Route::put('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update']);
-    Route::get('dashboard', AdminDashboardController::class);
-    Route::get('kepala-sekolah/dashboard', [AdminDashboardController::class, 'kepalaSekolah']);
+    Route::get('dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('kepala-sekolah/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'kepalaSekolah'])->name('kepala-sekolah.dashboard');
     
     Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index']);
     Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update']);
