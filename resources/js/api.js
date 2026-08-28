@@ -90,6 +90,12 @@ axios.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    if (status === 503) {
+      useToast().warning('Server sedang memproses pembaruan. Silakan muat ulang (refresh) halaman.');
+      console.warn('Server 503 Service Unavailable (deployment/restart in progress).');
+      return Promise.reject(error);
+    }
+
     if (status >= 500) {
       useToast().error('Terjadi kesalahan pada server. Silakan coba lagi.');
       console.error('Terjadi kesalahan pada server.');
