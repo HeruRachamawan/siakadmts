@@ -773,52 +773,52 @@ const getTargetClassesForSchedule = () => {
   return classes.value;
 };
 
-const dayTimeSlotMap = {
+const daySlotIntervals = {
   senin: {
-    '1': '07:50',
-    '2': '08:30',
-    '3': '09:10',
-    '4': '09:50',
-    '6': '11:00',
-    '7': '11:40',
+    '1': { start: '07:50', end: '08:30' },
+    '2': { start: '08:30', end: '09:10' },
+    '3': { start: '09:10', end: '09:50' },
+    '4': { start: '09:50', end: '10:30' },
+    '6': { start: '11:00', end: '11:40' },
+    '7': { start: '11:40', end: '12:20' },
   },
   selasa: {
-    '1': '07:30',
-    '2': '08:10',
-    '3': '08:50',
-    '4': '09:30',
-    '6': '10:40',
-    '7': '11:20',
+    '1': { start: '07:30', end: '08:10' },
+    '2': { start: '08:10', end: '08:50' },
+    '3': { start: '08:50', end: '09:30' },
+    '4': { start: '09:30', end: '10:10' },
+    '6': { start: '10:40', end: '11:20' },
+    '7': { start: '11:20', end: '12:00' },
   },
   rabu: {
-    '1': '07:30',
-    '2': '08:10',
-    '3': '08:50',
-    '4': '09:30',
-    '6': '10:40',
-    '7': '11:20',
+    '1': { start: '07:30', end: '08:10' },
+    '2': { start: '08:10', end: '08:50' },
+    '3': { start: '08:50', end: '09:30' },
+    '4': { start: '09:30', end: '10:10' },
+    '6': { start: '10:40', end: '11:20' },
+    '7': { start: '11:20', end: '12:00' },
   },
   kamis: {
-    '1': '07:30',
-    '2': '08:10',
-    '3': '08:50',
-    '4': '09:30',
-    '6': '10:40',
-    '7': '11:20',
+    '1': { start: '07:30', end: '08:10' },
+    '2': { start: '08:10', end: '08:50' },
+    '3': { start: '08:50', end: '09:30' },
+    '4': { start: '09:30', end: '10:10' },
+    '6': { start: '10:40', end: '11:20' },
+    '7': { start: '11:20', end: '12:00' },
   },
   jumat: {
-    '1': '07:45',
-    '2': '08:25',
-    '3': '09:05',
-    '6': '10:15',
+    '1': { start: '07:45', end: '08:25' },
+    '2': { start: '08:25', end: '09:05' },
+    '3': { start: '09:05', end: '09:45' },
+    '6': { start: '10:15', end: '10:55' },
   },
   sabtu: {
-    '1': '07:30',
-    '2': '08:10',
-    '3': '08:50',
-    '4': '09:30',
-    '6': '10:40',
-    '7': '11:20',
+    '1': { start: '07:30', end: '08:10' },
+    '2': { start: '08:10', end: '08:50' },
+    '3': { start: '08:50', end: '09:30' },
+    '4': { start: '09:30', end: '10:10' },
+    '6': { start: '10:40', end: '11:20' },
+    '7': { start: '11:20', end: '12:00' },
   },
 };
 
@@ -831,10 +831,26 @@ const lessonSlotIndexMap = {
   '7': 5,
 };
 
+function parseTimeToMins(tStr) {
+  if (!tStr) return 0;
+  const clean = tStr.replace('.', ':').substring(0, 5);
+  const [h, m] = clean.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
 const getSingleScheduleCell = (classId, day, slot) => {
   const dayKey = (day || '').toLowerCase();
 
-  // 1. Get all subject lessons (non-activities) for this class & day, sorted chronologically
+  // 1. Get day slot interval (fallback to generic slot times if not mapped)
+  const interval = daySlotIntervals[dayKey]?.[slot.no] || {
+    start: (slot.start || '00:00').replace('.', ':').substring(0, 5),
+    end: (slot.end || '23:59').replace('.', ':').substring(0, 5),
+  };
+
+  const slotStartMins = parseTimeToMins(interval.start);
+  const slotEndMins = parseTimeToMins(interval.end);
+
+  // 2. Filter all subject lessons (non-activities) for this class & day
   const dayLessons = schedules.value
     .filter(s => {
       const isSameClass = (s.class_id == classId || s.class_id === null);
@@ -843,17 +859,14 @@ const getSingleScheduleCell = (classId, day, slot) => {
     })
     .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
 
-  // 2. Try exact match by mapped start time for this day
-  const mappedStart = dayTimeSlotMap[dayKey]?.[slot.no];
-  if (mappedStart) {
-    const foundByMapped = dayLessons.find(s => (s.start_time || '').replace('.', ':').substring(0, 5) === mappedStart);
-    if (foundByMapped) return foundByMapped;
-  }
+  // 3. Find schedule that OVERLAPS with this slot interval (handles 2-hour or 3-hour block lessons)
+  const overlapping = dayLessons.find(s => {
+    const sStartMins = parseTimeToMins(s.start_time);
+    const sEndMins = parseTimeToMins(s.end_time);
+    return sStartMins < slotEndMins && sEndMins > slotStartMins;
+  });
 
-  // 3. Try matching generic slot.start
-  const genericStart = (slot.start || '').replace('.', ':').substring(0, 5);
-  const foundByGeneric = dayLessons.find(s => (s.start_time || '').replace('.', ':').substring(0, 5) === genericStart);
-  if (foundByGeneric) return foundByGeneric;
+  if (overlapping) return overlapping;
 
   // 4. Fallback: match by lesson order index (e.g. 1st lesson = Slot 1, 2nd lesson = Slot 2, etc.)
   const targetIndex = lessonSlotIndexMap[slot.no];
@@ -1641,7 +1654,7 @@ onMounted(async () => {
       cardSelectedStudentId.value = students.value[0].id;
     }
 
-    schedules.value = schRes?.data || [];
+    schedules.value = Array.isArray(schRes?.data) ? schRes.data : (Array.isArray(schRes?.data?.data) ? schRes.data.data : (Array.isArray(schRes) ? schRes : []));
     calendarEvents.value = calRes?.data?.data || calRes?.data || [];
   } catch (err) {
     console.error('Error initializing print center:', err);
