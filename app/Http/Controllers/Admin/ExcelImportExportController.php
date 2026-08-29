@@ -499,7 +499,7 @@ class ExcelImportExportController extends Controller
                         $s->nik ?: '-',
                         $s->full_name,
                         $s->gender === 'L' ? 'Laki-laki' : 'Perempuan',
-                        $s->classRoom?.name ?? $s->class_name ?? '-',
+                        $s->classRoom?->name ?? $s->class_name ?? '-',
                         $s->birth_place,
                         $s->birth_date,
                         $s->previous_school ?: '-',
