@@ -209,20 +209,22 @@ class StudentController extends BaseController
         
         // Baris 1: Header Kolom
         $headers = [
-            'NISN', 'NIS', 'Nama Lengkap', 'Jenis Kelamin (L/P)', 'Nama Kelas',
-            'Tempat Lahir', 'Tanggal Lahir (YYYY-MM-DD)', 'Alamat', 'Asal Sekolah', 'No HP Ortu',
-            'Nama Ayah', 'Status Ayah (hidup/meninggal/pisah/lainnya)', 'NIK Ayah', 'Pekerjaan Ayah', 'Penghasilan Ayah',
-            'Nama Ibu', 'Status Ibu (hidup/meninggal/pisah/lainnya)', 'NIK Ibu', 'Pekerjaan Ibu', 'Penghasilan Ibu'
+            'NISN (10 Digit)*', 'NIS*', 'NIK Siswa (16 Digit)*', 'Nama Lengkap*', 'Gender (L/P)*', 'Nama Kelas*',
+            'Tempat Lahir*', 'Tanggal Lahir (YYYY-MM-DD)*', 'Sekolah Asal', 'Alamat Lengkap*', 'No HP / WA Ortu*',
+            'Nama Ayah', 'Status Ayah (hidup/meninggal/tidak_diketahui)', 'NIK Ayah', 'Pekerjaan Ayah', 'Penghasilan Ayah',
+            'Nama Ibu', 'Status Ibu (hidup/meninggal/tidak_diketahui)', 'NIK Ibu', 'Pekerjaan Ibu', 'Penghasilan Ibu',
+            'Nama Wali', 'Hubungan Wali', 'NIK Wali', 'Pekerjaan Wali', 'No HP Wali', 'Penghasilan Wali'
         ];
         
         $writer->addRow(\OpenSpout\Common\Entity\Row::fromValuesWithStyle($headers, $style));
         
         // Baris 2: Contoh Format Pengisian (using explicit strings)
         $sampleData = [
-            '0051234567', '23241001', 'Budi Santoso', 'L', 'X IPA 1',
-            'Jakarta', '2006-05-14', 'Jl. Merdeka No. 123, Jakarta Selatan', 'SMPN 1 Jakarta', '081234567890',
-            'Agus Santoso', 'hidup', '3171234567890001', 'Karyawan Swasta', 'Rp 2.000.000 - Rp 5.000.000',
-            'Siti Aminah', 'hidup', '3171234567890002', 'Ibu Rumah Tangga', 'Tidak Berpenghasilan'
+            '0051234567', '2026001', '3201011505100001', 'Ahmad Rizky Pratama', 'L', '7A',
+            'Bandung', '2010-05-15', 'SDN 01 Ciwidey', 'Jl. Raya Ciwidey No. 10 RT 01/02', '081234567890',
+            'Sukardi', 'hidup', '3201010101750001', 'Wiraswasta', '2.500.001 - 3.500.000',
+            'Siti Aminah', 'hidup', '3201010101800002', 'Ibu Rumah Tangga', 'dibawah 800.000',
+            '', '', '', '', '', ''
         ];
         
         $sampleCells = array_map(function($data) {
@@ -240,7 +242,7 @@ class StudentController extends BaseController
     public function import(Request $request)
     {
         $request->validate([
-            'file' => ['required', 'file', 'mimes:xlsx,xls,csv,txt', 'max:5120']
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv,txt', 'max:10240']
         ]);
 
         $file = $request->file('file');
@@ -281,7 +283,7 @@ class StudentController extends BaseController
                         continue;
                     }
                     
-                    $row = array_pad($row, 20, null);
+                    $row = array_pad($row, 28, null);
                     
                     // Get cell values safely
                     $getValue = function($val) {
@@ -291,23 +293,24 @@ class StudentController extends BaseController
                     
                     $nisn = $getValue($row[0]);
                     $nis = $getValue($row[1]);
-                    $nama = $getValue($row[2]);
-                    $gender = strtoupper($getValue($row[3]));
-                    $className = $getValue($row[4]);
+                    $nik = $getValue($row[2]);
+                    $nama = $getValue($row[3]);
+                    $gender = strtoupper($getValue($row[4]));
+                    $className = $getValue($row[5]);
                     
-                    if (empty($nisn) || empty($nis) || empty($nama) || !in_array($gender, ['L', 'P'])) {
+                    if (empty($nisn) || empty($nama) || !in_array($gender, ['L', 'P'])) {
                         $failed++;
                         continue;
                     }
 
-                    if (Student::where('nisn', $nisn)->orWhere('nis', $nis)->exists()) {
+                    if (Student::where('nisn', $nisn)->exists()) {
                         $failed++;
                         continue;
                     }
 
                     $classId = null;
                     if (!empty($className)) {
-                        $class = \App\Models\ClassRoom::where('name', $className)->first();
+                        $class = \App\Models\ClassRoom::where('name', $className)->orWhere('name', 'LIKE', "%{$className}%")->first();
                         if ($class) {
                             $classId = $class->id;
                         }
@@ -315,12 +318,12 @@ class StudentController extends BaseController
 
                     $username = $nisn;
                     if (User::where('username', $username)->exists()) {
-                        $username = $username . '_' . time();
+                        $username = $username . '_' . rand(100, 999);
                     }
 
-                    $email = $nisn . '@student.example.com';
+                    $email = $nisn . '@mtsalhasanah.sch.id';
                     if (User::where('email', $email)->exists()) {
-                        $email = $nisn . '_' . time() . '@student.example.com';
+                        $email = $nisn . '_' . rand(100, 999) . '@mtsalhasanah.sch.id';
                     }
 
                     $user = User::create([
@@ -333,27 +336,35 @@ class StudentController extends BaseController
 
                     $user->student()->create([
                         'nisn' => $nisn,
-                        'nis' => $nis,
+                        'nis' => $nis ?: $nisn,
+                        'nik' => $nik ?: null,
                         'full_name' => $nama,
                         'gender' => $gender,
                         'class_id' => $classId,
-                        'birth_place' => $getValue($row[5]),
-                        'birth_date' => !empty($row[6]) ? $getValue($row[6]) : null,
-                        'address' => $getValue($row[7]),
+                        'birth_place' => $getValue($row[6]) ?: 'Bandung',
+                        'birth_date' => !empty($row[7]) ? $getValue($row[7]) : '2010-01-01',
                         'previous_school' => $getValue($row[8]),
-                        'parent_phone' => $getValue($row[9]),
+                        'address' => $getValue($row[9]) ?: '-',
+                        'parent_phone' => $getValue($row[10]) ?: '-',
                         
-                        'father_name' => $getValue($row[10]),
-                        'father_status' => strtolower($getValue($row[11])) ?: null,
-                        'father_nik' => $getValue($row[12]),
-                        'father_job' => $getValue($row[13]),
-                        'father_income' => $getValue($row[14]),
+                        'father_name' => $getValue($row[11]),
+                        'father_status' => strtolower($getValue($row[12])) ?: 'hidup',
+                        'father_nik' => $getValue($row[13]),
+                        'father_job' => $getValue($row[14]),
+                        'father_income' => $getValue($row[15]),
                         
-                        'mother_name' => $getValue($row[15]),
-                        'mother_status' => strtolower($getValue($row[16])) ?: null,
-                        'mother_nik' => $getValue($row[17]),
-                        'mother_job' => $getValue($row[18]),
-                        'mother_income' => $getValue($row[19]),
+                        'mother_name' => $getValue($row[16]),
+                        'mother_status' => strtolower($getValue($row[17])) ?: 'hidup',
+                        'mother_nik' => $getValue($row[18]),
+                        'mother_job' => $getValue($row[19]),
+                        'mother_income' => $getValue($row[20]),
+
+                        'guardian_name' => $getValue($row[21]),
+                        'guardian_relation' => $getValue($row[22]),
+                        'guardian_nik' => $getValue($row[23]),
+                        'guardian_job' => $getValue($row[24]),
+                        'guardian_phone' => $getValue($row[25]),
+                        'guardian_income' => $getValue($row[26]),
                     ]);
 
                     $success++;

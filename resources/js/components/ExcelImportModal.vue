@@ -74,15 +74,19 @@
 
           <!-- Preview Table -->
           <div class="flex-1 overflow-auto border border-slate-200/80 rounded-2xl bg-white shadow-inner">
-            <table class="w-full text-left text-xs font-inter border-collapse min-w-[700px]">
+            <table class="w-full text-left text-xs font-inter border-collapse min-w-[750px]">
               <thead>
                 <tr class="bg-slate-100 text-slate-700 font-black border-b border-slate-200 sticky top-0 z-10">
-                  <th class="p-3 w-14 font-lexend uppercase text-[10px]">No</th>
-                  <th class="p-3 font-lexend uppercase text-[10px]">Status</th>
-                  <th v-if="type === 'students'" class="p-3 font-lexend uppercase text-[10px]">NISN / NIS</th>
+                  <th class="p-3 w-12 font-lexend uppercase text-[10px] text-center">No</th>
+                  <th class="p-3 w-20 font-lexend uppercase text-[10px] text-center">Status</th>
+                  <th v-if="type === 'students'" class="p-3 font-lexend uppercase text-[10px]">NISN / NIK</th>
                   <th v-if="type === 'teachers'" class="p-3 font-lexend uppercase text-[10px]">NIP / NUPTK</th>
                   <th v-if="type === 'grades'" class="p-3 font-lexend uppercase text-[10px]">NISN</th>
                   <th class="p-3 font-lexend uppercase text-[10px]">Nama Lengkap</th>
+                  <th v-if="type === 'students'" class="p-3 font-lexend uppercase text-[10px] text-center">L/P</th>
+                  <th v-if="type === 'students'" class="p-3 font-lexend uppercase text-[10px]">Kelas</th>
+                  <th v-if="type === 'teachers'" class="p-3 font-lexend uppercase text-[10px]">Jabatan / Mapel</th>
+                  <th v-if="type === 'grades'" class="p-3 font-lexend uppercase text-[10px]">Mapel & Nilai</th>
                   <th class="p-3 font-lexend uppercase text-[10px]">Keterangan / Validasi</th>
                 </tr>
               </thead>
@@ -92,18 +96,33 @@
                   :key="row.row_num"
                   :class="row.is_valid ? 'hover:bg-emerald-50/20' : 'bg-rose-50/30 hover:bg-rose-50/50'"
                 >
-                  <td class="p-3 font-mono font-bold text-slate-400">{{ row.row_num }}</td>
-                  <td class="p-3">
+                  <td class="p-3 font-mono font-bold text-slate-400 text-center">{{ row.row_num }}</td>
+                  <td class="p-3 text-center">
                     <span v-if="row.is_valid" class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-black text-[10px]">VALID</span>
                     <span v-else class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-black text-[10px]">ERROR</span>
                   </td>
-                  <td v-if="type === 'students'" class="p-3 font-mono font-bold text-slate-800">{{ row.nisn }} / {{ row.nis || '-' }}</td>
-                  <td v-if="type === 'teachers'" class="p-3 font-mono font-bold text-slate-800">{{ row.nip || '-' }} / {{ row.nuptk || '-' }}</td>
+                  <td v-if="type === 'students'" class="p-3 font-mono font-bold text-slate-800">
+                    {{ row.nisn }} <span v-if="row.nik" class="text-slate-400 text-[10px]">/ NIK: {{ row.nik }}</span>
+                  </td>
+                  <td v-if="type === 'teachers'" class="p-3 font-mono font-bold text-slate-800">{{ row.nip || '-' }}</td>
                   <td v-if="type === 'grades'" class="p-3 font-mono font-bold text-slate-800">{{ row.nisn }}</td>
                   <td class="p-3 font-extrabold text-slate-900">{{ row.full_name || row.student_name }}</td>
+                  <td v-if="type === 'students'" class="p-3 font-black text-center" :class="row.gender === 'L' ? 'text-blue-600' : 'text-pink-600'">
+                    {{ row.gender || '-' }}
+                  </td>
+                  <td v-if="type === 'students'" class="p-3 font-bold text-slate-700">
+                    {{ row.class_name || '-' }}
+                  </td>
+                  <td v-if="type === 'teachers'" class="p-3 text-slate-700">
+                    <span class="font-bold">{{ row.position || 'Guru Pengajar' }}</span>
+                    <span v-if="row.subjects" class="text-[11px] text-emerald-700 block">Mapel: {{ row.subjects }}</span>
+                  </td>
+                  <td v-if="type === 'grades'" class="p-3 text-slate-700 font-mono text-[11px]">
+                    {{ row.subject_name }} (T:{{ row.assignment_score }}, UTS:{{ row.mid_score }}, UAS:{{ row.final_score }})
+                  </td>
                   <td class="p-3 font-semibold text-xs">
-                    <span v-if="row.is_valid" class="text-emerald-700">Siap diimpor</span>
-                    <span v-else class="text-rose-600 font-bold">{{ row.errors.join(', ') }}</span>
+                    <span v-if="row.is_valid" class="text-emerald-700 font-bold">✓ Siap diimpor</span>
+                    <span v-else class="text-rose-600 font-bold">⚠ {{ row.errors.join(', ') }}</span>
                   </td>
                 </tr>
               </tbody>
