@@ -129,42 +129,43 @@ class ExcelImportExportController extends Controller
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             ]);
 
-            foreach (range('A', $lastCol) as $col) {
-                $sheet->getColumnDimension($col)->setAutoSize(true);
+            foreach ($sheet->getColumnIterator() as $column) {
+                $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
             }
 
             $writer = new Xlsx($spreadsheet);
             $fileName = "Template_Import_{$type}_YASPIN.xlsx";
 
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header("Content-Disposition: attachment; filename=\"{$fileName}\"");
-            header('Cache-Control: max-age=0');
-
-            $writer->save('php://output');
-            exit;
+            return response()->streamDownload(function () use ($writer) {
+                $writer->save('php://output');
+            }, $fileName, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Cache-Control' => 'max-age=0, no-cache, must-revalidate',
+                'Pragma' => 'public',
+            ]);
         }
 
         // CSV Fallback
         $fileName = "Template_Import_{$type}_YASPIN.csv";
-        header('Content-Type: text/csv; charset=utf-8');
-        header("Content-Disposition: attachment; filename=\"{$fileName}\"");
-        header('Cache-Control: max-age=0');
+        return response()->streamDownload(function () use ($type) {
+            $output = fopen('php://output', 'w');
+            fputs($output, "\xEF\xBB\xBF");
 
-        $output = fopen('php://output', 'w');
-        fputs($output, "\xEF\xBB\xBF");
-
-        if ($type === 'students') {
-            fputcsv($output, ['NISN (10 Digit)*', 'NIS*', 'NIK Siswa (16 Digit)*', 'Nama Lengkap*', 'Gender (L/P)*', 'Kelas*', 'Tempat Lahir*', 'Tanggal Lahir (YYYY-MM-DD)*', 'Sekolah Asal', 'Alamat Lengkap*', 'No HP / WA Ortu*', 'Nama Ayah', 'Status Ayah', 'NIK Ayah', 'Pekerjaan Ayah', 'Penghasilan Ayah', 'Nama Ibu', 'Status Ibu', 'NIK Ibu', 'Pekerjaan Ibu', 'Penghasilan Ibu', 'Nama Wali', 'Hubungan Wali', 'NIK Wali', 'Pekerjaan Wali', 'No HP Wali', 'Penghasilan Wali']);
-            fputcsv($output, ['0051234567', '2026001', '3201011505100001', 'Ahmad Rizky Pratama', 'L', '7A', 'Bandung', '2010-05-15', 'SDN 01 Ciwidey', 'Jl. Raya Ciwidey No. 10', '081234567890', 'Sukardi', 'hidup', '3201010101750001', 'Wiraswasta', '2.500.001 - 3.500.000', 'Siti Aminah', 'hidup', '3201010101800002', 'Ibu Rumah Tangga', 'dibawah 800.000', '', '', '', '', '', '']);
-        } elseif ($type === 'teachers') {
-            fputcsv($output, ['NIP / NUPTK*', 'Nama Lengkap & Gelar*', 'Gender (L/P)*', 'No. WhatsApp / Telepon*', 'Email', 'Jabatan / Posisi', 'Mata Pelajaran yang Diampu (Pisahkan Koma)']);
-            fputcsv($output, ['198501012010011001', 'Budi Santoso, S.Pd', 'L', '08122334455', 'budi@mtsalhasanah.sch.id', 'Guru Pengajar', 'Matematika, IPA']);
-        } elseif ($type === 'grades') {
-            fputcsv($output, ['NISN*', 'Nama Siswa', 'Nama/Kode Mapel*', 'Nilai Tugas (0-100)*', 'Nilai UTS (0-100)*', 'Nilai UAS (0-100)*']);
-            fputcsv($output, ['0051234567', 'Ahmad Rizky Pratama', 'Matematika', '85', '80', '90']);
-        }
-        fclose($output);
-        exit;
+            if ($type === 'students') {
+                fputcsv($output, ['NISN (10 Digit)*', 'NIS*', 'NIK Siswa (16 Digit)*', 'Nama Lengkap*', 'Gender (L/P)*', 'Kelas*', 'Tempat Lahir*', 'Tanggal Lahir (YYYY-MM-DD)*', 'Sekolah Asal', 'Alamat Lengkap*', 'No HP / WA Ortu*', 'Nama Ayah', 'Status Ayah', 'NIK Ayah', 'Pekerjaan Ayah', 'Penghasilan Ayah', 'Nama Ibu', 'Status Ibu', 'NIK Ibu', 'Pekerjaan Ibu', 'Penghasilan Ibu', 'Nama Wali', 'Hubungan Wali', 'NIK Wali', 'Pekerjaan Wali', 'No HP Wali', 'Penghasilan Wali']);
+                fputcsv($output, ['0051234567', '2026001', '3201011505100001', 'Ahmad Rizky Pratama', 'L', '7A', 'Bandung', '2010-05-15', 'SDN 01 Ciwidey', 'Jl. Raya Ciwidey No. 10', '081234567890', 'Sukardi', 'hidup', '3201010101750001', 'Wiraswasta', '2.500.001 - 3.500.000', 'Siti Aminah', 'hidup', '3201010101800002', 'Ibu Rumah Tangga', 'dibawah 800.000', '', '', '', '', '', '']);
+            } elseif ($type === 'teachers') {
+                fputcsv($output, ['NIP / NUPTK*', 'Nama Lengkap & Gelar*', 'Gender (L/P)*', 'No. WhatsApp / Telepon*', 'Email', 'Jabatan / Posisi', 'Mata Pelajaran yang Diampu (Pisahkan Koma)']);
+                fputcsv($output, ['198501012010011001', 'Budi Santoso, S.Pd', 'L', '08122334455', 'budi@mtsalhasanah.sch.id', 'Guru Pengajar', 'Matematika, IPA']);
+            } elseif ($type === 'grades') {
+                fputcsv($output, ['NISN*', 'Nama Siswa', 'Nama/Kode Mapel*', 'Nilai Tugas (0-100)*', 'Nilai UTS (0-100)*', 'Nilai UAS (0-100)*']);
+                fputcsv($output, ['0051234567', 'Ahmad Rizky Pratama', 'Matematika', '85', '80', '90']);
+            }
+            fclose($output);
+        }, $fileName, [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Cache-Control' => 'max-age=0, no-cache, must-revalidate',
+        ]);
     }
 
     /**
@@ -445,7 +446,7 @@ class ExcelImportExportController extends Controller
 
             } elseif ($type === 'grades') {
                 $student = Student::where('nisn', $row['nisn'])->first();
-                $subject = Subject::where('name', 'LIKE', "%{$row['subject_name']}%")->orWhere('code', $row['subject_name'])->first();
+                $subject = Subject::where('name', 'LIKE', "%{$row['subject_name']}%")->orWhere('code', $subjectName)->first();
                 $academicYear = AcademicYear::where('is_active', true)->first() ?: AcademicYear::first();
 
                 if ($student && $subject && $academicYear) {
@@ -492,16 +493,21 @@ class ExcelImportExportController extends Controller
                 $students = Student::with('classRoom')->orderBy('full_name')->get();
                 $data = [];
                 foreach ($students as $i => $s) {
+                    $birthDateStr = '-';
+                    if ($s->birth_date) {
+                        $birthDateStr = ($s->birth_date instanceof \DateTimeInterface) ? $s->birth_date->format('Y-m-d') : (string)$s->birth_date;
+                    }
+
                     $data[] = [
                         $i + 1,
-                        $s->nisn,
-                        $s->nis,
+                        (string)$s->nisn,
+                        (string)$s->nis,
                         $s->nik ?: '-',
                         $s->full_name,
                         $s->gender === 'L' ? 'Laki-laki' : 'Perempuan',
-                        $s->classRoom?->name ?? $s->class_name ?? '-',
+                        $s->classRoom ? $s->classRoom->name : ($s->class_name ?: '-'),
                         $s->birth_place,
-                        $s->birth_date,
+                        $birthDateStr,
                         $s->previous_school ?: '-',
                         $s->address,
                         $s->parent_phone,
@@ -539,11 +545,11 @@ class ExcelImportExportController extends Controller
 
                     $data[] = [
                         $i + 1,
-                        $t->nip ?: '-',
+                        (string)($t->nip ?: '-'),
                         $t->full_name,
                         $t->gender === 'L' ? 'Laki-laki' : ($t->gender === 'P' ? 'Perempuan' : '-'),
                         $t->phone ?: '-',
-                        $t->user->email ?? '-',
+                        $t->user ? $t->user->email : '-',
                         $t->position ?: 'Guru Pengajar',
                         $subjectsStr,
                     ];
@@ -560,9 +566,9 @@ class ExcelImportExportController extends Controller
                 foreach ($grades as $i => $g) {
                     $data[] = [
                         $i + 1,
-                        $g->student->nisn ?? '-',
-                        $g->student->full_name ?? '-',
-                        $g->subject->name ?? '-',
+                        $g->student ? $g->student->nisn : '-',
+                        $g->student ? $g->student->full_name : '-',
+                        $g->subject ? $g->subject->name : '-',
                         $g->assignment_score,
                         $g->mid_score,
                         $g->final_score,
@@ -579,7 +585,7 @@ class ExcelImportExportController extends Controller
             $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '064E3B']],
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             ]);
 
             if ($lastRow > 1) {
@@ -588,56 +594,58 @@ class ExcelImportExportController extends Controller
                 ]);
             }
 
-            foreach (range('A', $lastCol) as $col) {
-                $sheet->getColumnDimension($col)->setAutoSize(true);
+            foreach ($sheet->getColumnIterator() as $column) {
+                $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
             }
 
             $writer = new Xlsx($spreadsheet);
             $fileName = "Data_Export_{$type}_YASPIN.xlsx";
 
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header("Content-Disposition: attachment; filename=\"{$fileName}\"");
-            header('Cache-Control: max-age=0');
-
-            $writer->save('php://output');
-            exit;
+            return response()->streamDownload(function () use ($writer) {
+                $writer->save('php://output');
+            }, $fileName, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Cache-Control' => 'max-age=0, no-cache, must-revalidate',
+                'Pragma' => 'public',
+            ]);
         }
 
         // CSV Fallback
         $fileName = "Data_Export_{$type}_YASPIN.csv";
-        header('Content-Type: text/csv; charset=utf-8');
-        header("Content-Disposition: attachment; filename=\"{$fileName}\"");
-        header('Cache-Control: max-age=0');
+        return response()->streamDownload(function () use ($type) {
+            $output = fopen('php://output', 'w');
+            fputs($output, "\xEF\xBB\xBF");
 
-        $output = fopen('php://output', 'w');
-        fputs($output, "\xEF\xBB\xBF");
+            if ($type === 'students') {
+                fputcsv($output, ['NO', 'NISN', 'NIS', 'NAMA LENGKAP', 'GENDER', 'TEMPAT LAHIR', 'TGL LAHIR', 'SEKOLAH ASAL', 'ALAMAT', 'NO HP ORTU', 'NAMA AYAH', 'STATUS AYAH', 'NIK AYAH', 'PEKERJAAN AYAH', 'PENGHASILAN AYAH', 'NAMA IBU', 'STATUS IBU', 'NIK IBU', 'PEKERJAAN IBU', 'PENGHASILAN IBU']);
+                $students = Student::orderBy('full_name')->get();
+                foreach ($students as $i => $s) {
+                    $birthDateStr = $s->birth_date ? (($s->birth_date instanceof \DateTimeInterface) ? $s->birth_date->format('Y-m-d') : (string)$s->birth_date) : '-';
+                    fputcsv($output, [
+                        $i + 1, $s->nisn, $s->nis, $s->full_name, $s->gender === 'L' ? 'Laki-laki' : 'Perempuan',
+                        $s->birth_place, $birthDateStr, $s->previous_school ?: '-', $s->address, $s->parent_phone,
+                        $s->father_name ?: '-', $s->father_status ?: '-', $s->father_nik ?: '-', $s->father_job ?: '-', $s->father_income ?: '-',
+                        $s->mother_name ?: '-', $s->mother_status ?: '-', $s->mother_nik ?: '-', $s->mother_job ?: '-', $s->mother_income ?: '-'
+                    ]);
+                }
+            } elseif ($type === 'teachers') {
+                fputcsv($output, ['NO', 'NIP', 'NUPTK', 'NAMA LENGKAP', 'EMAIL', 'NO HP']);
+                $teachers = Teacher::with('user')->orderBy('full_name')->get();
+                foreach ($teachers as $i => $t) {
+                    fputcsv($output, [$i + 1, $t->nip ?: '-', $t->nuptk ?: '-', $t->full_name, $t->user ? $t->user->email : '-', $t->phone ?: '-']);
+                }
+            } elseif ($type === 'grades') {
+                fputcsv($output, ['NO', 'NISN', 'NAMA SISWA', 'MATA PELAJARAN', 'TUGAS', 'UTS', 'UAS', 'NILAI AKHIR']);
+                $grades = Grade::with(['student', 'subject'])->get();
+                foreach ($grades as $i => $g) {
+                    fputcsv($output, [$i + 1, $g->student ? $g->student->nisn : '-', $g->student ? $g->student->full_name : '-', $g->subject ? $g->subject->name : '-', $g->assignment_score, $g->mid_score, $g->final_score, $g->final_grade]);
+                }
+            }
 
-        if ($type === 'students') {
-            fputcsv($output, ['NO', 'NISN', 'NIS', 'NAMA LENGKAP', 'GENDER', 'TEMPAT LAHIR', 'TGL LAHIR', 'SEKOLAH ASAL', 'ALAMAT', 'NO HP ORTU', 'NAMA AYAH', 'STATUS AYAH', 'NIK AYAH', 'PEKERJAAN AYAH', 'PENGHASILAN AYAH', 'NAMA IBU', 'STATUS IBU', 'NIK IBU', 'PEKERJAAN IBU', 'PENGHASILAN IBU']);
-            $students = Student::orderBy('full_name')->get();
-            foreach ($students as $i => $s) {
-                fputcsv($output, [
-                    $i + 1, $s->nisn, $s->nis, $s->full_name, $s->gender === 'L' ? 'Laki-laki' : 'Perempuan',
-                    $s->birth_place, $s->birth_date, $s->previous_school ?: '-', $s->address, $s->parent_phone,
-                    $s->father_name ?: '-', $s->father_status ?: '-', $s->father_nik ?: '-', $s->father_job ?: '-', $s->father_income ?: '-',
-                    $s->mother_name ?: '-', $s->mother_status ?: '-', $s->mother_nik ?: '-', $s->mother_job ?: '-', $s->mother_income ?: '-'
-                ]);
-            }
-        } elseif ($type === 'teachers') {
-            fputcsv($output, ['NO', 'NIP', 'NUPTK', 'NAMA LENGKAP', 'EMAIL', 'NO HP']);
-            $teachers = Teacher::with('user')->orderBy('full_name')->get();
-            foreach ($teachers as $i => $t) {
-                fputcsv($output, [$i + 1, $t->nip ?: '-', $t->nuptk ?: '-', $t->full_name, $t->user->email ?? '-', $t->phone ?: '-']);
-            }
-        } elseif ($type === 'grades') {
-            fputcsv($output, ['NO', 'NISN', 'NAMA SISWA', 'MATA PELAJARAN', 'TUGAS', 'UTS', 'UAS', 'NILAI AKHIR']);
-            $grades = Grade::with(['student', 'subject'])->get();
-            foreach ($grades as $i => $g) {
-                fputcsv($output, [$i + 1, $g->student->nisn ?? '-', $g->student->full_name ?? '-', $g->subject->name ?? '-', $g->assignment_score, $g->mid_score, $g->final_score, $g->final_grade]);
-            }
-        }
-
-        fclose($output);
-        exit;
+            fclose($output);
+        }, $fileName, [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Cache-Control' => 'max-age=0, no-cache, must-revalidate',
+        ]);
     }
 }
