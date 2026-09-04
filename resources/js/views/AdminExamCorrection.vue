@@ -12,7 +12,15 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
+        <button
+          @click="openSettingsModal"
+          class="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-2xl text-xs transition-all border border-slate-200 shadow-xs flex items-center gap-2 cursor-pointer"
+        >
+          <Settings class="w-4 h-4 text-slate-600" />
+          <span>Pengaturan Asesmen</span>
+        </button>
+
         <button
           @click="exportAllMadrasah"
           class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition-all shadow-md shadow-slate-900/20 flex items-center gap-2 cursor-pointer"
@@ -22,6 +30,7 @@
         </button>
       </div>
     </div>
+
 
     <!-- Overview Stats Bar -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -284,8 +293,146 @@
         </div>
       </div>
     </div>
+
+    <!-- SETTINGS MODAL (Super Admin & Kurikulum) -->
+    <div v-if="showSettingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+      <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden border border-slate-100 transform transition-all">
+        <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <div>
+            <div class="flex items-center gap-2">
+              <Settings class="w-5 h-5 text-slate-700" />
+              <h2 class="text-lg font-black text-slate-800 font-lexend uppercase tracking-wider">Pengaturan Asesmen & Koreksi</h2>
+            </div>
+            <p class="text-xs text-slate-400 font-medium mt-0.5">Kebijakan standar penilaian madrasah untuk Super Admin & Waka Kurikulum.</p>
+          </div>
+          <button @click="showSettingsModal = false" class="w-9 h-9 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors border border-slate-100 shadow-sm cursor-pointer">
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
+        <form @submit.prevent="saveSettings" class="p-8 space-y-5 max-h-[75vh] overflow-y-auto">
+          <!-- Default KKM & Option Count -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">KKM/KKTP Standar *</label>
+              <input
+                v-model.number="settingsForm.default_kkm"
+                type="number"
+                min="0"
+                max="100"
+                required
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400 text-center"
+              />
+              <span class="text-[10px] text-slate-400 font-medium">Batas kelulusan default saat guru membuat ujian</span>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Opsi Pilihan Ganda *</label>
+              <select
+                v-model.number="settingsForm.default_options_count"
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400"
+              >
+                <option :value="4">4 Pilihan (A, B, C, D) - Standar MTs</option>
+                <option :value="5">5 Pilihan (A, B, C, D, E)</option>
+              </select>
+              <span class="text-[10px] text-slate-400 font-medium">Format pilihan pada lembar kisi-kisi</span>
+            </div>
+          </div>
+
+          <!-- Default Weights -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Standar Bobot PG (%) *</label>
+              <input
+                v-model.number="settingsForm.default_pg_weight"
+                type="number"
+                min="0"
+                max="100"
+                required
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400 text-center"
+              />
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Standar Bobot Essay (%) *</label>
+              <input
+                v-model.number="settingsForm.default_essay_weight"
+                type="number"
+                min="0"
+                max="100"
+                required
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400 text-center"
+              />
+            </div>
+          </div>
+
+          <!-- Lock/Open Correction Toggle -->
+          <div class="p-4 rounded-2xl border transition-colors flex items-center justify-between" :class="settingsForm.is_correction_open ? 'bg-emerald-50/60 border-emerald-200' : 'bg-rose-50/60 border-rose-200'">
+            <div>
+              <span class="text-xs font-black uppercase tracking-wider" :class="settingsForm.is_correction_open ? 'text-emerald-900' : 'text-rose-900'">
+                {{ settingsForm.is_correction_open ? '🟢 Akses Koreksi Siswa: DIBUKA' : '🔴 Akses Koreksi Siswa: DIKUNCI' }}
+              </span>
+              <p class="text-[11px] mt-0.5 font-medium" :class="settingsForm.is_correction_open ? 'text-emerald-700' : 'text-rose-700'">
+                {{ settingsForm.is_correction_open ? 'Guru bebas menginput dan mengoreksi jawaban siswa.' : 'Form dikunci sementara. Guru tidak dapat mengubah nilai ujian.' }}
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="settingsForm.is_correction_open = !settingsForm.is_correction_open"
+              :class="settingsForm.is_correction_open ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'"
+              class="px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+            >
+              {{ settingsForm.is_correction_open ? 'Kunci Sekarang' : 'Buka Sekarang' }}
+            </button>
+          </div>
+
+          <!-- Deadline -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Batas Waktu Pengisian Nilai (Deadline)</label>
+            <input
+              v-model="settingsForm.correction_deadline"
+              type="date"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400"
+            />
+            <span class="text-[10px] text-slate-400 font-medium">Batas tanggal bagi para guru untuk menyelesaikan penginputan nilai ujian</span>
+          </div>
+
+          <!-- Allow Direct Sync to Grades -->
+          <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <div>
+              <span class="text-xs font-black text-slate-800 uppercase tracking-wider">Izinkan 1-Klik Kirim ke Buku Nilai</span>
+              <p class="text-[11px] text-slate-500 font-medium mt-0.5">Memungkinkan guru langsung menyinkronkan hasil koreksi ke modul Rapor/Grades.</p>
+            </div>
+            <input
+              v-model="settingsForm.allow_direct_sync"
+              type="checkbox"
+              class="w-5 h-5 rounded-lg text-teal-600 focus:ring-teal-400 cursor-pointer"
+            />
+          </div>
+
+          <!-- Actions -->
+          <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+            <button
+              type="button"
+              @click="showSettingsModal = false"
+              class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              :disabled="savingSettings"
+              class="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-all shadow-md cursor-pointer disabled:opacity-50"
+            >
+              {{ savingSettings ? 'Menyimpan...' : 'Simpan Pengaturan' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
+
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
@@ -302,6 +449,7 @@ import {
   Trash2,
   Eye,
   FileSpreadsheet,
+  Settings,
   X
 } from 'lucide-vue-next';
 
@@ -321,6 +469,19 @@ const searchQuery = ref('');
 const showDetailModal = ref(false);
 const selectedExamDetail = ref(null);
 const inspectAnalysis = ref(null);
+
+const showSettingsModal = ref(false);
+const savingSettings = ref(false);
+const settingsForm = ref({
+  default_kkm: 75,
+  default_pg_weight: 70,
+  default_essay_weight: 30,
+  default_options_count: 4,
+  is_correction_open: true,
+  correction_deadline: '',
+  allow_direct_sync: true
+});
+
 
 onMounted(async () => {
   await Promise.all([fetchExams(), fetchSummary(), fetchMeta()]);
@@ -428,4 +589,30 @@ async function deleteExam(exam) {
     }
   }
 }
+
+async function openSettingsModal() {
+  try {
+    const res = await api.get('/admin/exam-corrections/settings');
+    if (res.data?.data) {
+      settingsForm.value = { ...settingsForm.value, ...res.data.data };
+    }
+    showSettingsModal.value = true;
+  } catch (err) {
+    toast.error('Gagal memuat pengaturan asesmen.');
+  }
+}
+
+async function saveSettings() {
+  savingSettings.value = true;
+  try {
+    const res = await api.post('/admin/exam-corrections/settings', settingsForm.value);
+    toast.success(res.data?.message || 'Pengaturan asesmen berhasil disimpan!');
+    showSettingsModal.value = false;
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal menyimpan pengaturan.');
+  } finally {
+    savingSettings.value = false;
+  }
+}
+
 </script>

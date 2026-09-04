@@ -191,4 +191,56 @@ class AdminExamCorrectionController extends Controller
             'Cache-Control' => 'max-age=0',
         ]);
     }
+
+    /**
+     * Get exam correction master settings for Super Admin & Kurikulum.
+     */
+    public function getSettings()
+    {
+        $defaultSettings = [
+            'default_kkm' => 75,
+            'default_pg_weight' => 70,
+            'default_essay_weight' => 30,
+            'default_options_count' => 4, // 4: A-D, 5: A-E
+            'is_correction_open' => true,
+            'correction_deadline' => null,
+            'allow_direct_sync' => true,
+        ];
+
+        $raw = \App\Models\Setting::where('key', 'exam_correction_settings')->value('value');
+        $settings = $raw ? array_merge($defaultSettings, json_decode($raw, true) ?: []) : $defaultSettings;
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $settings
+        ]);
+    }
+
+    /**
+     * Save/Update exam correction master settings.
+     */
+    public function updateSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'default_kkm' => 'required|numeric|min:0|max:100',
+            'default_pg_weight' => 'required|numeric|min:0|max:100',
+            'default_essay_weight' => 'required|numeric|min:0|max:100',
+            'default_options_count' => 'required|integer|in:4,5',
+            'is_correction_open' => 'required|boolean',
+            'correction_deadline' => 'nullable|string',
+            'allow_direct_sync' => 'required|boolean',
+        ]);
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'exam_correction_settings'],
+            ['value' => json_encode($validated)]
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Pengaturan modul asesmen & koreksi berhasil disimpan!',
+            'data' => $validated
+        ]);
+    }
 }
+
