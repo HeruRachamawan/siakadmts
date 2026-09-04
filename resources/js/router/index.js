@@ -77,6 +77,7 @@ const routes = [
     { path: '/admin/settings', component: () => import('../views/AdminSettings.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Pengaturan Sekolah' } },
     { path: '/admin/academic-years', component: () => import('../views/AdminAcademicYears.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Tahun Ajaran' } },
     { path: '/admin/grades', component: () => import('../views/AdminGrades.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Rekap Nilai Siswa' } },
+    { path: '/admin/exam-corrections', component: () => import('../views/AdminExamCorrection.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Monitoring Koreksi Ujian' } },
     { path: '/admin/attendances', component: () => import('../views/AdminAttendances.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Presensi Siswa' } },
     { path: '/admin/attendance', component: () => import('../views/TeacherAttendance.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Presensi Harian' } },
     { path: '/admin/profile', component: () => import('../views/AdminProfile.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah', 'bendahara'], title: 'Profil & Biodata Diri' } },
@@ -163,8 +164,10 @@ const routes = [
     { path: '/teacher/attendance', component: () => import('../views/TeacherAttendance.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Presensi Mata Pelajaran' } },
     { path: '/teacher/attendance-reports', component: () => import('../views/AdminAttendanceReports.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Laporan Rekap Presensi' } },
     { path: '/teacher/grades', component: () => import('../views/TeacherGrades.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Input Nilai Siswa' } },
+    { path: '/teacher/exam-corrections', component: () => import('../views/TeacherExamCorrection.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Koreksi Soal & Analisis' } },
     { path: '/teacher/schedules', component: () => import('../views/TeacherSchedules.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Jadwal Mengajar' } },
     { path: '/teacher/calendar', component: () => import('../views/TeacherCalendar.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Kalender Akademik' } },
+
 
     // Student Routes
     { path: '/student/dashboard', component: () => import('../views/StudentDashboard.vue'), meta: { requiresAuth: true, role: 'student', title: 'Dashboard Siswa' } },

@@ -105,4 +105,11 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::post('letters/{id}/disposition', [\App\Http\Controllers\Admin\LetterController::class, 'updateDisposition']);
     Route::post('letters/generate-certificate', [\App\Http\Controllers\Admin\LetterController::class, 'generateStudentCertificate']);
     Route::delete('letters/{id}', [\App\Http\Controllers\Admin\LetterController::class, 'destroy']);
+
+    // Monitoring Koreksi Soal & Asesmen Madrasah (Admin / Kurikulum)
+    Route::get('exam-corrections', [\App\Http\Controllers\Admin\AdminExamCorrectionController::class, 'index']);
+    Route::get('exam-corrections/summary', [\App\Http\Controllers\Admin\AdminExamCorrectionController::class, 'summary']);
+    Route::get('exam-corrections/export-all', [\App\Http\Controllers\Admin\AdminExamCorrectionController::class, 'exportAll']);
+    Route::delete('exam-corrections/{id}', [\App\Http\Controllers\Admin\AdminExamCorrectionController::class, 'destroy']);
 });
+

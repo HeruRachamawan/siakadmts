@@ -162,6 +162,20 @@
           </RouterLink>
 
           <RouterLink
+            to="/admin/exam-corrections"
+            :title="isCollapsed ? 'Monitoring Koreksi Ujian' : ''"
+            class="nav-link bg-teal-50/50 text-teal-800 border border-teal-200/60 font-semibold"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <CheckSquare class="w-4 h-4 text-teal-600 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Koreksi</span>
+            </Transition>
+          </RouterLink>
+
+
+          <RouterLink
             to="/admin/calendar-events"
             :title="isCollapsed ? 'Kalender Akademik' : ''"
             class="nav-link"
@@ -351,6 +365,21 @@
             </Transition>
           </RouterLink>
 
+          <!-- Koreksi Soal & Asesmen -->
+          <RouterLink
+            to="/teacher/exam-corrections"
+            :title="isCollapsed ? 'Koreksi Soal & Asesmen' : ''"
+            class="nav-link bg-teal-50/60 text-teal-800 border border-teal-200/80 font-bold"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <CheckSquare class="w-4 h-4 text-teal-600 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Koreksi Soal</span>
+            </Transition>
+          </RouterLink>
+
+
           <!-- Jadwal Mengajar Saya -->
           <RouterLink
             to="/teacher/schedules"
@@ -427,6 +456,21 @@
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Siswa</span>
             </Transition>
           </RouterLink>
+
+          <!-- Monitoring Koreksi Ujian -->
+          <RouterLink
+            to="/admin/exam-corrections"
+            :title="isCollapsed ? 'Monitoring Koreksi Ujian' : ''"
+            class="nav-link bg-teal-50/50 text-teal-800 border border-teal-200/60 font-semibold"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <CheckSquare class="w-4 h-4 text-teal-600 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Koreksi</span>
+            </Transition>
+          </RouterLink>
+
 
           <!-- Rekap Presensi -->
           <RouterLink
@@ -725,6 +769,7 @@ import {
   Inbox,
   Send,
   Users,
+  CheckSquare,
   ArrowRightLeft
 } from 'lucide-vue-next';
 

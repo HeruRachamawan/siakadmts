@@ -50,4 +50,17 @@ Route::middleware(['auth:sanctum', 'role:teacher,admin,operator,kurikulum,kepala
     Route::get('ppdb/{id}', [\App\Http\Controllers\Admin\PpdbController::class, 'show']);
     Route::post('ppdb/{id}/process', [\App\Http\Controllers\Admin\PpdbController::class, 'process']);
     Route::post('ppdb/{id}/enroll', [\App\Http\Controllers\Admin\PpdbController::class, 'enroll']);
+
+    // Modul Koreksi Soal & Analisis Butir Soal (Teacher)
+    Route::get('exam-corrections', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'index']);
+    Route::post('exam-corrections', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'store']);
+    Route::get('exam-corrections/{id}', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'show']);
+    Route::put('exam-corrections/{id}', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'update']);
+    Route::delete('exam-corrections/{id}', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'destroy']);
+    Route::post('exam-corrections/{id}/keys', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'saveKeys']);
+    Route::post('exam-corrections/{id}/grade', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'gradeSubmissions']);
+    Route::get('exam-corrections/{id}/analysis', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'analysis']);
+    Route::post('exam-corrections/{id}/sync-grades', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'syncToGrades']);
+    Route::get('exam-corrections/{id}/export-excel', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'exportExcel']);
 });
+
