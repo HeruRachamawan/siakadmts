@@ -423,20 +423,39 @@ class ExamCorrectionController extends Controller
                     }
                 }
             } elseif ($request->has('questions')) {
+                $incomingNumbers = [];
                 foreach ($request->questions as $item) {
+                    $qNum = intval($item['question_number'] ?? 0);
+                    if ($qNum <= 0) continue;
+                    $incomingNumbers[] = $qNum;
+
                     $qType = $item['question_type'] ?? 'pg';
                     $correct = isset($item['correct_answer']) ? trim($item['correct_answer']) : null;
                     if ($correct !== null && in_array($qType, ['pg', 'true_false', 'agree_disagree', 'pg_complex'])) {
                         $correct = strtoupper($correct);
                     }
 
-                    ExamQuestion::where('exam_package_id', $exam->id)
-                        ->where('question_number', $item['question_number'])
-                        ->update([
+                    ExamQuestion::updateOrCreate(
+                        [
+                            'exam_package_id' => $exam->id,
+                            'question_number' => $qNum,
+                        ],
+                        [
                             'question_type' => $qType,
                             'correct_answer' => $correct,
                             'score_weight' => $item['score_weight'] ?? 1.00,
-                        ]);
+                        ]
+                    );
+                }
+
+                // Delete any questions that were removed by the teacher
+                if (!empty($incomingNumbers)) {
+                    ExamQuestion::where('exam_package_id', $exam->id)
+                        ->whereNotIn('question_number', $incomingNumbers)
+                        ->delete();
+
+                    $exam->total_questions = count($incomingNumbers);
+                    $exam->save();
                 }
             }
 

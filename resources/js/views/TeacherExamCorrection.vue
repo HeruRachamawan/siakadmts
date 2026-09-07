@@ -353,16 +353,64 @@
 
         <!-- Interactive Question Cards Grid -->
         <div class="space-y-3">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Kisi-kisi Butir Soal & Kunci Jawaban ({{ activeQuestions.length }} Nomor)</h3>
-            <span class="text-xs text-slate-400 font-medium">Ubah tipe tiap nomor dengan dropdown tipe soal (PG, PGK, B/S, Menjodohkan, Isian, Uraian)</span>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Kisi-kisi Butir Soal & Kunci Jawaban ({{ activeQuestions.length }} Nomor)</h3>
+              <span class="text-xs text-slate-400 font-medium">Ubah tipe tiap nomor dengan dropdown, tambah butir soal baru (+), atau hapus nomor yang tidak digunakan (🗑️).</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="relative">
+                <button
+                  type="button"
+                  @click="showAddQuestionMenu = !showAddQuestionMenu"
+                  class="px-3 py-1.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                >
+                  <PlusCircle class="w-3.5 h-3.5" />
+                  Tambah Butir Soal (+)
+                </button>
+                <div
+                  v-if="showAddQuestionMenu"
+                  class="absolute right-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-2xl shadow-xl z-30 py-1.5 text-xs"
+                >
+                  <div class="px-3 py-1 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Bentuk Soal:</div>
+                  <button type="button" @click="addQuestion('pg')" class="w-full text-left px-3 py-1.5 hover:bg-teal-50 text-slate-700 font-bold flex items-center justify-between cursor-pointer">
+                    <span>1. Pilihan Ganda (PG)</span>
+                    <span class="text-[10px] px-1.5 py-0.5 bg-teal-100 text-teal-800 rounded font-mono font-bold">+1</span>
+                  </button>
+                  <button type="button" @click="addQuestion('pg_complex')" class="w-full text-left px-3 py-1.5 hover:bg-purple-50 text-slate-700 font-bold flex items-center justify-between cursor-pointer">
+                    <span>2. PG Kompleks</span>
+                    <span class="text-[10px] px-1.5 py-0.5 bg-purple-100 text-purple-800 rounded font-mono font-bold">+1</span>
+                  </button>
+                  <button type="button" @click="addQuestion('true_false')" class="w-full text-left px-3 py-1.5 hover:bg-sky-50 text-slate-700 font-bold flex items-center justify-between cursor-pointer">
+                    <span>3. Benar / Salah</span>
+                    <span class="text-[10px] px-1.5 py-0.5 bg-sky-100 text-sky-800 rounded font-mono font-bold">+1</span>
+                  </button>
+                  <button type="button" @click="addQuestion('agree_disagree')" class="w-full text-left px-3 py-1.5 hover:bg-indigo-50 text-slate-700 font-bold flex items-center justify-between cursor-pointer">
+                    <span>4. Setuju / Tdk</span>
+                    <span class="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-800 rounded font-mono font-bold">+1</span>
+                  </button>
+                  <button type="button" @click="addQuestion('matching')" class="w-full text-left px-3 py-1.5 hover:bg-emerald-50 text-slate-700 font-bold flex items-center justify-between cursor-pointer">
+                    <span>5. Menjodohkan</span>
+                    <span class="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-mono font-bold">+1</span>
+                  </button>
+                  <button type="button" @click="addQuestion('short_answer')" class="w-full text-left px-3 py-1.5 hover:bg-blue-50 text-slate-700 font-bold flex items-center justify-between cursor-pointer">
+                    <span>6. Isian Singkat</span>
+                    <span class="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded font-mono font-bold">+1</span>
+                  </button>
+                  <button type="button" @click="addQuestion('essay')" class="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-slate-700 font-bold flex items-center justify-between cursor-pointer">
+                    <span>7. Uraian / Essay</span>
+                    <span class="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded font-mono font-bold">+1</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3">
             <div
               v-for="q in activeQuestions"
               :key="q.id || q.question_number"
-              class="p-3 rounded-2xl border transition-all text-center space-y-2.5 shadow-2xs"
+              class="p-3 rounded-2xl border transition-all text-center space-y-2.5 shadow-2xs relative group"
               :class="[
                 q.question_type === 'essay' ? 'bg-amber-50/40 border-amber-200' :
                 q.question_type === 'pg_complex' ? 'bg-purple-50/40 border-purple-200' :
@@ -373,22 +421,32 @@
                 (q.correct_answer ? 'bg-teal-50/60 border-teal-200' : 'bg-slate-50 border-slate-200')
               ]"
             >
-              <!-- Card Header: Question Number & Type Selector -->
+              <!-- Card Header: Question Number, Type Selector & Delete Button -->
               <div class="flex items-center justify-between gap-1">
                 <span class="text-xs font-black font-lexend text-slate-800">No. {{ q.question_number }}</span>
-                <select
-                  v-model="q.question_type"
-                  @change="onQuestionTypeChange(q)"
-                  class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-lg border border-slate-200 bg-white text-slate-700 cursor-pointer focus:ring-1 focus:ring-teal-400"
-                >
-                  <option value="pg">PG Biasa</option>
-                  <option value="pg_complex">PG Kompleks</option>
-                  <option value="true_false">Benar/Salah (B/S)</option>
-                  <option value="agree_disagree">Setuju/Tdk (S/TS)</option>
-                  <option value="matching">Menjodohkan</option>
-                  <option value="short_answer">Isian Singkat</option>
-                  <option value="essay">Uraian / Essay</option>
-                </select>
+                <div class="flex items-center gap-1">
+                  <select
+                    v-model="q.question_type"
+                    @change="onQuestionTypeChange(q)"
+                    class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-lg border border-slate-200 bg-white text-slate-700 cursor-pointer focus:ring-1 focus:ring-teal-400"
+                  >
+                    <option value="pg">PG Biasa</option>
+                    <option value="pg_complex">PG Kompleks</option>
+                    <option value="true_false">Benar/Salah (B/S)</option>
+                    <option value="agree_disagree">Setuju/Tdk (S/TS)</option>
+                    <option value="matching">Menjodohkan</option>
+                    <option value="short_answer">Isian Singkat</option>
+                    <option value="essay">Uraian / Essay</option>
+                  </select>
+                  <button
+                    type="button"
+                    @click="removeQuestion(q.question_number)"
+                    title="Hapus butir soal nomor ini"
+                    class="w-5 h-5 flex items-center justify-center rounded-md text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                  >
+                    <Trash2 class="w-3 h-3" />
+                  </button>
+                </div>
               </div>
 
               <!-- 1. PG Biasa (A, B, C, D) -->
@@ -1603,6 +1661,47 @@ function questionTypeLabel(type) {
     essay: 'Uraian'
   };
   return map[type] || 'PG';
+}
+
+const showAddQuestionMenu = ref(false);
+
+function addQuestion(type = 'pg') {
+  showAddQuestionMenu.value = false;
+  const newNum = activeQuestions.value.length + 1;
+  let defaultWeight = 1.00;
+  if (type === 'essay') defaultWeight = 10.00;
+  else if (['pg_complex', 'matching', 'short_answer'].includes(type)) defaultWeight = 2.00;
+
+  activeQuestions.value.push({
+    exam_package_id: activeExam.value?.id,
+    question_number: newNum,
+    question_type: type,
+    correct_answer: null,
+    score_weight: defaultWeight
+  });
+
+  if (activeExam.value) {
+    activeExam.value.total_questions = activeQuestions.value.length;
+  }
+  toast.success(`Butir soal No. ${newNum} (${questionTypeLabel(type)}) berhasil ditambahkan! Silakan klik "Simpan Format & Kunci".`);
+}
+
+function removeQuestion(qNum) {
+  if (activeQuestions.value.length <= 1) {
+    toast.error('Minimal harus ada 1 butir soal dalam paket ujian.');
+    return;
+  }
+  if (confirm(`Apakah Anda yakin ingin menghapus butir soal No. ${qNum}?`)) {
+    activeQuestions.value = activeQuestions.value.filter(q => q.question_number !== qNum);
+    // Renumber sequentially
+    activeQuestions.value.forEach((q, idx) => {
+      q.question_number = idx + 1;
+    });
+    if (activeExam.value) {
+      activeExam.value.total_questions = activeQuestions.value.length;
+    }
+    toast.info(`Nomor ${qNum} dihapus. Nomor soal diurutkan kembali (Total: ${activeQuestions.value.length} butir).`);
+  }
 }
 
 function onQuestionTypeChange(q) {
