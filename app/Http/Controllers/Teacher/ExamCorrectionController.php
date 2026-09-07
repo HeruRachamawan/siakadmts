@@ -121,6 +121,11 @@ class ExamCorrectionController extends Controller
             'semester' => 'nullable|string|in:ganjil,genap',
             'total_questions' => 'required|integer|min:1|max:100',
             'pg_count' => 'nullable|integer|min:0|max:100',
+            'pg_complex_count' => 'nullable|integer|min:0|max:100',
+            'true_false_count' => 'nullable|integer|min:0|max:100',
+            'agree_disagree_count' => 'nullable|integer|min:0|max:100',
+            'matching_count' => 'nullable|integer|min:0|max:100',
+            'short_answer_count' => 'nullable|integer|min:0|max:100',
             'essay_count' => 'nullable|integer|min:0|max:100',
             'kkm' => 'nullable|numeric|min:0|max:100',
             'pg_weight' => 'nullable|numeric|min:0|max:100',
@@ -155,20 +160,49 @@ class ExamCorrectionController extends Controller
                 'description' => $validated['description'] ?? null,
             ]);
 
-            // Generate question placeholders
+            // Build question type sequence based on teacher preferences:
+            $typesSequence = [];
+            $pgCount = intval($validated['pg_count'] ?? 0);
+            $pgComplexCount = intval($validated['pg_complex_count'] ?? 0);
+            $trueFalseCount = intval($validated['true_false_count'] ?? 0);
+            $agreeDisagreeCount = intval($validated['agree_disagree_count'] ?? 0);
+            $matchingCount = intval($validated['matching_count'] ?? 0);
+            $shortAnswerCount = intval($validated['short_answer_count'] ?? 0);
+            $essayCount = intval($validated['essay_count'] ?? 0);
+
+            for ($k = 0; $k < $pgCount; $k++) $typesSequence[] = 'pg';
+            for ($k = 0; $k < $pgComplexCount; $k++) $typesSequence[] = 'pg_complex';
+            for ($k = 0; $k < $trueFalseCount; $k++) $typesSequence[] = 'true_false';
+            for ($k = 0; $k < $agreeDisagreeCount; $k++) $typesSequence[] = 'agree_disagree';
+            for ($k = 0; $k < $matchingCount; $k++) $typesSequence[] = 'matching';
+            for ($k = 0; $k < $shortAnswerCount; $k++) $typesSequence[] = 'short_answer';
+            for ($k = 0; $k < $essayCount; $k++) $typesSequence[] = 'essay';
+
+            // Fallback if no specific breakdown was passed
+            if (empty($typesSequence)) {
+                for ($k = 1; $k <= $exam->total_questions; $k++) {
+                    $typesSequence[] = 'pg';
+                }
+            }
+
             $quickKeys = isset($validated['quick_keys']) ? strtoupper(trim(preg_replace('/\s+/', '', $validated['quick_keys']))) : '';
-            $quickKeysLength = strlen($quickKeys);
-            $pgLimit = isset($validated['pg_count']) ? intval($validated['pg_count']) : $exam->total_questions;
+            $quickKeyIndex = 0;
 
             for ($i = 1; $i <= $exam->total_questions; $i++) {
-                $isPg = ($i <= $pgLimit);
-                $key = ($isPg && $i <= $quickKeysLength) ? substr($quickKeys, $i - 1, 1) : null;
+                $qType = $typesSequence[$i - 1] ?? 'pg';
+                $isEssay = ($qType === 'essay');
+                $key = null;
+                if ($qType === 'pg' && $quickKeyIndex < strlen($quickKeys)) {
+                    $key = substr($quickKeys, $quickKeyIndex, 1);
+                    $quickKeyIndex++;
+                }
+
                 ExamQuestion::create([
                     'exam_package_id' => $exam->id,
                     'question_number' => $i,
-                    'question_type' => $isPg ? 'pg' : 'essay',
+                    'question_type' => $qType,
                     'correct_answer' => $key,
-                    'score_weight' => $isPg ? 1.00 : 10.00,
+                    'score_weight' => $isEssay ? 10.00 : 1.00,
                 ]);
             }
 

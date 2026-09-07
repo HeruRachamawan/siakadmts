@@ -820,37 +820,147 @@
             </div>
           </div>
 
-          <!-- Question Counts & Split -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-            <div class="space-y-1.5">
-              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Jumlah Soal Pilihan Ganda (PG) *</label>
-              <input
-                v-model.number="examForm.pg_count"
-                @input="updateTotalQuestions"
-                type="number"
-                min="0"
-                max="100"
-                required
-                class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-800 text-center focus:ring-2 focus:ring-teal-400"
-              />
+          <!-- Question Composition Breakdown (Custom per Tipe Soal) -->
+          <div class="p-5 bg-slate-50/80 border border-slate-200 rounded-3xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <label class="block text-xs font-black text-slate-800 uppercase tracking-wider">🎯 Komposisi Bentuk Soal Sesuai Kebutuhan Mapel</label>
+                <p class="text-[11px] text-slate-500 font-medium">Tentukan jumlah butir soal untuk tiap tipe yang diinginkan guru mapel.</p>
+              </div>
+              
+              <!-- Quick Presets -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  @click="applyModalPreset('pg20')"
+                  class="px-2.5 py-1 text-[10px] font-bold rounded-lg border bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-2xs cursor-pointer"
+                >
+                  20 PG
+                </button>
+                <button
+                  type="button"
+                  @click="applyModalPreset('pg_essay')"
+                  class="px-2.5 py-1 text-[10px] font-bold rounded-lg border bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-2xs cursor-pointer"
+                >
+                  15 PG + 5 Uraian
+                </button>
+                <button
+                  type="button"
+                  @click="applyModalPreset('akmi')"
+                  class="px-2.5 py-1 text-[10px] font-bold rounded-lg border bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 shadow-2xs cursor-pointer"
+                >
+                  ⭐ Standar AKMI / AM
+                </button>
+              </div>
             </div>
 
-            <div class="space-y-1.5">
-              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Jumlah Soal Uraian / Essay</label>
-              <input
-                v-model.number="examForm.essay_count"
-                @input="updateTotalQuestions"
-                type="number"
-                min="0"
-                max="50"
-                class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-800 text-center focus:ring-2 focus:ring-teal-400"
-              />
+            <!-- 7 Question Type Counter Cards Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              <!-- 1. PG Biasa -->
+              <div class="p-3 bg-white rounded-2xl border border-teal-200/80 space-y-1 text-center shadow-2xs">
+                <span class="block text-[10px] font-black text-teal-800 uppercase">1. Pilihan Ganda (PG)</span>
+                <input
+                  v-model.number="examForm.pg_count"
+                  @input="updateTotalQuestions"
+                  type="number"
+                  min="0"
+                  max="100"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+
+              <!-- 2. PG Kompleks -->
+              <div class="p-3 bg-white rounded-2xl border border-purple-200/80 space-y-1 text-center shadow-2xs">
+                <span class="block text-[10px] font-black text-purple-800 uppercase">2. PG Kompleks</span>
+                <input
+                  v-model.number="examForm.pg_complex_count"
+                  @input="updateTotalQuestions"
+                  type="number"
+                  min="0"
+                  max="100"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+
+              <!-- 3. Benar / Salah -->
+              <div class="p-3 bg-white rounded-2xl border border-sky-200/80 space-y-1 text-center shadow-2xs">
+                <span class="block text-[10px] font-black text-sky-800 uppercase">3. Benar / Salah</span>
+                <input
+                  v-model.number="examForm.true_false_count"
+                  @input="updateTotalQuestions"
+                  type="number"
+                  min="0"
+                  max="100"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+
+              <!-- 4. Setuju / Tidak Setuju -->
+              <div class="p-3 bg-white rounded-2xl border border-indigo-200/80 space-y-1 text-center shadow-2xs">
+                <span class="block text-[10px] font-black text-indigo-800 uppercase">4. Setuju / Tdk</span>
+                <input
+                  v-model.number="examForm.agree_disagree_count"
+                  @input="updateTotalQuestions"
+                  type="number"
+                  min="0"
+                  max="100"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+
+              <!-- 5. Menjodohkan -->
+              <div class="p-3 bg-white rounded-2xl border border-emerald-200/80 space-y-1 text-center shadow-2xs">
+                <span class="block text-[10px] font-black text-emerald-800 uppercase">5. Menjodohkan</span>
+                <input
+                  v-model.number="examForm.matching_count"
+                  @input="updateTotalQuestions"
+                  type="number"
+                  min="0"
+                  max="100"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+
+              <!-- 6. Isian Singkat -->
+              <div class="p-3 bg-white rounded-2xl border border-blue-200/80 space-y-1 text-center shadow-2xs">
+                <span class="block text-[10px] font-black text-blue-800 uppercase">6. Isian Singkat</span>
+                <input
+                  v-model.number="examForm.short_answer_count"
+                  @input="updateTotalQuestions"
+                  type="number"
+                  min="0"
+                  max="100"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+
+              <!-- 7. Uraian / Essay -->
+              <div class="p-3 bg-white rounded-2xl border border-amber-200/80 space-y-1 text-center shadow-2xs col-span-2 sm:col-span-1 md:col-span-2">
+                <span class="block text-[10px] font-black text-amber-800 uppercase">7. Uraian / Essay</span>
+                <input
+                  v-model.number="examForm.essay_count"
+                  @input="updateTotalQuestions"
+                  type="number"
+                  min="0"
+                  max="50"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
             </div>
 
-            <div class="col-span-1 sm:col-span-2 text-xs font-bold text-slate-500 flex items-center justify-between px-1">
-              <span>Total Soal: <strong class="text-teal-700">{{ examForm.total_questions }} Nomor</strong></span>
-              <span v-if="examForm.essay_count > 0" class="text-amber-700 font-bold">Bobot: PG {{ examForm.pg_weight }}% | Uraian {{ examForm.essay_weight }}%</span>
-              <span v-else class="text-teal-700 font-bold">100% Pilihan Ganda</span>
+            <!-- Total Soal & Ringkasan Bobot Live Bar -->
+            <div class="p-3 rounded-2xl bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-bold">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-xl bg-teal-600 text-white font-mono font-black">
+                  Total: {{ examForm.total_questions }} Soal
+                </span>
+                <span class="text-slate-500 font-medium">
+                  ({{ objectiveTotalCount }} Objektif + {{ examForm.essay_count || 0 }} Uraian)
+                </span>
+              </div>
+              <div class="text-slate-600">
+                Bobot: <strong class="text-teal-700">Objektif {{ examForm.pg_weight }}%</strong> | <strong class="text-amber-700">Uraian {{ examForm.essay_weight }}%</strong>
+              </div>
             </div>
           </div>
 
@@ -1180,6 +1290,11 @@ const examForm = reactive({
   exam_type: 'uh',
   semester: 'ganjil',
   pg_count: 20,
+  pg_complex_count: 0,
+  true_false_count: 0,
+  agree_disagree_count: 0,
+  matching_count: 0,
+  short_answer_count: 0,
   essay_count: 0,
   total_questions: 20,
   kkm: 75,
@@ -1188,10 +1303,20 @@ const examForm = reactive({
   quick_keys: ''
 });
 
+const objectiveTotalCount = computed(() => {
+  return (Number(examForm.pg_count) || 0) +
+    (Number(examForm.pg_complex_count) || 0) +
+    (Number(examForm.true_false_count) || 0) +
+    (Number(examForm.agree_disagree_count) || 0) +
+    (Number(examForm.matching_count) || 0) +
+    (Number(examForm.short_answer_count) || 0);
+});
+
 function updateTotalQuestions() {
-  const pg = Number(examForm.pg_count) || 0;
+  const obj = objectiveTotalCount.value;
   const es = Number(examForm.essay_count) || 0;
-  examForm.total_questions = Math.max(1, pg + es);
+  examForm.total_questions = Math.max(1, obj + es);
+
   if (es === 0) {
     examForm.pg_weight = 100;
     examForm.essay_weight = 0;
@@ -1199,6 +1324,35 @@ function updateTotalQuestions() {
     examForm.pg_weight = 70;
     examForm.essay_weight = 30;
   }
+}
+
+function applyModalPreset(preset) {
+  if (preset === 'pg20') {
+    examForm.pg_count = 20;
+    examForm.pg_complex_count = 0;
+    examForm.true_false_count = 0;
+    examForm.agree_disagree_count = 0;
+    examForm.matching_count = 0;
+    examForm.short_answer_count = 0;
+    examForm.essay_count = 0;
+  } else if (preset === 'pg_essay') {
+    examForm.pg_count = 15;
+    examForm.pg_complex_count = 0;
+    examForm.true_false_count = 0;
+    examForm.agree_disagree_count = 0;
+    examForm.matching_count = 0;
+    examForm.short_answer_count = 0;
+    examForm.essay_count = 5;
+  } else if (preset === 'akmi') {
+    examForm.pg_count = 10;
+    examForm.pg_complex_count = 3;
+    examForm.true_false_count = 2;
+    examForm.agree_disagree_count = 0;
+    examForm.matching_count = 2;
+    examForm.short_answer_count = 1;
+    examForm.essay_count = 2;
+  }
+  updateTotalQuestions();
 }
 
 function onPgWeightInput() {
@@ -1533,6 +1687,11 @@ function openCreateModal() {
   examForm.exam_type = 'uh';
   examForm.semester = 'ganjil';
   examForm.pg_count = 20;
+  examForm.pg_complex_count = 0;
+  examForm.true_false_count = 0;
+  examForm.agree_disagree_count = 0;
+  examForm.matching_count = 0;
+  examForm.short_answer_count = 0;
   examForm.essay_count = 0;
   examForm.total_questions = 20;
   examForm.pg_weight = 100;
