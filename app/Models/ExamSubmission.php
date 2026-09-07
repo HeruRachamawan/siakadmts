@@ -19,6 +19,7 @@ class ExamSubmission extends Model
         'pg_score',
         'essay_score',
         'total_score',
+        'remedial_score',
         'is_passed',
     ];
 
@@ -30,6 +31,7 @@ class ExamSubmission extends Model
         'pg_score' => 'float',
         'essay_score' => 'float',
         'total_score' => 'float',
+        'remedial_score' => 'float',
         'is_passed' => 'boolean',
     ];
 

@@ -274,6 +274,7 @@ class ExamCorrectionController extends Controller
                 'pg_score' => $sub ? $sub->pg_score : 0,
                 'essay_score' => $sub ? $sub->essay_score : 0,
                 'total_score' => $sub ? $sub->total_score : 0,
+                'remedial_score' => $sub ? $sub->remedial_score : null,
                 'is_passed' => $sub ? $sub->is_passed : false,
                 'has_submitted' => $sub !== null,
             ];
@@ -490,6 +491,7 @@ class ExamCorrectionController extends Controller
             'submissions.*.student_id' => 'required|exists:students,id',
             'submissions.*.answers' => 'nullable', // Array or String (e.g. "ABCD...")
             'submissions.*.essay_scores' => 'nullable|array',
+            'submissions.*.remedial_score' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $questions = $exam->questions->keyBy('question_number');
@@ -562,7 +564,11 @@ class ExamCorrectionController extends Controller
                     $totalScore = $pgScore;
                 }
 
-                $isPassed = $totalScore >= $exam->kkm;
+                $remedialScore = (isset($subData['remedial_score']) && $subData['remedial_score'] !== '' && $subData['remedial_score'] !== null)
+                    ? floatval($subData['remedial_score'])
+                    : null;
+
+                $isPassed = ($totalScore >= $exam->kkm) || ($remedialScore !== null && $remedialScore >= $exam->kkm);
 
                 // Save or update submission
                 $submission = ExamSubmission::updateOrCreate(
@@ -578,6 +584,7 @@ class ExamCorrectionController extends Controller
                         'pg_score' => $pgScore,
                         'essay_score' => $essayScore,
                         'total_score' => $totalScore,
+                        'remedial_score' => $remedialScore,
                         'is_passed' => $isPassed,
                     ]
                 );
@@ -767,13 +774,14 @@ class ExamCorrectionController extends Controller
         try {
             $syncedCount = 0;
             foreach ($submissions as $sub) {
+                $effectiveScore = ($sub->remedial_score !== null && $sub->remedial_score !== '') ? floatval($sub->remedial_score) : floatval($sub->total_score);
                 $grade = Grade::firstOrNew([
                     'student_id' => $sub->student_id,
                     'subject_id' => $exam->subject_id,
                     'academic_year_id' => $exam->academic_year_id,
                 ]);
 
-                $grade->{$targetField} = $sub->total_score;
+                $grade->{$targetField} = $effectiveScore;
                 $grade->save();
                 $syncedCount++;
             }
@@ -818,6 +826,8 @@ class ExamCorrectionController extends Controller
         }
         $headers[] = 'Jml Benar';
         $headers[] = 'Jml Salah';
+        $headers[] = 'Nilai Ujian';
+        $headers[] = 'Nilai Remedial';
         $headers[] = 'Nilai Akhir';
         $headers[] = 'Status';
 
@@ -848,10 +858,26 @@ class ExamCorrectionController extends Controller
                 $rowData[] = $sub ? ($sub->student_answers[(string)$q->question_number] ?? '') : '';
             }
 
+            $hasRemedial = $sub && $sub->remedial_score !== null && $sub->remedial_score !== '';
+            $finalScore = $hasRemedial ? $sub->remedial_score : ($sub ? $sub->total_score : 0);
+
+            $statusText = 'BELUM INPUT';
+            if ($sub) {
+                if ($hasRemedial && $sub->remedial_score >= $exam->kkm) {
+                    $statusText = 'TUNTAS (REMEDIAL)';
+                } elseif ($sub->is_passed) {
+                    $statusText = 'TUNTAS';
+                } else {
+                    $statusText = 'REMEDIAL';
+                }
+            }
+
             $rowData[] = $sub ? $sub->correct_pg_count : 0;
             $rowData[] = $sub ? $sub->wrong_pg_count : 0;
             $rowData[] = $sub ? $sub->total_score : 0;
-            $rowData[] = $sub ? ($sub->is_passed ? 'TUNTAS' : 'REMEDIAL') : 'BELUM INPUT';
+            $rowData[] = $hasRemedial ? $sub->remedial_score : '-';
+            $rowData[] = $finalScore;
+            $rowData[] = $statusText;
 
             $sheet->fromArray([$rowData], null, "A{$rowNum}");
             $rowNum++;
@@ -928,13 +954,15 @@ class ExamCorrectionController extends Controller
                 $totalScore = $pgScore;
             }
 
+            $isPassed = ($totalScore >= $exam->kkm) || ($sub->remedial_score !== null && $sub->remedial_score >= $exam->kkm);
+
             $sub->update([
                 'correct_pg_count' => $correctPgCount,
                 'wrong_pg_count' => $wrongPgCount,
                 'pg_score' => $pgScore,
                 'essay_score' => $essayScore,
                 'total_score' => $totalScore,
-                'is_passed' => $totalScore >= $exam->kkm,
+                'is_passed' => $isPassed,
             ]);
         }
     }

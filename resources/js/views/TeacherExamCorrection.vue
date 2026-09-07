@@ -592,7 +592,7 @@
           <div>
             <h3 class="text-xs font-black text-teal-950 uppercase tracking-wider">🎯 Mode Koreksi Siswa (Cepat & Detail)</h3>
             <p class="text-xs text-teal-700 mt-0.5 font-medium">
-              Ketik deretan jawaban di kolom, atau klik tombol <strong class="text-teal-900 bg-white px-1.5 py-0.5 rounded border border-teal-200">Form Jawaban</strong> pada baris siswa untuk mengisi PG Kompleks, B/S, Menjodohkan, & Isian secara interaktif.
+              Ketik deretan jawaban di kolom, atau klik tombol <strong class="text-teal-900 bg-white px-1.5 py-0.5 rounded border border-teal-200">Form Jawaban</strong>. Untuk siswa remedial, ketik nilai perbaikan pada kolom <strong class="text-teal-900">Nilai Remedial</strong> lalu klik <strong class="text-teal-900">Simpan & Hitung Koreksi</strong>.
             </p>
           </div>
 
@@ -616,7 +616,8 @@
                 <th class="px-4 py-3.5">Jawaban Siswa ({{ pgQuestionsCount }} Butir Objektif)</th>
                 <th v-if="essayQuestionsCount > 0" class="px-4 py-3.5 text-center">Nilai Uraian / Essay</th>
                 <th class="px-4 py-3.5 text-center">Benar / Salah</th>
-                <th class="px-4 py-3.5 text-center">Nilai Akhir</th>
+                <th class="px-4 py-3.5 text-center">Nilai Ujian</th>
+                <th class="px-4 py-3.5 text-center">Nilai Remedial</th>
                 <th class="px-4 py-3.5 text-center">Status</th>
               </tr>
             </thead>
@@ -682,13 +683,39 @@
                   </span>
                   <span v-else class="text-slate-400 text-[11px]">-</span>
                 </td>
+
+                <!-- Nilai Remedial Column -->
+                <td class="px-4 py-3 text-center">
+                  <div class="flex items-center justify-center">
+                    <input
+                      v-if="student.has_submitted"
+                      v-model.number="student.remedial_score"
+                      type="number"
+                      min="0"
+                      max="100"
+                      :placeholder="student.total_score < activeExam.kkm ? '0-100' : '-'"
+                      :class="[
+                        (student.remedial_score && student.remedial_score >= activeExam.kkm) ? 'border-teal-400 bg-teal-50/60 text-teal-900 focus:ring-teal-400' :
+                        (student.total_score < activeExam.kkm ? 'border-rose-300 bg-rose-50/30 text-rose-900 focus:ring-rose-400' : 'border-slate-200 bg-slate-50 text-slate-400')
+                      ]"
+                      class="w-16 border rounded-xl py-1 text-center text-xs font-black focus:ring-2 transition-all shadow-2xs"
+                      :title="student.total_score < activeExam.kkm ? 'Ketik nilai setelah siswa selesai remedial' : 'Siswa sudah tuntas'"
+                    />
+                    <span v-else class="text-slate-400 text-[11px]">-</span>
+                  </div>
+                </td>
+
+                <!-- Status Column -->
                 <td class="px-4 py-3 text-center">
                   <span
                     v-if="student.has_submitted"
-                    :class="student.is_passed ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'"
-                    class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider border shadow-2xs inline-block"
+                    :class="[
+                      (student.remedial_score && student.remedial_score >= activeExam.kkm) ? 'bg-teal-50 text-teal-800 border-teal-300' :
+                      (student.total_score >= activeExam.kkm ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200')
+                    ]"
+                    class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border shadow-2xs inline-block"
                   >
-                    {{ student.is_passed ? '🟢 TUNTAS' : '🔴 REMEDIAL' }}
+                    {{ (student.remedial_score && student.remedial_score >= activeExam.kkm) ? '🟢 TUNTAS (REMEDIAL)' : (student.total_score >= activeExam.kkm ? '🟢 TUNTAS' : '🔴 REMEDIAL') }}
                   </span>
                   <span v-else class="text-slate-400 text-[10px] font-bold">BELUM INPUT</span>
                 </td>
@@ -2054,6 +2081,7 @@ async function openExamDetail(id) {
 
       return {
         ...s,
+        remedial_score: (s.remedial_score !== null && s.remedial_score !== undefined) ? Number(s.remedial_score) : null,
         student_answers: rawAnswers,
         answer_string: str,
         essay_scores: essayScoresMap
@@ -2123,7 +2151,8 @@ async function submitAllGrades() {
       return {
         student_id: s.id,
         answers: hasAnswersObj ? s.student_answers : (s.answer_string || ''),
-        essay_scores: s.essay_scores || {}
+        essay_scores: s.essay_scores || {},
+        remedial_score: (s.remedial_score !== null && s.remedial_score !== undefined && s.remedial_score !== '') ? Number(s.remedial_score) : null
       };
     });
 
