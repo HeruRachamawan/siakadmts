@@ -280,6 +280,74 @@ class ExamCorrectionController extends Controller
     }
 
     /**
+     * Check if student answer matches the correct key based on question type.
+     */
+    public static function checkAnswerCorrectness(string $type, $studentAns, $correctAns): bool
+    {
+        if ($correctAns === null || $studentAns === null) {
+            return false;
+        }
+
+        $cleanStudent = trim((string)$studentAns);
+        $cleanCorrect = trim((string)$correctAns);
+
+        if ($cleanStudent === '' || $cleanCorrect === '') {
+            return false;
+        }
+
+        switch ($type) {
+            case 'pg':
+            case 'true_false':
+            case 'agree_disagree':
+                return strtoupper($cleanStudent) === strtoupper($cleanCorrect);
+
+            case 'pg_complex':
+                // Normalize multi-select answers e.g. "A, C", "A,C", "AC", "C,A" -> sorted comma string "A,C"
+                $normalize = function ($str) {
+                    $str = strtoupper($str);
+                    if (str_contains($str, ',')) {
+                        $parts = array_map('trim', explode(',', $str));
+                    } else {
+                        $parts = preg_split('//u', preg_replace('/\s+/', '', $str), -1, PREG_SPLIT_NO_EMPTY);
+                    }
+                    $parts = array_filter($parts, fn($v) => $v !== '');
+                    sort($parts);
+                    return implode(',', array_unique($parts));
+                };
+                return $normalize($cleanStudent) === $normalize($cleanCorrect);
+
+            case 'matching':
+                // Normalize pairs: e.g. "1-A, 2-B" or "1A,2B" -> sorted comma string
+                $normalizePairs = function ($str) {
+                    $str = strtoupper(preg_replace('/\s+/', '', $str));
+                    $str = str_replace(['-', ':', ';'], '', $str);
+                    $items = array_filter(explode(',', $str), fn($v) => $v !== '');
+                    sort($items);
+                    return implode(',', $items);
+                };
+                return $normalizePairs($cleanStudent) === $normalizePairs($cleanCorrect);
+
+            case 'short_answer':
+                // Case-insensitive, collapsed spaces, supports multiple alternatives separated by | or /
+                $studentNorm = strtolower(preg_replace('/\s+/', ' ', $cleanStudent));
+                $synonyms = preg_split('/[|\/]/', $cleanCorrect);
+                foreach ($synonyms as $syn) {
+                    $synNorm = strtolower(trim(preg_replace('/\s+/', ' ', $syn)));
+                    if ($studentNorm === $synNorm) {
+                        return true;
+                    }
+                }
+                return false;
+
+            case 'essay':
+                return false;
+
+            default:
+                return strtoupper($cleanStudent) === strtoupper($cleanCorrect);
+        }
+    }
+
+    /**
      * Save/Update answer keys and weights.
      */
     public function saveKeys(Request $request, $id)
@@ -305,11 +373,17 @@ class ExamCorrectionController extends Controller
                 }
             } elseif ($request->has('questions')) {
                 foreach ($request->questions as $item) {
+                    $qType = $item['question_type'] ?? 'pg';
+                    $correct = isset($item['correct_answer']) ? trim($item['correct_answer']) : null;
+                    if ($correct !== null && in_array($qType, ['pg', 'true_false', 'agree_disagree', 'pg_complex'])) {
+                        $correct = strtoupper($correct);
+                    }
+
                     ExamQuestion::where('exam_package_id', $exam->id)
                         ->where('question_number', $item['question_number'])
                         ->update([
-                            'question_type' => $item['question_type'] ?? 'pg',
-                            'correct_answer' => isset($item['correct_answer']) ? strtoupper(trim($item['correct_answer'])) : null,
+                            'question_type' => $qType,
+                            'correct_answer' => $correct,
                             'score_weight' => $item['score_weight'] ?? 1.00,
                         ]);
                 }
@@ -364,7 +438,7 @@ class ExamCorrectionController extends Controller
                 $answersInput = $subData['answers'] ?? [];
                 $essayScoresInput = $subData['essay_scores'] ?? [];
 
-                // Normalize answers if passed as quick string (e.g. "ABCDA...")
+                // Normalize answers if passed as quick string (e.g. "ABCDA...") or array
                 $answers = [];
                 if (is_string($answersInput)) {
                     $cleanStr = strtoupper(trim(preg_replace('/\s+/', '', $answersInput)));
@@ -373,11 +447,11 @@ class ExamCorrectionController extends Controller
                     }
                 } elseif (is_array($answersInput)) {
                     foreach ($answersInput as $k => $v) {
-                        $answers[(string)$k] = is_string($v) ? strtoupper(trim($v)) : $v;
+                        $answers[(string)$k] = is_string($v) ? trim($v) : $v;
                     }
                 }
 
-                // Grade PG questions
+                // Grade Objective questions (pg, pg_complex, true_false, agree_disagree, matching, short_answer)
                 $correctPgCount = 0;
                 $wrongPgCount = 0;
                 $earnedPgPoints = 0;
@@ -386,7 +460,7 @@ class ExamCorrectionController extends Controller
                     $studentAns = $answers[(string)$num] ?? null;
                     $correctAns = $q->correct_answer;
 
-                    if ($correctAns && $studentAns && $studentAns === $correctAns) {
+                    if ($correctAns !== null && $studentAns !== null && self::checkAnswerCorrectness($q->question_type, $studentAns, $correctAns)) {
                         $correctPgCount++;
                         $earnedPgPoints += $q->score_weight;
                     } else {
@@ -523,7 +597,7 @@ class ExamCorrectionController extends Controller
                         $optionCounts['OTHER']++;
                     }
                 }
-                if ($correctAns && $ans === $correctAns) {
+                if ($correctAns !== null && $ans !== null && self::checkAnswerCorrectness($q->question_type, $ans, $correctAns)) {
                     $correctCount++;
                 }
             }
@@ -540,11 +614,17 @@ class ExamCorrectionController extends Controller
             // Discrimination Index (Daya Pembeda D = (Ba - Bb) / n)
             $upperCorrect = 0;
             foreach ($upperGroup as $uSub) {
-                if (($uSub->student_answers[$qNum] ?? null) === $correctAns) $upperCorrect++;
+                $uAns = $uSub->student_answers[$qNum] ?? null;
+                if ($correctAns !== null && $uAns !== null && self::checkAnswerCorrectness($q->question_type, $uAns, $correctAns)) {
+                    $upperCorrect++;
+                }
             }
             $lowerCorrect = 0;
             foreach ($lowerGroup as $lSub) {
-                if (($lSub->student_answers[$qNum] ?? null) === $correctAns) $lowerCorrect++;
+                $lAns = $lSub->student_answers[$qNum] ?? null;
+                if ($correctAns !== null && $lAns !== null && self::checkAnswerCorrectness($q->question_type, $lAns, $correctAns)) {
+                    $lowerCorrect++;
+                }
             }
 
             $discriminationIndex = round(($upperCorrect - $lowerCorrect) / $groupSize, 2);
@@ -749,7 +829,7 @@ class ExamCorrectionController extends Controller
                 $studentAns = $answers[(string)$num] ?? null;
                 $correctAns = $q->correct_answer;
 
-                if ($correctAns && $studentAns && $studentAns === $correctAns) {
+                if ($correctAns !== null && $studentAns !== null && self::checkAnswerCorrectness($q->question_type, $studentAns, $correctAns)) {
                     $correctPgCount++;
                     $earnedPgPoints += $q->score_weight;
                 } else {
