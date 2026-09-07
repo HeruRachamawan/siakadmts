@@ -127,6 +127,13 @@ class ExamCorrectionController extends Controller
             'matching_count' => 'nullable|integer|min:0|max:100',
             'short_answer_count' => 'nullable|integer|min:0|max:100',
             'essay_count' => 'nullable|integer|min:0|max:100',
+            'pg_point' => 'nullable|numeric|min:0.01|max:100',
+            'pg_complex_point' => 'nullable|numeric|min:0.01|max:100',
+            'true_false_point' => 'nullable|numeric|min:0.01|max:100',
+            'agree_disagree_point' => 'nullable|numeric|min:0.01|max:100',
+            'matching_point' => 'nullable|numeric|min:0.01|max:100',
+            'short_answer_point' => 'nullable|numeric|min:0.01|max:100',
+            'essay_point' => 'nullable|numeric|min:0.01|max:100',
             'kkm' => 'nullable|numeric|min:0|max:100',
             'pg_weight' => 'nullable|numeric|min:0|max:100',
             'essay_weight' => 'nullable|numeric|min:0|max:100',
@@ -197,12 +204,22 @@ class ExamCorrectionController extends Controller
                     $quickKeyIndex++;
                 }
 
+                // Custom point/bobot per butir soal:
+                $point = 1.00;
+                if ($qType === 'pg') $point = floatval($validated['pg_point'] ?? 1.00);
+                elseif ($qType === 'pg_complex') $point = floatval($validated['pg_complex_point'] ?? 2.00);
+                elseif ($qType === 'true_false') $point = floatval($validated['true_false_point'] ?? 1.00);
+                elseif ($qType === 'agree_disagree') $point = floatval($validated['agree_disagree_point'] ?? 1.00);
+                elseif ($qType === 'matching') $point = floatval($validated['matching_point'] ?? 2.00);
+                elseif ($qType === 'short_answer') $point = floatval($validated['short_answer_point'] ?? 2.00);
+                elseif ($qType === 'essay') $point = floatval($validated['essay_point'] ?? 10.00);
+
                 ExamQuestion::create([
                     'exam_package_id' => $exam->id,
                     'question_number' => $i,
                     'question_type' => $qType,
                     'correct_answer' => $key,
-                    'score_weight' => $isEssay ? 10.00 : 1.00,
+                    'score_weight' => $point,
                 ]);
             }
 
