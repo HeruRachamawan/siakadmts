@@ -108,6 +108,7 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
 
     // Monitoring Koreksi Soal & Asesmen Madrasah (Admin / Kurikulum)
     Route::get('exam-corrections', [\App\Http\Controllers\Admin\AdminExamCorrectionController::class, 'index']);
+    Route::get('exam-corrections/options', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'options']);
     Route::get('exam-corrections/summary', [\App\Http\Controllers\Admin\AdminExamCorrectionController::class, 'summary']);
     Route::get('exam-corrections/settings', [\App\Http\Controllers\Admin\AdminExamCorrectionController::class, 'getSettings']);
     Route::post('exam-corrections/settings', [\App\Http\Controllers\Admin\AdminExamCorrectionController::class, 'updateSettings']);

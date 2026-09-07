@@ -74,7 +74,9 @@
         <div class="flex items-center gap-2 flex-wrap">
           <select v-model="filterClass" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-teal-400">
             <option value="">Semua Kelas</option>
-            <option v-for="c in classes" :key="c.id" :value="c.id">Kelas {{ c.name }}</option>
+            <option v-for="c in classes" :key="c.id" :value="c.id">
+              Kelas {{ c.name }} ({{ c.students_count || 0 }} Siswa)
+            </option>
           </select>
 
           <select v-model="filterSubject" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-teal-400">
@@ -577,7 +579,9 @@
               <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Kelas *</label>
               <select v-model="examForm.class_room_id" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400">
                 <option value="">-- Pilih Kelas --</option>
-                <option v-for="c in classes" :key="c.id" :value="c.id">Kelas {{ c.name }} (Tingkat {{ c.grade_level }})</option>
+                <option v-for="c in classes" :key="c.id" :value="c.id">
+                  Kelas {{ c.name }} (Tingkat {{ c.grade_level }}) — {{ c.students_count || 0 }} Siswa
+                </option>
               </select>
             </div>
 
@@ -755,14 +759,29 @@ onMounted(async () => {
 
 async function fetchMeta() {
   try {
-    const [clsRes, sbjRes] = await Promise.all([
-      api.get('/teacher/classes'),
-      api.get('/teacher/grade-options')
-    ]);
-    classes.value = clsRes.data?.data || clsRes.data || [];
-    subjects.value = sbjRes.data?.subjects || [];
+    const res = await api.get('/teacher/exam-corrections/options');
+    const optData = res.data?.data || {};
+    classes.value = optData.classes || [];
+    subjects.value = optData.subjects || [];
+
+    if (optData.settings) {
+      examForm.kkm = optData.settings.default_kkm ?? 75;
+      examForm.pg_weight = optData.settings.default_pg_weight ?? 70;
+      examForm.essay_weight = optData.settings.default_essay_weight ?? 30;
+    }
   } catch (err) {
-    console.error('Failed to load classes or subjects:', err);
+    console.error('Failed to load exam correction options:', err);
+    try {
+      const [clsRes, sbjRes] = await Promise.all([
+        api.get('/teacher/classes'),
+        api.get('/teacher/grade-options')
+      ]);
+      const gData = sbjRes.data?.data || sbjRes.data || {};
+      classes.value = gData.classes || clsRes.data?.data || clsRes.data || [];
+      subjects.value = gData.subjects || [];
+    } catch (fallbackErr) {
+      console.error(fallbackErr);
+    }
   }
 }
 
@@ -822,14 +841,12 @@ function examTypeLabel(type) {
 
 function openCreateModal() {
   examForm.title = '';
-  examForm.class_room_id = classes.value[0]?.id || '';
+  const classWithStudents = classes.value.find(c => (c.students_count || 0) > 0) || classes.value[0];
+  examForm.class_room_id = classWithStudents?.id || '';
   examForm.subject_id = subjects.value[0]?.id || '';
   examForm.exam_type = 'uh';
   examForm.semester = 'ganjil';
   examForm.total_questions = 20;
-  examForm.kkm = 75;
-  examForm.pg_weight = 70;
-  examForm.essay_weight = 30;
   examForm.quick_keys = '';
   showCreateModal.value = true;
 }

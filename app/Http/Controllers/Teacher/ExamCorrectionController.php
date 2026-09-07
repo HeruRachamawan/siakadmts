@@ -28,6 +28,44 @@ class ExamCorrectionController extends Controller
     }
 
     /**
+     * Get metadata options (all classes, teacher subjects, active academic year, settings).
+     */
+    public function options(Request $request)
+    {
+        $teacher = $this->getTeacher($request);
+
+        // Get all classes with students count
+        $classes = \App\Models\ClassRoom::withCount('students')
+            ->orderBy('grade_level')
+            ->orderBy('name')
+            ->get();
+
+        // Get subjects: teacher subjects or all subjects
+        if ($teacher && $teacher->subjects()->exists()) {
+            $subjects = $teacher->subjects()->orderBy('name')->get();
+        } else {
+            $subjects = \App\Models\Subject::orderBy('name')->get();
+        }
+
+        $activeYear = AcademicYear::where('is_active', true)->first()
+            ?? AcademicYear::orderBy('id', 'desc')->first();
+
+        // Settings
+        $rawSettings = \App\Models\Setting::where('key', 'exam_correction_settings')->value('value');
+        $settings = $rawSettings ? json_decode($rawSettings, true) : null;
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'classes' => $classes,
+                'subjects' => $subjects,
+                'active_academic_year' => $activeYear,
+                'settings' => $settings,
+            ]
+        ]);
+    }
+
+    /**
      * List all exam packages created by teacher or assigned to classes.
      */
     public function index(Request $request)

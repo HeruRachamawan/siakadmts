@@ -53,6 +53,7 @@ Route::middleware(['auth:sanctum', 'role:teacher,admin,operator,kurikulum,kepala
 
     // Modul Koreksi Soal & Analisis Butir Soal (Teacher)
     Route::get('exam-corrections', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'index']);
+    Route::get('exam-corrections/options', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'options']);
     Route::get('exam-corrections/settings', [\App\Http\Controllers\Admin\AdminExamCorrectionController::class, 'getSettings']);
     Route::post('exam-corrections', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'store']);
     Route::get('exam-corrections/{id}', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'show']);
