@@ -120,6 +120,8 @@ class ExamCorrectionController extends Controller
             'exam_type' => 'required|string|in:uh,sts,sas,pat,am,quiz',
             'semester' => 'nullable|string|in:ganjil,genap',
             'total_questions' => 'required|integer|min:1|max:100',
+            'pg_count' => 'nullable|integer|min:0|max:100',
+            'essay_count' => 'nullable|integer|min:0|max:100',
             'kkm' => 'nullable|numeric|min:0|max:100',
             'pg_weight' => 'nullable|numeric|min:0|max:100',
             'essay_weight' => 'nullable|numeric|min:0|max:100',
@@ -156,15 +158,17 @@ class ExamCorrectionController extends Controller
             // Generate question placeholders
             $quickKeys = isset($validated['quick_keys']) ? strtoupper(trim(preg_replace('/\s+/', '', $validated['quick_keys']))) : '';
             $quickKeysLength = strlen($quickKeys);
+            $pgLimit = isset($validated['pg_count']) ? intval($validated['pg_count']) : $exam->total_questions;
 
             for ($i = 1; $i <= $exam->total_questions; $i++) {
-                $key = ($i <= $quickKeysLength) ? substr($quickKeys, $i - 1, 1) : null;
+                $isPg = ($i <= $pgLimit);
+                $key = ($isPg && $i <= $quickKeysLength) ? substr($quickKeys, $i - 1, 1) : null;
                 ExamQuestion::create([
                     'exam_package_id' => $exam->id,
                     'question_number' => $i,
-                    'question_type' => 'pg',
+                    'question_type' => $isPg ? 'pg' : 'essay',
                     'correct_answer' => $key,
-                    'score_weight' => 1.00,
+                    'score_weight' => $isPg ? 1.00 : 10.00,
                 ]);
             }
 

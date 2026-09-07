@@ -258,11 +258,11 @@
         <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-3">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
             <div>
-              <label class="block text-xs font-black text-slate-800 uppercase tracking-wider">⚡ Input Kunci Jawaban Cepat (Deret Huruf)</label>
-              <p class="text-xs text-slate-500 font-medium">Ketik atau paste deretan kunci jawaban sekaligus (misal: <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-teal-700 font-mono font-bold">ABCDABCDAB...</code>)</p>
+              <label class="block text-xs font-black text-slate-800 uppercase tracking-wider">⚡ Input Kunci Jawaban Cepat (Deret Huruf PG)</label>
+              <p class="text-xs text-slate-500 font-medium">Ketik atau paste deretan kunci jawaban pilihan ganda sekaligus (misal: <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-teal-700 font-mono font-bold">ABCDABCDAB...</code>)</p>
             </div>
             <span class="text-xs font-mono font-bold px-3 py-1 rounded-xl bg-white border border-slate-200 text-teal-700">
-              {{ quickKeyInput.length }} / {{ activeExam.total_questions }} Karakter
+              {{ quickKeyInput.length }} / {{ pgQuestionsCount }} Karakter PG
             </span>
           </div>
 
@@ -270,7 +270,7 @@
             <input
               v-model="quickKeyInput"
               type="text"
-              :maxlength="activeExam.total_questions"
+              :maxlength="pgQuestionsCount"
               placeholder="Contoh: ABCDEABCDA..."
               class="w-full bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 tracking-widest focus:ring-2 focus:ring-teal-400 uppercase"
               @input="onQuickKeyInput"
@@ -279,8 +279,45 @@
               @click="applyQuickKeys"
               class="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs flex-shrink-0 transition-all shadow-sm cursor-pointer"
             >
-              Terapkan ke Kisi-kisi
+              Terapkan ke PG
             </button>
+          </div>
+        </div>
+
+        <!-- Format & Question Types Quick Toolbar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-teal-50/40 border border-teal-100 rounded-2xl">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Format Soal:</span>
+            <button
+              type="button"
+              @click="setAllQuestionType('pg')"
+              class="px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-xs"
+              :class="essayQuestionsCount === 0 ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'"
+            >
+              Semua PG ({{ activeQuestions.length }})
+            </button>
+            <button
+              v-if="activeQuestions.length >= 6"
+              type="button"
+              @click="setSplitFormat(activeQuestions.length - 5, 5)"
+              class="px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-xs"
+              :class="essayQuestionsCount === 5 ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'"
+            >
+              {{ activeQuestions.length - 5 }} PG + 5 Uraian
+            </button>
+            <button
+              v-if="activeQuestions.length >= 12"
+              type="button"
+              @click="setSplitFormat(activeQuestions.length - 10, 10)"
+              class="px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-xs"
+              :class="essayQuestionsCount === 10 ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'"
+            >
+              {{ activeQuestions.length - 10 }} PG + 10 Uraian
+            </button>
+          </div>
+          <div class="text-xs font-bold text-slate-600 flex items-center gap-2">
+            <span class="px-2.5 py-1 rounded-lg bg-teal-100/80 text-teal-800">{{ pgQuestionsCount }} Soal PG ({{ activeExam?.pg_weight || 70 }}%)</span>
+            <span class="px-2.5 py-1 rounded-lg bg-amber-100/80 text-amber-800">{{ essayQuestionsCount }} Soal Uraian ({{ activeExam?.essay_weight || 30 }}%)</span>
           </div>
         </div>
 
@@ -288,7 +325,7 @@
         <div class="space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Kisi-kisi Butir Soal ({{ activeQuestions.length }} Nomor)</h3>
-            <span class="text-xs text-slate-400 font-medium">Pilih opsi A / B / C / D / E untuk masing-masing butir soal</span>
+            <span class="text-xs text-slate-400 font-medium">Klik tombol <strong class="text-slate-600">PG / Uraian</strong> pada nomor untuk mengganti tipenya</span>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-2.5">
@@ -296,14 +333,22 @@
               v-for="q in activeQuestions"
               :key="q.id || q.question_number"
               class="p-2.5 rounded-2xl border transition-all text-center space-y-2"
-              :class="q.correct_answer ? 'bg-teal-50/60 border-teal-200' : 'bg-slate-50 border-slate-200'"
+              :class="q.question_type === 'essay' ? 'bg-amber-50/40 border-amber-200' : (q.correct_answer ? 'bg-teal-50/60 border-teal-200' : 'bg-slate-50 border-slate-200')"
             >
               <div class="flex items-center justify-between">
                 <span class="text-[11px] font-black font-lexend text-slate-700">No. {{ q.question_number }}</span>
-                <span v-if="q.question_type === 'essay'" class="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">Essay</span>
+                <button
+                  type="button"
+                  @click="toggleQuestionType(q)"
+                  :class="q.question_type === 'essay' ? 'bg-amber-500 text-white shadow-xs font-black' : 'bg-slate-200 text-slate-700 font-bold hover:bg-slate-300'"
+                  class="text-[9px] px-1.5 py-0.5 rounded cursor-pointer transition-all uppercase tracking-wider"
+                  title="Klik untuk ubah tipe (PG / Uraian)"
+                >
+                  {{ q.question_type === 'essay' ? 'Uraian' : 'PG' }}
+                </button>
               </div>
 
-              <!-- Options Buttons -->
+              <!-- Options Buttons (For PG) -->
               <div v-if="q.question_type !== 'essay'" class="grid grid-cols-4 gap-1">
                 <button
                   v-for="opt in ['A', 'B', 'C', 'D']"
@@ -317,12 +362,15 @@
                 </button>
               </div>
 
+              <!-- Max Score Input (For Essay) -->
               <div v-else class="space-y-1">
+                <label class="block text-[8px] font-bold text-amber-700 uppercase">Maks Skor</label>
                 <input
                   v-model.number="q.score_weight"
                   type="number"
-                  placeholder="Maks Skor"
-                  class="w-full bg-white border border-slate-200 rounded-lg px-1.5 py-1 text-center text-xs font-bold text-slate-800"
+                  min="1"
+                  placeholder="Skor"
+                  class="w-full bg-white border border-amber-300 rounded-lg px-1.5 py-1 text-center text-xs font-bold text-amber-900 focus:ring-1 focus:ring-amber-400"
                 />
               </div>
             </div>
@@ -369,8 +417,9 @@
               <tr>
                 <th class="px-4 py-3.5 w-12 text-center">No</th>
                 <th class="px-4 py-3.5">Nama Siswa</th>
-                <th class="px-4 py-3.5">Deret Jawaban Siswa ({{ activeExam.total_questions }} Karakter)</th>
-                <th class="px-4 py-3.5 text-center">Benar / Salah</th>
+                <th class="px-4 py-3.5">Jawaban PG ({{ pgQuestionsCount }} Butir)</th>
+                <th v-if="essayQuestionsCount > 0" class="px-4 py-3.5 text-center">Nilai Uraian / Essay</th>
+                <th class="px-4 py-3.5 text-center">Benar / Salah PG</th>
                 <th class="px-4 py-3.5 text-center">Nilai Akhir</th>
                 <th class="px-4 py-3.5 text-center">Status</th>
               </tr>
@@ -387,13 +436,29 @@
                     <input
                       v-model="student.answer_string"
                       type="text"
-                      :maxlength="activeExam.total_questions"
-                      placeholder="Ketik jawaban siswa... misal: ABCDE..."
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 tracking-widest uppercase focus:ring-2 focus:ring-teal-400"
+                      :maxlength="pgQuestionsCount"
+                      :placeholder="pgQuestionsCount > 0 ? `Ketik ${pgQuestionsCount} jawaban PG... (ABCD...)` : 'Tidak ada soal PG'"
+                      :disabled="pgQuestionsCount === 0"
+                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 tracking-widest uppercase focus:ring-2 focus:ring-teal-400 disabled:opacity-40"
                     />
                     <span class="text-[10px] font-mono text-slate-400 font-bold flex-shrink-0 w-12 text-right">
-                      {{ (student.answer_string || '').length }}/{{ activeExam.total_questions }}
+                      {{ (student.answer_string || '').length }}/{{ pgQuestionsCount }}
                     </span>
+                  </div>
+                </td>
+                <td v-if="essayQuestionsCount > 0" class="px-4 py-3 text-center">
+                  <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                    <div v-for="eq in essayQuestions" :key="eq.id || eq.question_number" class="flex flex-col items-center">
+                      <span class="text-[9px] font-bold text-slate-400">No.{{ eq.question_number }}</span>
+                      <input
+                        v-model.number="student.essay_scores[String(eq.question_number)]"
+                        type="number"
+                        min="0"
+                        :max="eq.score_weight || 10"
+                        :placeholder="`0-${eq.score_weight || 10}`"
+                        class="w-14 bg-white border border-slate-200 rounded-lg py-1 text-center text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400"
+                      />
+                    </div>
                   </div>
                 </td>
                 <td class="px-4 py-3 text-center">
@@ -617,20 +682,42 @@
             </div>
           </div>
 
-          <!-- Total Questions & KKM -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Question Counts & Split -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
             <div class="space-y-1.5">
-              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Jumlah Soal *</label>
+              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Jumlah Soal Pilihan Ganda (PG) *</label>
               <input
-                v-model.number="examForm.total_questions"
+                v-model.number="examForm.pg_count"
+                @input="updateTotalQuestions"
                 type="number"
-                min="1"
+                min="0"
                 max="100"
                 required
-                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 text-center focus:ring-2 focus:ring-teal-400"
+                class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-800 text-center focus:ring-2 focus:ring-teal-400"
               />
             </div>
 
+            <div class="space-y-1.5">
+              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Jumlah Soal Uraian / Essay</label>
+              <input
+                v-model.number="examForm.essay_count"
+                @input="updateTotalQuestions"
+                type="number"
+                min="0"
+                max="50"
+                class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-800 text-center focus:ring-2 focus:ring-teal-400"
+              />
+            </div>
+
+            <div class="col-span-1 sm:col-span-2 text-xs font-bold text-slate-500 flex items-center justify-between px-1">
+              <span>Total Soal: <strong class="text-teal-700">{{ examForm.total_questions }} Nomor</strong></span>
+              <span v-if="examForm.essay_count > 0" class="text-amber-700 font-bold">Bobot: PG {{ examForm.pg_weight }}% | Uraian {{ examForm.essay_weight }}%</span>
+              <span v-else class="text-teal-700 font-bold">100% Pilihan Ganda</span>
+            </div>
+          </div>
+
+          <!-- KKM & Weights -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="space-y-1.5">
               <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Batas KKM/KKTP *</label>
               <input
@@ -651,7 +738,20 @@
                 min="0"
                 max="100"
                 required
+                @input="onPgWeightInput"
                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 text-center focus:ring-2 focus:ring-teal-400"
+              />
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Bobot Uraian (%) *</label>
+              <input
+                v-model.number="examForm.essay_weight"
+                type="number"
+                min="0"
+                max="100"
+                readonly
+                class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500 text-center cursor-not-allowed"
               />
             </div>
           </div>
@@ -735,12 +835,32 @@ const examForm = reactive({
   subject_id: '',
   exam_type: 'uh',
   semester: 'ganjil',
+  pg_count: 20,
+  essay_count: 0,
   total_questions: 20,
   kkm: 75,
-  pg_weight: 70,
-  essay_weight: 30,
+  pg_weight: 100,
+  essay_weight: 0,
   quick_keys: ''
 });
+
+function updateTotalQuestions() {
+  const pg = Number(examForm.pg_count) || 0;
+  const es = Number(examForm.essay_count) || 0;
+  examForm.total_questions = Math.max(1, pg + es);
+  if (es === 0) {
+    examForm.pg_weight = 100;
+    examForm.essay_weight = 0;
+  } else if (examForm.pg_weight === 100) {
+    examForm.pg_weight = 70;
+    examForm.essay_weight = 30;
+  }
+}
+
+function onPgWeightInput() {
+  const pg = Number(examForm.pg_weight) || 0;
+  examForm.essay_weight = Math.max(0, 100 - pg);
+}
 
 // Active Exam Workspace States
 const activeExam = ref(null);
@@ -752,6 +872,50 @@ const savingKeys = ref(false);
 const gradingProcessing = ref(false);
 const syncingGrades = ref(false);
 const analysisData = ref(null);
+
+const pgQuestions = computed(() => activeQuestions.value.filter(q => q.question_type !== 'essay'));
+const essayQuestions = computed(() => activeQuestions.value.filter(q => q.question_type === 'essay'));
+const pgQuestionsCount = computed(() => pgQuestions.value.length);
+const essayQuestionsCount = computed(() => essayQuestions.value.length);
+const totalEssayMaxScore = computed(() => essayQuestions.value.reduce((sum, q) => sum + (Number(q.score_weight) || 0), 0));
+
+function toggleQuestionType(q) {
+  if (q.question_type === 'essay') {
+    q.question_type = 'pg';
+    q.score_weight = 1.00;
+  } else {
+    q.question_type = 'essay';
+    q.correct_answer = null;
+    if (!q.score_weight || q.score_weight <= 1) {
+      q.score_weight = 10.00;
+    }
+  }
+}
+
+function setAllQuestionType(type) {
+  activeQuestions.value.forEach(q => {
+    q.question_type = type;
+    if (type === 'essay') {
+      q.correct_answer = null;
+      if (!q.score_weight || q.score_weight <= 1) q.score_weight = 10.00;
+    } else {
+      q.score_weight = 1.00;
+    }
+  });
+}
+
+function setSplitFormat(pgCount, essayCount) {
+  activeQuestions.value.forEach(q => {
+    if (q.question_number <= pgCount) {
+      q.question_type = 'pg';
+      q.score_weight = 1.00;
+    } else {
+      q.question_type = 'essay';
+      q.correct_answer = null;
+      if (!q.score_weight || q.score_weight <= 1) q.score_weight = 10.00;
+    }
+  });
+}
 
 onMounted(async () => {
   await Promise.all([fetchExams(), fetchMeta()]);
@@ -847,7 +1011,11 @@ function openCreateModal() {
   examForm.subject_id = subjects.value[0]?.id || '';
   examForm.exam_type = 'uh';
   examForm.semester = 'ganjil';
+  examForm.pg_count = 20;
+  examForm.essay_count = 0;
   examForm.total_questions = 20;
+  examForm.pg_weight = 100;
+  examForm.essay_weight = 0;
   examForm.quick_keys = '';
   showCreateModal.value = true;
 }
@@ -878,7 +1046,7 @@ async function openExamDetail(id) {
     activeExam.value = data.exam;
     activeQuestions.value = data.questions || [];
 
-    // Map students and construct their answer strings if already submitted
+    // Map students and construct their answer strings and essay scores
     activeStudents.value = (data.students || []).map(s => {
       let str = '';
       if (s.student_answers && typeof s.student_answers === 'object') {
@@ -886,16 +1054,26 @@ async function openExamDetail(id) {
           str += s.student_answers[String(i)] || '';
         }
       }
+
+      const rawEssay = (s.essay_scores && typeof s.essay_scores === 'object') ? s.essay_scores : {};
+      const essayScoresMap = {};
+      Object.keys(rawEssay).forEach(k => {
+        essayScoresMap[k] = Number(rawEssay[k]);
+      });
+
       return {
         ...s,
-        answer_string: str
+        answer_string: str,
+        essay_scores: essayScoresMap
       };
     });
 
-    // Populate quickKeyInput from existing keys
+    // Populate quickKeyInput from existing keys of PG questions
     let keysStr = '';
     activeQuestions.value.forEach(q => {
-      keysStr += q.correct_answer || '';
+      if (q.question_type !== 'essay') {
+        keysStr += q.correct_answer || '';
+      }
     });
     quickKeyInput.value = keysStr;
 
@@ -918,12 +1096,16 @@ function onQuickKeyInput(e) {
 
 function applyQuickKeys() {
   const clean = quickKeyInput.value.toUpperCase();
+  let keyIdx = 0;
   for (let i = 0; i < activeQuestions.value.length; i++) {
-    if (i < clean.length) {
-      activeQuestions.value[i].correct_answer = clean[i];
+    if (activeQuestions.value[i].question_type !== 'essay') {
+      if (keyIdx < clean.length) {
+        activeQuestions.value[i].correct_answer = clean[keyIdx];
+        keyIdx++;
+      }
     }
   }
-  toast.success('Kunci jawaban deret huruf berhasil dipetakan ke kisi-kisi!');
+  toast.success('Kunci jawaban deret huruf berhasil dipetakan ke kisi-kisi PG!');
 }
 
 async function saveAnswerKeys() {
@@ -932,7 +1114,7 @@ async function saveAnswerKeys() {
     await api.post(`/teacher/exam-corrections/${activeExam.value.id}/keys`, {
       questions: activeQuestions.value
     });
-    toast.success('Kunci jawaban berhasil disimpan & nilai diperbarui!');
+    toast.success('Kunci jawaban & format tipe soal berhasil disimpan!');
     await openExamDetail(activeExam.value.id);
   } catch (err) {
     toast.error(err.response?.data?.message || 'Gagal menyimpan kunci jawaban.');
@@ -946,7 +1128,8 @@ async function submitAllGrades() {
   try {
     const submissionsPayload = activeStudents.value.map(s => ({
       student_id: s.id,
-      answers: s.answer_string || ''
+      answers: s.answer_string || '',
+      essay_scores: s.essay_scores || {}
     }));
 
     await api.post(`/teacher/exam-corrections/${activeExam.value.id}/grade`, {
