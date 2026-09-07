@@ -492,7 +492,7 @@ onMounted(async () => {
 async function fetchMeta() {
   try {
     const res = await api.get('/admin/exam-corrections/options');
-    const optData = res.data?.data || {};
+    const optData = res?.data || res || {};
     classes.value = optData.classes || [];
     subjects.value = optData.subjects || [];
   } catch (err) {
@@ -502,8 +502,8 @@ async function fetchMeta() {
         api.get('/admin/classes'),
         api.get('/admin/subjects')
       ]);
-      classes.value = clsRes.data?.data || clsRes.data || [];
-      subjects.value = sbjRes.data?.data || sbjRes.data || [];
+      classes.value = clsRes?.data || clsRes || [];
+      subjects.value = sbjRes?.data || sbjRes || [];
     } catch (fallbackErr) {
       console.error(fallbackErr);
     }
@@ -514,7 +514,8 @@ async function fetchExams() {
   loading.value = true;
   try {
     const res = await api.get('/admin/exam-corrections');
-    exams.value = res.data?.data?.data || res.data?.data || [];
+    const list = res?.data?.data || res?.data || res || [];
+    exams.value = Array.isArray(list) ? list : (list.data || []);
   } catch (err) {
     toast.error('Gagal memuat data monitoring ujian.');
   } finally {
@@ -525,7 +526,7 @@ async function fetchExams() {
 async function fetchSummary() {
   try {
     const res = await api.get('/admin/exam-corrections/summary');
-    summary.value = res.data?.data || null;
+    summary.value = res?.data || res || null;
   } catch (err) {
     console.error('Failed to fetch summary:', err);
   }
@@ -572,8 +573,9 @@ async function inspectExam(id) {
       api.get(`/teacher/exam-corrections/${id}`),
       api.get(`/teacher/exam-corrections/${id}/analysis`)
     ]);
-    selectedExamDetail.value = detailRes.data?.data?.exam;
-    inspectAnalysis.value = analysisRes.data?.data;
+    const dExam = detailRes?.data || detailRes || {};
+    selectedExamDetail.value = dExam.exam || dExam;
+    inspectAnalysis.value = analysisRes?.data || analysisRes;
     showDetailModal.value = true;
   } catch (err) {
     toast.error('Gagal memuat detail analisis ujian.');
@@ -603,8 +605,9 @@ async function deleteExam(exam) {
 async function openSettingsModal() {
   try {
     const res = await api.get('/admin/exam-corrections/settings');
-    if (res.data?.data) {
-      settingsForm.value = { ...settingsForm.value, ...res.data.data };
+    const sData = res?.data || res;
+    if (sData) {
+      settingsForm.value = { ...settingsForm.value, ...sData };
     }
     showSettingsModal.value = true;
   } catch (err) {
@@ -616,7 +619,7 @@ async function saveSettings() {
   savingSettings.value = true;
   try {
     const res = await api.post('/admin/exam-corrections/settings', settingsForm.value);
-    toast.success(res.data?.message || 'Pengaturan asesmen berhasil disimpan!');
+    toast.success(res?.message || res?.data?.message || 'Pengaturan asesmen berhasil disimpan!');
     showSettingsModal.value = false;
   } catch (err) {
     toast.error(err.response?.data?.message || 'Gagal menyimpan pengaturan.');

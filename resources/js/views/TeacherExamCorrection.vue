@@ -760,7 +760,7 @@ onMounted(async () => {
 async function fetchMeta() {
   try {
     const res = await api.get('/teacher/exam-corrections/options');
-    const optData = res.data?.data || {};
+    const optData = res?.data || res || {};
     classes.value = optData.classes || [];
     subjects.value = optData.subjects || [];
 
@@ -776,8 +776,9 @@ async function fetchMeta() {
         api.get('/teacher/classes'),
         api.get('/teacher/grade-options')
       ]);
-      const gData = sbjRes.data?.data || sbjRes.data || {};
-      classes.value = gData.classes || clsRes.data?.data || clsRes.data || [];
+      const gData = sbjRes?.data || sbjRes || {};
+      const cData = clsRes?.data || clsRes || [];
+      classes.value = gData.classes || cData.classes || (Array.isArray(cData) ? cData : []);
       subjects.value = gData.subjects || [];
     } catch (fallbackErr) {
       console.error(fallbackErr);
@@ -858,8 +859,9 @@ async function createExam() {
     toast.success('Paket ujian berhasil dibuat!');
     showCreateModal.value = false;
     await fetchExams();
-    if (res.data?.data?.id) {
-      openExamDetail(res.data.data.id);
+    const createdId = res?.data?.id || res?.id;
+    if (createdId) {
+      openExamDetail(createdId);
     }
   } catch (err) {
     toast.error(err.response?.data?.message || 'Gagal membuat ujian.');
@@ -872,7 +874,7 @@ async function openExamDetail(id) {
   loading.value = true;
   try {
     const res = await api.get(`/teacher/exam-corrections/${id}`);
-    const data = res.data?.data;
+    const data = res?.data || res || {};
     activeExam.value = data.exam;
     activeQuestions.value = data.questions || [];
 
@@ -965,7 +967,7 @@ async function fetchAnalysis() {
   activeTab.value = 'analysis';
   try {
     const res = await api.get(`/teacher/exam-corrections/${activeExam.value.id}/analysis`);
-    analysisData.value = res.data?.data;
+    analysisData.value = res?.data || res;
   } catch (err) {
     toast.error('Gagal memuat data analisis butir soal.');
   }
@@ -975,7 +977,7 @@ async function syncToGrades() {
   syncingGrades.value = true;
   try {
     const res = await api.post(`/teacher/exam-corrections/${activeExam.value.id}/sync-grades`);
-    toast.success(res.data?.message || 'Nilai berhasil disinkronkan ke Buku Nilai!');
+    toast.success(res?.message || res?.data?.message || 'Nilai berhasil disinkronkan ke Buku Nilai!');
   } catch (err) {
     toast.error(err.response?.data?.message || 'Gagal menyinkronkan nilai.');
   } finally {
