@@ -284,70 +284,82 @@
           </div>
         </div>
 
-        <!-- Format & Question Types Quick Toolbar -->
-        <div class="space-y-3 p-5 bg-gradient-to-r from-teal-50/50 via-slate-50 to-indigo-50/40 border border-teal-100/80 rounded-2xl">
+        <!-- Format & Question Types Info Bar (Menampilkan Format yang Dipilih Guru Sebelumnya) -->
+        <div class="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs space-y-3">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles class="w-3.5 h-3.5 text-teal-600" />
-                <span>Preset Format:</span>
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <span class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <CheckCircle2 class="w-4 h-4 text-teal-600" />
+                <span>Format Soal Terpilih:</span>
               </span>
+              <!-- Active types badges with counts according to teacher's creation -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span v-if="questionTypeSummary.pg > 0" class="px-2.5 py-1 rounded-xl bg-teal-50 text-teal-800 border border-teal-200 text-xs font-black flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                  {{ questionTypeSummary.pg }} PG Biasa
+                </span>
+                <span v-if="questionTypeSummary.pg_complex > 0" class="px-2.5 py-1 rounded-xl bg-purple-50 text-purple-800 border border-purple-200 text-xs font-black flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                  {{ questionTypeSummary.pg_complex }} PG Kompleks
+                </span>
+                <span v-if="questionTypeSummary.true_false > 0" class="px-2.5 py-1 rounded-xl bg-sky-50 text-sky-800 border border-sky-200 text-xs font-black flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                  {{ questionTypeSummary.true_false }} Benar/Salah
+                </span>
+                <span v-if="questionTypeSummary.agree_disagree > 0" class="px-2.5 py-1 rounded-xl bg-indigo-50 text-indigo-800 border border-indigo-200 text-xs font-black flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                  {{ questionTypeSummary.agree_disagree }} Setuju/Tdk
+                </span>
+                <span v-if="questionTypeSummary.matching > 0" class="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-black flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  {{ questionTypeSummary.matching }} Menjodohkan
+                </span>
+                <span v-if="questionTypeSummary.short_answer > 0" class="px-2.5 py-1 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 text-xs font-black flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                  {{ questionTypeSummary.short_answer }} Isian Singkat
+                </span>
+                <span v-if="questionTypeSummary.essay > 0" class="px-2.5 py-1 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-black flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                  {{ questionTypeSummary.essay }} Uraian / Essay
+                </span>
+              </div>
+            </div>
+
+            <!-- Total and weights pill -->
+            <div class="text-xs font-bold text-slate-600 flex items-center gap-2 flex-wrap">
+              <span class="px-2.5 py-1 rounded-xl bg-teal-100/80 text-teal-800 font-black">
+                {{ pgQuestionsCount }} Butir Objektif ({{ activeExam?.pg_weight || 70 }}%)
+              </span>
+              <span class="px-2.5 py-1 rounded-xl bg-amber-100/80 text-amber-800 font-black">
+                {{ essayQuestionsCount }} Butir Uraian ({{ activeExam?.essay_weight || 30 }}%)
+              </span>
+            </div>
+          </div>
+
+          <!-- Secondary/Optional: Opsi Reset Cepat (Tidak Mencolok) -->
+          <div class="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <span class="text-slate-400 font-medium">
+              💡 Butir soal di bawah sudah otomatis tersusun sesuai pilihan saat pembuatan ujian. Guru dapat mengubah tipe nomor tertentu lewat dropdown atau tombol di bawah:
+            </span>
+            <div class="flex items-center gap-1.5 flex-wrap">
               <button
                 type="button"
                 @click="setAllQuestionType('pg')"
-                class="px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-xs"
-                :class="questionTypeSummary.pg === activeQuestions.length ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'"
+                class="px-2 py-1 text-[10px] font-bold rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+                title="Reset seluruh nomor soal menjadi PG Biasa"
               >
-                Semua PG ({{ activeQuestions.length }})
-              </button>
-              <button
-                type="button"
-                @click="applyAkmiPreset"
-                class="px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200"
-                title="Terapkan distribusi soal standar Asesmen Madrasah (PG, PGK, B/S, Menjodohkan, Uraian)"
-              >
-                ⭐ Standar AKMI / AM
+                Reset Semua ke PG ({{ activeQuestions.length }})
               </button>
               <button
                 v-if="activeQuestions.length >= 6"
                 type="button"
                 @click="setSplitFormat(activeQuestions.length - 5, 5)"
-                class="px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-xs"
-                :class="essayQuestionsCount === 5 ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'"
+                class="px-2 py-1 text-[10px] font-bold rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+                title="Format cepat: PG + 5 Uraian"
               >
-                {{ activeQuestions.length - 5 }} PG + 5 Uraian
+                Set PG + 5 Uraian
               </button>
             </div>
-            <div class="text-xs font-bold text-slate-600 flex items-center gap-2 flex-wrap">
-              <span class="px-2.5 py-1 rounded-lg bg-teal-100/80 text-teal-800">{{ pgQuestionsCount }} Butir Objektif ({{ activeExam?.pg_weight || 70 }}%)</span>
-              <span class="px-2.5 py-1 rounded-lg bg-amber-100/80 text-amber-800">{{ essayQuestionsCount }} Butir Uraian ({{ activeExam?.essay_weight || 30 }}%)</span>
-            </div>
-          </div>
-
-          <!-- Type Distribution Badges Bar -->
-          <div class="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-200/60 text-[11px] font-bold">
-            <span class="text-slate-400 text-[10px] uppercase font-black mr-1">Tipe Soal Aktif:</span>
-            <span v-if="questionTypeSummary.pg > 0" class="px-2 py-0.5 rounded-lg bg-teal-50 text-teal-700 border border-teal-200">
-              PG: {{ questionTypeSummary.pg }}
-            </span>
-            <span v-if="questionTypeSummary.pg_complex > 0" class="px-2 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200">
-              PG Kompleks: {{ questionTypeSummary.pg_complex }}
-            </span>
-            <span v-if="questionTypeSummary.true_false > 0" class="px-2 py-0.5 rounded-lg bg-sky-50 text-sky-700 border border-sky-200">
-              Benar/Salah: {{ questionTypeSummary.true_false }}
-            </span>
-            <span v-if="questionTypeSummary.agree_disagree > 0" class="px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
-              Setuju/Tdk: {{ questionTypeSummary.agree_disagree }}
-            </span>
-            <span v-if="questionTypeSummary.matching > 0" class="px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Menjodohkan: {{ questionTypeSummary.matching }}
-            </span>
-            <span v-if="questionTypeSummary.short_answer > 0" class="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
-              Isian: {{ questionTypeSummary.short_answer }}
-            </span>
-            <span v-if="questionTypeSummary.essay > 0" class="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
-              Uraian: {{ questionTypeSummary.essay }}
-            </span>
           </div>
         </div>
 
