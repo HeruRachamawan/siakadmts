@@ -726,6 +726,7 @@
                         type="number"
                         min="0"
                         :max="eq.score_weight || 10"
+                        step="any"
                         :placeholder="`0-${eq.score_weight || 10}`"
                         class="w-14 bg-white border border-slate-200 rounded-lg py-1 text-center text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400"
                       />
@@ -1540,6 +1541,7 @@
                   type="number"
                   min="0"
                   :max="q.score_weight || 10"
+                  step="any"
                   :placeholder="`0-${q.score_weight || 10}`"
                   class="w-full bg-white border border-amber-300 rounded-lg px-2 py-1 text-center text-xs font-bold text-amber-900 focus:ring-1 focus:ring-amber-400"
                 />
@@ -2352,6 +2354,55 @@ function getWrongAnswerForQuestion(q) {
   return 'X';
 }
 
+function findBestObjectiveSubset(questions, targetPoints) {
+  if (!questions || questions.length === 0) return [];
+  if (targetPoints <= 0) return [];
+
+  const totalWeight = questions.reduce((sum, q) => sum + Number(q.score_weight || 1), 0);
+  if (targetPoints >= totalWeight) {
+    return questions.map((_, i) => i);
+  }
+
+  // Multiply weights by 100 to handle decimal weights safely
+  const scale = 100;
+  const targetScaled = Math.round(targetPoints * scale);
+  const totalScaled = Math.round(totalWeight * scale);
+
+  const dp = new Map();
+  dp.set(0, []);
+
+  for (let i = 0; i < questions.length; i++) {
+    const w = Math.round(Number(questions[i].score_weight || 1) * scale);
+    if (w <= 0) continue;
+    const entries = Array.from(dp.entries());
+    for (const [currW, indices] of entries) {
+      const nextW = currW + w;
+      if (nextW <= totalScaled && !dp.has(nextW)) {
+        dp.set(nextW, [...indices, i]);
+      }
+    }
+  }
+
+  let bestW = -1;
+  let minDiff = Infinity;
+
+  for (const [w] of dp.entries()) {
+    const diff = Math.abs(w - targetScaled);
+    if (diff === 0) {
+      bestW = w;
+      break;
+    }
+    // Prefer w >= targetScaled so the score reaches/passes KKM
+    const penalty = w >= targetScaled ? 0 : 0.05;
+    if (diff + penalty < minDiff) {
+      minDiff = diff + penalty;
+      bestW = w;
+    }
+  }
+
+  return dp.get(bestW) || [];
+}
+
 function fillStudentWithKKM(student) {
   if (!student) return;
   if (!student.student_answers) student.student_answers = {};
@@ -2367,29 +2418,56 @@ function fillStudentWithKKM(student) {
   const objQuestions = questions.filter(q => q.question_type !== 'essay');
   const essayQuestions = questions.filter(q => q.question_type === 'essay');
 
-  // Objective questions: calculate points needed to meet KKM
-  const totalObjWeight = objQuestions.reduce((sum, q) => sum + Number(q.score_weight || 1), 0);
-  const targetObjPoints = (kkm / 100) * totalObjWeight;
+  const pgWeight = Number(activeExam.value?.pg_weight ?? 100);
+  const essayWeight = Number(activeExam.value?.essay_weight ?? 0);
 
-  let currentEarned = 0;
-  objQuestions.forEach(q => {
+  const totalObjWeight = objQuestions.reduce((sum, q) => sum + Number(q.score_weight || 1), 0);
+  const totalEssayWeight = essayQuestions.reduce((sum, q) => sum + Number(q.score_weight || 10), 0);
+
+  // 1. Calculate best subset for Objective questions
+  const targetObjPoints = (kkm / 100) * totalObjWeight;
+  const bestSubsetIndices = new Set(findBestObjectiveSubset(objQuestions, targetObjPoints));
+
+  let earnedObjPoints = 0;
+  objQuestions.forEach((q, idx) => {
     const qNum = String(q.question_number);
     const weight = Number(q.score_weight || 1);
-    // Give correct answer until accumulated points reach or satisfy KKM target
-    if (currentEarned < targetObjPoints) {
+    if (bestSubsetIndices.has(idx)) {
       student.student_answers[qNum] = q.correct_answer || 'A';
-      currentEarned += weight;
+      earnedObjPoints += weight;
     } else {
       student.student_answers[qNum] = getWrongAnswerForQuestion(q);
     }
   });
 
-  // Essay questions: assign proportional score to meet KKM
-  essayQuestions.forEach(q => {
-    const qNum = String(q.question_number);
-    const maxScore = Number(q.score_weight || 10);
-    student.essay_scores[qNum] = Math.round((kkm / 100) * maxScore);
-  });
+  const actualPgScore = totalObjWeight > 0 ? (earnedObjPoints / totalObjWeight) * 100 : 100;
+
+  // 2. Adjust Essay scores to balance total blended score to match KKM exactly
+  if (essayQuestions.length > 0 && essayWeight > 0) {
+    // Formula: (actualPgScore * pgWeight / 100) + (targetEssayScore * essayWeight / 100) = kkm
+    const targetEssayScore = (kkm - (actualPgScore * (pgWeight / 100))) / (essayWeight / 100);
+    const targetEarnedEssay = Math.max(0, Math.min(totalEssayWeight, (targetEssayScore / 100) * totalEssayWeight));
+
+    let remaining = Math.round(targetEarnedEssay * 100) / 100;
+    essayQuestions.forEach((q, i) => {
+      const qNum = String(q.question_number);
+      const maxScore = Number(q.score_weight || 10);
+      if (i === essayQuestions.length - 1) {
+        student.essay_scores[qNum] = Math.max(0, Math.min(maxScore, Math.round(remaining * 100) / 100));
+      } else {
+        const val = Math.max(0, Math.min(maxScore, Math.round((targetEarnedEssay / totalEssayWeight) * maxScore * 100) / 100));
+        student.essay_scores[qNum] = val;
+        remaining = Math.round((remaining - val) * 100) / 100;
+      }
+    });
+  } else if (essayQuestions.length > 0) {
+    // If essayWeight is 0 but essay questions exist, set essay to proportional KKM
+    essayQuestions.forEach(q => {
+      const qNum = String(q.question_number);
+      const maxScore = Number(q.score_weight || 10);
+      student.essay_scores[qNum] = Math.round((kkm / 100) * maxScore * 100) / 100;
+    });
+  }
 
   syncStudentAnswerString(student);
   toast.success(`Jawaban ${student.name} berhasil diatur pas KKM (${kkm})!`);
