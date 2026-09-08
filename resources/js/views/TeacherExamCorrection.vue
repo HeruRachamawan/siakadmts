@@ -1640,13 +1640,42 @@
             <div>
               <div class="flex items-center gap-2 flex-wrap">
                 <h3 class="text-sm font-black text-slate-800 font-lexend uppercase tracking-wider">Pratinjau Lembar Rekap Capaian per Bentuk Soal</h3>
-                <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Kertas Lanskap A4</span>
+                <span
+                  :class="selectedPaperSize === 'f4' ? 'bg-teal-100 text-teal-800 border-teal-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'"
+                  class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full" :class="selectedPaperSize === 'f4' ? 'bg-teal-600' : 'bg-emerald-600'"></span>
+                  {{ selectedPaperSize === 'f4' ? 'Ukuran F4 / Folio (33 × 21.5 cm)' : 'Ukuran A4 (29.7 × 21 cm)' }}
+                </span>
               </div>
               <p class="text-xs text-slate-500 font-medium">Format resmi madrasah. Tampilan di bawah ini adalah representasi nyata lembar cetak.</p>
             </div>
           </div>
 
           <div class="flex items-center gap-2 flex-wrap justify-end">
+            <!-- Pilihan Ukuran Kertas (A4 / F4) -->
+            <div class="flex items-center bg-slate-200/90 p-1 rounded-xl border border-slate-300 shadow-inner">
+              <button
+                type="button"
+                @click="selectedPaperSize = 'f4'"
+                :class="selectedPaperSize === 'f4' ? 'bg-white text-emerald-800 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Kertas F4 / Folio Lanskap (330 x 215 mm) - Standar madrasah, ruang tabel lebih lega & tidak terpotong"
+              >
+                <span>F4 / Folio</span>
+                <span class="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[9px] font-black rounded-full uppercase tracking-tighter">Rekomendasi</span>
+              </button>
+              <button
+                type="button"
+                @click="selectedPaperSize = 'a4'"
+                :class="selectedPaperSize === 'a4' ? 'bg-white text-slate-900 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Kertas A4 Lanskap (297 x 210 mm)"
+              >
+                <span>A4</span>
+              </button>
+            </div>
+
             <button
               @click="printDocument"
               type="button"
@@ -1679,7 +1708,11 @@
         <!-- Canvas Area (Smooth scroll, content always starts at top y=0, perfectly centered) -->
         <div class="flex-1 overflow-auto bg-slate-200/90 p-4 sm:p-8 flex justify-start xl:justify-center items-start">
           <!-- The Printable Sheet Container -->
-          <div id="printableRecapSheet" class="printable-recap-sheet bg-white w-[1120px] min-w-[1120px] p-8 sm:p-10 shadow-2xl border border-slate-300 text-slate-900 rounded-xl space-y-5 my-2">
+          <div
+            id="printableRecapSheet"
+            :class="selectedPaperSize === 'f4' ? 'w-[1240px] min-w-[1240px]' : 'w-[1080px] min-w-[1080px]'"
+            class="printable-recap-sheet bg-white p-8 sm:p-10 shadow-2xl border border-slate-300 text-slate-900 rounded-xl space-y-5 my-2 transition-all duration-200"
+          >
             
             <!-- 1. KOP RESMI MADRASAH DENGAN LOGO RESMI -->
             <div class="flex items-center gap-5 border-b-4 border-double border-slate-900 pb-3">
@@ -1953,6 +1986,7 @@ const searchQuery = ref('');
 
 const showPrintModal = ref(false);
 const schoolProfile = ref(null);
+const selectedPaperSize = ref('f4'); // 'f4' (rekomendasi folio) atau 'a4'
 
 const showCreateModal = ref(false);
 const creatingExam = ref(false);
@@ -3193,15 +3227,19 @@ function printDocument() {
     return;
   }
 
+  const isF4 = selectedPaperSize.value === 'f4';
+  const paperCssSize = isF4 ? '330mm 215mm' : '297mm 210mm';
+  const paperTitle = isF4 ? 'F4 / Folio' : 'A4';
+
   printWindow.document.open();
   printWindow.document.write(`<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <title>Lembar Rekapitulasi Capaian Nilai Asesmen - ${activeExam.value?.title || 'Ujian'}</title>
+  <title>Lembar Rekapitulasi Capaian Nilai Asesmen (${paperTitle}) - ${activeExam.value?.title || 'Ujian'}</title>
   <style>
     @page {
-      size: A4 landscape;
+      size: ${paperCssSize};
       margin: 8mm 8mm 8mm 8mm;
     }
     * {
@@ -3349,7 +3387,8 @@ function printDocument() {
     .text-\\[11px\\] { font-size: 11px; }
     
     table {
-      width: 100%;
+      width: 100% !important;
+      table-layout: auto !important;
       border-collapse: collapse;
       margin-top: 6px;
       page-break-inside: auto;
@@ -3542,6 +3581,11 @@ async function exportToWord() {
 
   const komposisiStr = activeQuestionTypesList.value.map(t => `${t.count} ${t.label}`).join(', ');
 
+  const isF4 = selectedPaperSize.value === 'f4';
+  const msoPaperSize = isF4 ? '935.4pt 609.4pt' : '841.9pt 595.3pt';
+  const paperNameDesc = isF4 ? 'F4 / Folio Landscape (33.0cm x 21.5cm)' : 'A4 Landscape (29.7cm x 21.0cm)';
+  const paperTag = isF4 ? 'F4' : 'A4';
+
   // 4. HTML Template Dokumen Resmi dengan Standar Word (Tegas & Tebal)
   const wordHtml = `
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -3549,7 +3593,7 @@ async function exportToWord() {
       xmlns="http://www.w3.org/TR/REC-html40">
 <head>
   <meta charset="utf-8">
-  <title>Lembar Rekapitulasi Capaian Nilai Asesmen - ${activeExam.value.title || 'Ujian'}</title>
+  <title>Lembar Rekapitulasi Capaian Nilai Asesmen (${paperTag}) - ${activeExam.value.title || 'Ujian'}</title>
   <!--[if gte mso 9]>
   <xml>
     <w:WordDocument>
@@ -3561,7 +3605,7 @@ async function exportToWord() {
   <![endif]-->
   <style>
     @page Section1 {
-      size: 841.9pt 595.3pt; /* A4 Landscape (29.7cm x 21.0cm) */
+      size: ${msoPaperSize}; /* ${paperNameDesc} */
       mso-page-orientation: landscape;
       margin: 18.0pt 24.0pt 18.0pt 24.0pt;
     }
@@ -3744,12 +3788,12 @@ async function exportToWord() {
     const safeMapel = (activeExam.value.subject?.name || 'Mapel').replace(/[^a-zA-Z0-9_-]/g, '_');
     const safeKelas = (activeExam.value.class_room?.name || 'Kelas').replace(/[^a-zA-Z0-9_-]/g, '_');
     a.href = url;
-    a.download = `Rekap_Nilai_${safeMapel}_${safeKelas}.doc`;
+    a.download = `Rekap_Nilai_${safeMapel}_${safeKelas}_${paperTag}.doc`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success('Lembar rekap berhasil dikonversi dan diunduh ke format Word (.doc)');
+    toast.success(`Lembar rekap format ${paperTag} berhasil dikonversi dan diunduh ke Word (.doc)`);
   } catch (err) {
     console.error('Word export error:', err);
     toast.error('Gagal mengunduh file Word.');
