@@ -1618,25 +1618,28 @@
     </div>
 
     <!-- PRINT PREVIEW MODAL: REKAPITULASI NILAI CAPAIAN PER BENTUK SOAL (KONSEP 1) -->
-    <div v-if="showPrintModal && activeExam" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-6xl overflow-hidden border border-slate-200 my-auto flex flex-col max-h-[94vh]">
+    <div v-if="showPrintModal && activeExam" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-7xl overflow-hidden border border-slate-200 my-auto flex flex-col max-h-[95vh]">
         <!-- Modal Toolbar Header (Hidden on Print) -->
-        <div class="no-print px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 flex-shrink-0">
+        <div class="no-print px-5 sm:px-8 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 flex-shrink-0">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20 flex-shrink-0">
               <Printer class="w-5 h-5" />
             </div>
             <div>
-              <h3 class="text-sm font-black text-slate-800 font-lexend uppercase tracking-wider">Pratinjau Lembar Rekap Capaian per Bentuk Soal (Konsep 1)</h3>
-              <p class="text-xs text-slate-500 font-medium">Format cetak resmi madrasah siap cetak atau simpan sebagai file PDF. Direkomendasikan kertas <strong>Lanskap (Landscape)</strong>.</p>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-sm font-black text-slate-800 font-lexend uppercase tracking-wider">Pratinjau Lembar Rekap Capaian per Bentuk Soal</h3>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Kertas Lanskap (Landscape)</span>
+              </div>
+              <p class="text-xs text-slate-500 font-medium">Format cetak resmi madrasah. Hasil cetak & PDF akan 100% presisi dan rapi sesuai pratinjau di bawah ini.</p>
             </div>
           </div>
 
-          <div class="flex items-center gap-2 flex-wrap">
+          <div class="flex items-center gap-2 flex-wrap justify-end">
             <button
               @click="printDocument"
               type="button"
-              class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 cursor-pointer"
+              class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 cursor-pointer"
             >
               <Printer class="w-4 h-4" />
               <span>Cetak / Simpan PDF</span>
@@ -1645,36 +1648,48 @@
             <button
               @click="showPrintModal = false"
               type="button"
-              class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
             >
               Tutup
             </button>
           </div>
         </div>
 
-        <!-- Sheet Scroll Area -->
-        <div class="p-4 sm:p-8 overflow-y-auto bg-slate-200/70 flex-1 flex justify-center">
+        <!-- Sheet Scroll Area (Allows clean horizontal scroll on smaller monitors without squashing the landscape sheet) -->
+        <div class="p-4 sm:p-8 overflow-auto bg-slate-200/80 flex-1 flex justify-start lg:justify-center">
           <!-- The Printable Sheet Container -->
-          <div id="printableRecapSheet" class="printable-recap-sheet bg-white w-full max-w-5xl p-8 sm:p-10 shadow-lg border border-slate-300 text-slate-900 rounded-lg space-y-5">
+          <div id="printableRecapSheet" class="printable-recap-sheet bg-white w-full min-w-[1020px] max-w-[1140px] p-8 sm:p-10 shadow-2xl border border-slate-300 text-slate-900 rounded-xl space-y-5 my-2">
             
-            <!-- 1. KOP RESMI MADRASAH -->
-            <div class="relative pb-3 text-center border-b-2 border-slate-900">
-              <div class="text-xs font-semibold tracking-widest text-slate-700 uppercase">
-                YAYASAN PENDIDIKAN ISLAM AL-HASANAH
+            <!-- 1. KOP RESMI MADRASAH DENGAN LOGO RESMI -->
+            <div class="flex items-center gap-5 border-b-4 border-double border-slate-900 pb-3">
+              <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center">
+                <img
+                  v-if="schoolProfile?.app_logo_url || schoolProfile?.app_logo"
+                  :src="schoolProfile?.app_logo_url || getImageUrl(schoolProfile?.app_logo)"
+                  class="w-full h-full object-contain"
+                  alt="Logo Madrasah"
+                />
+                <div v-else class="w-18 h-18 rounded-2xl bg-teal-800 text-white flex items-center justify-center font-black text-xl shadow-md">
+                  MTS
+                </div>
               </div>
-              <h1 class="text-xl sm:text-2xl font-black font-lexend uppercase tracking-wide text-slate-900 mt-0.5">
-                {{ schoolProfile?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH' }}
-              </h1>
-              <div class="text-[11px] font-semibold text-slate-600 mt-1">
-                {{ schoolProfile?.school_tagline || 'Madrasah Tsanawiyah Al - Hasanah Ciomas' }} • Status: {{ schoolProfile?.school_accreditation || 'TERAKREDITASI A' }}
+              <div class="text-center flex-1 pr-6 sm:pr-14">
+                <div class="text-xs sm:text-sm font-bold tracking-widest text-slate-700 uppercase">
+                  {{ schoolProfile?.school_foundation || 'YAYASAN PENDIDIKAN ISLAM AL-HASANAH' }}
+                </div>
+                <h1 class="text-xl sm:text-2xl font-black font-lexend uppercase tracking-wide text-slate-900 mt-0.5">
+                  {{ schoolProfile?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH' }}
+                </h1>
+                <div class="text-[11px] sm:text-xs font-semibold text-slate-600 mt-0.5">
+                  {{ schoolProfile?.school_tagline || 'Madrasah Tsanawiyah Al - Hasanah Ciomas' }} • Status: {{ schoolProfile?.school_accreditation || 'TERAKREDITASI A' }}
+                </div>
+                <div class="text-[10px] sm:text-[11px] text-slate-600 mt-0.5">
+                  {{ schoolProfile?.school_address || 'Jl. Ciapus Sukamakmur No.05, Ciomas, Bogor' }}
+                </div>
+                <div class="text-[10px] text-slate-500 font-mono mt-0.5">
+                  Telp: {{ schoolProfile?.school_phone || '081617666017' }} • Email: {{ schoolProfile?.school_email || 'mtsalhasanah.ciomas@gmail.com' }}
+                </div>
               </div>
-              <div class="text-[10px] text-slate-600 mt-0.5">
-                {{ schoolProfile?.school_address || 'Jl. Ciapus Sukamakmur No.05, Ciomas, Bogor' }}
-              </div>
-              <div class="text-[10px] text-slate-500 font-mono mt-0.5">
-                Telp: {{ schoolProfile?.school_phone || '081617666017' }} • Email: {{ schoolProfile?.school_email || 'mtsalhasanah.ciomas@gmail.com' }}
-              </div>
-              <div class="border-t border-slate-900 mt-2"></div>
             </div>
 
             <!-- 2. JUDUL LEMBAR REKAPITULASI -->
@@ -1688,16 +1703,16 @@
             </div>
 
             <!-- 3. METADATA ASESMEN -->
-            <div class="grid grid-cols-2 gap-4 text-xs font-medium border border-slate-300 rounded-lg p-3 bg-slate-50/50">
+            <div class="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs font-medium border border-slate-300 rounded-lg p-3 bg-slate-50/70">
               <div class="space-y-1">
-                <div class="flex"><span class="w-32 font-bold text-slate-700">Mata Pelajaran</span><span class="mr-2">:</span><span class="font-bold text-slate-900">{{ activeExam.subject?.name || '-' }}</span></div>
-                <div class="flex"><span class="w-32 font-bold text-slate-700">Kelas / Rombel</span><span class="mr-2">:</span><span class="font-bold text-slate-900">Kelas {{ activeExam.class_room?.name || '-' }}</span></div>
+                <div class="flex"><span class="w-32 font-bold text-slate-700">Mata Pelajaran</span><span class="mr-2">:</span><strong class="text-slate-900">{{ activeExam.subject?.name || '-' }}</strong></div>
+                <div class="flex"><span class="w-32 font-bold text-slate-700">Kelas / Rombel</span><span class="mr-2">:</span><strong class="text-slate-900">Kelas {{ activeExam.class_room?.name || '-' }}</strong></div>
                 <div class="flex"><span class="w-32 font-bold text-slate-700">Guru Pengampu</span><span class="mr-2">:</span><span>{{ activeExam.teacher?.full_name || activeExam.teacher?.name || '-' }}</span></div>
                 <div class="flex"><span class="w-32 font-bold text-slate-700">Nama Paket Ujian</span><span class="mr-2">:</span><span>{{ activeExam.title }}</span></div>
               </div>
               <div class="space-y-1">
-                <div class="flex"><span class="w-36 font-bold text-slate-700">Jenis Asesmen</span><span class="mr-2">:</span><span class="font-bold text-slate-900">{{ getExamTypeFullName(activeExam.exam_type) }}</span></div>
-                <div class="flex"><span class="w-36 font-bold text-slate-700">KKM / KKTP</span><span class="mr-2">:</span><span class="font-black text-teal-800 bg-teal-50 px-1.5 py-0.2 rounded border border-teal-200">{{ activeExam.kkm }}</span></div>
+                <div class="flex"><span class="w-36 font-bold text-slate-700">Jenis Asesmen</span><span class="mr-2">:</span><strong class="text-slate-900">{{ getExamTypeFullName(activeExam.exam_type) }}</strong></div>
+                <div class="flex"><span class="w-36 font-bold text-slate-700">KKM / KKTP</span><span class="mr-2">:</span><strong class="text-teal-900 bg-teal-100/70 px-2 py-0.5 rounded border border-teal-300">{{ activeExam.kkm }}</strong></div>
                 <div class="flex"><span class="w-36 font-bold text-slate-700">Bobot Penilaian</span><span class="mr-2">:</span><span>Objektif: {{ activeExam.pg_weight }}% | Uraian: {{ activeExam.essay_weight }}%</span></div>
                 <div class="flex"><span class="w-36 font-bold text-slate-700">Komposisi Soal</span><span class="mr-2">:</span><span class="font-semibold">{{ activeExam.total_questions }} Butir ({{ activeQuestionTypesList.map(t => `${t.count} ${t.label}`).join(', ') }})</span></div>
               </div>
@@ -1713,7 +1728,7 @@
                     <th rowspan="2" class="border border-slate-300 px-3 py-2 text-left">Nama Siswa</th>
                     <th rowspan="2" class="border border-slate-300 px-1.5 py-2 w-8">L/P</th>
                     <!-- Dynamic Columns for each Active Question Type -->
-                    <th :colspan="activeQuestionTypesList.length" class="border border-slate-300 px-3 py-1.5 bg-slate-200/80 text-teal-900">
+                    <th :colspan="activeQuestionTypesList.length" class="border border-slate-300 px-3 py-1.5 bg-slate-200/80 text-teal-900 font-black">
                       Capaian Nilai per Bentuk Soal (Poin / Maks)
                     </th>
                     <th rowspan="2" class="border border-slate-300 px-2 py-2 w-16">Nilai Asli</th>
@@ -3134,53 +3149,225 @@ function openPrintPreview() {
   showPrintModal.value = true;
 }
 
+function getImageUrl(path) {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
+  return `/storage/${path.replace(/^\/?storage\//, '')}`;
+}
+
 function printDocument() {
-  window.print();
+  const printElem = document.getElementById('printableRecapSheet');
+  if (!printElem) {
+    window.print();
+    return;
+  }
+
+  const content = printElem.innerHTML;
+  const printWindow = window.open('', '_blank', 'width=1200,height=850');
+  if (!printWindow) {
+    window.print();
+    return;
+  }
+
+  printWindow.document.open();
+  printWindow.document.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Lembar Rekapitulasi Capaian Nilai Asesmen - ${activeExam.value?.title || 'Ujian'}</title>
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 8mm 8mm 8mm 8mm;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background: #ffffff !important;
+      color: #0f172a;
+      padding: 4px;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+    .text-center { text-align: center; }
+    .text-left { text-align: left; }
+    .text-right { text-align: right; }
+    .font-bold { font-weight: bold; }
+    .font-semibold { font-weight: 600; }
+    .font-black { font-weight: 900; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .uppercase { text-transform: uppercase; }
+    .underline { text-decoration: underline; }
+    
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .justify-end { justify-content: flex-end; }
+    .items-center { align-items: center; }
+    .items-start { align-items: flex-start; }
+    .flex-1 { flex: 1 1 0%; }
+    .flex-shrink-0 { flex-shrink: 0; }
+    .gap-1 { gap: 4px; }
+    .gap-1\\.5 { gap: 6px; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+    .gap-5 { gap: 20px; }
+    .gap-6 { gap: 24px; }
+    .gap-8 { gap: 32px; }
+    .gap-12 { gap: 48px; }
+    .gap-x-8 { column-gap: 32px; }
+    .gap-y-1\\.5 { row-gap: 6px; }
+    .grid { display: grid; }
+    .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+    
+    .w-full { width: 100%; }
+    .w-8 { width: 32px; }
+    .w-12 { width: 48px; }
+    .w-14 { width: 56px; }
+    .w-16 { width: 64px; }
+    .w-18 { width: 72px; }
+    .w-20 { width: 80px; }
+    .w-24 { width: 96px; }
+    .w-32 { width: 128px; }
+    .w-36 { width: 144px; }
+    .h-14 { height: 56px; }
+    .h-16 { height: 64px; }
+    .h-18 { height: 72px; }
+    .h-20 { height: 80px; }
+    
+    .p-2 { padding: 8px; }
+    .p-3 { padding: 12px; }
+    .px-1\\.5 { padding-left: 6px; padding-right: 6px; }
+    .px-2 { padding-left: 8px; padding-right: 8px; }
+    .px-2\\.5 { padding-left: 10px; padding-right: 10px; }
+    .px-3 { padding-left: 12px; padding-right: 12px; }
+    .px-4 { padding-left: 16px; padding-right: 16px; }
+    .py-1 { padding-top: 4px; padding-bottom: 4px; }
+    .py-1\\.5 { padding-top: 6px; padding-bottom: 6px; }
+    .py-2 { padding-top: 8px; padding-bottom: 8px; }
+    .py-3 { padding-top: 12px; padding-bottom: 12px; }
+    .py-6 { padding-top: 24px; padding-bottom: 24px; }
+    .pb-2 { padding-bottom: 8px; }
+    .pb-3 { padding-bottom: 12px; }
+    .pt-2 { padding-top: 8px; }
+    .pt-4 { padding-top: 16px; }
+    .pt-6 { padding-top: 24px; }
+    .pr-2 { padding-right: 8px; }
+    .pr-6 { padding-right: 24px; }
+    .pr-10 { padding-right: 40px; }
+    .pr-14 { padding-right: 56px; }
+    .mr-2 { margin-right: 8px; }
+    .mb-1 { margin-bottom: 4px; }
+    .mb-2 { margin-bottom: 8px; }
+    .mb-4 { margin-bottom: 16px; }
+    .mt-0\\.5 { margin-top: 2px; }
+    .mt-1 { margin-top: 4px; }
+    .mt-2 { margin-top: 8px; }
+    
+    .space-y-1 > * + * { margin-top: 4px; }
+    .space-y-1\\.5 > * + * { margin-top: 6px; }
+    .space-y-5 > * + * { margin-top: 20px; }
+    
+    .border { border: 1px solid #94a3b8; }
+    .border-b { border-bottom: 1px solid #94a3b8; }
+    .border-b-2 { border-bottom: 2px solid #0f172a; }
+    .border-b-4 { border-bottom: 4px solid #0f172a; }
+    .border-double { border-bottom-style: double; }
+    .border-slate-200 { border-color: #e2e8f0; }
+    .border-slate-300 { border-color: #cbd5e1; }
+    .border-slate-900 { border-color: #0f172a; }
+    .border-teal-200 { border-color: #99f6e4; }
+    .border-teal-300 { border-color: #5eead4; }
+    
+    .rounded { border-radius: 4px; }
+    .rounded-lg { border-radius: 8px; }
+    .rounded-xl { border-radius: 12px; }
+    .rounded-2xl { border-radius: 16px; }
+    
+    .bg-white { background-color: #ffffff; }
+    .bg-slate-50 { background-color: #f8fafc !important; }
+    .bg-slate-100 { background-color: #f1f5f9 !important; }
+    .bg-slate-150 { background-color: #e6edf4 !important; }
+    .bg-slate-200 { background-color: #e2e8f0 !important; }
+    .bg-teal-50 { background-color: #f0fdfa !important; }
+    .bg-teal-100 { background-color: #ccfbf1 !important; }
+    .bg-teal-800 { background-color: #115e59 !important; color: white !important; }
+    
+    .text-white { color: #ffffff !important; }
+    .text-slate-400 { color: #94a3b8; }
+    .text-slate-500 { color: #64748b; }
+    .text-slate-600 { color: #475569; }
+    .text-slate-700 { color: #334155; }
+    .text-slate-800 { color: #1e293b; }
+    .text-slate-900 { color: #0f172a; }
+    .text-emerald-700 { color: #047857; }
+    .text-teal-700 { color: #0f766e; }
+    .text-teal-800 { color: #115e59; }
+    .text-teal-900 { color: #134e4a; }
+    .text-rose-600 { color: #e11d48; }
+    
+    .text-xs { font-size: 10px; }
+    .text-sm { font-size: 11px; }
+    .text-base { font-size: 12px; }
+    .text-lg { font-size: 14px; }
+    .text-xl { font-size: 16px; }
+    .text-2xl { font-size: 18px; }
+    .text-\\[8px\\] { font-size: 8px; }
+    .text-\\[9px\\] { font-size: 9px; }
+    .text-\\[10px\\] { font-size: 10px; }
+    .text-\\[11px\\] { font-size: 11px; }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      page-break-inside: auto;
+    }
+    tr {
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+    th, td {
+      border: 1px solid #94a3b8;
+      padding: 3px 5px;
+    }
+    thead {
+      display: table-header-group;
+    }
+    tfoot {
+      display: table-footer-group;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+    .break-inside-avoid {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  </style>
+</head>
+<body>
+  <div style="width: 100%; max-width: 100%;">
+    ${content}
+  </div>
+</body>
+</html>`);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 400);
 }
 </script>
-
-<style scoped>
-@media print {
-  /* Hide all elements on page except #printableRecapSheet */
-  body * {
-    visibility: hidden !important;
-  }
-  #printableRecapSheet,
-  #printableRecapSheet * {
-    visibility: visible !important;
-  }
-  #printableRecapSheet {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 6mm !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: white !important;
-    color: black !important;
-  }
-  .no-print {
-    display: none !important;
-  }
-  table {
-    page-break-inside: auto;
-  }
-  tr {
-    page-break-inside: avoid;
-    page-break-after: auto;
-  }
-  thead {
-    display: table-header-group;
-  }
-  tfoot {
-    display: table-footer-group;
-  }
-  @page {
-    size: landscape;
-    margin: 8mm;
-  }
-}
-</style>

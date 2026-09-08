@@ -284,13 +284,22 @@ class ExamCorrectionController extends Controller
         $settings = \App\Models\Setting::pluck('value', 'key')->toArray();
         $principalId = $settings['principal_teacher_id'] ?? null;
         $principal = $principalId ? Teacher::find($principalId) : null;
+        $logoUrl = null;
+        if (!empty($settings['app_logo'])) {
+            $logoPath = ltrim(preg_replace('/^(\/?storage\/)+/', '', $settings['app_logo']), '/');
+            $logoUrl = asset('storage/' . $logoPath);
+        }
+
         $schoolProfile = [
-            'school_name' => $settings['app_name'] ?? 'MTs AL - HASANAH',
-            'school_tagline' => $settings['app_tagline'] ?? 'Madrasah Tsanawiyah Al - Hasanah',
+            'school_name' => $settings['app_name'] ?? 'MADRASAH TSANAWIYAH AL - HASANAH',
+            'school_foundation' => $settings['school_foundation'] ?? 'YAYASAN PENDIDIKAN ISLAM AL-HASANAH',
+            'school_tagline' => $settings['app_tagline'] ?? 'Madrasah Tsanawiyah Al - Hasanah Ciomas',
             'school_address' => $settings['school_address'] ?? 'Jl. Ciapus Sukamakmur No.05, Desa Sukamakmur, Kec. Ciomas, Kab. Bogor, Prov. Jawa Barat 16610',
             'school_phone' => $settings['school_phone'] ?? '081617666017',
             'school_email' => $settings['school_email'] ?? 'mtsalhasanah.ciomas@gmail.com',
-            'school_accreditation' => $settings['school_accreditation'] ?? 'Akreditasi A',
+            'school_accreditation' => $settings['school_accreditation'] ?? 'TERAKREDITASI A',
+            'app_logo' => $settings['app_logo'] ?? null,
+            'app_logo_url' => $logoUrl,
             'principal_name' => $principal ? ($principal->full_name ?? $principal->name) : 'Kepala Madrasah',
             'principal_nip' => $principal ? ($principal->nip ?? '-') : '-',
         ];
