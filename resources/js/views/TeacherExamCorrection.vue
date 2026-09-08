@@ -812,35 +812,283 @@
 
       <!-- SUB-TAB 3: ANALISIS BUTIR SOAL -->
       <div v-if="activeTab === 'analysis'" class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 space-y-6">
+        <!-- Header & Action Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-600/20">
+                <BarChart2 class="w-5 h-5" />
+              </span>
+              <div>
+                <h2 class="text-base font-black text-slate-800 font-lexend uppercase tracking-wider">
+                  Analisis Butir Soal & Daya Serap Kelas
+                </h2>
+                <p class="text-xs text-slate-500 font-medium">
+                  Visualisasi persentase ketercapaian kompetensi per nomor butir soal, daya pembeda, dan indeks kesukaran untuk kelas <strong class="text-slate-800">{{ activeExam.class_room?.name }}</strong>.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <button
+              @click="openAnalysisPrintModal"
+              type="button"
+              class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-teal-600/20 flex items-center gap-2 cursor-pointer"
+            >
+              <Printer class="w-4 h-4" />
+              <span>Cetak Laporan & Grafik</span>
+            </button>
+            <button
+              @click="fetchAnalysis"
+              type="button"
+              class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              title="Muat ulang data analisis terbaru"
+            >
+              <RotateCcw class="w-4 h-4" />
+              <span>Segarkan</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Analysis Summary Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4" v-if="analysisData?.summary">
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-150 shadow-sm">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Rata-rata Kelas</span>
-            <div class="text-xl font-black text-teal-700 font-lexend">{{ analysisData.summary.avg_score }}</div>
+            <div class="text-2xl font-black text-teal-700 font-lexend mt-0.5">{{ analysisData.summary.avg_score }}</div>
           </div>
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-150 shadow-sm">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Nilai Tertinggi / Terendah</span>
-            <div class="text-xl font-black text-slate-800 font-lexend">{{ analysisData.summary.max_score }} / {{ analysisData.summary.min_score }}</div>
+            <div class="text-2xl font-black text-slate-800 font-lexend mt-0.5">{{ analysisData.summary.max_score }} / {{ analysisData.summary.min_score }}</div>
           </div>
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-150 shadow-sm">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Siswa Tuntas / Remedial</span>
-            <div class="text-xl font-black text-emerald-600 font-lexend">{{ analysisData.summary.passed_count }} / {{ analysisData.summary.remedial_count }}</div>
+            <div class="text-2xl font-black text-emerald-600 font-lexend mt-0.5">{{ analysisData.summary.passed_count }} / {{ analysisData.summary.remedial_count }}</div>
           </div>
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-150 shadow-sm">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tingkat Ketuntasan</span>
-            <div class="text-xl font-black text-blue-600 font-lexend">{{ analysisData.summary.pass_percentage }}%</div>
+            <div class="text-2xl font-black text-blue-600 font-lexend mt-0.5">{{ analysisData.summary.pass_percentage }}%</div>
+          </div>
+        </div>
+
+        <!-- VISUAL GRAFIK DAYA SERAP BUTIR SOAL -->
+        <div class="bg-slate-50/80 rounded-3xl p-5 sm:p-6 border border-slate-200/80 space-y-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider font-lexend">
+                  Grafik Daya Serap & Ketercapaian per Butir Soal (% Benar)
+                </h3>
+                <span class="px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 text-[10px] font-bold">
+                  {{ analysisQuestions.length }} Butir Soal
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-500 font-medium mt-0.5">
+                Tinggi batang menunjukkan persentase siswa yang berhasil menjawab benar pada setiap butir soal.
+              </p>
+            </div>
+
+            <!-- Filter Kategori Kesukaran -->
+            <div class="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm text-xs font-bold">
+              <button
+                type="button"
+                @click="analysisDifficultyFilter = 'all'"
+                :class="analysisDifficultyFilter === 'all' ? 'bg-teal-600 text-white' : 'text-slate-600 hover:text-slate-900'"
+                class="px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+              >
+                Semua ({{ analysisQuestions.length }})
+              </button>
+              <button
+                type="button"
+                @click="analysisDifficultyFilter = 'Mudah'"
+                :class="analysisDifficultyFilter === 'Mudah' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:text-slate-900'"
+                class="px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+              >
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Mudah ({{ difficultyDistribution.mudah }})</span>
+              </button>
+              <button
+                type="button"
+                @click="analysisDifficultyFilter = 'Sedang'"
+                :class="analysisDifficultyFilter === 'Sedang' ? 'bg-amber-500 text-white' : 'text-slate-600 hover:text-slate-900'"
+                class="px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+              >
+                <span class="w-2 h-2 rounded-full bg-amber-300"></span>
+                <span>Sedang ({{ difficultyDistribution.sedang }})</span>
+              </button>
+              <button
+                type="button"
+                @click="analysisDifficultyFilter = 'Sukar'"
+                :class="analysisDifficultyFilter === 'Sukar' ? 'bg-rose-600 text-white' : 'text-slate-600 hover:text-slate-900'"
+                class="px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+              >
+                <span class="w-2 h-2 rounded-full bg-rose-300"></span>
+                <span>Sukar ({{ difficultyDistribution.sukar }})</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Chart Board with Y-Axis & Reference Threshold Lines -->
+          <div class="relative bg-white rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-sm overflow-hidden">
+            <!-- Reference Lines -->
+            <div class="absolute inset-x-12 sm:inset-x-16 top-6 bottom-14 pointer-events-none flex flex-col justify-between">
+              <!-- 100% -->
+              <div class="border-b border-slate-200/80 w-full relative">
+                <span class="absolute -left-10 sm:-left-12 -top-2.5 text-[10px] font-bold text-slate-400">100%</span>
+              </div>
+              <!-- 75% -->
+              <div class="border-b border-dashed border-slate-200 w-full relative">
+                <span class="absolute -left-10 sm:-left-12 -top-2.5 text-[10px] font-bold text-slate-400">75%</span>
+              </div>
+              <!-- 70% Batas Mudah -->
+              <div class="border-b-2 border-dashed border-emerald-400/80 w-full relative">
+                <span class="hidden sm:inline absolute right-2 -top-2.5 text-[9px] font-black uppercase text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                  Batas Mudah (&ge; 70%)
+                </span>
+              </div>
+              <!-- 50% -->
+              <div class="border-b border-dashed border-slate-200 w-full relative">
+                <span class="absolute -left-10 sm:-left-12 -top-2.5 text-[10px] font-bold text-slate-400">50%</span>
+              </div>
+              <!-- 30% Batas Sukar -->
+              <div class="border-b-2 border-dashed border-rose-400/80 w-full relative">
+                <span class="hidden sm:inline absolute right-2 -top-2.5 text-[9px] font-black uppercase text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
+                  Batas Sukar / Remedial (&le; 30%)
+                </span>
+              </div>
+              <!-- 25% -->
+              <div class="border-b border-dashed border-slate-200 w-full relative">
+                <span class="absolute -left-10 sm:-left-12 -top-2.5 text-[10px] font-bold text-slate-400">25%</span>
+              </div>
+              <!-- 0% -->
+              <div class="border-b-2 border-slate-300 w-full relative">
+                <span class="absolute -left-10 sm:-left-12 -top-2.5 text-[10px] font-bold text-slate-400">0%</span>
+              </div>
+            </div>
+
+            <!-- Scrollable Bars Container -->
+            <div class="overflow-x-auto pb-2 pl-10 sm:pl-12">
+              <div class="min-w-full flex items-end gap-2 sm:gap-3 h-64 pt-6 pb-2 px-2">
+                <div
+                  v-for="qa in filteredAnalysisQuestions"
+                  :key="qa.question_number"
+                  class="flex flex-col items-center flex-1 min-w-[36px] max-w-[56px] h-full justify-end group relative cursor-pointer"
+                >
+                  <!-- Percentage label -->
+                  <span
+                    class="text-[10px] font-black mb-1 transition-transform group-hover:-translate-y-1"
+                    :class="[
+                      qa.difficulty_index >= 0.70 ? 'text-emerald-700' :
+                      qa.difficulty_index >= 0.30 ? 'text-amber-700' : 'text-rose-700'
+                    ]"
+                  >
+                    {{ Math.round(qa.difficulty_index * 100) }}%
+                  </span>
+
+                  <!-- Bar Element -->
+                  <div class="w-full bg-slate-100 rounded-t-lg h-full flex items-end overflow-hidden p-0.5 shadow-inner">
+                    <div
+                      class="w-full rounded-t-md transition-all duration-300 group-hover:brightness-110 shadow"
+                      :class="[
+                        qa.difficulty_index >= 0.70 ? 'bg-gradient-to-t from-emerald-600 to-emerald-400' :
+                        qa.difficulty_index >= 0.30 ? 'bg-gradient-to-t from-amber-500 to-amber-400' :
+                        'bg-gradient-to-t from-rose-600 to-rose-400'
+                      ]"
+                      :style="{ height: Math.max(8, Math.round(qa.difficulty_index * 100)) + '%' }"
+                    ></div>
+                  </div>
+
+                  <!-- X-Axis Labels -->
+                  <div class="mt-2 text-center">
+                    <span class="block text-[11px] font-black text-slate-800 font-lexend">
+                      #{{ qa.question_number }}
+                    </span>
+                    <span class="block text-[9px] font-bold text-slate-400">
+                      {{ qa.correct_answer || '-' }}
+                    </span>
+                  </div>
+
+                  <!-- Detailed Tooltip Hover Popup -->
+                  <div class="absolute bottom-full mb-3 hidden group-hover:flex flex-col z-30 bg-slate-900 text-white rounded-xl p-3 text-[10px] shadow-2xl w-44 pointer-events-none -left-1/2">
+                    <div class="font-black text-xs border-b border-slate-700 pb-1 mb-1 text-emerald-400">
+                      Soal No. {{ qa.question_number }} ({{ questionTypeLabel(qa.question_type) }})
+                    </div>
+                    <div class="flex justify-between py-0.5">
+                      <span class="text-slate-400">Kunci Jawaban:</span>
+                      <strong class="text-white">{{ qa.correct_answer || '-' }}</strong>
+                    </div>
+                    <div class="flex justify-between py-0.5">
+                      <span class="text-slate-400">Siswa Benar:</span>
+                      <strong class="text-emerald-400">{{ qa.correct_count }} Siswa ({{ Math.round(qa.difficulty_index * 100) }}%)</strong>
+                    </div>
+                    <div class="flex justify-between py-0.5">
+                      <span class="text-slate-400">Siswa Salah:</span>
+                      <strong class="text-rose-400">{{ qa.wrong_count }} Siswa</strong>
+                    </div>
+                    <div class="flex justify-between py-0.5">
+                      <span class="text-slate-400">Tingkat Kesukaran:</span>
+                      <strong :class="qa.difficulty_index >= 0.7 ? 'text-emerald-300' : (qa.difficulty_index >= 0.3 ? 'text-amber-300' : 'text-rose-300')">
+                        {{ qa.difficulty_category }} (P: {{ qa.difficulty_index }})
+                      </strong>
+                    </div>
+                    <div class="flex justify-between py-0.5">
+                      <span class="text-slate-400">Daya Pembeda:</span>
+                      <strong class="text-teal-300">{{ qa.discrimination_category }} (D: {{ qa.discrimination_index }})</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Legend & Summary Alerts -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
+            <div class="p-3 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex items-center gap-3">
+              <span class="w-4 h-4 rounded-full bg-emerald-500 flex-shrink-0 shadow"></span>
+              <div>
+                <strong class="text-emerald-900 font-bold block">Soal Mudah ({{ difficultyDistribution.mudah }} Soal / {{ difficultyDistribution.mudahPct }}%)</strong>
+                <span class="text-[11px] text-emerald-700">Daya serap tinggi (&ge; 70% siswa menjawab benar)</span>
+              </div>
+            </div>
+
+            <div class="p-3 bg-amber-50/80 border border-amber-200 rounded-2xl flex items-center gap-3">
+              <span class="w-4 h-4 rounded-full bg-amber-400 flex-shrink-0 shadow"></span>
+              <div>
+                <strong class="text-amber-900 font-bold block">Soal Sedang ({{ difficultyDistribution.sedang }} Soal / {{ difficultyDistribution.sedangPct }}%)</strong>
+                <span class="text-[11px] text-amber-700">Tingkat kesulitan ideal (30% - 70% siswa menjawab benar)</span>
+              </div>
+            </div>
+
+            <div class="p-3 bg-rose-50/80 border border-rose-200 rounded-2xl flex items-center gap-3">
+              <span class="w-4 h-4 rounded-full bg-rose-500 flex-shrink-0 shadow"></span>
+              <div>
+                <strong class="text-rose-900 font-bold block">Soal Sukar ({{ difficultyDistribution.sukar }} Soal / {{ difficultyDistribution.sukarPct }}%)</strong>
+                <span class="text-[11px] text-rose-700">Daya serap rendah (&le; 30% siswa menjawab benar)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Remedial Highlight Box -->
+          <div v-if="difficultyDistribution.hardQuestions.length > 0" class="p-4 bg-rose-100/70 border border-rose-200 text-rose-900 rounded-2xl text-xs flex items-start gap-3">
+            <AlertCircle class="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <strong class="font-bold block text-rose-950">Catatan Tindak Lanjut Guru (Perlu Remedial Klasikal):</strong>
+              <p class="mt-0.5 text-rose-800">
+                Terdapat <strong>{{ difficultyDistribution.hardQuestions.length }} butir soal</strong> dengan tingkat kesukaran tinggi (Nomor: <strong class="font-black underline">{{ difficultyDistribution.hardQuestions.map(n => '#' + n).join(', ') }}</strong>) di mana sebagian besar siswa menjawab salah. Disarankan butir soal ini dibahas kembali dalam remedial klasikal sebelum melanjutkan ke materi berikutnya.
+              </p>
+            </div>
           </div>
         </div>
 
         <!-- Questions Difficulty Breakdown -->
         <div class="space-y-4">
-          <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Tingkat Kesukaran & Daya Pembeda Soal</h3>
+          <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider font-lexend">Rincian Butir Soal & Pilihan Pengecoh</h3>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div
-              v-for="qa in analysisData?.questions_analysis"
+              v-for="qa in filteredAnalysisQuestions"
               :key="qa.question_number"
-              class="p-4 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-3"
+              class="p-4 rounded-2xl border border-slate-150 bg-slate-50/60 space-y-3"
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -848,6 +1096,7 @@
                     {{ qa.question_number }}
                   </span>
                   <span class="text-xs font-bold text-slate-700">Kunci: <strong class="text-teal-700">{{ qa.correct_answer || '-' }}</strong></span>
+                  <span class="text-[10px] text-slate-400 font-semibold">({{ questionTypeLabel(qa.question_type) }})</span>
                 </div>
 
                 <div class="flex items-center gap-1.5">
@@ -867,7 +1116,7 @@
               <!-- Progress bar of correct vs wrong -->
               <div class="space-y-1">
                 <div class="flex justify-between text-[11px] font-bold">
-                  <span class="text-emerald-700">Benar: {{ qa.correct_count }} Siswa</span>
+                  <span class="text-emerald-700">Benar: {{ qa.correct_count }} Siswa ({{ Math.round(qa.difficulty_index * 100) }}%)</span>
                   <span class="text-rose-700">Salah: {{ qa.wrong_count }} Siswa</span>
                 </div>
                 <div class="w-full bg-rose-200 h-2 rounded-full overflow-hidden flex">
@@ -876,7 +1125,7 @@
               </div>
 
               <!-- Option distribution -->
-              <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 pt-1 border-t border-slate-200/60">
+              <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 pt-1 border-t border-slate-200/60 flex-wrap">
                 <span class="text-slate-400">Pilihan:</span>
                 <span v-for="(cnt, opt) in qa.options" :key="opt" class="px-1.5 py-0.5 rounded bg-white border border-slate-200 font-mono">
                   {{ opt }}: {{ cnt }}
@@ -1934,6 +2183,317 @@
         </div>
       </div>
     </div>
+
+    <!-- PRINT PREVIEW MODAL: LAPORAN ANALISIS BUTIR SOAL & GRAFIK DAYA SERAP -->
+    <div v-if="showAnalysisPrintModal && activeExam" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[70] flex flex-col p-2 sm:p-6 overflow-hidden">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-7xl mx-auto flex flex-col h-full max-h-full overflow-hidden border border-slate-200">
+        <!-- Modal Toolbar Header -->
+        <div class="no-print px-5 sm:px-8 py-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 flex-shrink-0 z-20">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-600/20 flex-shrink-0">
+              <BarChart2 class="w-5 h-5" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-sm font-black text-slate-800 font-lexend uppercase tracking-wider">
+                  Pratinjau Laporan Analisis Butir Soal & Grafik
+                </h3>
+                <span
+                  :class="selectedAnalysisPaperSize === 'f4' ? 'bg-teal-100 text-teal-800 border-teal-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'"
+                  class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full" :class="selectedAnalysisPaperSize === 'f4' ? 'bg-teal-600' : 'bg-emerald-600'"></span>
+                  {{ selectedAnalysisPaperSize === 'f4' ? 'Ukuran F4 / Folio (33 × 21.5 cm)' : 'Ukuran A4 (29.7 × 21 cm)' }}
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 font-medium">Laporan resmi analisis kesukaran, daya pembeda, dan visual grafik batang daya serap kelas.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap justify-end">
+            <!-- Pilihan Ukuran Kertas (A4 / F4) -->
+            <div class="flex items-center bg-slate-200/90 p-1 rounded-xl border border-slate-300 shadow-inner">
+              <button
+                type="button"
+                @click="selectedAnalysisPaperSize = 'f4'"
+                :class="selectedAnalysisPaperSize === 'f4' ? 'bg-white text-teal-800 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Kertas F4 / Folio Lanskap (330 x 215 mm) - Standar madrasah, grafik & tabel lebih lega tanpa terpotong"
+              >
+                <span>F4 / Folio</span>
+                <span class="px-1.5 py-0.2 bg-teal-100 text-teal-800 text-[9px] font-black rounded-full uppercase tracking-tighter">Rekomendasi</span>
+              </button>
+              <button
+                type="button"
+                @click="selectedAnalysisPaperSize = 'a4'"
+                :class="selectedAnalysisPaperSize === 'a4' ? 'bg-white text-slate-900 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Kertas A4 Lanskap (297 x 210 mm)"
+              >
+                <span>A4</span>
+              </button>
+            </div>
+
+            <button
+              @click="printAnalysisDocument"
+              type="button"
+              class="px-4 sm:px-5 py-2.5 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-teal-600/20 flex items-center gap-2 cursor-pointer"
+            >
+              <Printer class="w-4 h-4" />
+              <span>Cetak / Simpan PDF</span>
+            </button>
+
+            <button
+              @click="showAnalysisPrintModal = false"
+              type="button"
+              class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+
+        <!-- Canvas Area -->
+        <div class="flex-1 overflow-auto bg-slate-200/90 p-4 sm:p-8 flex justify-start xl:justify-center items-start">
+          <div
+            id="printableAnalysisSheet"
+            :class="selectedAnalysisPaperSize === 'f4' ? 'w-[1240px] min-w-[1240px]' : 'w-[1080px] min-w-[1080px]'"
+            class="printable-recap-sheet bg-white p-8 sm:p-10 shadow-2xl border border-slate-300 text-slate-900 rounded-xl space-y-5 my-2 transition-all duration-200"
+          >
+            <!-- 1. KOP RESMI MADRASAH DENGAN GARIS GANDA -->
+            <div class="flex items-center gap-5 border-b-4 border-double border-slate-900 pb-3">
+              <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center">
+                <img
+                  v-if="schoolProfile?.app_logo_url || schoolProfile?.app_logo"
+                  :src="schoolProfile?.app_logo_url || getImageUrl(schoolProfile?.app_logo)"
+                  class="w-full h-full object-contain"
+                  alt="Logo Madrasah"
+                />
+                <div v-else class="w-18 h-18 rounded-2xl bg-teal-800 text-white flex items-center justify-center font-black text-xl shadow-md">
+                  MTS
+                </div>
+              </div>
+              <div class="text-center flex-1 pr-6 sm:pr-14">
+                <div class="text-xs sm:text-sm font-bold tracking-widest text-slate-700 uppercase">
+                  {{ schoolProfile?.school_foundation || 'YAYASAN PENDIDIKAN ISLAM AL-HASANAH' }}
+                </div>
+                <div class="text-lg sm:text-2xl font-black tracking-wide text-slate-900 uppercase my-0.5">
+                  {{ schoolProfile?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH' }}
+                </div>
+                <div class="text-[11px] sm:text-xs font-semibold text-slate-600">
+                  {{ schoolProfile?.school_tagline || 'Madrasah Tsanawiyah Al - Hasanah Ciomas' }} • Status: {{ schoolProfile?.school_accreditation || 'TERAKREDITASI A' }}
+                </div>
+                <div class="text-[10px] sm:text-[11px] text-slate-500">
+                  {{ schoolProfile?.school_address || 'Jl. Ciapus Sukamakmur No.05, Ciomas, Bogor' }}
+                </div>
+                <div class="text-[9px] sm:text-[10px] text-slate-500 font-mono">
+                  Telp: {{ schoolProfile?.school_phone || '081617666017' }} • Email: {{ schoolProfile?.school_email || 'mtsalhasanah.ciomas@gmail.com' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. JUDUL LEMBAR ANALISIS -->
+            <div class="text-center space-y-1">
+              <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-wide uppercase underline">
+                Laporan Analisis Butir Soal & Daya Serap Asesmen
+              </h2>
+              <p class="text-xs sm:text-sm font-bold text-slate-700 uppercase">
+                {{ getExamTypeFullName(activeExam.exam_type) }} • SEMESTER {{ (activeExam.semester || 'ganjil').toUpperCase() }} • TAHUN PELAJARAN {{ activeExam.academic_year?.name || '2024/2025' }}
+              </p>
+            </div>
+
+            <!-- 3. METADATA ASESMEN & STATISTIK KELAS -->
+            <div class="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs font-medium border border-slate-300 rounded-lg p-3 bg-slate-50/70">
+              <div class="space-y-1">
+                <div class="flex"><span class="w-32 font-bold text-slate-700">Mata Pelajaran</span><span class="mr-2">:</span><strong class="text-slate-900">{{ activeExam.subject?.name || '-' }}</strong></div>
+                <div class="flex"><span class="w-32 font-bold text-slate-700">Kelas / Rombel</span><span class="mr-2">:</span><strong class="text-slate-900">Kelas {{ activeExam.class_room?.name || '-' }}</strong></div>
+                <div class="flex"><span class="w-32 font-bold text-slate-700">Guru Pengampu</span><span class="mr-2">:</span><span>{{ activeExam.teacher?.full_name || activeExam.teacher?.name || '-' }}</span></div>
+                <div class="flex"><span class="w-32 font-bold text-slate-700">Nama Paket Ujian</span><span class="mr-2">:</span><span>{{ activeExam.title }}</span></div>
+              </div>
+              <div class="space-y-1">
+                <div class="flex"><span class="w-36 font-bold text-slate-700">Jenis Asesmen</span><span class="mr-2">:</span><strong class="text-slate-900">{{ getExamTypeFullName(activeExam.exam_type) }}</strong></div>
+                <div class="flex"><span class="w-36 font-bold text-slate-700">KKM / KKTP</span><span class="mr-2">:</span><strong class="text-teal-900 bg-teal-100/70 px-2 py-0.5 rounded border border-teal-300">{{ activeExam.kkm }}</strong></div>
+                <div class="flex"><span class="w-36 font-bold text-slate-700">Peserta / Rata-rata</span><span class="mr-2">:</span><span class="font-bold">{{ analysisData?.summary?.total_students || activeStudents.length }} Siswa • Rata-rata: {{ analysisData?.summary?.avg_score || '-' }}</span></div>
+                <div class="flex"><span class="w-36 font-bold text-slate-700">Ketuntasan Kelas</span><span class="mr-2">:</span><span class="font-bold text-emerald-700">{{ analysisData?.summary?.passed_count || 0 }} Tuntas ({{ analysisData?.summary?.pass_percentage || 0 }}%) • Rem: {{ analysisData?.summary?.remedial_count || 0 }}</span></div>
+              </div>
+            </div>
+
+            <!-- 4. VISUAL GRAFIK BATANG DAYA SERAP CETAK -->
+            <div class="border border-slate-300 rounded-lg p-4 bg-white space-y-2 break-inside-avoid">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                <div class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <span>Grafik Daya Serap per Butir Soal (% Siswa Menjawab Benar)</span>
+                </div>
+                <div class="flex items-center gap-3 text-[10px] font-bold">
+                  <span class="flex items-center gap-1 text-emerald-700"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block"></span> Mudah (&ge; 70%)</span>
+                  <span class="flex items-center gap-1 text-amber-700"><span class="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block"></span> Sedang (30%-70%)</span>
+                  <span class="flex items-center gap-1 text-rose-700"><span class="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block"></span> Sukar (&le; 30%)</span>
+                </div>
+              </div>
+
+              <!-- Graphic Bars -->
+              <div class="pt-4 pb-2 px-1">
+                <div class="flex items-end gap-1.5 sm:gap-2 h-36 border-b-2 border-slate-800 pb-1 relative">
+                  <!-- Guideline 70% -->
+                  <div class="absolute inset-x-0 bottom-[70%] border-b border-dashed border-emerald-400 pointer-events-none">
+                    <span class="absolute -left-6 -top-2 text-[8px] font-bold text-emerald-700">70%</span>
+                  </div>
+                  <!-- Guideline 30% -->
+                  <div class="absolute inset-x-0 bottom-[30%] border-b border-dashed border-rose-400 pointer-events-none">
+                    <span class="absolute -left-6 -top-2 text-[8px] font-bold text-rose-700">30%</span>
+                  </div>
+
+                  <!-- Bars -->
+                  <div
+                    v-for="qa in analysisQuestions"
+                    :key="qa.question_number"
+                    class="flex-1 flex flex-col items-center justify-end h-full min-w-[20px]"
+                  >
+                    <!-- Percentage label -->
+                    <span
+                      class="text-[8px] font-black leading-tight"
+                      :class="[
+                        qa.difficulty_index >= 0.70 ? 'text-emerald-700' :
+                        qa.difficulty_index >= 0.30 ? 'text-amber-700' : 'text-rose-700'
+                      ]"
+                    >
+                      {{ Math.round(qa.difficulty_index * 100) }}%
+                    </span>
+
+                    <!-- The Printable Bar -->
+                    <div
+                      class="w-full rounded-t-sm"
+                      :class="[
+                        qa.difficulty_index >= 0.70 ? 'bg-emerald-500' :
+                        qa.difficulty_index >= 0.30 ? 'bg-amber-400' : 'bg-rose-500'
+                      ]"
+                      :style="{ height: Math.max(5, Math.round(qa.difficulty_index * 100)) + '%' }"
+                    ></div>
+
+                    <!-- Question label -->
+                    <span class="text-[9px] font-black text-slate-800 mt-1">
+                      {{ qa.question_number }}
+                    </span>
+                    <span class="text-[7.5px] text-slate-500 font-bold -mt-0.5">
+                      {{ qa.correct_answer || '-' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. TABEL REKAPITULASI ANALISIS BUTIR SOAL LENGKAP -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-[10px] border-collapse border border-slate-400 bg-white">
+                <thead>
+                  <tr class="bg-slate-100 text-slate-900 uppercase font-black text-center text-[10px]">
+                    <th class="border border-slate-400 px-2 py-1.5 w-8">No</th>
+                    <th class="border border-slate-400 px-2 py-1.5 w-24">Bentuk Soal</th>
+                    <th class="border border-slate-400 px-2 py-1.5 w-14">Kunci</th>
+                    <th class="border border-slate-400 px-2 py-1.5 w-16">Benar (B)</th>
+                    <th class="border border-slate-400 px-2 py-1.5 w-16">Salah (S)</th>
+                    <th class="border border-slate-400 px-2 py-1.5 w-20">Daya Serap</th>
+                    <th class="border border-slate-400 px-2 py-1.5 w-20">Indeks (P)</th>
+                    <th class="border border-slate-400 px-2 py-1.5 w-24">Tingkat Kesukaran</th>
+                    <th class="border border-slate-400 px-2 py-1.5 w-20">Pembeda (D)</th>
+                    <th class="border border-slate-400 px-2 py-1.5 w-28">Kategori Pembeda</th>
+                    <th class="border border-slate-400 px-2 py-1.5">Rekomendasi Tindak Lanjut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="qa in analysisQuestions"
+                    :key="qa.question_number"
+                    class="border-b border-slate-300 hover:bg-slate-50"
+                  >
+                    <td class="border border-slate-300 px-2 py-1 text-center font-bold">{{ qa.question_number }}</td>
+                    <td class="border border-slate-300 px-2 py-1 text-center font-medium">{{ questionTypeLabel(qa.question_type) }}</td>
+                    <td class="border border-slate-300 px-2 py-1 text-center font-black text-teal-800 font-mono">{{ qa.correct_answer || '-' }}</td>
+                    <td class="border border-slate-300 px-2 py-1 text-center font-bold text-emerald-700">{{ qa.correct_count }}</td>
+                    <td class="border border-slate-300 px-2 py-1 text-center font-bold text-rose-700">{{ qa.wrong_count }}</td>
+                    <td class="border border-slate-300 px-2 py-1 text-center font-black">
+                      {{ Math.round(qa.difficulty_index * 100) }}%
+                    </td>
+                    <td class="border border-slate-300 px-2 py-1 text-center font-mono font-bold">{{ qa.difficulty_index }}</td>
+                    <td class="border border-slate-300 px-2 py-1 text-center font-bold">
+                      <span
+                        :class="[
+                          qa.difficulty_category === 'Mudah' ? 'text-emerald-700' :
+                          qa.difficulty_category === 'Sedang' ? 'text-amber-700' : 'text-rose-700'
+                        ]"
+                      >
+                        {{ qa.difficulty_category }}
+                      </span>
+                    </td>
+                    <td class="border border-slate-300 px-2 py-1 text-center font-mono font-bold">{{ qa.discrimination_index }}</td>
+                    <td class="border border-slate-300 px-2 py-1 text-center">{{ qa.discrimination_category }}</td>
+                    <td class="border border-slate-300 px-2 py-1 text-center font-medium">
+                      <span v-if="qa.difficulty_index < 0.30" class="text-rose-700 font-bold">
+                        Prioritas Remedial
+                      </span>
+                      <span v-else-if="qa.discrimination_index < 0.20" class="text-amber-700 font-semibold">
+                        Perlu Revisi Butir
+                      </span>
+                      <span v-else class="text-emerald-700 font-semibold">
+                        Diterima Baik
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 6. KESIMPULAN & TINDAK LANJUT -->
+            <div class="border border-slate-300 rounded-lg p-3 bg-slate-50 text-xs space-y-1.5 break-inside-avoid">
+              <div class="font-black text-slate-800 uppercase tracking-wider">Kesimpulan Komposisi & Evaluasi Guru:</div>
+              <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div class="p-2 border border-slate-200 rounded bg-white">
+                  <span class="text-slate-500 block text-[10px]">Soal Kategori Mudah:</span>
+                  <strong class="text-emerald-700 text-sm">{{ difficultyDistribution.mudah }} Butir ({{ difficultyDistribution.mudahPct }}%)</strong>
+                </div>
+                <div class="p-2 border border-slate-200 rounded bg-white">
+                  <span class="text-slate-500 block text-[10px]">Soal Kategori Sedang:</span>
+                  <strong class="text-amber-700 text-sm">{{ difficultyDistribution.sedang }} Butir ({{ difficultyDistribution.sedangPct }}%)</strong>
+                </div>
+                <div class="p-2 border border-slate-200 rounded bg-white">
+                  <span class="text-slate-500 block text-[10px]">Soal Kategori Sukar:</span>
+                  <strong class="text-rose-700 text-sm">{{ difficultyDistribution.sukar }} Butir ({{ difficultyDistribution.sukarPct }}%)</strong>
+                </div>
+              </div>
+              <div v-if="difficultyDistribution.hardQuestions.length > 0" class="text-[11px] text-rose-800 pt-1 font-medium">
+                * Catatan: Butir soal nomor <strong>{{ difficultyDistribution.hardQuestions.map(n => '#' + n).join(', ') }}</strong> memiliki tingkat kesalahan tinggi (&gt; 70% salah). Diperlukan pendalaman konsep pada materi terkait dalam remedial klasikal.
+              </div>
+            </div>
+
+            <!-- 7. TANDA TANGAN RESMI -->
+            <div class="pt-4 text-xs text-slate-800 break-inside-avoid">
+              <div class="flex justify-end mb-4 font-medium">
+                Ciomas, {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}
+              </div>
+
+              <div class="grid grid-cols-2 gap-8 text-center">
+                <div>
+                  <div class="font-bold">Mengetahui,</div>
+                  <div>Kepala MTs Al - Hasanah</div>
+                  <div class="h-20 flex items-center justify-center"></div>
+                  <div class="font-black text-slate-900 underline">{{ schoolProfile?.principal_name || 'Kepala Madrasah' }}</div>
+                  <div class="text-[11px] text-slate-600 font-mono">NIP: {{ schoolProfile?.principal_nip || '-' }}</div>
+                </div>
+
+                <div>
+                  <div class="font-bold">Guru Pengampu,</div>
+                  <div>Mata Pelajaran {{ activeExam.subject?.name || '' }}</div>
+                  <div class="h-20 flex items-center justify-center"></div>
+                  <div class="font-black text-slate-900 underline">{{ activeExam.teacher?.full_name || activeExam.teacher?.name || 'Guru Mata Pelajaran' }}</div>
+                  <div class="text-[11px] text-slate-600 font-mono">NIP: {{ activeExam.teacher?.nip || '-' }}</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1987,6 +2547,9 @@ const searchQuery = ref('');
 const showPrintModal = ref(false);
 const schoolProfile = ref(null);
 const selectedPaperSize = ref('f4'); // 'f4' (rekomendasi folio) atau 'a4'
+const showAnalysisPrintModal = ref(false);
+const selectedAnalysisPaperSize = ref('f4'); // 'f4' (rekomendasi folio) atau 'a4'
+const analysisDifficultyFilter = ref('all'); // 'all', 'Mudah', 'Sedang', 'Sukar'
 
 const showCreateModal = ref(false);
 const creatingExam = ref(false);
@@ -2127,6 +2690,54 @@ const savingKeys = ref(false);
 const gradingProcessing = ref(false);
 const syncingGrades = ref(false);
 const analysisData = ref(null);
+
+const analysisQuestions = computed(() => {
+  return analysisData.value?.questions_analysis || [];
+});
+
+const filteredAnalysisQuestions = computed(() => {
+  const list = analysisQuestions.value;
+  if (analysisDifficultyFilter.value === 'all') return list;
+  if (analysisDifficultyFilter.value === 'Mudah') return list.filter(q => q.difficulty_category === 'Mudah');
+  if (analysisDifficultyFilter.value === 'Sedang') return list.filter(q => q.difficulty_category === 'Sedang');
+  if (analysisDifficultyFilter.value === 'Sukar') return list.filter(q => (q.difficulty_category || '').includes('Sukar') || (q.difficulty_category || '').includes('Sulit'));
+  return list;
+});
+
+const difficultyDistribution = computed(() => {
+  const list = analysisQuestions.value;
+  let mudah = 0;
+  let sedang = 0;
+  let sukar = 0;
+  const hardQuestions = [];
+  const easyQuestions = [];
+
+  list.forEach(q => {
+    const p = Number(q.difficulty_index) || 0;
+    if (p >= 0.70) {
+      mudah++;
+      easyQuestions.push(q.question_number);
+    } else if (p < 0.30) {
+      sukar++;
+      hardQuestions.push(q.question_number);
+    } else {
+      sedang++;
+    }
+  });
+
+  const total = list.length || 1;
+  return {
+    total: list.length,
+    mudah,
+    sedang,
+    sukar,
+    mudahPct: Math.round((mudah / total) * 100),
+    sedangPct: Math.round((sedang / total) * 100),
+    sukarPct: Math.round((sukar / total) * 100),
+    hardQuestions,
+    easyQuestions
+  };
+});
 
 const pgQuestions = computed(() => activeQuestions.value.filter(q => q.question_type !== 'essay'));
 const essayQuestions = computed(() => activeQuestions.value.filter(q => q.question_type === 'essay'));
@@ -3207,6 +3818,20 @@ function openPrintPreview() {
   showPrintModal.value = true;
 }
 
+function openAnalysisPrintModal() {
+  if (!activeExam.value) {
+    toast.error('Pilih paket ujian terlebih dahulu.');
+    return;
+  }
+  if (!analysisData.value) {
+    fetchAnalysis();
+  }
+  showPrintModal.value = false;
+  showCreateModal.value = false;
+  showStudentModal.value = false;
+  showAnalysisPrintModal.value = true;
+}
+
 function getImageUrl(path) {
   if (!path) return '';
   if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
@@ -3385,6 +4010,243 @@ function printDocument() {
     .text-\\[9px\\] { font-size: 9px; }
     .text-\\[10px\\] { font-size: 10px; }
     .text-\\[11px\\] { font-size: 11px; }
+    
+    table {
+      width: 100% !important;
+      table-layout: auto !important;
+      border-collapse: collapse;
+      margin-top: 6px;
+      page-break-inside: auto;
+    }
+    tr {
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+    th, td {
+      border: 1px solid #94a3b8;
+      padding: 3px 5px;
+    }
+    thead {
+      display: table-header-group;
+    }
+    tfoot {
+      display: table-footer-group;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+    .break-inside-avoid {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  </style>
+</head>
+<body>
+  <div style="width: 100%; max-width: 100%;">
+    ${content}
+  </div>
+</body>
+</html>`);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 400);
+}
+
+function printAnalysisDocument() {
+  const printElem = document.getElementById('printableAnalysisSheet');
+  if (!printElem) {
+    window.print();
+    return;
+  }
+
+  const content = printElem.innerHTML;
+  const printWindow = window.open('', '_blank', 'width=1200,height=850');
+  if (!printWindow) {
+    window.print();
+    return;
+  }
+
+  const isF4 = selectedAnalysisPaperSize.value === 'f4';
+  const paperCssSize = isF4 ? '330mm 215mm' : '297mm 210mm';
+  const paperTitle = isF4 ? 'F4 / Folio' : 'A4';
+
+  printWindow.document.open();
+  printWindow.document.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Laporan Analisis Butir Soal & Daya Serap (${paperTitle}) - ${activeExam.value?.title || 'Ujian'}</title>
+  <style>
+    @page {
+      size: ${paperCssSize};
+      margin: 8mm 8mm 8mm 8mm;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background: #ffffff !important;
+      color: #0f172a;
+      padding: 0;
+      margin: 0;
+      font-size: ${isF4 ? '10px' : '9.5px'};
+      line-height: 1.35;
+    }
+    .text-center { text-align: center; }
+    .text-left { text-align: left; }
+    .text-right { text-align: right; }
+    .font-bold { font-weight: bold; }
+    .font-semibold { font-weight: 600; }
+    .font-black { font-weight: 900; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .uppercase { text-transform: uppercase; }
+    .underline { text-decoration: underline; }
+    
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .justify-end { justify-content: flex-end; }
+    .items-center { align-items: center; }
+    .items-start { align-items: flex-start; }
+    .flex-1 { flex: 1 1 0%; }
+    .flex-shrink-0 { flex-shrink: 0; }
+    .gap-1 { gap: 4px; }
+    .gap-1\\.5 { gap: 6px; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+    .gap-5 { gap: 20px; }
+    .gap-8 { gap: 32px; }
+    .gap-x-8 { column-gap: 32px; }
+    .gap-y-1\\.5 { row-gap: 6px; }
+    .grid { display: grid; }
+    .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+    
+    .w-full { width: 100%; }
+    .w-8 { width: 32px; }
+    .w-14 { width: 56px; }
+    .w-16 { width: 64px; }
+    .w-18 { width: 72px; }
+    .w-20 { width: 80px; }
+    .w-24 { width: 96px; }
+    .w-28 { width: 112px; }
+    .w-32 { width: 128px; }
+    .w-36 { width: 144px; }
+    .h-14 { height: 56px; }
+    .h-16 { height: 64px; }
+    .h-18 { height: 72px; }
+    .h-20 { height: 80px; }
+    .h-36 { height: 144px; }
+    .min-w-\\[20px\\] { min-width: 20px; }
+    
+    .p-2 { padding: 8px; }
+    .p-3 { padding: 12px; }
+    .p-4 { padding: 16px; }
+    .px-1 { padding-left: 4px; padding-right: 4px; }
+    .px-2 { padding-left: 8px; padding-right: 8px; }
+    .px-3 { padding-left: 12px; padding-right: 12px; }
+    .py-0\\.5 { padding-top: 2px; padding-bottom: 2px; }
+    .py-1 { padding-top: 4px; padding-bottom: 4px; }
+    .py-1\\.5 { padding-top: 6px; padding-bottom: 6px; }
+    .py-2 { padding-top: 8px; padding-bottom: 8px; }
+    .pb-1 { padding-bottom: 4px; }
+    .pb-1\\.5 { padding-bottom: 6px; }
+    .pb-2 { padding-bottom: 8px; }
+    .pb-3 { padding-bottom: 12px; }
+    .pt-1 { padding-top: 4px; }
+    .pt-2 { padding-top: 8px; }
+    .pt-4 { padding-top: 16px; }
+    .pr-6 { padding-right: 24px; }
+    .pr-14 { padding-right: 56px; }
+    .mr-2 { margin-right: 8px; }
+    .mb-1 { margin-bottom: 4px; }
+    .mb-2 { margin-bottom: 8px; }
+    .mb-4 { margin-bottom: 16px; }
+    .mt-1 { margin-top: 4px; }
+    .-mt-0\\.5 { margin-top: -2px; }
+    
+    .space-y-1 > * + * { margin-top: 4px; }
+    .space-y-1\\.5 > * + * { margin-top: 6px; }
+    .space-y-2 > * + * { margin-top: 8px; }
+    .space-y-5 > * + * { margin-top: 20px; }
+    
+    .border { border: 1px solid #94a3b8; }
+    .border-b { border-bottom: 1px solid #94a3b8; }
+    .border-b-2 { border-bottom: 2px solid #0f172a; }
+    .border-b-4 { border-bottom: 4px solid #0f172a; }
+    .border-dashed { border-style: dashed; }
+    .border-double { border-bottom-style: double; }
+    .border-slate-200 { border-color: #e2e8f0; }
+    .border-slate-300 { border-color: #cbd5e1; }
+    .border-slate-400 { border-color: #94a3b8; }
+    .border-slate-800 { border-color: #1e293b; }
+    .border-slate-900 { border-color: #0f172a; }
+    .border-emerald-400 { border-color: #34d399; }
+    .border-rose-400 { border-color: #fb7185; }
+    
+    .rounded { border-radius: 4px; }
+    .rounded-sm { border-radius: 2px; }
+    .rounded-lg { border-radius: 8px; }
+    .rounded-xl { border-radius: 12px; }
+    .rounded-2xl { border-radius: 16px; }
+    .rounded-t-sm { border-top-left-radius: 2px; border-top-right-radius: 2px; }
+    
+    .bg-white { background-color: #ffffff; }
+    .bg-slate-50 { background-color: #f8fafc !important; }
+    .bg-slate-100 { background-color: #f1f5f9 !important; }
+    .bg-slate-200 { background-color: #e2e8f0 !important; }
+    .bg-emerald-500 { background-color: #10b981 !important; }
+    .bg-amber-400 { background-color: #fbbf24 !important; }
+    .bg-rose-500 { background-color: #f43f5e !important; }
+    .bg-teal-800 { background-color: #115e59 !important; color: white !important; }
+    
+    .text-white { color: #ffffff !important; }
+    .text-slate-400 { color: #94a3b8; }
+    .text-slate-500 { color: #64748b; }
+    .text-slate-600 { color: #475569; }
+    .text-slate-700 { color: #334155; }
+    .text-slate-800 { color: #1e293b; }
+    .text-slate-900 { color: #0f172a; }
+    .text-emerald-700 { color: #047857; }
+    .text-amber-700 { color: #b45309; }
+    .text-rose-700 { color: #be123c; }
+    .text-rose-800 { color: #9f1239; }
+    .text-teal-800 { color: #115e59; }
+    .text-teal-900 { color: #134e4a; }
+    
+    .text-xs { font-size: 10px; }
+    .text-sm { font-size: 11px; }
+    .text-base { font-size: 12px; }
+    .text-lg { font-size: 14px; }
+    .text-xl { font-size: 16px; }
+    .text-2xl { font-size: 18px; }
+    .text-\\[7\\.5px\\] { font-size: 7.5px; }
+    .text-\\[8px\\] { font-size: 8px; }
+    .text-\\[9px\\] { font-size: 9px; }
+    .text-\\[10px\\] { font-size: 10px; }
+    .text-\\[11px\\] { font-size: 11px; }
+    
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .inset-x-0 { left: 0; right: 0; }
+    .bottom-\\[70\\%\\] { bottom: 70%; }
+    .bottom-\\[30\\%\\] { bottom: 30%; }
+    .-left-6 { left: -24px; }
+    .-top-2 { top: -8px; }
+    .pointer-events-none { pointer-events: none; }
     
     table {
       width: 100% !important;
