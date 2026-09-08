@@ -1618,10 +1618,10 @@
     </div>
 
     <!-- PRINT PREVIEW MODAL: REKAPITULASI NILAI CAPAIAN PER BENTUK SOAL (KONSEP 1) -->
-    <div v-if="showPrintModal && activeExam" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-7xl overflow-hidden border border-slate-200 my-auto flex flex-col max-h-[95vh]">
-        <!-- Modal Toolbar Header (Hidden on Print) -->
-        <div class="no-print px-5 sm:px-8 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 flex-shrink-0">
+    <div v-if="showPrintModal && activeExam" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[70] flex flex-col p-2 sm:p-6 overflow-hidden">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-7xl mx-auto flex flex-col h-full max-h-full overflow-hidden border border-slate-200">
+        <!-- Modal Toolbar Header (Pinned at Top, never overlaps content) -->
+        <div class="no-print px-5 sm:px-8 py-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 flex-shrink-0 z-20">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20 flex-shrink-0">
               <Printer class="w-5 h-5" />
@@ -1629,9 +1629,9 @@
             <div>
               <div class="flex items-center gap-2 flex-wrap">
                 <h3 class="text-sm font-black text-slate-800 font-lexend uppercase tracking-wider">Pratinjau Lembar Rekap Capaian per Bentuk Soal</h3>
-                <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Kertas Lanskap (Landscape)</span>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Kertas Lanskap A4</span>
               </div>
-              <p class="text-xs text-slate-500 font-medium">Format cetak resmi madrasah. Hasil cetak & PDF akan 100% presisi dan rapi sesuai pratinjau di bawah ini.</p>
+              <p class="text-xs text-slate-500 font-medium">Format resmi madrasah. Tampilan di bawah ini adalah representasi nyata lembar cetak.</p>
             </div>
           </div>
 
@@ -1655,10 +1655,10 @@
           </div>
         </div>
 
-        <!-- Sheet Scroll Area (Allows clean horizontal scroll on smaller monitors without squashing the landscape sheet) -->
-        <div class="p-4 sm:p-8 overflow-auto bg-slate-200/80 flex-1 flex justify-start lg:justify-center">
+        <!-- Canvas Area (Smooth scroll, content always starts at top y=0, perfectly centered) -->
+        <div class="flex-1 overflow-auto bg-slate-200/90 p-4 sm:p-8 flex justify-start xl:justify-center items-start">
           <!-- The Printable Sheet Container -->
-          <div id="printableRecapSheet" class="printable-recap-sheet bg-white w-full min-w-[1020px] max-w-[1140px] p-8 sm:p-10 shadow-2xl border border-slate-300 text-slate-900 rounded-xl space-y-5 my-2">
+          <div id="printableRecapSheet" class="printable-recap-sheet bg-white w-[1120px] min-w-[1120px] p-8 sm:p-10 shadow-2xl border border-slate-300 text-slate-900 rounded-xl space-y-5 my-2">
             
             <!-- 1. KOP RESMI MADRASAH DENGAN LOGO RESMI -->
             <div class="flex items-center gap-5 border-b-4 border-double border-slate-900 pb-3">
@@ -1720,29 +1720,29 @@
 
             <!-- 4. TABEL CAPAIAN PER BENTUK SOAL -->
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-[11px] border-collapse border border-slate-300">
+              <table class="w-full text-left text-[11px] border-collapse border border-slate-300 bg-white">
                 <thead>
-                  <tr class="bg-slate-100 text-slate-800 uppercase font-black tracking-wider text-center">
-                    <th rowspan="2" class="border border-slate-300 px-2 py-2 w-8">No</th>
-                    <th rowspan="2" class="border border-slate-300 px-2.5 py-2 w-24">NISN</th>
-                    <th rowspan="2" class="border border-slate-300 px-3 py-2 text-left">Nama Siswa</th>
-                    <th rowspan="2" class="border border-slate-300 px-1.5 py-2 w-8">L/P</th>
+                  <tr class="bg-slate-100 text-slate-800 uppercase font-black tracking-wider text-center text-[10px]">
+                    <th rowspan="2" class="border border-slate-300 px-2 py-2 w-10">No</th>
+                    <th rowspan="2" class="border border-slate-300 px-2.5 py-2 w-28">NISN</th>
+                    <th rowspan="2" class="border border-slate-300 px-3 py-2 text-left min-w-[180px]">Nama Siswa</th>
+                    <th rowspan="2" class="border border-slate-300 px-1.5 py-2 w-10">L/P</th>
                     <!-- Dynamic Columns for each Active Question Type -->
-                    <th :colspan="activeQuestionTypesList.length" class="border border-slate-300 px-3 py-1.5 bg-slate-200/80 text-teal-900 font-black">
+                    <th :colspan="activeQuestionTypesList.length" class="border border-slate-300 px-3 py-1.5 bg-slate-200/80 text-teal-950 font-black">
                       Capaian Nilai per Bentuk Soal (Poin / Maks)
                     </th>
-                    <th rowspan="2" class="border border-slate-300 px-2 py-2 w-16">Nilai Asli</th>
-                    <th rowspan="2" class="border border-slate-300 px-2 py-2 w-16">Nilai Rem.</th>
-                    <th rowspan="2" class="border border-slate-300 px-2 py-2 w-16 bg-slate-150 font-black">Nilai Akhir</th>
+                    <th rowspan="2" class="border border-slate-300 px-2 py-2 w-18">Nilai Asli</th>
+                    <th rowspan="2" class="border border-slate-300 px-2 py-2 w-18">Nilai Rem.</th>
+                    <th rowspan="2" class="border border-slate-300 px-2 py-2 w-18 bg-slate-150 font-black">Nilai Akhir</th>
                     <th rowspan="2" class="border border-slate-300 px-2 py-2 w-24">Keterangan</th>
                   </tr>
                   <tr class="bg-slate-50 text-slate-700 font-bold text-center text-[10px]">
                     <th
                       v-for="typeObj in activeQuestionTypesList"
                       :key="typeObj.key"
-                      class="border border-slate-300 px-2 py-1.5"
+                      class="border border-slate-300 px-2 py-1.5 min-w-[80px]"
                     >
-                      <div>{{ typeObj.label }}</div>
+                      <div class="font-bold text-slate-800">{{ typeObj.label }}</div>
                       <div class="text-[9px] text-slate-500 font-normal">({{ typeObj.count }} Soal • Maks {{ typeObj.maxScore }})</div>
                     </th>
                   </tr>
@@ -3146,6 +3146,9 @@ function openPrintPreview() {
     toast.error('Pilih paket ujian terlebih dahulu.');
     return;
   }
+  showStudentModal.value = false;
+  selectedStudent.value = null;
+  showCreateModal.value = false;
   showPrintModal.value = true;
 }
 
