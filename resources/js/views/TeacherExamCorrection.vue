@@ -940,19 +940,30 @@
                 <Printer class="w-5 h-5" />
               </div>
               <div>
-                <h3 class="text-sm font-black text-emerald-950 font-lexend uppercase tracking-wider">Cetak Rekap Capaian (Print / PDF)</h3>
-                <p class="text-xs text-emerald-700 mt-1 font-medium">Cetak lembar rekapitulasi nilai kolektif 1 kelas dengan rincian perolehan per bentuk soal, status KKM/KKTP, dan tanda tangan resmi.</p>
+                <h3 class="text-sm font-black text-emerald-950 font-lexend uppercase tracking-wider">Cetak & Ekspor Rekap Capaian</h3>
+                <p class="text-xs text-emerald-700 mt-1 font-medium">Cetak lembar rekapitulasi nilai kolektif 1 kelas dengan rincian perolehan per bentuk soal, status KKM/KKTP, dan tanda tangan resmi ke PDF atau Word.</p>
               </div>
             </div>
 
-            <button
-              @click="openPrintPreview"
-              type="button"
-              class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Printer class="w-4 h-4" />
-              <span>Buka Lembar Cetak Rekap</span>
-            </button>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                @click="openPrintPreview"
+                type="button"
+                class="py-3 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Printer class="w-4 h-4" />
+                <span>Buka Lembar Cetak</span>
+              </button>
+              <button
+                @click="exportToWord"
+                type="button"
+                class="py-3 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl text-xs transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Unduh langsung dokumen Microsoft Word (.doc) dalam format lanskap resmi"
+              >
+                <FileText class="w-4 h-4" />
+                <span>Unduh Word (.doc)</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1639,10 +1650,20 @@
             <button
               @click="printDocument"
               type="button"
-              class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 cursor-pointer"
+              class="px-4 sm:px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 cursor-pointer"
             >
               <Printer class="w-4 h-4" />
               <span>Cetak / Simpan PDF</span>
+            </button>
+
+            <button
+              @click="exportToWord"
+              type="button"
+              class="px-4 sm:px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-blue-600/20 flex items-center gap-2 cursor-pointer"
+              title="Unduh format dokumen Microsoft Word (.doc) dengan tata letak lanskap resmi"
+            >
+              <FileText class="w-4 h-4" />
+              <span>Unduh Word (.doc)</span>
             </button>
 
             <button
@@ -3372,5 +3393,294 @@ function printDocument() {
     printWindow.print();
     printWindow.close();
   }, 400);
+}
+
+function exportToWord() {
+  if (!activeExam.value) {
+    toast.error('Data ujian tidak ditemukan.');
+    return;
+  }
+
+  // 1. Dapatkan Logo Madrasah (Base64 via Canvas jika memungkinkan, atau URL absolut)
+  let logoImgHtml = '';
+  try {
+    const printImg = document.querySelector('#printableRecapSheet img');
+    if (printImg && printImg.complete && printImg.naturalWidth > 0) {
+      const canvas = document.createElement('canvas');
+      canvas.width = printImg.naturalWidth;
+      canvas.height = printImg.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(printImg, 0, 0);
+      const dataUrl = canvas.toDataURL('image/png');
+      logoImgHtml = `<img src="${dataUrl}" width="75" height="75" style="width: 75px; height: 75px; object-fit: contain;" alt="Logo Madrasah" />`;
+    }
+  } catch (e) {
+    console.warn('Canvas logo conversion fallback:', e);
+  }
+
+  if (!logoImgHtml) {
+    const rawLogo = schoolProfile.value?.app_logo_url || schoolProfile.value?.app_logo;
+    if (rawLogo) {
+      const logoUrl = rawLogo.startsWith('http') ? rawLogo : (window.location.origin + getImageUrl(rawLogo));
+      logoImgHtml = `<img src="${logoUrl}" width="75" height="75" style="width: 75px; height: 75px; object-fit: contain;" alt="Logo Madrasah" />`;
+    } else {
+      logoImgHtml = `<div style="width: 70px; height: 70px; line-height: 70px; text-align: center; background-color: #115e59; color: #ffffff; font-weight: 900; font-size: 16pt; border-radius: 8px;">MTS</div>`;
+    }
+  }
+
+  // 2. Kolom Bentuk Soal Dinamis
+  const qTypes = activeQuestionTypesList.value || [];
+  let thQTypes = '';
+  let thQTypesSub = '';
+
+  if (qTypes.length > 0) {
+    thQTypes = `<th colspan="${qTypes.length}" style="border: 1pt solid #94a3b8; padding: 4pt 3pt; background-color: #e2e8f0; color: #134e4a; font-weight: 900; font-size: 8.5pt; text-align: center;">Capaian Nilai per Bentuk Soal (Poin / Maks)</th>`;
+    thQTypesSub = qTypes.map(t => `
+      <th style="border: 1pt solid #94a3b8; padding: 3.5pt 2.5pt; background-color: #f8fafc; text-align: center; font-size: 8pt; min-width: 60pt;">
+        <div style="font-weight: bold; color: #1e293b;">${t.label}</div>
+        <div style="font-size: 7pt; color: #64748b; font-weight: normal;">(${t.count} Soal • Maks ${t.maxScore})</div>
+      </th>
+    `).join('');
+  }
+
+  // 3. Baris Data Siswa
+  const students = activeStudents.value || [];
+  const kkm = Number(activeExam.value?.kkm || 75);
+
+  let rowsHtml = '';
+  if (students.length === 0) {
+    const totalCols = 8 + qTypes.length;
+    rowsHtml = `<tr><td colspan="${totalCols}" align="center" style="border: 1pt solid #94a3b8; padding: 12pt; color: #94a3b8; font-style: italic;">Tidak ada data siswa pada kelas ini.</td></tr>`;
+  } else {
+    rowsHtml = students.map((student, idx) => {
+      const typeScoresHtml = qTypes.map(t => {
+        const score = calculateStudentTypeScore(student, t);
+        return `
+          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-size: 8pt;">
+            <div style="font-weight: bold; color: #1e293b;">${score.earned}</div>
+            <div style="font-size: 7pt; color: #64748b;">(${score.percentage}%)</div>
+          </td>
+        `;
+      }).join('');
+
+      const initialScore = student.total_score !== null ? student.total_score : '-';
+      const initialScoreColor = (student.total_score !== null && student.total_score < kkm) ? '#e11d48' : '#1e293b';
+      const remScore = (student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? student.remedial_score : '-';
+      const finalGrade = getStudentFinalGrade(student);
+      const status = getStudentPrintStatus(student);
+
+      let statusHtml = '';
+      if (status === 'TUNTAS') {
+        statusHtml = '<b style="color: #047857;">TUNTAS</b>';
+      } else if (status === 'TUNTAS (REM)') {
+        statusHtml = '<b style="color: #0f766e;">TUNTAS (REM)</b>';
+      } else if (status === 'REMEDIAL') {
+        statusHtml = '<b style="color: #e11d48;">REMEDIAL</b>';
+      } else {
+        statusHtml = '<span style="color: #94a3b8;">BELUM UJIAN</span>';
+      }
+
+      return `
+        <tr style="background-color: ${idx % 2 === 1 ? '#f8fafc' : '#ffffff'};">
+          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-weight: bold; color: #64748b; font-size: 8pt;">${idx + 1}</td>
+          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-family: monospace; font-size: 8pt; color: #475569;">${student.nisn || '-'}</td>
+          <td align="left" style="border: 1pt solid #94a3b8; padding: 3pt 4pt; font-weight: bold; font-size: 8.5pt; color: #0f172a;">${student.name}</td>
+          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-weight: bold; font-size: 8pt; color: #475569;">${student.gender || '-'}</td>
+          ${typeScoresHtml}
+          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-weight: bold; font-size: 8.5pt; color: ${initialScoreColor};">${initialScore}</td>
+          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-weight: bold; font-size: 8.5pt; color: #0f766e;">${remScore}</td>
+          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-weight: 900; font-size: 9pt; color: #0f172a; background-color: #f1f5f9;">${finalGrade}</td>
+          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-size: 7.5pt;">${statusHtml}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  const komposisiStr = activeQuestionTypesList.value.map(t => `${t.count} ${t.label}`).join(', ');
+
+  // 4. Dokumen HTML Lengkap Spesifik Microsoft Word (MSO Landscape A4)
+  const wordContent = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="utf-8">
+  <title>Lembar Rekapitulasi Capaian Nilai Asesmen - ${activeExam.value.title || 'Ujian'}</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    @page Section1 {
+      size: 841.9pt 595.3pt; /* A4 Landscape (29.7cm x 21.0cm) */
+      mso-page-orientation: landscape;
+      margin: 20.0pt 25.0pt 20.0pt 25.0pt;
+    }
+    div.Section1 {
+      page: Section1;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #0f172a;
+    }
+    table {
+      border-collapse: collapse;
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+  </style>
+</head>
+<body style="font-family: Arial, Helvetica, sans-serif; color: #0f172a; margin: 0; padding: 0;">
+  <div class="Section1">
+    <!-- 1. KOP RESMI MADRASAH DENGAN LOGO RESMI -->
+    <table width="100%" style="border-collapse: collapse; border: none; border-bottom: 3.5pt double #0f172a; margin-bottom: 8pt;">
+      <tr>
+        <td width="85" align="center" valign="middle" style="padding-right: 12pt; border: none;">
+          ${logoImgHtml}
+        </td>
+        <td align="center" valign="middle" style="border: none; text-align: center;">
+          <div style="font-size: 9pt; font-weight: bold; letter-spacing: 1.5pt; text-transform: uppercase; color: #475569;">
+            ${schoolProfile.value?.school_foundation || 'YAYASAN PENDIDIKAN ISLAM AL-HASANAH'}
+          </div>
+          <div style="font-size: 14.5pt; font-weight: 900; text-transform: uppercase; color: #0f172a; margin-top: 1pt;">
+            ${schoolProfile.value?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH'}
+          </div>
+          <div style="font-size: 8.5pt; font-weight: 600; color: #475569; margin-top: 1pt;">
+            ${schoolProfile.value?.school_tagline || 'Madrasah Tsanawiyah Al - Hasanah Ciomas'} • Status: ${schoolProfile.value?.school_accreditation || 'TERAKREDITASI A'}
+          </div>
+          <div style="font-size: 8pt; color: #475569; margin-top: 1pt;">
+            ${schoolProfile.value?.school_address || 'Jl. Ciapus Sukamakmur No.05, Ciomas, Bogor'}
+          </div>
+          <div style="font-size: 7.5pt; color: #64748b; font-family: monospace; margin-top: 1pt;">
+            Telp: ${schoolProfile.value?.school_phone || '081617666017'} • Email: ${schoolProfile.value?.school_email || 'mtsalhasanah.ciomas@gmail.com'}
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- 2. JUDUL LEMBAR REKAPITULASI -->
+    <div style="text-align: center; margin-bottom: 8pt;">
+      <div style="font-size: 11pt; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5pt; text-decoration: underline; color: #0f172a;">
+        LEMBAR REKAPITULASI CAPAIAN NILAI ASESMEN PER BENTUK SOAL
+      </div>
+      <div style="font-size: 8.5pt; font-weight: bold; text-transform: uppercase; color: #334155; margin-top: 2pt;">
+        ${getExamTypeFullName(activeExam.value.exam_type)} • SEMESTER ${(activeExam.value.semester || 'ganjil').toUpperCase()} • TAHUN PELAJARAN ${activeExam.value.academic_year?.name || '2024/2025'}
+      </div>
+    </div>
+
+    <!-- 3. METADATA ASESMEN -->
+    <table width="100%" style="border-collapse: collapse; border: 1pt solid #cbd5e1; background-color: #f8fafc; margin-bottom: 8pt;">
+      <tr>
+        <td width="50%" valign="top" style="padding: 5pt 8pt; font-size: 8.5pt; color: #334155; line-height: 1.5; border: none;">
+          <div><b>Mata Pelajaran :</b> <span style="font-weight: 900; color: #0f172a;">${activeExam.value.subject?.name || '-'}</span></div>
+          <div><b>Kelas / Rombel :</b> <span style="font-weight: 900; color: #0f172a;">Kelas ${activeExam.value.class_room?.name || '-'}</span></div>
+          <div><b>Guru Pengampu :</b> ${activeExam.value.teacher?.full_name || activeExam.value.teacher?.name || '-'}</div>
+          <div><b>Nama Paket Ujian :</b> ${activeExam.value.title}</div>
+        </td>
+        <td width="50%" valign="top" style="padding: 5pt 8pt; font-size: 8.5pt; color: #334155; line-height: 1.5; border: none;">
+          <div><b>Jenis Asesmen :</b> <span style="font-weight: 900; color: #0f172a;">${getExamTypeFullName(activeExam.value.exam_type)}</span></div>
+          <div><b>KKM / KKTP :</b> <span style="font-weight: 900; color: #115e59; background-color: #ccfbf1; padding: 1pt 5pt; border: 1pt solid #5eead4;">${activeExam.value.kkm}</span></div>
+          <div><b>Bobot Penilaian :</b> Objektif: ${activeExam.value.pg_weight}% | Uraian: ${activeExam.value.essay_weight}%</div>
+          <div><b>Komposisi Soal :</b> ${activeExam.value.total_questions} Butir (${komposisiStr})</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- 4. TABEL CAPAIAN PER BENTUK SOAL -->
+    <table width="100%" border="1" cellspacing="0" cellpadding="3" style="border-collapse: collapse; border: 1pt solid #94a3b8; margin-bottom: 8pt;">
+      <thead>
+        <tr style="background-color: #f1f5f9; color: #0f172a; text-transform: uppercase; font-size: 8pt; font-weight: bold; text-align: center;">
+          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 22pt;">No</th>
+          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 65pt;">NISN</th>
+          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 4pt; text-align: left; min-width: 120pt;">Nama Siswa</th>
+          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 22pt;">L/P</th>
+          ${thQTypes}
+          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 42pt;">Nilai Asli</th>
+          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 42pt;">Nilai Rem.</th>
+          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 45pt; background-color: #e2e8f0; font-weight: 900;">Nilai Akhir</th>
+          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 60pt;">Keterangan</th>
+        </tr>
+        ${thQTypesSub ? `<tr>${thQTypesSub}</tr>` : ''}
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+
+    <!-- 5. REKAPITULASI KETUNTASAN KLASIKAL -->
+    <div style="font-size: 8.5pt; font-weight: bold; text-transform: uppercase; color: #1e293b; margin-top: 6pt; margin-bottom: 3pt;">
+      Rekapitulasi Ketuntasan Klasikal:
+    </div>
+    <table width="100%" border="1" cellspacing="0" cellpadding="4" style="border-collapse: collapse; border: 1pt solid #cbd5e1; margin-bottom: 10pt;">
+      <tr>
+        <td width="25%" style="border: 1pt solid #cbd5e1; background-color: #f8fafc; padding: 4pt 6pt; font-size: 8pt;">
+          <span style="color: #64748b; font-size: 7.5pt; display: block;">Total Siswa Peserta</span>
+          <b style="color: #1e293b; font-size: 9pt;">${printStats.value.participated} / ${printStats.value.total} Siswa</b>
+        </td>
+        <td width="25%" style="border: 1pt solid #cbd5e1; background-color: #f8fafc; padding: 4pt 6pt; font-size: 8pt;">
+          <span style="color: #64748b; font-size: 7.5pt; display: block;">Tuntas (Murni + Rem)</span>
+          <b style="color: #047857; font-size: 9pt;">${printStats.value.totalPassed} Siswa (${printStats.value.passPercentage}%)</b>
+        </td>
+        <td width="25%" style="border: 1pt solid #cbd5e1; background-color: #f8fafc; padding: 4pt 6pt; font-size: 8pt;">
+          <span style="color: #64748b; font-size: 7.5pt; display: block;">Perlu Remedial</span>
+          <b style="color: #e11d48; font-size: 9pt;">${printStats.value.remedialCount} Siswa</b>
+        </td>
+        <td width="25%" style="border: 1pt solid #cbd5e1; background-color: #f8fafc; padding: 4pt 6pt; font-size: 8pt;">
+          <span style="color: #64748b; font-size: 7.5pt; display: block;">Rata-rata / Tertinggi / Terendah</span>
+          <b style="color: #1e293b; font-size: 9pt;">${printStats.value.avgScore} / ${printStats.value.maxScore} / ${printStats.value.minScore}</b>
+        </td>
+      </tr>
+    </table>
+
+    <!-- 6. LEMBAR TANDA TANGAN RESMI -->
+    <table width="100%" style="border-collapse: collapse; border: none; margin-top: 10pt;">
+      <tr>
+        <td colspan="2" align="right" style="border: none; padding-bottom: 8pt; font-size: 8.5pt; color: #1e293b;">
+          Ciomas, ${getPrintDateFormatted()}
+        </td>
+      </tr>
+      <tr>
+        <td width="50%" align="center" valign="top" style="border: none; font-size: 8.5pt; color: #1e293b;">
+          <b>Mengetahui,</b><br>
+          Kepala MTs Al - Hasanah<br><br><br><br><br>
+          <b style="text-decoration: underline; font-size: 9.5pt; color: #0f172a;">${schoolProfile.value?.principal_name || 'Kepala Madrasah'}</b><br>
+          <span style="font-family: monospace; font-size: 8pt; color: #475569;">NIP: ${schoolProfile.value?.principal_nip || '-'}</span>
+        </td>
+        <td width="50%" align="center" valign="top" style="border: none; font-size: 8.5pt; color: #1e293b;">
+          <b>Guru Pengampu,</b><br>
+          Mata Pelajaran ${activeExam.value.subject?.name || ''}<br><br><br><br><br>
+          <b style="text-decoration: underline; font-size: 9.5pt; color: #0f172a;">${activeExam.value.teacher?.full_name || activeExam.value.teacher?.name || 'Guru Mata Pelajaran'}</b><br>
+          <span style="font-family: monospace; font-size: 8pt; color: #475569;">NIP: ${activeExam.value.teacher?.nip || '-'}</span>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>
+  `;
+
+  // 5. Unduh Dokumen Word (.doc)
+  try {
+    const blob = new Blob(['\ufeff' + wordContent], {
+      type: 'application/msword;charset=utf-8'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safeMapel = (activeExam.value.subject?.name || 'Mapel').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeKelas = (activeExam.value.class_room?.name || 'Kelas').replace(/[^a-zA-Z0-9_-]/g, '_');
+    a.href = url;
+    a.download = `Rekap_Nilai_${safeMapel}_${safeKelas}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Lembar rekap berhasil dikonversi dan diunduh ke format Word (.doc)');
+  } catch (err) {
+    console.error('Word export error:', err);
+    toast.error('Gagal mengunduh file Word.');
+  }
 }
 </script>
