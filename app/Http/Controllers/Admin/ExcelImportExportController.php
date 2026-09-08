@@ -169,6 +169,90 @@ class ExcelImportExportController extends Controller
     }
 
     /**
+     * Map headers to standard field keys.
+     */
+    private function detectColumnMapping(array $headerRow, string $type): array
+    {
+        $map = [];
+        $hasNoCol = false;
+
+        foreach ($headerRow as $idx => $val) {
+            $h = strtolower(trim((string)$val));
+            if (empty($h)) continue;
+
+            if ($h === 'no' || $h === 'no.' || $h === 'nomor') {
+                $hasNoCol = true;
+                continue;
+            }
+
+            if ($type === 'students') {
+                if (str_contains($h, 'nisn')) {
+                    $map['nisn'] = $idx;
+                } elseif ($h === 'nis' || str_starts_with($h, 'nis ') || str_contains($h, 'no induk') || str_contains($h, 'nomor induk')) {
+                    $map['nis'] = $idx;
+                } elseif (str_contains($h, 'nik') && !str_contains($h, 'ayah') && !str_contains($h, 'ibu') && !str_contains($h, 'wali')) {
+                    $map['nik'] = $idx;
+                } elseif (str_contains($h, 'nama') && !str_contains($h, 'ayah') && !str_contains($h, 'ibu') && !str_contains($h, 'wali') && !str_contains($h, 'sekolah')) {
+                    $map['full_name'] = $idx;
+                } elseif (str_contains($h, 'gender') || str_contains($h, 'kelamin') || $h === 'jk' || $h === 'l/p' || $h === 'l / p') {
+                    $map['gender'] = $idx;
+                } elseif (str_contains($h, 'kelas') || str_contains($h, 'rombel')) {
+                    $map['class_name'] = $idx;
+                } elseif (str_contains($h, 'tempat') || str_contains($h, 'tmp lahir')) {
+                    $map['birth_place'] = $idx;
+                } elseif (str_contains($h, 'tanggal') || str_contains($h, 'tgl lahir')) {
+                    $map['birth_date'] = $idx;
+                } elseif (str_contains($h, 'sekolah asal') || str_contains($h, 'asal sekolah')) {
+                    $map['previous_school'] = $idx;
+                } elseif (str_contains($h, 'alamat')) {
+                    $map['address'] = $idx;
+                } elseif (str_contains($h, 'hp') || str_contains($h, 'telepon') || str_contains($h, 'telp') || str_contains($h, 'wa')) {
+                    if (!isset($map['parent_phone']) && !str_contains($h, 'wali')) {
+                        $map['parent_phone'] = $idx;
+                    }
+                } elseif (str_contains($h, 'ayah')) {
+                    if (str_contains($h, 'nama')) $map['father_name'] = $idx;
+                    elseif (str_contains($h, 'status')) $map['father_status'] = $idx;
+                    elseif (str_contains($h, 'nik')) $map['father_nik'] = $idx;
+                    elseif (str_contains($h, 'kerja') || str_contains($h, 'pekerjaan')) $map['father_job'] = $idx;
+                    elseif (str_contains($h, 'hasil') || str_contains($h, 'penghasilan')) $map['father_income'] = $idx;
+                } elseif (str_contains($h, 'ibu')) {
+                    if (str_contains($h, 'nama')) $map['mother_name'] = $idx;
+                    elseif (str_contains($h, 'status')) $map['mother_status'] = $idx;
+                    elseif (str_contains($h, 'nik')) $map['mother_nik'] = $idx;
+                    elseif (str_contains($h, 'kerja') || str_contains($h, 'pekerjaan')) $map['mother_job'] = $idx;
+                    elseif (str_contains($h, 'hasil') || str_contains($h, 'penghasilan')) $map['mother_income'] = $idx;
+                } elseif (str_contains($h, 'wali')) {
+                    if (str_contains($h, 'nama')) $map['guardian_name'] = $idx;
+                    elseif (str_contains($h, 'hub') || str_contains($h, 'hubungan')) $map['guardian_relation'] = $idx;
+                    elseif (str_contains($h, 'nik')) $map['guardian_nik'] = $idx;
+                    elseif (str_contains($h, 'kerja') || str_contains($h, 'pekerjaan')) $map['guardian_job'] = $idx;
+                    elseif (str_contains($h, 'hp') || str_contains($h, 'telp') || str_contains($h, 'telepon')) $map['guardian_phone'] = $idx;
+                    elseif (str_contains($h, 'hasil') || str_contains($h, 'penghasilan')) $map['guardian_income'] = $idx;
+                }
+            } elseif ($type === 'teachers') {
+                if (str_contains($h, 'nip') || str_contains($h, 'nuptk')) $map['nip'] = $idx;
+                elseif (str_contains($h, 'nama')) $map['full_name'] = $idx;
+                elseif (str_contains($h, 'gender') || str_contains($h, 'kelamin') || $h === 'jk' || $h === 'l/p') $map['gender'] = $idx;
+                elseif (str_contains($h, 'hp') || str_contains($h, 'wa') || str_contains($h, 'telepon')) $map['phone'] = $idx;
+                elseif (str_contains($h, 'email')) $map['email'] = $idx;
+                elseif (str_contains($h, 'jabatan') || str_contains($h, 'posisi')) $map['position'] = $idx;
+                elseif (str_contains($h, 'mapel') || str_contains($h, 'mata pelajaran') || str_contains($h, 'ampu')) $map['subjects'] = $idx;
+            } elseif ($type === 'grades') {
+                if (str_contains($h, 'nisn')) $map['nisn'] = $idx;
+                elseif (str_contains($h, 'nama')) $map['student_name'] = $idx;
+                elseif (str_contains($h, 'mapel') || str_contains($h, 'mata pelajaran')) $map['subject_name'] = $idx;
+                elseif (str_contains($h, 'tugas')) $map['assignment_score'] = $idx;
+                elseif (str_contains($h, 'uts') || str_contains($h, 'sts') || str_contains($h, 'mid')) $map['mid_score'] = $idx;
+                elseif (str_contains($h, 'uas') || str_contains($h, 'sas') || str_contains($h, 'pat') || str_contains($h, 'final')) $map['final_score'] = $idx;
+            }
+        }
+
+        $map['_has_no_col'] = $hasNoCol;
+        return $map;
+    }
+
+    /**
      * Preview uploaded Excel file with validation matching form schemas.
      */
     public function previewImport(Request $request, $type)
@@ -186,6 +270,10 @@ class ExcelImportExportController extends Controller
             return response()->json(['message' => 'File Excel kosong atau tidak memiliki data'], 422);
         }
 
+        $headerRow = $rows[0] ?? [];
+        $colMap = $this->detectColumnMapping($headerRow, $type);
+        $offset = ($colMap['_has_no_col'] ?? false) ? 1 : 0;
+
         $dataRows = array_slice($rows, 1);
         $parsed = [];
 
@@ -197,17 +285,91 @@ class ExcelImportExportController extends Controller
             $errors = [];
 
             if ($type === 'students') {
-                $nisn = trim((string)($row[0] ?? ''));
-                $nis = trim((string)($row[1] ?? ''));
-                $nik = trim((string)($row[2] ?? ''));
-                $fullName = trim((string)($row[3] ?? ''));
-                $gender = strtoupper(trim((string)($row[4] ?? '')));
-                $className = trim((string)($row[5] ?? ''));
-                $birthPlace = trim((string)($row[6] ?? ''));
-                $birthDate = trim((string)($row[7] ?? ''));
-                $previousSchool = trim((string)($row[8] ?? ''));
-                $address = trim((string)($row[9] ?? ''));
-                $parentPhone = trim((string)($row[10] ?? ''));
+                $getCol = function($key, $defaultIdx) use ($row, $colMap, $offset) {
+                    if (isset($colMap[$key])) {
+                        return trim((string)($row[$colMap[$key]] ?? ''));
+                    }
+                    return trim((string)($row[$defaultIdx + $offset] ?? ''));
+                };
+
+                $nisn = $getCol('nisn', 0);
+                $nis = $getCol('nis', 1);
+                $nik = $getCol('nik', 2);
+                $fullName = $getCol('full_name', 3);
+                $rawGender = $getCol('gender', 4);
+                $className = $getCol('class_name', 5);
+                $birthPlace = $getCol('birth_place', 6);
+                $birthDate = $getCol('birth_date', 7);
+                $previousSchool = $getCol('previous_school', 8);
+                $address = $getCol('address', 9);
+                $parentPhone = $getCol('parent_phone', 10);
+
+                // Smart Full Name & NIK fallback if columns were misaligned
+                if (is_numeric($fullName) && strlen($fullName) >= 15 && empty($nik)) {
+                    $nik = $fullName;
+                    $fullName = '';
+                }
+                if (empty($fullName) || is_numeric($fullName)) {
+                    foreach ($row as $cellVal) {
+                        $str = trim((string)$cellVal);
+                        if (!is_numeric($str) && strlen($str) >= 3 && preg_match('/^[a-zA-Z\s\',.\-]+$/', $str)) {
+                            $up = strtoupper($str);
+                            if (!in_array($up, ['L', 'P', 'LAKI-LAKI', 'PEREMPUAN', 'PRIA', 'WANITA', 'HIDUP', 'MENINGGAL'])) {
+                                if (!preg_match('/^(kelas\s*)?[7-9]/i', $str)) {
+                                    $fullName = $str;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Smart Gender Normalization (handles "Laki-laki", "Perempuan", "L", "P", etc.)
+                $gender = '';
+                $upperG = strtoupper($rawGender);
+                if (str_starts_with($upperG, 'L') || str_contains($upperG, 'LAKI') || str_contains($upperG, 'PRIA')) {
+                    $gender = 'L';
+                } elseif (str_starts_with($upperG, 'P') || str_contains($upperG, 'PEREMPUAN') || str_contains($upperG, 'WANITA')) {
+                    $gender = 'P';
+                }
+                // If gender still empty, scan row for gender values
+                if (empty($gender)) {
+                    foreach ($row as $cellVal) {
+                        $cg = strtoupper(trim((string)$cellVal));
+                        if (in_array($cg, ['L', 'P', 'LAKI-LAKI', 'PEREMPUAN', 'PRIA', 'WANITA'])) {
+                            $gender = (str_starts_with($cg, 'L') || str_contains($cg, 'LAKI') || str_contains($cg, 'PRIA')) ? 'L' : 'P';
+                            break;
+                        }
+                    }
+                }
+                if (empty($gender)) {
+                    $gender = 'L'; // Default fallback
+                }
+
+                // Smart NISN / NIS fallback (if NISN is row number 1, 2, 3... and NIS has long number)
+                if (is_numeric($nisn) && strlen($nisn) <= 3 && !empty($nis) && strlen($nis) >= 5) {
+                    $nisn = $nis;
+                }
+                if (empty($nisn) && !empty($nis)) {
+                    $nisn = $nis;
+                }
+                if (empty($nisn) && !empty($nik)) {
+                    $nisn = substr($nik, -10);
+                }
+
+                // Smart Class Name fallback
+                if (in_array(strtoupper($className), ['L', 'P', 'LAKI-LAKI', 'PEREMPUAN', 'PRIA', 'WANITA'])) {
+                    $className = '';
+                }
+                if (empty($className)) {
+                    foreach ($row as $cellVal) {
+                        $cv = trim((string)$cellVal);
+                        if (preg_match('/^(kelas\s*)?[7-9][a-zA-Z0-9\s\-]*$/i', $cv) || ClassRoom::where('name', $cv)->exists()) {
+                            $className = $cv;
+                            break;
+                        }
+                    }
+                }
 
                 // Validations
                 if (empty($nisn)) { $isValid = false; $errors[] = 'NISN wajib diisi'; }
@@ -242,34 +404,45 @@ class ExcelImportExportController extends Controller
                     'previous_school' => $previousSchool,
                     'address' => $address,
                     'parent_phone' => $parentPhone,
-                    'father_name' => trim((string)($row[11] ?? '')),
-                    'father_status' => strtolower(trim((string)($row[12] ?? 'hidup'))),
-                    'father_nik' => trim((string)($row[13] ?? '')),
-                    'father_job' => trim((string)($row[14] ?? '')),
-                    'father_income' => trim((string)($row[15] ?? '')),
-                    'mother_name' => trim((string)($row[16] ?? '')),
-                    'mother_status' => strtolower(trim((string)($row[17] ?? 'hidup'))),
-                    'mother_nik' => trim((string)($row[18] ?? '')),
-                    'mother_job' => trim((string)($row[19] ?? '')),
-                    'mother_income' => trim((string)($row[20] ?? '')),
-                    'guardian_name' => trim((string)($row[21] ?? '')),
-                    'guardian_relation' => trim((string)($row[22] ?? '')),
-                    'guardian_nik' => trim((string)($row[23] ?? '')),
-                    'guardian_job' => trim((string)($row[24] ?? '')),
-                    'guardian_phone' => trim((string)($row[25] ?? '')),
-                    'guardian_income' => trim((string)($row[26] ?? '')),
+                    'father_name' => $getCol('father_name', 11),
+                    'father_status' => strtolower($getCol('father_status', 12)) ?: 'hidup',
+                    'father_nik' => $getCol('father_nik', 13),
+                    'father_job' => $getCol('father_job', 14),
+                    'father_income' => $getCol('father_income', 15),
+                    'mother_name' => $getCol('mother_name', 16),
+                    'mother_status' => strtolower($getCol('mother_status', 17)) ?: 'hidup',
+                    'mother_nik' => $getCol('mother_nik', 18),
+                    'mother_job' => $getCol('mother_job', 19),
+                    'mother_income' => $getCol('mother_income', 20),
+                    'guardian_name' => $getCol('guardian_name', 21),
+                    'guardian_relation' => $getCol('guardian_relation', 22),
+                    'guardian_nik' => $getCol('guardian_nik', 23),
+                    'guardian_job' => $getCol('guardian_job', 24),
+                    'guardian_phone' => $getCol('guardian_phone', 25),
+                    'guardian_income' => $getCol('guardian_income', 26),
                     'is_valid' => $isValid,
                     'errors' => $errors,
                 ];
 
             } elseif ($type === 'teachers') {
-                $nip = trim((string)($row[0] ?? ''));
-                $fullName = trim((string)($row[1] ?? ''));
-                $gender = strtoupper(trim((string)($row[2] ?? '')));
-                $phone = trim((string)($row[3] ?? ''));
-                $email = trim((string)($row[4] ?? ''));
-                $position = trim((string)($row[5] ?? ''));
-                $subjects = trim((string)($row[6] ?? ''));
+                $getCol = function($key, $defaultIdx) use ($row, $colMap, $offset) {
+                    if (isset($colMap[$key])) {
+                        return trim((string)($row[$colMap[$key]] ?? ''));
+                    }
+                    return trim((string)($row[$defaultIdx + $offset] ?? ''));
+                };
+
+                $nip = $getCol('nip', 0);
+                $fullName = $getCol('full_name', 1);
+                $rawGender = $getCol('gender', 2);
+                $phone = $getCol('phone', 3);
+                $email = $getCol('email', 4);
+                $position = $getCol('position', 5);
+                $subjects = $getCol('subjects', 6);
+
+                $upperG = strtoupper($rawGender);
+                $gender = (str_starts_with($upperG, 'L') || str_contains($upperG, 'LAKI') || str_contains($upperG, 'PRIA')) ? 'L' :
+                          ((str_starts_with($upperG, 'P') || str_contains($upperG, 'PEREMPUAN') || str_contains($upperG, 'WANITA')) ? 'P' : 'L');
 
                 if (empty($fullName)) { $isValid = false; $errors[] = 'Nama Guru wajib diisi'; }
                 if (empty($nip)) { $isValid = false; $errors[] = 'NIP / NUPTK wajib diisi'; }
@@ -294,12 +467,19 @@ class ExcelImportExportController extends Controller
                 ];
 
             } elseif ($type === 'grades') {
-                $nisn = trim((string)($row[0] ?? ''));
-                $studentName = trim((string)($row[1] ?? ''));
-                $subjectName = trim((string)($row[2] ?? ''));
-                $assignment = (float)($row[3] ?? 0);
-                $uts = (float)($row[4] ?? 0);
-                $uas = (float)($row[5] ?? 0);
+                $getCol = function($key, $defaultIdx) use ($row, $colMap, $offset) {
+                    if (isset($colMap[$key])) {
+                        return trim((string)($row[$colMap[$key]] ?? ''));
+                    }
+                    return trim((string)($row[$defaultIdx + $offset] ?? ''));
+                };
+
+                $nisn = $getCol('nisn', 0);
+                $studentName = $getCol('student_name', 1);
+                $subjectName = $getCol('subject_name', 2);
+                $assignment = (float)($getCol('assignment_score', 3) ?: 0);
+                $uts = (float)($getCol('mid_score', 4) ?: 0);
+                $uas = (float)($getCol('final_score', 5) ?: 0);
 
                 $student = Student::where('nisn', $nisn)->first();
                 if (!$student) { $isValid = false; $errors[] = "Siswa NISN {$nisn} tidak ditemukan"; }
