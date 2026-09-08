@@ -97,8 +97,9 @@ axios.interceptors.response.use(
     }
 
     if (status >= 500) {
-      useToast().error('Terjadi kesalahan pada server. Silakan coba lagi.');
-      console.error('Terjadi kesalahan pada server.');
+      const serverMsg = data?.message;
+      useToast().error(serverMsg || 'Terjadi kesalahan pada server. Silakan coba lagi.');
+      console.error('Terjadi kesalahan pada server:', serverMsg);
       return Promise.reject(error);
     }
 

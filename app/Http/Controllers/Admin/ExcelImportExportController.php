@@ -516,139 +516,200 @@ class ExcelImportExportController extends Controller
     {
         $rows = $request->input('rows', []);
         $importedCount = 0;
+        $failedCount = 0;
 
-        foreach ($rows as $row) {
-            if (empty($row['is_valid'])) continue;
+        $sanitizeStatus = function($val) {
+            $s = strtolower(trim((string)$val));
+            if (in_array($s, ['hidup', 'meninggal', 'pisah', 'lainnya'])) return $s;
+            if (str_contains($s, 'mati') || str_contains($s, 'alm') || str_contains($s, 'wafat')) return 'meninggal';
+            if (str_contains($s, 'cerai') || str_contains($s, 'pisah')) return 'pisah';
+            return 'hidup';
+        };
 
-            if ($type === 'students') {
-                $nisn = $row['nisn'];
-                $username = $nisn;
-                
-                // Ensure unique username & email for User account
-                if (User::where('username', $username)->exists()) {
-                    $username = $username . '_' . rand(100, 999);
-                }
-                $email = "student_{$nisn}@mtsalhasanah.sch.id";
-                if (User::where('email', $email)->exists()) {
-                    $email = "student_{$nisn}_" . rand(100, 999) . "@mtsalhasanah.sch.id";
-                }
+        $parseBirthDate = function($val) {
+            $str = trim((string)$val);
+            if (empty($str)) return '2010-01-01';
+            if (is_numeric($str) && (int)$str > 10000 && (int)$str < 80000) {
+                try {
+                    return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($str)->format('Y-m-d');
+                } catch (\Throwable $e) {}
+            }
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $str)) {
+                return $str;
+            }
+            if (preg_match('/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/', $str, $m)) {
+                return sprintf('%04d-%02d-%02d', $m[3], $m[2], $m[1]);
+            }
+            $ts = strtotime($str);
+            if ($ts && $ts > 0) {
+                return date('Y-m-d', $ts);
+            }
+            return '2010-01-01';
+        };
 
-                $user = User::create([
-                    'name' => $row['full_name'],
-                    'username' => $username,
-                    'email' => $email,
-                    'password' => Hash::make($nisn),
-                    'role' => 'student',
-                ]);
+        try {
+            foreach ($rows as $row) {
+                if (empty($row['is_valid'])) continue;
 
-                // Resolve class_id if given by class_name
-                $classId = $row['class_id'] ?? null;
-                if (!$classId && !empty($row['class_name'])) {
-                    $cls = ClassRoom::where('name', $row['class_name'])->orWhere('name', 'LIKE', "%{$row['class_name']}%")->first();
-                    if ($cls) $classId = $cls->id;
-                }
+                try {
+                    if ($type === 'students') {
+                        $nisn = trim((string)($row['nisn'] ?? ''));
+                        if (empty($nisn) || empty($row['full_name'])) continue;
 
-                Student::create([
-                    'user_id' => $user->id,
-                    'class_id' => $classId,
-                    'nisn' => $nisn,
-                    'nis' => $row['nis'] ?: $nisn,
-                    'nik' => $row['nik'] ?: null,
-                    'full_name' => $row['full_name'],
-                    'gender' => in_array($row['gender'] ?? '', ['L', 'P']) ? $row['gender'] : 'L',
-                    'birth_place' => $row['birth_place'] ?: 'Bandung',
-                    'birth_date' => !empty($row['birth_date']) ? $row['birth_date'] : '2010-01-01',
-                    'previous_school' => $row['previous_school'] ?? null,
-                    'address' => $row['address'] ?: '-',
-                    'parent_phone' => $row['parent_phone'] ?: '-',
-                    'father_name' => $row['father_name'] ?? null,
-                    'father_status' => $row['father_status'] ?: 'hidup',
-                    'father_nik' => $row['father_nik'] ?? null,
-                    'father_job' => $row['father_job'] ?? null,
-                    'father_income' => $row['father_income'] ?? null,
-                    'mother_name' => $row['mother_name'] ?? null,
-                    'mother_status' => $row['mother_status'] ?: 'hidup',
-                    'mother_nik' => $row['mother_nik'] ?? null,
-                    'mother_job' => $row['mother_job'] ?? null,
-                    'mother_income' => $row['mother_income'] ?? null,
-                    'guardian_name' => $row['guardian_name'] ?? null,
-                    'guardian_relation' => $row['guardian_relation'] ?? null,
-                    'guardian_nik' => $row['guardian_nik'] ?? null,
-                    'guardian_job' => $row['guardian_job'] ?? null,
-                    'guardian_phone' => $row['guardian_phone'] ?? null,
-                    'guardian_income' => $row['guardian_income'] ?? null,
-                ]);
-                $importedCount++;
-
-            } elseif ($type === 'teachers') {
-                $nip = $row['nip'] ?: (string)rand(10000000, 99999999);
-                $username = $nip;
-                if (User::where('username', $username)->exists()) {
-                    $username = $username . '_' . rand(100, 999);
-                }
-                $email = !empty($row['email']) ? $row['email'] : "guru_{$nip}@mtsalhasanah.sch.id";
-                if (User::where('email', $email)->exists()) {
-                    $email = "guru_{$nip}_" . rand(100, 999) . "@mtsalhasanah.sch.id";
-                }
-
-                $user = User::create([
-                    'name' => $row['full_name'],
-                    'username' => $username,
-                    'email' => $email,
-                    'password' => Hash::make($nip),
-                    'role' => 'teacher',
-                ]);
-
-                $teacher = Teacher::create([
-                    'user_id' => $user->id,
-                    'nip' => $row['nip'] ?: null,
-                    'full_name' => $row['full_name'],
-                    'gender' => in_array($row['gender'] ?? '', ['L', 'P']) ? $row['gender'] : 'L',
-                    'phone' => $row['phone'] ?: '-',
-                    'position' => $row['position'] ?: 'Guru Pengajar',
-                ]);
-
-                // Sync Subjects if provided in Excel
-                if (!empty($row['subjects'])) {
-                    $subjectNames = array_map('trim', explode(',', $row['subjects']));
-                    $subjectIds = Subject::where(function($q) use ($subjectNames) {
-                        foreach ($subjectNames as $sName) {
-                            $q->orWhere('name', 'LIKE', "%{$sName}%");
+                        // If student already exists with this NISN, skip
+                        if (Student::where('nisn', $nisn)->exists()) {
+                            continue;
                         }
-                    })->pluck('id')->toArray();
 
-                    if (!empty($subjectIds)) {
-                        $teacher->subjects()->sync($subjectIds);
+                        $username = $nisn;
+                        if (User::where('username', $username)->exists()) {
+                            $username = $username . '_' . rand(100, 999);
+                        }
+                        $email = "student_{$nisn}@mtsalhasanah.sch.id";
+                        if (User::where('email', $email)->exists()) {
+                            $email = "student_{$nisn}_" . rand(100, 999) . "@mtsalhasanah.sch.id";
+                        }
+
+                        $user = User::create([
+                            'name' => $row['full_name'],
+                            'username' => $username,
+                            'email' => $email,
+                            'password' => Hash::make($nisn),
+                            'role' => 'student',
+                        ]);
+
+                        // Resolve class_id if given by class_name
+                        $classId = $row['class_id'] ?? null;
+                        if (!$classId && !empty($row['class_name'])) {
+                            $cls = ClassRoom::where('name', $row['class_name'])->orWhere('name', 'LIKE', "%{$row['class_name']}%")->first();
+                            if ($cls) $classId = $cls->id;
+                        }
+
+                        $nis = trim((string)($row['nis'] ?? '')) ?: $nisn;
+                        if (Student::where('nis', $nis)->exists()) {
+                            $nis = $nis . '_' . rand(100, 999);
+                        }
+
+                        $nik = trim((string)($row['nik'] ?? '')) ?: null;
+
+                        Student::create([
+                            'user_id' => $user->id,
+                            'class_id' => $classId,
+                            'nisn' => $nisn,
+                            'nis' => $nis,
+                            'nik' => $nik,
+                            'full_name' => $row['full_name'],
+                            'gender' => in_array($row['gender'] ?? '', ['L', 'P']) ? $row['gender'] : 'L',
+                            'birth_place' => $row['birth_place'] ?: 'Bandung',
+                            'birth_date' => $parseBirthDate($row['birth_date'] ?? ''),
+                            'previous_school' => $row['previous_school'] ?? null,
+                            'address' => $row['address'] ?: '-',
+                            'parent_phone' => $row['parent_phone'] ?: '-',
+                            'father_name' => $row['father_name'] ?? null,
+                            'father_status' => $sanitizeStatus($row['father_status'] ?? ''),
+                            'father_nik' => $row['father_nik'] ?? null,
+                            'father_job' => $row['father_job'] ?? null,
+                            'father_income' => $row['father_income'] ?? null,
+                            'mother_name' => $row['mother_name'] ?? null,
+                            'mother_status' => $sanitizeStatus($row['mother_status'] ?? ''),
+                            'mother_nik' => $row['mother_nik'] ?? null,
+                            'mother_job' => $row['mother_job'] ?? null,
+                            'mother_income' => $row['mother_income'] ?? null,
+                            'guardian_name' => $row['guardian_name'] ?? null,
+                            'guardian_relation' => $row['guardian_relation'] ?? null,
+                            'guardian_nik' => $row['guardian_nik'] ?? null,
+                            'guardian_job' => $row['guardian_job'] ?? null,
+                            'guardian_phone' => $row['guardian_phone'] ?? null,
+                            'guardian_income' => $row['guardian_income'] ?? null,
+                        ]);
+                        $importedCount++;
+
+                    } elseif ($type === 'teachers') {
+                        $nip = trim((string)($row['nip'] ?? '')) ?: (string)rand(10000000, 99999999);
+                        $username = $nip;
+                        if (User::where('username', $username)->exists()) {
+                            $username = $username . '_' . rand(100, 999);
+                        }
+                        $email = !empty($row['email']) ? $row['email'] : "guru_{$nip}@mtsalhasanah.sch.id";
+                        if (User::where('email', $email)->exists()) {
+                            $email = "guru_{$nip}_" . rand(100, 999) . "@mtsalhasanah.sch.id";
+                        }
+
+                        $user = User::create([
+                            'name' => $row['full_name'],
+                            'username' => $username,
+                            'email' => $email,
+                            'password' => Hash::make($nip),
+                            'role' => 'teacher',
+                        ]);
+
+                        $teacher = Teacher::create([
+                            'user_id' => $user->id,
+                            'nip' => $row['nip'] ?: null,
+                            'full_name' => $row['full_name'],
+                            'gender' => in_array($row['gender'] ?? '', ['L', 'P']) ? $row['gender'] : 'L',
+                            'phone' => $row['phone'] ?: '-',
+                            'position' => $row['position'] ?: 'Guru Pengajar',
+                        ]);
+
+                        // Sync Subjects if provided in Excel
+                        if (!empty($row['subjects'])) {
+                            $subjectNames = array_map('trim', explode(',', $row['subjects']));
+                            $subjectIds = Subject::where(function($q) use ($subjectNames) {
+                                foreach ($subjectNames as $sName) {
+                                    $q->orWhere('name', 'LIKE', "%{$sName}%");
+                                }
+                            })->pluck('id')->toArray();
+
+                            if (!empty($subjectIds)) {
+                                $teacher->subjects()->sync($subjectIds);
+                            }
+                        }
+
+                        $importedCount++;
+
+                    } elseif ($type === 'grades') {
+                        $student = Student::where('nisn', $row['nisn'])->first();
+                        $subject = Subject::where('name', 'LIKE', "%{$row['subject_name']}%")->orWhere('code', $row['subject_name'])->first();
+                        $academicYear = AcademicYear::where('is_active', true)->first() ?: AcademicYear::first();
+
+                        if ($student && $subject && $academicYear) {
+                            Grade::updateOrCreate([
+                                'student_id' => $student->id,
+                                'subject_id' => $subject->id,
+                                'academic_year_id' => $academicYear->id,
+                            ], [
+                                'assignment_score' => $row['assignment_score'],
+                                'mid_score' => $row['mid_score'],
+                                'final_score' => $row['final_score'],
+                                'final_grade' => round(($row['assignment_score'] * 0.3) + ($row['mid_score'] * 0.3) + ($row['final_score'] * 0.4), 1),
+                            ]);
+                            $importedCount++;
+                        }
                     }
-                }
-
-                $importedCount++;
-
-            } elseif ($type === 'grades') {
-                $student = Student::where('nisn', $row['nisn'])->first();
-                $subject = Subject::where('name', 'LIKE', "%{$row['subject_name']}%")->orWhere('code', $subjectName)->first();
-                $academicYear = AcademicYear::where('is_active', true)->first() ?: AcademicYear::first();
-
-                if ($student && $subject && $academicYear) {
-                    Grade::updateOrCreate([
-                        'student_id' => $student->id,
-                        'subject_id' => $subject->id,
-                        'academic_year_id' => $academicYear->id,
-                    ], [
-                        'assignment_score' => $row['assignment_score'],
-                        'mid_score' => $row['mid_score'],
-                        'final_score' => $row['final_score'],
-                        'final_grade' => round(($row['assignment_score'] * 0.3) + ($row['mid_score'] * 0.3) + ($row['final_score'] * 0.4), 1),
-                    ]);
-                    $importedCount++;
+                } catch (\Throwable $rowError) {
+                    \Log::warning("Gagal mengimpor 1 baris pada {$type}: " . $rowError->getMessage(), ['row' => $row]);
+                    $failedCount++;
                 }
             }
-        }
 
-        return response()->json([
-            'message' => "Berhasil mengimpor {$importedCount} data ke database!",
-            'imported_count' => $importedCount,
-        ]);
+            $message = $failedCount > 0
+                ? "Berhasil mengimpor {$importedCount} data {$type}. {$failedCount} data dilewati karena kendala format/sudah ada."
+                : "Berhasil mengimpor {$importedCount} data {$type} ke sistem!";
+
+            return response()->json([
+                'status' => 'success',
+                'message' => $message,
+                'imported_count' => $importedCount,
+                'failed_count' => $failedCount,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error("Import {$type} error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengimpor data: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

@@ -239,11 +239,12 @@ async function executeImport() {
     const res = await api.post(`/admin/excel/import/${props.type}`, {
       rows: previewData.value.rows,
     });
-    toast.success(res.data?.message || 'Import data berhasil!');
+    toast.success(res?.message || res?.data?.message || 'Import data berhasil!');
     emit('success');
     emit('close');
   } catch (err) {
-    toast.error('Gagal memproses import data ke database.');
+    const errMsg = err.response?.data?.message;
+    toast.error(errMsg || 'Gagal memproses import data ke database.');
   } finally {
     processingImport.value = false;
   }
