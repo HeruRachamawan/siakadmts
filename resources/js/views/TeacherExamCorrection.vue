@@ -271,26 +271,40 @@
         <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-3">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
             <div>
-              <label class="block text-xs font-black text-slate-800 uppercase tracking-wider">⚡ Input Kunci Jawaban Cepat (Deret Huruf PG)</label>
-              <p class="text-xs text-slate-500 font-medium">Ketik atau paste deretan kunci jawaban pilihan ganda sekaligus (misal: <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-teal-700 font-mono font-bold">ABCDABCDAB...</code>)</p>
+              <label class="block text-xs font-black text-slate-800 uppercase tracking-wider">⚡ Input Kunci Jawaban Cepat (Deret Huruf PG Biasa)</label>
+              <p class="text-xs text-slate-500 font-medium">Ketik atau paste deretan kunci jawaban pilihan ganda sekaligus (misal: <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-teal-700 font-mono font-bold">ABCDABCDAB...</code>). Soal kompleks/uraian tidak akan terpengaruh.</p>
             </div>
-            <span class="text-xs font-mono font-bold px-3 py-1 rounded-xl bg-white border border-slate-200 text-teal-700">
-              {{ quickKeyInput.length }} / {{ pgQuestionsCount }} Karakter PG
-            </span>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button
+                v-if="quickKeyInput.length > 0"
+                type="button"
+                @click="copyQuickKeysToClipboard"
+                class="px-3 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                title="Salin deretan kunci PG bersih ke clipboard"
+              >
+                <Copy class="w-3.5 h-3.5" />
+                <span>Salin Kunci PG</span>
+              </button>
+              <span class="text-xs font-mono font-bold px-3 py-1 rounded-xl bg-white border border-slate-200 text-teal-700">
+                {{ quickKeyInput.length }} / {{ pgBiasaQuestionsCount }} Karakter PG Biasa
+              </span>
+            </div>
           </div>
 
           <div class="flex items-center gap-2">
             <input
               v-model="quickKeyInput"
               type="text"
-              :maxlength="pgQuestionsCount"
-              placeholder="Contoh: ABCDEABCDA..."
-              class="w-full bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 tracking-widest focus:ring-2 focus:ring-teal-400 uppercase"
+              :maxlength="pgBiasaQuestionsCount"
+              :placeholder="pgBiasaQuestionsCount > 0 ? 'Contoh: ABCDEABCDA...' : 'Tidak ada butir soal PG biasa'"
+              :disabled="pgBiasaQuestionsCount === 0"
+              class="w-full bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 tracking-widest focus:ring-2 focus:ring-teal-400 uppercase disabled:opacity-50"
               @input="onQuickKeyInput"
             />
             <button
               @click="applyQuickKeys"
-              class="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs flex-shrink-0 transition-all shadow-sm cursor-pointer"
+              :disabled="pgBiasaQuestionsCount === 0 || quickKeyInput.length === 0"
+              class="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs flex-shrink-0 transition-all shadow-sm cursor-pointer disabled:opacity-50"
             >
               Terapkan ke PG
             </button>
@@ -638,7 +652,12 @@
               <tr>
                 <th class="px-4 py-3.5 w-12 text-center">No</th>
                 <th class="px-4 py-3.5">Nama Siswa</th>
-                <th class="px-4 py-3.5">Jawaban Siswa ({{ pgQuestionsCount }} Butir Objektif)</th>
+                <th class="px-4 py-3.5">
+                  <div>Jawaban PG Biasa ({{ pgBiasaQuestionsCount }} Butir)</div>
+                  <span v-if="hasComplexQuestions" class="text-[9px] font-normal text-teal-700 normal-case block">
+                    *Gunakan tombol "Form Jawaban" untuk PGK, Menjodohkan, B/S & Isian
+                  </span>
+                </th>
                 <th v-if="essayQuestionsCount > 0" class="px-4 py-3.5 text-center">Nilai Uraian / Essay</th>
                 <th class="px-4 py-3.5 text-center">Benar / Salah</th>
                 <th class="px-4 py-3.5 text-center">Nilai Ujian</th>
@@ -654,7 +673,7 @@
                   <div class="text-[10px] text-slate-400 font-mono">NISN: {{ student.nisn || '-' }} • {{ student.gender === 'L' ? 'Laki-laki' : 'Perempuan' }}</div>
                 </td>
                 <td class="px-4 py-3">
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1.5">
                     <button
                       type="button"
                       @click="openStudentModal(student, idx)"
@@ -666,17 +685,26 @@
                       <span>{{ hasComplexQuestions ? 'Form Jawaban' : 'Detail' }}</span>
                     </button>
 
+                    <button
+                      type="button"
+                      @click="fillStudentWithAnswerKeys(student)"
+                      class="p-1.5 rounded-xl bg-slate-100 hover:bg-teal-50 text-slate-400 hover:text-teal-700 border border-slate-200 hover:border-teal-200 transition-all cursor-pointer flex-shrink-0"
+                      title="Salin 100% kunci jawaban lengkap ke siswa ini"
+                    >
+                      <Sparkles class="w-3.5 h-3.5" />
+                    </button>
+
                     <input
                       v-model="student.answer_string"
                       @input="onAnswerStringInput(student)"
                       type="text"
-                      :maxlength="pgQuestionsCount"
-                      :placeholder="pgQuestionsCount > 0 ? `Ketik ${pgQuestionsCount} jawaban... (ABCD...)` : 'Tidak ada soal objektif'"
-                      :disabled="pgQuestionsCount === 0"
+                      :maxlength="pgBiasaQuestionsCount"
+                      :placeholder="pgBiasaQuestionsCount > 0 ? `Ketik ${pgBiasaQuestionsCount} jawaban PG...` : 'Gunakan Form Jawaban'"
+                      :disabled="pgBiasaQuestionsCount === 0"
                       class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 tracking-widest uppercase focus:ring-2 focus:ring-teal-400 disabled:opacity-40"
                     />
                     <span class="text-[10px] font-mono text-slate-400 font-bold flex-shrink-0 w-12 text-right">
-                      {{ (student.answer_string || '').length }}/{{ pgQuestionsCount }}
+                      {{ (student.answer_string || '').length }}/{{ pgBiasaQuestionsCount }}
                     </span>
                   </div>
                 </td>
@@ -1512,9 +1540,18 @@
         </div>
 
         <!-- Modal Footer -->
-        <div class="px-8 py-4 border-t border-slate-100 flex justify-between items-center bg-slate-50/50 flex-shrink-0">
+        <div class="px-8 py-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50/50 flex-shrink-0">
           <span class="text-xs text-slate-400 font-medium">Jawaban disimpan ke draft lembar koreksi. Klik "Simpan & Hitung Koreksi" untuk menghitung nilai.</span>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              @click="fillStudentWithAnswerKeys(selectedStudent)"
+              class="px-4 py-2.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Salin 100% kunci jawaban lengkap (PG, PG Kompleks, Menjodohkan, Uraian) ke siswa ini"
+            >
+              <Sparkles class="w-3.5 h-3.5 text-teal-600" />
+              <span>Salin dari Kunci Jawaban</span>
+            </button>
             <button
               type="button"
               @click="closeStudentModal"
@@ -1805,7 +1842,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Printer
+  Printer,
+  Copy
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -1968,6 +2006,9 @@ const essayQuestions = computed(() => activeQuestions.value.filter(q => q.questi
 const pgQuestionsCount = computed(() => pgQuestions.value.length);
 const essayQuestionsCount = computed(() => essayQuestions.value.length);
 const totalEssayMaxScore = computed(() => essayQuestions.value.reduce((sum, q) => sum + (Number(q.score_weight) || 0), 0));
+
+const pgBiasaQuestions = computed(() => activeQuestions.value.filter(q => q.question_type === 'pg'));
+const pgBiasaQuestionsCount = computed(() => pgBiasaQuestions.value.length);
 
 const hasComplexQuestions = computed(() => {
   return activeQuestions.value.some(q => ['pg_complex', 'true_false', 'agree_disagree', 'matching', 'short_answer'].includes(q.question_type));
@@ -2208,21 +2249,61 @@ function isStudentComplexSelected(student, qNum, opt) {
 
 function syncStudentAnswerString(student) {
   let str = '';
-  for (let i = 1; i <= activeExam.value.total_questions; i++) {
-    const val = student.student_answers?.[String(i)] || '';
-    str += val;
-  }
+  const pgList = activeQuestions.value.filter(q => q.question_type === 'pg');
+  pgList.forEach(q => {
+    const val = student.student_answers?.[String(q.question_number)] || '';
+    str += (val.length === 1 ? val : (val ? val[0] : ''));
+  });
   student.answer_string = str;
 }
 
 function onAnswerStringInput(student) {
-  const clean = (student.answer_string || '').toUpperCase();
-  for (let i = 0; i < clean.length; i++) {
-    if (i < activeExam.value.total_questions) {
-      if (!student.student_answers) student.student_answers = {};
-      student.student_answers[String(i + 1)] = clean[i];
+  // Strip all whitespace so copy-pasting strings with spaces doesn't shift question alignment!
+  const raw = student.answer_string || '';
+  const clean = raw.toUpperCase().replace(/\s+/g, '');
+  student.answer_string = clean;
+
+  const pgList = activeQuestions.value.filter(q => q.question_type === 'pg');
+  if (!student.student_answers) student.student_answers = {};
+
+  for (let i = 0; i < pgList.length; i++) {
+    const qNum = String(pgList[i].question_number);
+    if (i < clean.length) {
+      student.student_answers[qNum] = clean[i];
+    } else {
+      // If user backspaced/cleared a character, remove single-letter answer for that PG question
+      if (student.student_answers[qNum] && student.student_answers[qNum].length === 1) {
+        delete student.student_answers[qNum];
+      }
     }
   }
+}
+
+function fillStudentWithAnswerKeys(student) {
+  if (!student) return;
+  if (!student.student_answers) student.student_answers = {};
+  if (!student.essay_scores) student.essay_scores = {};
+
+  activeQuestions.value.forEach(q => {
+    const qNum = String(q.question_number);
+    if (q.question_type === 'essay') {
+      student.essay_scores[qNum] = Number(q.score_weight || 10);
+    } else {
+      student.student_answers[qNum] = q.correct_answer || '';
+    }
+  });
+
+  syncStudentAnswerString(student);
+  toast.success(`Semua kunci jawaban berhasil disalin lengkap ke jawaban ${student.name}!`);
+}
+
+function copyQuickKeysToClipboard() {
+  if (!quickKeyInput.value) return;
+  navigator.clipboard.writeText(quickKeyInput.value).then(() => {
+    toast.success('Deretan kunci jawaban PG berhasil disalin ke clipboard!');
+  }).catch(() => {
+    toast.info('Silakan salin manual dari kotak input.');
+  });
 }
 
 onMounted(async () => {
@@ -2369,20 +2450,21 @@ async function openExamDetail(id) {
 
     // Map students and construct their answer strings and essay scores
     activeStudents.value = (data.students || []).map(s => {
+      const rawAnswers = (s.student_answers && typeof s.student_answers === 'object') ? { ...s.student_answers } : {};
+
+      // Build answer_string strictly from single-choice PG Biasa questions
       let str = '';
-      if (s.student_answers && typeof s.student_answers === 'object') {
-        for (let i = 1; i <= activeExam.value.total_questions; i++) {
-          str += s.student_answers[String(i)] || '';
-        }
-      }
+      const pgList = (data.questions || []).filter(q => q.question_type === 'pg');
+      pgList.forEach(q => {
+        const val = rawAnswers[String(q.question_number)] || '';
+        str += (val.length === 1 ? val : '');
+      });
 
       const rawEssay = (s.essay_scores && typeof s.essay_scores === 'object') ? s.essay_scores : {};
       const essayScoresMap = {};
       Object.keys(rawEssay).forEach(k => {
         essayScoresMap[k] = Number(rawEssay[k]);
       });
-
-      const rawAnswers = (s.student_answers && typeof s.student_answers === 'object') ? { ...s.student_answers } : {};
 
       return {
         ...s,
@@ -2393,10 +2475,10 @@ async function openExamDetail(id) {
       };
     });
 
-    // Populate quickKeyInput from existing keys of PG questions
+    // Populate quickKeyInput ONLY from single-letter PG Biasa questions
     let keysStr = '';
     activeQuestions.value.forEach(q => {
-      if (q.question_type !== 'essay') {
+      if (q.question_type === 'pg') {
         keysStr += q.correct_answer || '';
       }
     });
@@ -2420,17 +2502,18 @@ function onQuickKeyInput(e) {
 }
 
 function applyQuickKeys() {
-  const clean = quickKeyInput.value.toUpperCase();
+  const clean = quickKeyInput.value.toUpperCase().replace(/[^A-D]/g, '');
+  quickKeyInput.value = clean;
   let keyIdx = 0;
   for (let i = 0; i < activeQuestions.value.length; i++) {
-    if (activeQuestions.value[i].question_type !== 'essay') {
+    if (activeQuestions.value[i].question_type === 'pg') {
       if (keyIdx < clean.length) {
         activeQuestions.value[i].correct_answer = clean[keyIdx];
         keyIdx++;
       }
     }
   }
-  toast.success('Kunci jawaban deret huruf berhasil dipetakan ke kisi-kisi PG!');
+  toast.success(`Kunci jawaban (${clean.length} butir) berhasil dipetakan ke butir soal PG Biasa!`);
 }
 
 async function saveAnswerKeys() {
