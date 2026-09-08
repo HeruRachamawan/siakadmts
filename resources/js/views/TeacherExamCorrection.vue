@@ -3395,14 +3395,18 @@ function printDocument() {
   }, 400);
 }
 
-function exportToWord() {
+async function exportToWord() {
   if (!activeExam.value) {
     toast.error('Data ujian tidak ditemukan.');
     return;
   }
 
-  // 1. Dapatkan Logo Madrasah (Base64 via Canvas jika memungkinkan, atau URL absolut)
-  let logoImgHtml = '';
+  toast.info('Menyiapkan dokumen Word...');
+
+  // 1. Dapatkan Base64 Logo Madrasah secara asynchronous & akurat
+  let logoData = null;
+
+  // Coba metode 1: Tangkap dari elemen Canvas DOM jika sudah dirender
   try {
     const printImg = document.querySelector('#printableRecapSheet img');
     if (printImg && printImg.complete && printImg.naturalWidth > 0) {
@@ -3412,85 +3416,134 @@ function exportToWord() {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(printImg, 0, 0);
       const dataUrl = canvas.toDataURL('image/png');
-      logoImgHtml = `<img src="${dataUrl}" width="75" height="75" style="width: 75px; height: 75px; object-fit: contain;" alt="Logo Madrasah" />`;
+      const b64 = dataUrl.split(',')[1];
+      if (b64 && b64.length > 50) {
+        logoData = { base64: b64, mime: 'image/png' };
+      }
     }
   } catch (e) {
-    console.warn('Canvas logo conversion fallback:', e);
+    console.warn('Canvas DOM capture error:', e);
   }
 
-  if (!logoImgHtml) {
-    const rawLogo = schoolProfile.value?.app_logo_url || schoolProfile.value?.app_logo;
-    if (rawLogo) {
-      const logoUrl = rawLogo.startsWith('http') ? rawLogo : (window.location.origin + getImageUrl(rawLogo));
-      logoImgHtml = `<img src="${logoUrl}" width="75" height="75" style="width: 75px; height: 75px; object-fit: contain;" alt="Logo Madrasah" />`;
-    } else {
-      logoImgHtml = `<div style="width: 70px; height: 70px; line-height: 70px; text-align: center; background-color: #115e59; color: #ffffff; font-weight: 900; font-size: 16pt; border-radius: 8px;">MTS</div>`;
+  // Coba metode 2: Ambil langsung dari file logo via fetch jika canvas gagal atau belum dibuka
+  if (!logoData) {
+    const candidates = [
+      schoolProfile.value?.app_logo_url,
+      schoolProfile.value?.app_logo ? getImageUrl(schoolProfile.value.app_logo) : null,
+      '/logo.png'
+    ].filter(Boolean);
+
+    for (const candidate of candidates) {
+      try {
+        const url = candidate.startsWith('http') ? candidate : (window.location.origin + candidate);
+        const res = await fetch(url);
+        if (res.ok) {
+          const blob = await res.blob();
+          const b64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const resStr = String(reader.result || '');
+              resolve(resStr.split(',')[1] || '');
+            };
+            reader.readAsDataURL(blob);
+          });
+          if (b64 && b64.length > 50) {
+            logoData = { base64: b64, mime: blob.type || 'image/png' };
+            break;
+          }
+        }
+      } catch (err) {
+        console.warn('Fetch logo candidate error:', err);
+      }
     }
   }
 
-  // 2. Kolom Bentuk Soal Dinamis
+  // Siapkan markup logo yang kompatibel dengan Word & VML
+  let logoImgHtml = '';
+  if (logoData) {
+    logoImgHtml = `
+      <!--[if gte vml 1]>
+      <v:shape style="width:65pt;height:65pt;" coordsize="21600,21600">
+        <v:imagedata src="logo_madrasah.png" title="Logo Madrasah"/>
+      </v:shape>
+      <![endif]-->
+      <![if !vml]>
+      <img width="80" height="80" src="logo_madrasah.png" style="width:80px;height:80px;object-fit:contain;" alt="Logo Madrasah" />
+      <![endif]>
+    `;
+  } else {
+    logoImgHtml = `<div style="width: 70px; height: 70px; line-height: 70px; text-align: center; background-color: #000000; color: #ffffff; font-weight: 900; font-size: 16pt; border-radius: 6px;">MTS</div>`;
+  }
+
+  // 2. Kolom Bentuk Soal Dinamis (Warna tegas & border solid)
   const qTypes = activeQuestionTypesList.value || [];
   let thQTypes = '';
   let thQTypesSub = '';
 
   if (qTypes.length > 0) {
-    thQTypes = `<th colspan="${qTypes.length}" style="border: 1pt solid #94a3b8; padding: 4pt 3pt; background-color: #e2e8f0; color: #134e4a; font-weight: 900; font-size: 8.5pt; text-align: center;">Capaian Nilai per Bentuk Soal (Poin / Maks)</th>`;
+    thQTypes = `<th colspan="${qTypes.length}" style="border: 1pt solid #000000; padding: 5pt 3pt; background-color: #cbd5e1; color: #000000; font-weight: 900; font-size: 8.5pt; text-align: center;">CAPAIAN NILAI PER BENTUK SOAL (POIN / MAKS)</th>`;
     thQTypesSub = qTypes.map(t => `
-      <th style="border: 1pt solid #94a3b8; padding: 3.5pt 2.5pt; background-color: #f8fafc; text-align: center; font-size: 8pt; min-width: 60pt;">
-        <div style="font-weight: bold; color: #1e293b;">${t.label}</div>
-        <div style="font-size: 7pt; color: #64748b; font-weight: normal;">(${t.count} Soal • Maks ${t.maxScore})</div>
+      <th style="border: 1pt solid #000000; padding: 4pt 2.5pt; background-color: #e2e8f0; text-align: center; font-size: 8pt; min-width: 60pt;">
+        <div style="font-weight: 900; color: #000000;">${t.label}</div>
+        <div style="font-size: 7.5pt; color: #000000; font-weight: normal;">(${t.count} Soal • Maks ${t.maxScore})</div>
       </th>
     `).join('');
   }
 
-  // 3. Baris Data Siswa
+  // 3. Baris Data Siswa (Teks hitam pekat tegas & kontras tinggi)
   const students = activeStudents.value || [];
   const kkm = Number(activeExam.value?.kkm || 75);
 
   let rowsHtml = '';
   if (students.length === 0) {
     const totalCols = 8 + qTypes.length;
-    rowsHtml = `<tr><td colspan="${totalCols}" align="center" style="border: 1pt solid #94a3b8; padding: 12pt; color: #94a3b8; font-style: italic;">Tidak ada data siswa pada kelas ini.</td></tr>`;
+    rowsHtml = `<tr><td colspan="${totalCols}" align="center" style="border: 1pt solid #000000; padding: 12pt; color: #000000; font-style: italic;">Tidak ada data siswa pada kelas ini.</td></tr>`;
   } else {
     rowsHtml = students.map((student, idx) => {
       const typeScoresHtml = qTypes.map(t => {
         const score = calculateStudentTypeScore(student, t);
         return `
-          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-size: 8pt;">
-            <div style="font-weight: bold; color: #1e293b;">${score.earned}</div>
-            <div style="font-size: 7pt; color: #64748b;">(${score.percentage}%)</div>
+          <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; font-size: 8.5pt;">
+            <div style="font-weight: 900; color: #000000;">${score.earned}</div>
+            <div style="font-size: 7.5pt; color: #333333; font-weight: 600;">(${score.percentage}%)</div>
           </td>
         `;
       }).join('');
 
       const initialScore = student.total_score !== null ? student.total_score : '-';
-      const initialScoreColor = (student.total_score !== null && student.total_score < kkm) ? '#e11d48' : '#1e293b';
-      const remScore = (student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? student.remedial_score : '-';
+      const initialScoreHtml = (student.total_score !== null && student.total_score < kkm)
+        ? `<b style="color: #dc2626; font-size: 9pt;">${initialScore}</b>`
+        : `<b style="color: #000000; font-size: 9pt;">${initialScore}</b>`;
+
+      const remScore = (student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '')
+        ? `<b style="color: #0f766e; font-size: 9pt;">${student.remedial_score}</b>`
+        : `<span style="color: #666666; font-weight: bold;">-</span>`;
+
       const finalGrade = getStudentFinalGrade(student);
       const status = getStudentPrintStatus(student);
 
       let statusHtml = '';
       if (status === 'TUNTAS') {
-        statusHtml = '<b style="color: #047857;">TUNTAS</b>';
+        statusHtml = '<b style="color: #15803d; font-size: 8.5pt;">TUNTAS</b>';
       } else if (status === 'TUNTAS (REM)') {
-        statusHtml = '<b style="color: #0f766e;">TUNTAS (REM)</b>';
+        statusHtml = '<b style="color: #0f766e; font-size: 8.5pt;">TUNTAS (REM)</b>';
       } else if (status === 'REMEDIAL') {
-        statusHtml = '<b style="color: #e11d48;">REMEDIAL</b>';
+        statusHtml = '<b style="color: #dc2626; font-size: 8.5pt;">REMEDIAL</b>';
       } else {
-        statusHtml = '<span style="color: #94a3b8;">BELUM UJIAN</span>';
+        statusHtml = '<span style="color: #64748b; font-size: 8pt; font-weight: bold;">BELUM UJIAN</span>';
       }
 
       return `
         <tr style="background-color: ${idx % 2 === 1 ? '#f8fafc' : '#ffffff'};">
-          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-weight: bold; color: #64748b; font-size: 8pt;">${idx + 1}</td>
-          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-family: monospace; font-size: 8pt; color: #475569;">${student.nisn || '-'}</td>
-          <td align="left" style="border: 1pt solid #94a3b8; padding: 3pt 4pt; font-weight: bold; font-size: 8.5pt; color: #0f172a;">${student.name}</td>
-          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-weight: bold; font-size: 8pt; color: #475569;">${student.gender || '-'}</td>
+          <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; font-weight: bold; color: #000000; font-size: 8.5pt;">${idx + 1}</td>
+          <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; font-family: Arial, sans-serif; font-size: 8.5pt; font-weight: bold; color: #000000;">${student.nisn || '-'}</td>
+          <td align="left" style="border: 1pt solid #000000; padding: 3.5pt 6pt; font-weight: bold; font-size: 9pt; color: #000000;">${student.name}</td>
+          <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; font-weight: bold; font-size: 8.5pt; color: #000000;">${student.gender || '-'}</td>
           ${typeScoresHtml}
-          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-weight: bold; font-size: 8.5pt; color: ${initialScoreColor};">${initialScore}</td>
-          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-weight: bold; font-size: 8.5pt; color: #0f766e;">${remScore}</td>
-          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-weight: 900; font-size: 9pt; color: #0f172a; background-color: #f1f5f9;">${finalGrade}</td>
-          <td align="center" style="border: 1pt solid #94a3b8; padding: 3pt 2pt; font-size: 7.5pt;">${statusHtml}</td>
+          <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt;">${initialScoreHtml}</td>
+          <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt;">${remScore}</td>
+          <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; background-color: #cbd5e1;"><b style="font-size: 9.5pt; color: #000000;">${finalGrade}</b></td>
+          <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt;">${statusHtml}</td>
         </tr>
       `;
     }).join('');
@@ -3498,9 +3551,10 @@ function exportToWord() {
 
   const komposisiStr = activeQuestionTypesList.value.map(t => `${t.count} ${t.label}`).join(', ');
 
-  // 4. Dokumen HTML Lengkap Spesifik Microsoft Word (MSO Landscape A4)
-  const wordContent = `
-<html xmlns:o="urn:schemas-microsoft-com:office:office"
+  // 4. HTML Template Dokumen Resmi dengan Standar Word (Tegas & Tebal)
+  const wordHtml = `
+<html xmlns:v="urn:schemas-microsoft-com:vml"
+      xmlns:o="urn:schemas-microsoft-com:office:office"
       xmlns:w="urn:schemas-microsoft-com:office:word"
       xmlns="http://www.w3.org/TR/REC-html40">
 <head>
@@ -3519,12 +3573,12 @@ function exportToWord() {
     @page Section1 {
       size: 841.9pt 595.3pt; /* A4 Landscape (29.7cm x 21.0cm) */
       mso-page-orientation: landscape;
-      margin: 20.0pt 25.0pt 20.0pt 25.0pt;
+      margin: 18.0pt 24.0pt 18.0pt 24.0pt;
     }
     div.Section1 {
       page: Section1;
       font-family: Arial, Helvetica, sans-serif;
-      color: #0f172a;
+      color: #000000;
     }
     table {
       border-collapse: collapse;
@@ -3533,75 +3587,82 @@ function exportToWord() {
     }
   </style>
 </head>
-<body style="font-family: Arial, Helvetica, sans-serif; color: #0f172a; margin: 0; padding: 0;">
+<body style="font-family: Arial, Helvetica, sans-serif; color: #000000; margin: 0; padding: 0;">
   <div class="Section1">
-    <!-- 1. KOP RESMI MADRASAH DENGAN LOGO RESMI -->
-    <table width="100%" style="border-collapse: collapse; border: none; border-bottom: 3.5pt double #0f172a; margin-bottom: 8pt;">
+    <!-- 1. KOP RESMI MADRASAH -->
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: none; width: 100%;">
       <tr>
-        <td width="85" align="center" valign="middle" style="padding-right: 12pt; border: none;">
+        <td width="90" align="center" valign="middle" style="padding-right: 12pt; border: none;">
           ${logoImgHtml}
         </td>
         <td align="center" valign="middle" style="border: none; text-align: center;">
-          <div style="font-size: 9pt; font-weight: bold; letter-spacing: 1.5pt; text-transform: uppercase; color: #475569;">
+          <div style="font-size: 10pt; font-weight: bold; letter-spacing: 1.5pt; text-transform: uppercase; color: #000000;">
             ${schoolProfile.value?.school_foundation || 'YAYASAN PENDIDIKAN ISLAM AL-HASANAH'}
           </div>
-          <div style="font-size: 14.5pt; font-weight: 900; text-transform: uppercase; color: #0f172a; margin-top: 1pt;">
+          <div style="font-size: 16pt; font-weight: 900; text-transform: uppercase; color: #000000; letter-spacing: 0.5pt; margin-top: 2pt; margin-bottom: 2pt;">
             ${schoolProfile.value?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH'}
           </div>
-          <div style="font-size: 8.5pt; font-weight: 600; color: #475569; margin-top: 1pt;">
+          <div style="font-size: 9pt; font-weight: bold; color: #000000;">
             ${schoolProfile.value?.school_tagline || 'Madrasah Tsanawiyah Al - Hasanah Ciomas'} • Status: ${schoolProfile.value?.school_accreditation || 'TERAKREDITASI A'}
           </div>
-          <div style="font-size: 8pt; color: #475569; margin-top: 1pt;">
+          <div style="font-size: 8.5pt; color: #000000; margin-top: 2pt;">
             ${schoolProfile.value?.school_address || 'Jl. Ciapus Sukamakmur No.05, Ciomas, Bogor'}
           </div>
-          <div style="font-size: 7.5pt; color: #64748b; font-family: monospace; margin-top: 1pt;">
+          <div style="font-size: 8pt; color: #000000; font-family: Arial, monospace; font-weight: bold; margin-top: 2pt;">
             Telp: ${schoolProfile.value?.school_phone || '081617666017'} • Email: ${schoolProfile.value?.school_email || 'mtsalhasanah.ciomas@gmail.com'}
           </div>
         </td>
       </tr>
     </table>
 
+    <!-- GARIS GANDA KOP SURAT RESMI (BULLETPROOF UNTUK WORD) -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin-top: 4pt; margin-bottom: 8pt; width: 100%;">
+      <tr>
+        <td style="border: none; border-top: 1.5pt solid #000000; border-bottom: 3pt solid #000000; height: 2pt; font-size: 1pt; line-height: 1pt; padding: 0;">&nbsp;</td>
+      </tr>
+    </table>
+
     <!-- 2. JUDUL LEMBAR REKAPITULASI -->
     <div style="text-align: center; margin-bottom: 8pt;">
-      <div style="font-size: 11pt; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5pt; text-decoration: underline; color: #0f172a;">
+      <div style="font-size: 12pt; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5pt; text-decoration: underline; color: #000000;">
         LEMBAR REKAPITULASI CAPAIAN NILAI ASESMEN PER BENTUK SOAL
       </div>
-      <div style="font-size: 8.5pt; font-weight: bold; text-transform: uppercase; color: #334155; margin-top: 2pt;">
+      <div style="font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #000000; margin-top: 3pt;">
         ${getExamTypeFullName(activeExam.value.exam_type)} • SEMESTER ${(activeExam.value.semester || 'ganjil').toUpperCase()} • TAHUN PELAJARAN ${activeExam.value.academic_year?.name || '2024/2025'}
       </div>
     </div>
 
-    <!-- 3. METADATA ASESMEN -->
-    <table width="100%" style="border-collapse: collapse; border: 1pt solid #cbd5e1; background-color: #f8fafc; margin-bottom: 8pt;">
+    <!-- 3. METADATA ASESMEN (KOTAK 2 KOLOM TEGAS) -->
+    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; border: 1.5pt solid #000000; background-color: #f1f5f9; margin-bottom: 8pt; width: 100%;">
       <tr>
-        <td width="50%" valign="top" style="padding: 5pt 8pt; font-size: 8.5pt; color: #334155; line-height: 1.5; border: none;">
-          <div><b>Mata Pelajaran :</b> <span style="font-weight: 900; color: #0f172a;">${activeExam.value.subject?.name || '-'}</span></div>
-          <div><b>Kelas / Rombel :</b> <span style="font-weight: 900; color: #0f172a;">Kelas ${activeExam.value.class_room?.name || '-'}</span></div>
-          <div><b>Guru Pengampu :</b> ${activeExam.value.teacher?.full_name || activeExam.value.teacher?.name || '-'}</div>
-          <div><b>Nama Paket Ujian :</b> ${activeExam.value.title}</div>
+        <td width="50%" valign="top" style="padding: 6pt 10pt; font-size: 9pt; color: #000000; line-height: 1.5; border: none;">
+          <div><b style="color: #000000;">Mata Pelajaran :</b> <span style="font-weight: 900; color: #000000;">${activeExam.value.subject?.name || '-'}</span></div>
+          <div><b style="color: #000000;">Kelas / Rombel :</b> <span style="font-weight: 900; color: #000000;">Kelas ${activeExam.value.class_room?.name || '-'}</span></div>
+          <div><b style="color: #000000;">Guru Pengampu :</b> <span style="font-weight: bold; color: #000000;">${activeExam.value.teacher?.full_name || activeExam.value.teacher?.name || '-'}</span></div>
+          <div><b style="color: #000000;">Nama Paket Ujian :</b> <span style="font-weight: bold; color: #000000;">${activeExam.value.title}</span></div>
         </td>
-        <td width="50%" valign="top" style="padding: 5pt 8pt; font-size: 8.5pt; color: #334155; line-height: 1.5; border: none;">
-          <div><b>Jenis Asesmen :</b> <span style="font-weight: 900; color: #0f172a;">${getExamTypeFullName(activeExam.value.exam_type)}</span></div>
-          <div><b>KKM / KKTP :</b> <span style="font-weight: 900; color: #115e59; background-color: #ccfbf1; padding: 1pt 5pt; border: 1pt solid #5eead4;">${activeExam.value.kkm}</span></div>
-          <div><b>Bobot Penilaian :</b> Objektif: ${activeExam.value.pg_weight}% | Uraian: ${activeExam.value.essay_weight}%</div>
-          <div><b>Komposisi Soal :</b> ${activeExam.value.total_questions} Butir (${komposisiStr})</div>
+        <td width="50%" valign="top" style="padding: 6pt 10pt; font-size: 9pt; color: #000000; line-height: 1.5; border: none;">
+          <div><b style="color: #000000;">Jenis Asesmen :</b> <span style="font-weight: 900; color: #000000;">${getExamTypeFullName(activeExam.value.exam_type)}</span></div>
+          <div><b style="color: #000000;">KKM / KKTP :</b> <span style="font-weight: 900; color: #000000; background-color: #ccfbf1; padding: 1.5pt 6pt; border: 1.5pt solid #0f766e;">${activeExam.value.kkm}</span></div>
+          <div><b style="color: #000000;">Bobot Penilaian :</b> <span style="font-weight: bold; color: #000000;">Objektif: ${activeExam.value.pg_weight}% | Uraian: ${activeExam.value.essay_weight}%</span></div>
+          <div><b style="color: #000000;">Komposisi Soal :</b> <span style="font-weight: bold; color: #000000;">${activeExam.value.total_questions} Butir (${komposisiStr})</span></div>
         </td>
       </tr>
     </table>
 
-    <!-- 4. TABEL CAPAIAN PER BENTUK SOAL -->
-    <table width="100%" border="1" cellspacing="0" cellpadding="3" style="border-collapse: collapse; border: 1pt solid #94a3b8; margin-bottom: 8pt;">
+    <!-- 4. TABEL CAPAIAN PER BENTUK SOAL (BORDER SOLID TEGAS) -->
+    <table width="100%" border="1" cellspacing="0" cellpadding="4" style="border-collapse: collapse; border: 1.5pt solid #000000; margin-bottom: 8pt; width: 100%;">
       <thead>
-        <tr style="background-color: #f1f5f9; color: #0f172a; text-transform: uppercase; font-size: 8pt; font-weight: bold; text-align: center;">
-          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 22pt;">No</th>
-          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 65pt;">NISN</th>
-          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 4pt; text-align: left; min-width: 120pt;">Nama Siswa</th>
-          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 22pt;">L/P</th>
+        <tr style="background-color: #cbd5e1; color: #000000; text-transform: uppercase; font-size: 8.5pt; font-weight: 900; text-align: center;">
+          <th rowspan="2" style="border: 1pt solid #000000; padding: 5pt 2pt; width: 22pt;">NO</th>
+          <th rowspan="2" style="border: 1pt solid #000000; padding: 5pt 2pt; width: 65pt;">NISN</th>
+          <th rowspan="2" style="border: 1pt solid #000000; padding: 5pt 6pt; text-align: left; min-width: 120pt;">NAMA SISWA</th>
+          <th rowspan="2" style="border: 1pt solid #000000; padding: 5pt 2pt; width: 22pt;">L/P</th>
           ${thQTypes}
-          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 42pt;">Nilai Asli</th>
-          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 42pt;">Nilai Rem.</th>
-          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 45pt; background-color: #e2e8f0; font-weight: 900;">Nilai Akhir</th>
-          <th rowspan="2" style="border: 1pt solid #94a3b8; padding: 4pt 2pt; width: 60pt;">Keterangan</th>
+          <th rowspan="2" style="border: 1pt solid #000000; padding: 5pt 2pt; width: 42pt;">NILAI ASLI</th>
+          <th rowspan="2" style="border: 1pt solid #000000; padding: 5pt 2pt; width: 42pt;">NILAI REM</th>
+          <th rowspan="2" style="border: 1pt solid #000000; padding: 5pt 2pt; width: 45pt; background-color: #94a3b8; color: #000000; font-weight: 900;">NILAI AKHIR</th>
+          <th rowspan="2" style="border: 1pt solid #000000; padding: 5pt 2pt; width: 60pt;">KETERANGAN</th>
         </tr>
         ${thQTypesSub ? `<tr>${thQTypesSub}</tr>` : ''}
       </thead>
@@ -3611,49 +3672,49 @@ function exportToWord() {
     </table>
 
     <!-- 5. REKAPITULASI KETUNTASAN KLASIKAL -->
-    <div style="font-size: 8.5pt; font-weight: bold; text-transform: uppercase; color: #1e293b; margin-top: 6pt; margin-bottom: 3pt;">
+    <div style="font-size: 9.5pt; font-weight: 900; text-transform: uppercase; color: #000000; margin-top: 8pt; margin-bottom: 4pt;">
       Rekapitulasi Ketuntasan Klasikal:
     </div>
-    <table width="100%" border="1" cellspacing="0" cellpadding="4" style="border-collapse: collapse; border: 1pt solid #cbd5e1; margin-bottom: 10pt;">
+    <table width="100%" border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; border: 1.5pt solid #000000; margin-bottom: 10pt; width: 100%;">
       <tr>
-        <td width="25%" style="border: 1pt solid #cbd5e1; background-color: #f8fafc; padding: 4pt 6pt; font-size: 8pt;">
-          <span style="color: #64748b; font-size: 7.5pt; display: block;">Total Siswa Peserta</span>
-          <b style="color: #1e293b; font-size: 9pt;">${printStats.value.participated} / ${printStats.value.total} Siswa</b>
+        <td width="25%" style="border: 1pt solid #000000; background-color: #f1f5f9; padding: 5pt 8pt; font-size: 8.5pt;">
+          <span style="color: #000000; font-size: 8pt; font-weight: bold; display: block;">Total Siswa Peserta</span>
+          <b style="color: #000000; font-size: 10pt; font-weight: 900;">${printStats.value.participated} / ${printStats.value.total} Siswa</b>
         </td>
-        <td width="25%" style="border: 1pt solid #cbd5e1; background-color: #f8fafc; padding: 4pt 6pt; font-size: 8pt;">
-          <span style="color: #64748b; font-size: 7.5pt; display: block;">Tuntas (Murni + Rem)</span>
-          <b style="color: #047857; font-size: 9pt;">${printStats.value.totalPassed} Siswa (${printStats.value.passPercentage}%)</b>
+        <td width="25%" style="border: 1pt solid #000000; background-color: #f1f5f9; padding: 5pt 8pt; font-size: 8.5pt;">
+          <span style="color: #000000; font-size: 8pt; font-weight: bold; display: block;">Tuntas (Murni + Rem)</span>
+          <b style="color: #15803d; font-size: 10pt; font-weight: 900;">${printStats.value.totalPassed} Siswa (${printStats.value.passPercentage}%)</b>
         </td>
-        <td width="25%" style="border: 1pt solid #cbd5e1; background-color: #f8fafc; padding: 4pt 6pt; font-size: 8pt;">
-          <span style="color: #64748b; font-size: 7.5pt; display: block;">Perlu Remedial</span>
-          <b style="color: #e11d48; font-size: 9pt;">${printStats.value.remedialCount} Siswa</b>
+        <td width="25%" style="border: 1pt solid #000000; background-color: #f1f5f9; padding: 5pt 8pt; font-size: 8.5pt;">
+          <span style="color: #000000; font-size: 8pt; font-weight: bold; display: block;">Perlu Remedial</span>
+          <b style="color: #dc2626; font-size: 10pt; font-weight: 900;">${printStats.value.remedialCount} Siswa</b>
         </td>
-        <td width="25%" style="border: 1pt solid #cbd5e1; background-color: #f8fafc; padding: 4pt 6pt; font-size: 8pt;">
-          <span style="color: #64748b; font-size: 7.5pt; display: block;">Rata-rata / Tertinggi / Terendah</span>
-          <b style="color: #1e293b; font-size: 9pt;">${printStats.value.avgScore} / ${printStats.value.maxScore} / ${printStats.value.minScore}</b>
+        <td width="25%" style="border: 1pt solid #000000; background-color: #f1f5f9; padding: 5pt 8pt; font-size: 8.5pt;">
+          <span style="color: #000000; font-size: 8pt; font-weight: bold; display: block;">Rata-rata / Tertinggi / Terendah</span>
+          <b style="color: #000000; font-size: 10pt; font-weight: 900;">${printStats.value.avgScore} / ${printStats.value.maxScore} / ${printStats.value.minScore}</b>
         </td>
       </tr>
     </table>
 
     <!-- 6. LEMBAR TANDA TANGAN RESMI -->
-    <table width="100%" style="border-collapse: collapse; border: none; margin-top: 10pt;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: none; margin-top: 10pt; width: 100%;">
       <tr>
-        <td colspan="2" align="right" style="border: none; padding-bottom: 8pt; font-size: 8.5pt; color: #1e293b;">
+        <td colspan="2" align="right" style="border: none; padding-bottom: 8pt; font-size: 9pt; font-weight: bold; color: #000000;">
           Ciomas, ${getPrintDateFormatted()}
         </td>
       </tr>
       <tr>
-        <td width="50%" align="center" valign="top" style="border: none; font-size: 8.5pt; color: #1e293b;">
-          <b>Mengetahui,</b><br>
-          Kepala MTs Al - Hasanah<br><br><br><br><br>
-          <b style="text-decoration: underline; font-size: 9.5pt; color: #0f172a;">${schoolProfile.value?.principal_name || 'Kepala Madrasah'}</b><br>
-          <span style="font-family: monospace; font-size: 8pt; color: #475569;">NIP: ${schoolProfile.value?.principal_nip || '-'}</span>
+        <td width="50%" align="center" valign="top" style="border: none; font-size: 9pt; color: #000000;">
+          <b style="color: #000000;">Mengetahui,</b><br>
+          <span style="font-weight: bold; color: #000000;">Kepala MTs Al - Hasanah</span><br><br><br><br><br>
+          <b style="text-decoration: underline; font-size: 10pt; color: #000000; font-weight: 900;">${schoolProfile.value?.principal_name || 'Kepala Madrasah'}</b><br>
+          <div style="font-family: Arial, monospace; font-size: 8.5pt; font-weight: bold; color: #000000; margin-top: 2pt;">NIP: ${schoolProfile.value?.principal_nip || '-'}</div>
         </td>
-        <td width="50%" align="center" valign="top" style="border: none; font-size: 8.5pt; color: #1e293b;">
-          <b>Guru Pengampu,</b><br>
-          Mata Pelajaran ${activeExam.value.subject?.name || ''}<br><br><br><br><br>
-          <b style="text-decoration: underline; font-size: 9.5pt; color: #0f172a;">${activeExam.value.teacher?.full_name || activeExam.value.teacher?.name || 'Guru Mata Pelajaran'}</b><br>
-          <span style="font-family: monospace; font-size: 8pt; color: #475569;">NIP: ${activeExam.value.teacher?.nip || '-'}</span>
+        <td width="50%" align="center" valign="top" style="border: none; font-size: 9pt; color: #000000;">
+          <b style="color: #000000;">Guru Pengampu,</b><br>
+          <span style="font-weight: bold; color: #000000;">Mata Pelajaran ${activeExam.value.subject?.name || ''}</span><br><br><br><br><br>
+          <b style="text-decoration: underline; font-size: 10pt; color: #000000; font-weight: 900;">${activeExam.value.teacher?.full_name || activeExam.value.teacher?.name || 'Guru Mata Pelajaran'}</b><br>
+          <div style="font-family: Arial, monospace; font-size: 8.5pt; font-weight: bold; color: #000000; margin-top: 2pt;">NIP: ${activeExam.value.teacher?.nip || '-'}</div>
         </td>
       </tr>
     </table>
@@ -3662,9 +3723,34 @@ function exportToWord() {
 </html>
   `;
 
-  // 5. Unduh Dokumen Word (.doc)
+  // 5. Kemas sebagai Dokumen MHTML (.doc) yang disematkan langsung (Single-File Multipart)
   try {
-    const blob = new Blob(['\ufeff' + wordContent], {
+    const boundary = "----=_NextPart_SiakadMts_Document_" + Date.now();
+    let mhtml = "";
+
+    mhtml += "MIME-Version: 1.0\r\n";
+    mhtml += `Content-Type: multipart/related; boundary="${boundary}"\r\n\r\n`;
+
+    // Part 1: HTML Utama
+    mhtml += `--${boundary}\r\n`;
+    mhtml += "Content-Type: text/html; charset=utf-8\r\n";
+    mhtml += "Content-Transfer-Encoding: 8bit\r\n\r\n";
+    mhtml += wordHtml + "\r\n\r\n";
+
+    // Part 2: Logo Madrasah Base64 (Dipetakan ke Content-Location: logo_madrasah.png)
+    if (logoData && logoData.base64) {
+      // Bungkus base64 string maksimal 76 karakter per baris sesuai standar RFC MIME
+      const wrappedB64 = logoData.base64.replace(/(.{76})/g, "$1\r\n");
+      mhtml += `--${boundary}\r\n`;
+      mhtml += `Content-Type: ${logoData.mime || 'image/png'}\r\n`;
+      mhtml += "Content-Transfer-Encoding: base64\r\n";
+      mhtml += "Content-Location: logo_madrasah.png\r\n\r\n";
+      mhtml += wrappedB64 + "\r\n\r\n";
+    }
+
+    mhtml += `--${boundary}--\r\n`;
+
+    const blob = new Blob([mhtml], {
       type: 'application/msword;charset=utf-8'
     });
     const url = URL.createObjectURL(blob);
