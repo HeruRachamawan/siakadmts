@@ -687,6 +687,15 @@
 
                     <button
                       type="button"
+                      @click="fillStudentWithKKM(student)"
+                      class="p-1.5 rounded-xl bg-slate-100 hover:bg-amber-50 text-slate-400 hover:text-amber-600 border border-slate-200 hover:border-amber-200 transition-all cursor-pointer flex-shrink-0"
+                      :title="`Isi jawaban siswa ini pas dengan KKM (${activeExam?.kkm || 75})`"
+                    >
+                      <Target class="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
                       @click="fillStudentWithAnswerKeys(student)"
                       class="p-1.5 rounded-xl bg-slate-100 hover:bg-teal-50 text-slate-400 hover:text-teal-700 border border-slate-200 hover:border-teal-200 transition-all cursor-pointer flex-shrink-0"
                       title="Salin 100% kunci jawaban lengkap ke siswa ini"
@@ -1545,6 +1554,15 @@
           <div class="flex items-center gap-2 flex-wrap">
             <button
               type="button"
+              @click="fillStudentWithKKM(selectedStudent)"
+              class="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              :title="`Isi jawaban siswa ini otomatis pas dengan batas KKM (${activeExam?.kkm || 75})`"
+            >
+              <Target class="w-3.5 h-3.5 text-amber-600" />
+              <span>Isi Pas KKM ({{ activeExam?.kkm || 75 }})</span>
+            </button>
+            <button
+              type="button"
               @click="fillStudentWithAnswerKeys(selectedStudent)"
               class="px-4 py-2.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
               title="Salin 100% kunci jawaban lengkap (PG, PG Kompleks, Menjodohkan, Uraian) ke siswa ini"
@@ -1842,6 +1860,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  Target,
   Printer,
   Copy
 } from 'lucide-vue-next';
@@ -2295,6 +2314,85 @@ function fillStudentWithAnswerKeys(student) {
 
   syncStudentAnswerString(student);
   toast.success(`Semua kunci jawaban berhasil disalin lengkap ke jawaban ${student.name}!`);
+}
+
+function getWrongAnswerForQuestion(q) {
+  const correct = (q.correct_answer || '').trim();
+  const type = q.question_type;
+
+  if (type === 'pg') {
+    const letters = ['A', 'B', 'C', 'D', 'E'];
+    const wrong = letters.find(l => l !== correct.toUpperCase());
+    return wrong || 'B';
+  }
+
+  if (type === 'true_false') {
+    return correct.toUpperCase() === 'B' ? 'S' : 'B';
+  }
+
+  if (type === 'agree_disagree') {
+    return correct.toUpperCase() === 'S' ? 'TS' : 'S';
+  }
+
+  if (type === 'pg_complex') {
+    const letters = ['A', 'B', 'C', 'D', 'E'];
+    const correctUpper = correct.toUpperCase();
+    const wrong = letters.find(l => !correctUpper.includes(l));
+    return wrong || 'E';
+  }
+
+  if (type === 'matching') {
+    return '1-X';
+  }
+
+  if (type === 'short_answer') {
+    return '-';
+  }
+
+  return 'X';
+}
+
+function fillStudentWithKKM(student) {
+  if (!student) return;
+  if (!student.student_answers) student.student_answers = {};
+  if (!student.essay_scores) student.essay_scores = {};
+
+  const kkm = Number(activeExam.value?.kkm ?? 75);
+  const questions = activeQuestions.value || [];
+  if (questions.length === 0) {
+    toast.error('Belum ada butir soal ujian.');
+    return;
+  }
+
+  const objQuestions = questions.filter(q => q.question_type !== 'essay');
+  const essayQuestions = questions.filter(q => q.question_type === 'essay');
+
+  // Objective questions: calculate points needed to meet KKM
+  const totalObjWeight = objQuestions.reduce((sum, q) => sum + Number(q.score_weight || 1), 0);
+  const targetObjPoints = (kkm / 100) * totalObjWeight;
+
+  let currentEarned = 0;
+  objQuestions.forEach(q => {
+    const qNum = String(q.question_number);
+    const weight = Number(q.score_weight || 1);
+    // Give correct answer until accumulated points reach or satisfy KKM target
+    if (currentEarned < targetObjPoints) {
+      student.student_answers[qNum] = q.correct_answer || 'A';
+      currentEarned += weight;
+    } else {
+      student.student_answers[qNum] = getWrongAnswerForQuestion(q);
+    }
+  });
+
+  // Essay questions: assign proportional score to meet KKM
+  essayQuestions.forEach(q => {
+    const qNum = String(q.question_number);
+    const maxScore = Number(q.score_weight || 10);
+    student.essay_scores[qNum] = Math.round((kkm / 100) * maxScore);
+  });
+
+  syncStudentAnswerString(student);
+  toast.success(`Jawaban ${student.name} berhasil diatur pas KKM (${kkm})!`);
 }
 
 function copyQuickKeysToClipboard() {
