@@ -235,6 +235,16 @@
               <span>Koreksi Siswa ({{ activeStudents.length }})</span>
             </button>
             <button
+              @click="activeTab = 'adjusted'"
+              :class="activeTab === 'adjusted' ? 'bg-white text-amber-700 shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 font-bold'"
+              class="px-4 py-2 rounded-xl text-xs transition-all cursor-pointer flex items-center gap-1.5 relative"
+              title="Pengolahan Nilai Jadi standar rapor bebas remedial"
+            >
+              <Award class="w-3.5 h-3.5 text-amber-600" />
+              <span>Nilai Jadi (Rapor)</span>
+              <span class="w-2 h-2 rounded-full bg-amber-500 absolute top-1.5 right-1.5"></span>
+            </button>
+            <button
               @click="fetchAnalysis"
               :class="activeTab === 'analysis' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
               class="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
@@ -638,6 +648,16 @@
 
             <button
               type="button"
+              @click="activeTab = 'adjusted'"
+              class="px-4 py-2.5 sm:py-3 bg-amber-50 hover:bg-amber-100 active:scale-98 text-amber-900 border border-amber-300 font-bold rounded-2xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0 w-full sm:w-auto"
+              title="Olah nilai jadi bebas remedial untuk standar rapor"
+            >
+              <Award class="w-4 h-4 text-amber-600" />
+              <span>Olah Nilai Jadi (Rapor)</span>
+            </button>
+
+            <button
+              type="button"
               @click="resetAllCorrections"
               class="px-4 py-2.5 sm:py-3 bg-white hover:bg-rose-50 active:scale-98 text-rose-600 hover:text-rose-700 border border-slate-200 hover:border-rose-200 font-bold rounded-2xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0 w-full sm:w-auto"
               title="Kosongkan seluruh koreksi dan nilai siswa pada ujian ini"
@@ -803,6 +823,285 @@
                     {{ (student.remedial_score && student.remedial_score >= activeExam.kkm) ? '🟢 TUNTAS (REMEDIAL)' : (student.total_score >= activeExam.kkm ? '🟢 TUNTAS' : '🔴 REMEDIAL') }}
                   </span>
                   <span v-else class="text-slate-400 text-[10px] font-bold">BELUM INPUT</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUB-TAB 2.5: PENGOLAHAN NILAI JADI (STANDAR RAPOR BEBAS REMEDIAL) -->
+      <div v-if="activeTab === 'adjusted'" class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 space-y-6">
+        <!-- Header & Deskripsi Kebijakan Sekolah -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+                <Award class="w-5 h-5" />
+              </span>
+              <h2 class="text-base font-black text-slate-800 font-lexend uppercase tracking-wider">
+                Pengolahan Nilai Jadi (Standar Rapor Bebas Remedial)
+              </h2>
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider border border-emerald-300">
+                100% Lulus &ge; KKM {{ activeExam.kkm }}
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 font-medium">
+              Nilai asli koreksi tetap tersimpan murni. Nilai Jadi di bawah ini adalah nilai resmi untuk <strong>Buku Nilai / Rapor</strong> yang disesuaikan secara proporsional agar tidak ada siswa berstatus remedial.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <button
+              @click="openAdjustedPrintModal"
+              type="button"
+              class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 cursor-pointer"
+            >
+              <Printer class="w-4 h-4" />
+              <span>Cetak Rekap Nilai Jadi</span>
+            </button>
+
+            <button
+              @click="syncToGrades"
+              :disabled="syncingGrades"
+              type="button"
+              class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-600/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              title="Sinkronkan Nilai Jadi ke Buku Nilai / Rapor Siswa"
+            >
+              <Send class="w-4 h-4" />
+              <span>{{ syncingGrades ? 'Menyinkronkan...' : 'Kirim ke Buku Nilai' }}</span>
+            </button>
+
+            <button
+              @click="saveAdjustedScores"
+              :disabled="gradingProcessing"
+              type="button"
+              class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-teal-600/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              <Check class="w-4 h-4" />
+              <span>{{ gradingProcessing ? 'Menyimpan...' : 'Simpan Nilai Jadi' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Perbandingan Statistik: Nilai Asli vs Nilai Jadi -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Rata-rata Nilai Asli</span>
+            <div class="text-xl font-black text-slate-700 font-lexend mt-0.5">
+              {{ adjustedStats.originalAvg }}
+            </div>
+            <span class="text-[10px] text-slate-500 font-medium">Ketuntasan Asli: {{ adjustedStats.originalPassPct }}% ({{ adjustedStats.originalPassed }}/{{ adjustedStats.counted }} siswa)</span>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-teal-50/70 border border-teal-200">
+            <span class="text-[10px] font-bold text-teal-600 uppercase tracking-wider block">Rata-rata Nilai Jadi</span>
+            <div class="text-xl font-black text-teal-800 font-lexend mt-0.5">
+              {{ adjustedStats.adjustedAvg }}
+            </div>
+            <span class="text-[10px] text-teal-700 font-medium">Selisih Kenaikan: +{{ (adjustedStats.adjustedAvg - adjustedStats.originalAvg).toFixed(1) }} Poin</span>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200">
+            <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Ketuntasan Rapor Akhir</span>
+            <div class="text-xl font-black text-emerald-700 font-lexend mt-0.5">
+              {{ adjustedStats.adjustedPassPct }}% TUNTAS
+            </div>
+            <span class="text-[10px] text-emerald-700 font-semibold">100% Memenuhi KKTP (Bebas Remedial)</span>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200">
+            <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">Standar KKM / KKTP</span>
+            <div class="text-xl font-black text-amber-900 font-lexend mt-0.5">
+              {{ activeExam.kkm }}
+            </div>
+            <span class="text-[10px] text-amber-800 font-medium">Batas Terendah Nilai Jadi</span>
+          </div>
+        </div>
+
+        <!-- GENERATOR OTOMATIS NILAI JADI TOOLBAR -->
+        <div class="p-5 bg-gradient-to-r from-amber-500/10 via-teal-500/10 to-emerald-500/10 border border-amber-200/80 rounded-3xl space-y-3">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <div>
+              <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5 font-lexend">
+                <Sparkles class="w-4 h-4 text-amber-600" />
+                <span>Generator Cepat Nilai Jadi (1-Klik Tanpa Remedial)</span>
+              </h3>
+              <p class="text-[11px] text-slate-600 font-medium mt-0.5">
+                Pilih formula di bawah ini untuk mengolah nilai seluruh siswa secara otomatis dan berkeadilan:
+              </p>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs">
+              <span class="text-slate-500 text-[11px]">Batas KKM: <strong class="text-slate-800">{{ activeExam.kkm }}</strong></span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap pt-1">
+            <button
+              type="button"
+              @click="applyBoostToKKM"
+              class="px-4 py-2 rounded-xl bg-white hover:bg-emerald-50 active:scale-95 text-emerald-800 font-bold text-xs border border-emerald-300 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Angkat seluruh siswa di bawah KKM menjadi KKM/75, siswa &ge; KKM tetap nilainya"
+            >
+              <span>✨ 1-Klik Angkat ke KKM ({{ activeExam.kkm }})</span>
+            </button>
+
+            <button
+              type="button"
+              @click="applyProportionalCurve"
+              class="px-4 py-2 rounded-xl bg-white hover:bg-teal-50 active:scale-95 text-teal-800 font-bold text-xs border border-teal-300 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Konversi kurva proporsional: Terendah = KKM, Tertinggi = 98, urutan ranking tetap konsisten"
+            >
+              <span>📈 Konversi Kurva Proporsional</span>
+            </button>
+
+            <button
+              type="button"
+              @click="applyFlatBonus(5)"
+              class="px-3 py-2 rounded-xl bg-white hover:bg-amber-50 active:scale-95 text-amber-800 font-bold text-xs border border-amber-300 shadow-sm transition-all flex items-center gap-1 cursor-pointer"
+              title="Tambah +5 poin ke semua siswa"
+            >
+              <span>➕ Tambah +5 Poin</span>
+            </button>
+
+            <button
+              type="button"
+              @click="applyFlatBonus(10)"
+              class="px-3 py-2 rounded-xl bg-white hover:bg-amber-50 active:scale-95 text-amber-800 font-bold text-xs border border-amber-300 shadow-sm transition-all flex items-center gap-1 cursor-pointer"
+              title="Tambah +10 poin ke semua siswa"
+            >
+              <span>➕ Tambah +10 Poin</span>
+            </button>
+
+            <button
+              type="button"
+              @click="resetAdjustedToOriginal"
+              class="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 active:scale-95 text-slate-600 font-bold text-xs border border-slate-300 shadow-sm transition-all flex items-center gap-1 cursor-pointer ml-auto"
+              title="Kembalikan nilai jadi sama dengan nilai asli"
+            >
+              <RotateCcw class="w-3.5 h-3.5" />
+              <span>Reset ke Asli</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- TABEL RINCIAN NILAI JADI PER SISWA -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-700 border-collapse">
+            <thead class="bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-200">
+              <tr>
+                <th class="px-4 py-3.5 w-12 text-center">No</th>
+                <th class="px-4 py-3.5 min-w-[200px]">Nama Siswa</th>
+                <th class="px-4 py-3.5 text-center w-28">Nilai Asli (Murni)</th>
+                <th class="px-4 py-3.5 text-center w-36 bg-amber-50/60 text-amber-900 border-x border-amber-200/80">
+                  <span>Nilai Jadi (Rapor)</span>
+                  <span class="block text-[9px] font-normal normal-case text-amber-700">*Bisa diedit langsung</span>
+                </th>
+                <th class="px-4 py-3.5 text-center w-24">Selisih</th>
+                <th class="px-4 py-3.5 text-center w-28">Predikat</th>
+                <th class="px-4 py-3.5 text-center w-36">Status Rapor</th>
+                <th class="px-4 py-3.5 text-center min-w-[160px]">Aksi Cepat</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr v-for="(student, idx) in activeStudents" :key="student.id" class="hover:bg-amber-50/20 transition-colors">
+                <td class="px-4 py-3 text-center font-bold text-slate-400">{{ idx + 1 }}</td>
+                <td class="px-4 py-3">
+                  <div class="font-bold text-slate-900 font-lexend">{{ student.name }}</div>
+                  <div class="text-[10px] text-slate-400 font-mono">NISN: {{ student.nisn || '-' }} • {{ student.gender === 'L' ? 'Laki-laki' : 'Perempuan' }}</div>
+                </td>
+                <td class="px-4 py-3 text-center font-bold" :class="Number(student.total_score || 0) < activeExam.kkm ? 'text-rose-600' : 'text-slate-700'">
+                  {{ student.total_score !== null ? student.total_score : '-' }}
+                </td>
+
+                <!-- Input Nilai Jadi Editable -->
+                <td class="px-4 py-3 text-center bg-amber-50/40 border-x border-amber-200/60">
+                  <div class="flex items-center justify-center">
+                    <input
+                      v-model.number="student.remedial_score"
+                      type="number"
+                      min="0"
+                      max="100"
+                      :placeholder="student.total_score !== null ? String(student.total_score) : '-'"
+                      :class="[
+                        (student.remedial_score && student.remedial_score >= activeExam.kkm) ? 'border-emerald-400 bg-emerald-50 text-emerald-900 font-black focus:ring-emerald-400' :
+                        'border-slate-300 bg-white text-slate-800 font-bold focus:ring-teal-400'
+                      ]"
+                      class="w-20 border rounded-xl py-1.5 text-center text-sm font-lexend focus:ring-2 transition-all shadow-sm"
+                      title="Ketik langsung nilai jadi yang diinginkan untuk siswa ini"
+                    />
+                  </div>
+                </td>
+
+                <!-- Selisih Kenaikan -->
+                <td class="px-4 py-3 text-center">
+                  <span
+                    v-if="student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '' && student.total_score !== null"
+                    :class="(student.remedial_score - student.total_score) > 0 ? 'text-emerald-700 font-bold' : 'text-slate-400'"
+                    class="text-xs"
+                  >
+                    {{ (student.remedial_score - student.total_score) > 0 ? `+${(student.remedial_score - student.total_score).toFixed(0)}` : '0' }}
+                  </span>
+                  <span v-else class="text-slate-400 text-xs">-</span>
+                </td>
+
+                <!-- Predikat Nilai Jadi -->
+                <td class="px-4 py-3 text-center">
+                  <span
+                    v-if="student.remedial_score || student.total_score"
+                    :class="getGradePredicate(student.remedial_score || student.total_score).color"
+                    class="px-2.5 py-0.5 rounded-md text-[10px] font-black border uppercase tracking-wider"
+                  >
+                    {{ getGradePredicate(student.remedial_score || student.total_score).pred }} ({{ getGradePredicate(student.remedial_score || student.total_score).label }})
+                  </span>
+                  <span v-else class="text-slate-400">-</span>
+                </td>
+
+                <!-- Status Rapor (100% Tuntas jika Nilai Jadi >= KKM) -->
+                <td class="px-4 py-3 text-center">
+                  <span
+                    v-if="(student.remedial_score && student.remedial_score >= activeExam.kkm) || (student.total_score >= activeExam.kkm)"
+                    class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs inline-block"
+                  >
+                    🟢 TUNTAS
+                  </span>
+                  <span
+                    v-else-if="student.has_submitted || student.total_score !== null"
+                    class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border bg-rose-50 text-rose-700 border-rose-200 shadow-2xs inline-block"
+                  >
+                    🔴 BUTUH DONGKRAK
+                  </span>
+                  <span v-else class="text-slate-400 text-[10px] font-bold">BELUM UJIAN</span>
+                </td>
+
+                <!-- Aksi Cepat per Siswa -->
+                <td class="px-4 py-3 text-center">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <button
+                      type="button"
+                      @click="student.remedial_score = activeExam.kkm"
+                      class="px-2 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-black cursor-pointer transition-colors"
+                      :title="`Set nilai jadi pas KKM (${activeExam.kkm})`"
+                    >
+                      KKM ({{ activeExam.kkm }})
+                    </button>
+                    <button
+                      type="button"
+                      @click="student.remedial_score = Math.min(100, (Number(student.remedial_score || student.total_score || 0) + 5))"
+                      class="px-2 py-1 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-800 text-[10px] font-black cursor-pointer transition-colors"
+                      title="Tambah +5 poin"
+                    >
+                      +5
+                    </button>
+                    <button
+                      type="button"
+                      @click="student.remedial_score = student.total_score"
+                      class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-bold cursor-pointer transition-colors"
+                      title="Kembalikan ke nilai asli"
+                    >
+                      Asli
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -2494,6 +2793,252 @@
         </div>
       </div>
     </div>
+
+    <!-- PRINT PREVIEW MODAL: REKAPITULASI NILAI JADI (STANDAR RAPOR BEBAS REMEDIAL) -->
+    <div v-if="showAdjustedPrintModal && activeExam" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[70] flex flex-col p-2 sm:p-6 overflow-hidden">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-7xl mx-auto flex flex-col h-full max-h-full overflow-hidden border border-slate-200">
+        <!-- Modal Toolbar Header -->
+        <div class="no-print px-5 sm:px-8 py-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 flex-shrink-0 z-20">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20 flex-shrink-0">
+              <Award class="w-5 h-5" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-sm font-black text-slate-800 font-lexend uppercase tracking-wider">
+                  Pratinjau Lembar Nilai Jadi (Standar Rapor Bebas Remedial)
+                </h3>
+                <span
+                  :class="selectedAdjustedPaperSize === 'f4' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'"
+                  class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full" :class="selectedAdjustedPaperSize === 'f4' ? 'bg-amber-600' : 'bg-emerald-600'"></span>
+                  {{ selectedAdjustedPaperSize === 'f4' ? 'Ukuran F4 / Folio (33 × 21.5 cm)' : 'Ukuran A4 (29.7 × 21 cm)' }}
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 font-medium">Dokumen rekapitulasi nilai akhir siap setor rapor & kurikulum dengan tingkat ketuntasan 100%.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap justify-end">
+            <!-- Pilihan Ukuran Kertas (A4 / F4) -->
+            <div class="flex items-center bg-slate-200/90 p-1 rounded-xl border border-slate-300 shadow-inner">
+              <button
+                type="button"
+                @click="selectedAdjustedPaperSize = 'f4'"
+                :class="selectedAdjustedPaperSize === 'f4' ? 'bg-white text-amber-800 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Kertas F4 / Folio Lanskap (330 x 215 mm) - Rekomendasi standar madrasah"
+              >
+                <span>F4 / Folio</span>
+                <span class="px-1.5 py-0.2 bg-amber-100 text-amber-800 text-[9px] font-black rounded-full uppercase tracking-tighter">Rekomendasi</span>
+              </button>
+              <button
+                type="button"
+                @click="selectedAdjustedPaperSize = 'a4'"
+                :class="selectedAdjustedPaperSize === 'a4' ? 'bg-white text-slate-900 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Kertas A4 Lanskap (297 x 210 mm)"
+              >
+                <span>A4</span>
+              </button>
+            </div>
+
+            <button
+              @click="printAdjustedDocument"
+              type="button"
+              class="px-4 sm:px-5 py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-amber-600/20 flex items-center gap-2 cursor-pointer"
+            >
+              <Printer class="w-4 h-4" />
+              <span>Cetak / Simpan PDF</span>
+            </button>
+
+            <button
+              @click="showAdjustedPrintModal = false"
+              type="button"
+              class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+
+        <!-- Canvas Area -->
+        <div class="flex-1 overflow-auto bg-slate-200/90 p-4 sm:p-8 flex justify-start xl:justify-center items-start">
+          <div
+            id="printableAdjustedSheet"
+            :class="selectedAdjustedPaperSize === 'f4' ? 'w-[1240px] min-w-[1240px]' : 'w-[1080px] min-w-[1080px]'"
+            class="printable-recap-sheet bg-white p-8 sm:p-10 shadow-2xl border border-slate-300 text-slate-900 rounded-xl space-y-5 my-2 transition-all duration-200"
+          >
+            <!-- 1. KOP RESMI MADRASAH DENGAN GARIS GANDA -->
+            <div class="flex items-center gap-5 border-b-4 border-double border-slate-900 pb-3">
+              <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center">
+                <img
+                  v-if="schoolProfile?.app_logo_url || schoolProfile?.app_logo"
+                  :src="schoolProfile?.app_logo_url || getImageUrl(schoolProfile?.app_logo)"
+                  class="w-full h-full object-contain"
+                  alt="Logo Madrasah"
+                />
+                <div v-else class="w-18 h-18 rounded-2xl bg-teal-800 text-white flex items-center justify-center font-black text-xl shadow-md">
+                  MTS
+                </div>
+              </div>
+              <div class="text-center flex-1 pr-6 sm:pr-14">
+                <div class="text-xs sm:text-sm font-bold tracking-widest text-slate-700 uppercase">
+                  {{ schoolProfile?.school_foundation || 'YAYASAN PENDIDIKAN ISLAM AL-HASANAH' }}
+                </div>
+                <div class="text-lg sm:text-2xl font-black tracking-wide text-slate-900 uppercase my-0.5">
+                  {{ schoolProfile?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH' }}
+                </div>
+                <div class="text-[11px] sm:text-xs font-semibold text-slate-600">
+                  {{ schoolProfile?.school_tagline || 'Madrasah Tsanawiyah Al - Hasanah Ciomas' }} • Status: {{ schoolProfile?.school_accreditation || 'TERAKREDITASI A' }}
+                </div>
+                <div class="text-[10px] sm:text-[11px] text-slate-500">
+                  {{ schoolProfile?.school_address || 'Jl. Ciapus Sukamakmur No.05, Ciomas, Bogor' }}
+                </div>
+                <div class="text-[9px] sm:text-[10px] text-slate-500 font-mono">
+                  Telp: {{ schoolProfile?.school_phone || '081617666017' }} • Email: {{ schoolProfile?.school_email || 'mtsalhasanah.ciomas@gmail.com' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. JUDUL LEMBAR NILAI JADI -->
+            <div class="text-center space-y-1">
+              <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-wide uppercase underline">
+                Daftar Rekapitulasi Nilai Asesmen (Standar Rapor Bebas Remedial)
+              </h2>
+              <p class="text-xs sm:text-sm font-bold text-slate-700 uppercase">
+                {{ getExamTypeFullName(activeExam.exam_type) }} • SEMESTER {{ (activeExam.semester || 'ganjil').toUpperCase() }} • TAHUN PELAJARAN {{ activeExam.academic_year?.name || '2024/2025' }}
+              </p>
+            </div>
+
+            <!-- 3. METADATA ASESMEN & STATISTIK KELAS -->
+            <div class="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs font-medium border border-slate-300 rounded-lg p-3 bg-slate-50/70">
+              <div class="space-y-1">
+                <div class="flex"><span class="w-32 font-bold text-slate-700">Mata Pelajaran</span><span class="mr-2">:</span><strong class="text-slate-900">{{ activeExam.subject?.name || '-' }}</strong></div>
+                <div class="flex"><span class="w-32 font-bold text-slate-700">Kelas / Rombel</span><span class="mr-2">:</span><strong class="text-slate-900">Kelas {{ activeExam.class_room?.name || '-' }}</strong></div>
+                <div class="flex"><span class="w-32 font-bold text-slate-700">Guru Pengampu</span><span class="mr-2">:</span><span>{{ activeExam.teacher?.full_name || activeExam.teacher?.name || '-' }}</span></div>
+                <div class="flex"><span class="w-32 font-bold text-slate-700">Nama Paket Ujian</span><span class="mr-2">:</span><span>{{ activeExam.title }}</span></div>
+              </div>
+              <div class="space-y-1">
+                <div class="flex"><span class="w-36 font-bold text-slate-700">Jenis Asesmen</span><span class="mr-2">:</span><strong class="text-slate-900">{{ getExamTypeFullName(activeExam.exam_type) }}</strong></div>
+                <div class="flex"><span class="w-36 font-bold text-slate-700">KKM / KKTP Madrasah</span><span class="mr-2">:</span><strong class="text-teal-900 bg-teal-100/70 px-2 py-0.5 rounded border border-teal-300">{{ activeExam.kkm }}</strong></div>
+                <div class="flex"><span class="w-36 font-bold text-slate-700">Peserta / Rata-rata Rapor</span><span class="mr-2">:</span><span class="font-bold">{{ adjustedStats.completedStudents }} Siswa • Rata-rata: {{ adjustedStats.adjustedAvg }}</span></div>
+                <div class="flex"><span class="w-36 font-bold text-slate-700">Ketuntasan Rapor</span><span class="mr-2">:</span><span class="font-bold text-emerald-700">{{ adjustedStats.adjustedPassedCount }} Siswa Tuntas ({{ adjustedStats.adjustedPassPct }}%) • Rem: 0 Siswa (Tidak Ada)</span></div>
+              </div>
+            </div>
+
+            <!-- 4. TABEL NILAI JADI LENGKAP -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-[11px] border-collapse border border-slate-400 bg-white">
+                <thead>
+                  <tr class="bg-slate-100 text-slate-900 uppercase font-black text-center text-[10px]">
+                    <th class="border border-slate-400 px-2 py-2 w-10">No</th>
+                    <th class="border border-slate-400 px-3 py-2 w-28">NISN</th>
+                    <th class="border border-slate-400 px-3 py-2 text-left min-w-[220px]">Nama Lengkap Siswa</th>
+                    <th class="border border-slate-400 px-2 py-2 w-14">L/P</th>
+                    <th class="border border-slate-400 px-2 py-2 w-20">Nilai Asli</th>
+                    <th class="border border-slate-400 px-2 py-2 w-24 bg-amber-50 text-amber-900 font-black">Nilai Jadi (Rapor)</th>
+                    <th class="border border-slate-400 px-2 py-2 w-20">Predikat</th>
+                    <th class="border border-slate-400 px-3 py-2 w-28">Status</th>
+                    <th class="border border-slate-400 px-3 py-2 text-left">Keterangan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(student, idx) in activeStudents"
+                    :key="student.id"
+                    class="border-b border-slate-300 hover:bg-slate-50"
+                  >
+                    <td class="border border-slate-300 px-2 py-1.5 text-center font-bold">{{ idx + 1 }}</td>
+                    <td class="border border-slate-300 px-3 py-1.5 text-center font-mono font-medium">{{ student.nisn || '-' }}</td>
+                    <td class="border border-slate-300 px-3 py-1.5 text-left font-bold text-slate-900 uppercase">{{ student.name }}</td>
+                    <td class="border border-slate-300 px-2 py-1.5 text-center font-medium">{{ student.gender || '-' }}</td>
+                    <td class="border border-slate-300 px-2 py-1.5 text-center font-bold text-slate-500">
+                      {{ student.total_score !== null ? student.total_score : '-' }}
+                    </td>
+                    <td class="border border-slate-400 px-2 py-1.5 text-center font-black text-sm bg-amber-50/50 text-slate-900">
+                      {{ (student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? student.remedial_score : (student.total_score !== null ? student.total_score : '-') }}
+                    </td>
+                    <td class="border border-slate-300 px-2 py-1.5 text-center font-bold">
+                      <span class="font-black text-slate-800">
+                        {{ getGradePredicate((student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? student.remedial_score : student.total_score).pred }}
+                      </span>
+                    </td>
+                    <td class="border border-slate-300 px-3 py-1.5 text-center font-black text-emerald-800">
+                      <span
+                        v-if="student.has_submitted || student.total_score !== null || student.remedial_score !== null"
+                        class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider"
+                      >
+                        TUNTAS
+                      </span>
+                      <span v-else class="text-slate-400 text-[10px] font-bold">
+                        BELUM UJIAN
+                      </span>
+                    </td>
+                    <td class="border border-slate-300 px-3 py-1.5 text-left text-[10px] text-slate-600">
+                      <span v-if="student.has_submitted || student.total_score !== null">
+                        Memenuhi KKM ({{ activeExam.kkm }})
+                      </span>
+                      <span v-else>-</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 5. REKAPITULASI KELAS RINGKAS -->
+            <div class="border border-slate-300 rounded-lg p-3 bg-slate-50 text-xs space-y-1 break-inside-avoid">
+              <div class="font-black text-slate-800 uppercase tracking-wider">Rekapitulasi Ketercapaian Hasil Belajar:</div>
+              <div class="grid grid-cols-4 gap-2 text-[11px] pt-1">
+                <div class="p-2 border border-slate-200 rounded bg-white text-center">
+                  <span class="text-slate-500 block text-[10px]">Total Peserta:</span>
+                  <strong class="text-slate-800 text-sm">{{ activeStudents.length }} Siswa</strong>
+                </div>
+                <div class="p-2 border border-slate-200 rounded bg-white text-center">
+                  <span class="text-slate-500 block text-[10px]">Rata-rata Nilai Jadi:</span>
+                  <strong class="text-teal-800 text-sm">{{ adjustedStats.adjustedAvg }}</strong>
+                </div>
+                <div class="p-2 border border-slate-200 rounded bg-white text-center">
+                  <span class="text-slate-500 block text-[10px]">Siswa Tuntas:</span>
+                  <strong class="text-emerald-700 text-sm">{{ adjustedStats.adjustedPassedCount }} Siswa ({{ adjustedStats.adjustedPassPct }}%)</strong>
+                </div>
+                <div class="p-2 border border-slate-200 rounded bg-white text-center">
+                  <span class="text-slate-500 block text-[10px]">Siswa Remedial:</span>
+                  <strong class="text-slate-700 text-sm">0 Siswa (Tidak Ada)</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. TANDA TANGAN RESMI -->
+            <div class="pt-4 text-xs text-slate-800 break-inside-avoid">
+              <div class="flex justify-end mb-4 font-medium">
+                Ciomas, {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}
+              </div>
+
+              <div class="grid grid-cols-2 gap-8 text-center">
+                <div>
+                  <div class="font-bold">Mengetahui,</div>
+                  <div>Kepala MTs Al - Hasanah</div>
+                  <div class="h-20 flex items-center justify-center"></div>
+                  <div class="font-black text-slate-900 underline">{{ schoolProfile?.principal_name || 'Kepala Madrasah' }}</div>
+                  <div class="text-[11px] text-slate-600 font-mono">NIP: {{ schoolProfile?.principal_nip || '-' }}</div>
+                </div>
+
+                <div>
+                  <div class="font-bold">Guru Pengampu,</div>
+                  <div>Mata Pelajaran {{ activeExam.subject?.name || '' }}</div>
+                  <div class="h-20 flex items-center justify-center"></div>
+                  <div class="font-black text-slate-900 underline">{{ activeExam.teacher?.full_name || activeExam.teacher?.name || 'Guru Mata Pelajaran' }}</div>
+                  <div class="text-[11px] text-slate-600 font-mono">NIP: {{ activeExam.teacher?.nip || '-' }}</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -2550,6 +3095,8 @@ const selectedPaperSize = ref('f4'); // 'f4' (rekomendasi folio) atau 'a4'
 const showAnalysisPrintModal = ref(false);
 const selectedAnalysisPaperSize = ref('f4'); // 'f4' (rekomendasi folio) atau 'a4'
 const analysisDifficultyFilter = ref('all'); // 'all', 'Mudah', 'Sedang', 'Sukar'
+const showAdjustedPrintModal = ref(false);
+const selectedAdjustedPaperSize = ref('f4'); // 'f4' (rekomendasi folio) atau 'a4'
 
 const showCreateModal = ref(false);
 const creatingExam = ref(false);
@@ -2738,6 +3285,68 @@ const difficultyDistribution = computed(() => {
     easyQuestions
   };
 });
+
+const adjustedStats = computed(() => {
+  const students = activeStudents.value || [];
+  const kkm = Number(activeExam.value?.kkm) || 75;
+  
+  let totalOrigScore = 0;
+  let countOrigScored = 0;
+  let origPassed = 0;
+  
+  let totalAdjScore = 0;
+  let countAdjScored = 0;
+  let adjPassed = 0;
+
+  students.forEach(s => {
+    const raw = (s.total_score !== null && s.total_score !== undefined && s.total_score !== '') ? Number(s.total_score) : null;
+    const adj = (s.remedial_score !== null && s.remedial_score !== undefined && s.remedial_score !== '') ? Number(s.remedial_score) : raw;
+
+    if (raw !== null && !isNaN(raw)) {
+      totalOrigScore += raw;
+      countOrigScored++;
+      if (raw >= kkm) origPassed++;
+    }
+
+    if (adj !== null && !isNaN(adj)) {
+      totalAdjScore += adj;
+      countAdjScored++;
+      if (adj >= kkm) adjPassed++;
+    }
+  });
+
+  const originalAvg = countOrigScored > 0 ? (totalOrigScore / countOrigScored).toFixed(1) : '0';
+  const originalPassPct = countOrigScored > 0 ? Math.round((origPassed / countOrigScored) * 100) : 0;
+  const originalRem = countOrigScored - origPassed;
+
+  const adjustedAvg = countAdjScored > 0 ? (totalAdjScore / countAdjScored).toFixed(1) : '0';
+  const adjustedPassPct = countAdjScored > 0 ? Math.round((adjPassed / countAdjScored) * 100) : 0;
+  const adjustedRem = countAdjScored - adjPassed;
+
+  return {
+    totalStudents: students.length,
+    completedStudents: countAdjScored,
+    counted: countOrigScored || students.length,
+    originalAvg: Number(originalAvg),
+    originalPassPct,
+    originalPassed: origPassed,
+    origRemCount: originalRem,
+    adjustedAvg: Number(adjustedAvg),
+    adjustedPassPct,
+    adjustedPassed: adjPassed,
+    adjustedPassedCount: adjPassed,
+    adjustedRemCount: adjustedRem
+  };
+});
+
+function getGradePredicate(score) {
+  const s = Number(score) || 0;
+  if (s >= 90) return { pred: 'A', label: 'Sangat Baik', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+  if (s >= 80) return { pred: 'B', label: 'Baik', color: 'bg-teal-50 text-teal-700 border-teal-200' };
+  if (s >= 70) return { pred: 'C', label: 'Cukup', color: 'bg-blue-50 text-blue-700 border-blue-200' };
+  if (s >= 60) return { pred: 'D', label: 'Kurang', color: 'bg-amber-50 text-amber-700 border-amber-200' };
+  return { pred: 'E', label: 'Perlu Bimbingan', color: 'bg-rose-50 text-rose-700 border-rose-200' };
+}
 
 const pgQuestions = computed(() => activeQuestions.value.filter(q => q.question_type !== 'essay'));
 const essayQuestions = computed(() => activeQuestions.value.filter(q => q.question_type === 'essay'));
@@ -3553,6 +4162,101 @@ async function syncToGrades() {
   }
 }
 
+function applyBoostToKKM() {
+  if (!activeExam.value) return;
+  const kkm = Number(activeExam.value.kkm) || 75;
+  activeStudents.value.forEach(s => {
+    const raw = Number(s.total_score);
+    if (isNaN(raw)) return;
+    if (raw < kkm) {
+      s.remedial_score = kkm;
+    } else {
+      s.remedial_score = raw;
+    }
+  });
+  toast.success(`Semua siswa di bawah KKM berhasil didongkrak ke KKM (${kkm}).`);
+}
+
+function applyProportionalCurve() {
+  if (!activeExam.value) return;
+  const kkm = Number(activeExam.value.kkm) || 75;
+  const validScores = activeStudents.value
+    .map(s => Number(s.total_score))
+    .filter(n => !isNaN(n) && n !== null);
+
+  if (validScores.length === 0) {
+    toast.error('Belum ada siswa yang memiliki nilai asli.');
+    return;
+  }
+
+  const minRaw = Math.min(...validScores);
+  const maxRaw = Math.max(...validScores);
+  const targetMax = Math.max(98, maxRaw);
+
+  activeStudents.value.forEach(s => {
+    const raw = Number(s.total_score);
+    if (isNaN(raw)) return;
+
+    let curved = raw;
+    if (maxRaw > minRaw) {
+      curved = Math.round(kkm + ((raw - minRaw) / (maxRaw - minRaw)) * (targetMax - kkm));
+    } else {
+      curved = Math.max(kkm, raw);
+    }
+
+    if (curved < kkm) curved = kkm;
+    if (curved > 100) curved = 100;
+    s.remedial_score = curved;
+  });
+
+  toast.success('Konversi kurva proporsional berhasil diterapkan.');
+}
+
+function applyFlatBonus(pts) {
+  if (!activeExam.value) return;
+  activeStudents.value.forEach(s => {
+    const base = Number(s.remedial_score ?? s.total_score);
+    if (isNaN(base)) return;
+    s.remedial_score = Math.min(100, Math.max(0, Math.round(base + pts)));
+  });
+  toast.success(`Bonus +${pts} poin berhasil ditambahkan ke seluruh siswa.`);
+}
+
+function resetAdjustedToOriginal() {
+  activeStudents.value.forEach(s => {
+    s.remedial_score = s.total_score;
+  });
+  toast.info('Nilai jadi dikembalikan sama persis dengan nilai asli koreksi.');
+}
+
+async function saveAdjustedScores() {
+  if (!activeExam.value) return;
+  gradingProcessing.value = true;
+  try {
+    const submissionsPayload = activeStudents.value.map(s => {
+      const hasAnswersObj = s.student_answers && Object.keys(s.student_answers).length > 0;
+      return {
+        student_id: s.id,
+        answers: hasAnswersObj ? s.student_answers : (s.answer_string || ''),
+        essay_scores: s.essay_scores || {},
+        remedial_score: (s.remedial_score !== null && s.remedial_score !== undefined && s.remedial_score !== '') ? Number(s.remedial_score) : null
+      };
+    });
+
+    await api.post(`/teacher/exam-corrections/${activeExam.value.id}/grade`, {
+      submissions: submissionsPayload
+    });
+
+    toast.success('Nilai jadi (rapor) berhasil disimpan ke database!');
+    await openExamDetail(activeExam.value.id);
+    activeTab.value = 'adjusted';
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal menyimpan nilai jadi.');
+  } finally {
+    gradingProcessing.value = false;
+  }
+}
+
 function downloadExcel(id) {
   window.open(`/api/teacher/exam-corrections/${id}/export-excel`, '_blank');
 }
@@ -3829,7 +4533,20 @@ function openAnalysisPrintModal() {
   showPrintModal.value = false;
   showCreateModal.value = false;
   showStudentModal.value = false;
+  showAdjustedPrintModal.value = false;
   showAnalysisPrintModal.value = true;
+}
+
+function openAdjustedPrintModal() {
+  if (!activeExam.value) {
+    toast.error('Pilih paket ujian terlebih dahulu.');
+    return;
+  }
+  showPrintModal.value = false;
+  showCreateModal.value = false;
+  showStudentModal.value = false;
+  showAnalysisPrintModal.value = false;
+  showAdjustedPrintModal.value = true;
 }
 
 function getImageUrl(path) {
@@ -4268,6 +4985,209 @@ function printAnalysisDocument() {
     }
     tfoot {
       display: table-footer-group;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+    .break-inside-avoid {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  </style>
+</head>
+<body>
+  <div style="width: 100%; max-width: 100%;">
+    ${content}
+  </div>
+</body>
+</html>`);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 400);
+}
+
+function printAdjustedDocument() {
+  const printElem = document.getElementById('printableAdjustedSheet');
+  if (!printElem) {
+    window.print();
+    return;
+  }
+
+  const content = printElem.innerHTML;
+  const printWindow = window.open('', '_blank', 'width=1200,height=850');
+  if (!printWindow) {
+    window.print();
+    return;
+  }
+
+  const isF4 = selectedAdjustedPaperSize.value === 'f4';
+  const paperCssSize = isF4 ? '330mm 215mm' : '297mm 210mm';
+  const paperTitle = isF4 ? 'F4 / Folio' : 'A4';
+
+  printWindow.document.open();
+  printWindow.document.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Rekapitulasi Nilai Rapor Bebas Remedial (${paperTitle}) - ${activeExam.value?.title || 'Ujian'}</title>
+  <style>
+    @page {
+      size: ${paperCssSize};
+      margin: 8mm 8mm 8mm 8mm;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background: #ffffff !important;
+      color: #0f172a;
+      padding: 0;
+      margin: 0;
+      font-size: ${isF4 ? '11px' : '10px'};
+      line-height: 1.35;
+    }
+    .text-center { text-align: center; }
+    .text-left { text-align: left; }
+    .text-right { text-align: right; }
+    .font-bold { font-weight: bold; }
+    .font-semibold { font-weight: 600; }
+    .font-black { font-weight: 900; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .uppercase { text-transform: uppercase; }
+    .underline { text-decoration: underline; }
+    
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .justify-end { justify-content: flex-end; }
+    .items-center { align-items: center; }
+    .items-start { align-items: flex-start; }
+    .flex-1 { flex: 1 1 0%; }
+    .flex-shrink-0 { flex-shrink: 0; }
+    .gap-1 { gap: 4px; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+    .gap-5 { gap: 20px; }
+    .gap-8 { gap: 32px; }
+    .gap-x-8 { column-gap: 32px; }
+    .gap-y-1\\.5 { row-gap: 6px; }
+    .grid { display: grid; }
+    .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+    
+    .w-full { width: 100%; }
+    .w-10 { width: 40px; }
+    .w-12 { width: 48px; }
+    .w-14 { width: 56px; }
+    .w-18 { width: 72px; }
+    .w-20 { width: 80px; }
+    .w-24 { width: 96px; }
+    .w-28 { width: 112px; }
+    .w-32 { width: 128px; }
+    .w-36 { width: 144px; }
+    .h-18 { height: 72px; }
+    .h-20 { height: 80px; }
+    
+    .p-2 { padding: 8px; }
+    .p-3 { padding: 12px; }
+    .p-4 { padding: 16px; }
+    .px-2 { padding-left: 8px; padding-right: 8px; }
+    .px-3 { padding-left: 12px; padding-right: 12px; }
+    .px-4 { padding-left: 16px; padding-right: 16px; }
+    .py-0\\.5 { padding-top: 2px; padding-bottom: 2px; }
+    .py-1 { padding-top: 4px; padding-bottom: 4px; }
+    .py-1\\.5 { padding-top: 6px; padding-bottom: 6px; }
+    .py-2 { padding-top: 8px; padding-bottom: 8px; }
+    .py-3 { padding-top: 12px; padding-bottom: 12px; }
+    .pb-3 { padding-bottom: 12px; }
+    .pt-1 { padding-top: 4px; }
+    .pt-4 { padding-top: 16px; }
+    .pt-6 { padding-top: 24px; }
+    .mb-4 { margin-bottom: 16px; }
+    .pr-6 { padding-right: 24px; }
+    .pr-14 { padding-right: 56px; }
+    
+    .border { border: 1px solid #cbd5e1; }
+    .border-b { border-bottom: 1px solid #cbd5e1; }
+    .border-b-4 { border-bottom: 4px double #0f172a; }
+    .border-double { border-style: double; }
+    .border-slate-200 { border-color: #e2e8f0; }
+    .border-slate-300 { border-color: #cbd5e1; }
+    .border-slate-400 { border-color: #94a3b8; }
+    .border-slate-900 { border-color: #0f172a; }
+    .border-teal-300 { border-color: #5eead4; }
+    .border-emerald-200 { border-color: #a7f3d0; }
+    .border-emerald-300 { border-color: #6ee7b7; }
+    .border-amber-200 { border-color: #fde68a; }
+    
+    .rounded { border-radius: 4px; }
+    .rounded-lg { border-radius: 8px; }
+    .rounded-xl { border-radius: 12px; }
+    .rounded-2xl { border-radius: 16px; }
+    
+    .bg-white { background-color: #ffffff; }
+    .bg-slate-50 { background-color: #f8fafc; }
+    .bg-slate-100 { background-color: #f1f5f9; }
+    .bg-teal-800 { background-color: #115e59; }
+    .bg-teal-100 { background-color: #ccfbf1; }
+    .bg-emerald-50 { background-color: #ecfdf5; }
+    .bg-emerald-100 { background-color: #d1fae5; }
+    .bg-amber-50 { background-color: #fffbeb; }
+    .bg-amber-50\\/50 { background-color: rgba(255, 251, 235, 0.5); }
+    
+    .text-white { color: #ffffff; }
+    .text-slate-400 { color: #94a3b8; }
+    .text-slate-500 { color: #64748b; }
+    .text-slate-600 { color: #475569; }
+    .text-slate-700 { color: #334155; }
+    .text-slate-800 { color: #1e293b; }
+    .text-slate-900 { color: #0f172a; }
+    .text-teal-700 { color: #0f766e; }
+    .text-teal-800 { color: #115e59; }
+    .text-teal-900 { color: #134e4a; }
+    .text-emerald-700 { color: #047857; }
+    .text-emerald-800 { color: #065f46; }
+    .text-emerald-900 { color: #064e3b; }
+    .text-amber-800 { color: #92400e; }
+    .text-amber-900 { color: #78350f; }
+    .text-rose-600 { color: #e11d48; }
+    
+    .text-xs { font-size: 10px; }
+    .text-sm { font-size: 11px; }
+    .text-base { font-size: 13px; }
+    .text-lg { font-size: 15px; }
+    .text-xl { font-size: 17px; }
+    .text-2xl { font-size: 19px; }
+    .text-\\[9px\\] { font-size: 9px; }
+    .text-\\[10px\\] { font-size: 10px; }
+    .text-\\[11px\\] { font-size: 11px; }
+    
+    table {
+      width: 100% !important;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    th, td {
+      border: 1px solid #94a3b8;
+      padding: 4px 6px;
+    }
+    thead {
+      display: table-header-group;
+    }
+    tr {
+      page-break-inside: avoid;
     }
     img {
       max-width: 100%;
