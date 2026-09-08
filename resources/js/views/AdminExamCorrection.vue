@@ -170,11 +170,19 @@
                 <div class="flex items-center justify-end gap-1.5">
                   <button
                     @click="inspectExam(exam.id)"
-                    title="Lihat Detail & Analisis Butir Soal"
+                    title="Lihat Detail & Opsi Cetak Lengkap"
                     class="px-3 py-1.5 bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer"
                   >
                     <Eye class="w-3.5 h-3.5" />
                     <span>Detail</span>
+                  </button>
+
+                  <button
+                    @click="openRecapPrint(exam.id)"
+                    title="Cetak Cepat Rekap Nilai Ujian"
+                    class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <Printer class="w-4 h-4" />
                   </button>
 
                   <button
@@ -278,17 +286,57 @@
           </div>
         </div>
 
-        <div class="px-8 py-5 bg-slate-50/80 border-t border-slate-100 flex justify-between items-center">
+        <div class="px-6 sm:px-8 py-4 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-3">
+          <div class="flex items-center gap-2 flex-wrap w-full md:w-auto">
+            <!-- Tombol 1: Cetak Nilai Asli -->
+            <button
+              type="button"
+              @click="openRecapPrint(selectedExamDetail?.id)"
+              class="px-4 py-2 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+              title="Cetak lembar rekapitulasi nilai koreksi asli & arsip nilai murni"
+            >
+              <Printer class="w-4 h-4" />
+              <span>Cetak Nilai Asli</span>
+            </button>
+
+            <!-- Tombol 2: Cetak Nilai Jadi (Rapor) -->
+            <button
+              type="button"
+              @click="openAdjustedPrint(selectedExamDetail?.id)"
+              class="px-4 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-sm shadow-amber-500/20 cursor-pointer"
+              title="Cetak lembar nilai jadi standar rapor bebas remedial (100% tuntas)"
+            >
+              <Award class="w-4 h-4" />
+              <span>Cetak Nilai Jadi (Rapor)</span>
+            </button>
+
+            <!-- Tombol 3: Cetak Analisis & Grafik -->
+            <button
+              type="button"
+              @click="openAnalysisPrint(selectedExamDetail?.id)"
+              class="px-4 py-2 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-sm shadow-teal-600/20 cursor-pointer"
+              title="Cetak laporan analisis butir soal lengkap dengan visual grafik daya serap"
+            >
+              <BarChart2 class="w-4 h-4" />
+              <span>Cetak Analisis & Grafik</span>
+            </button>
+
+            <!-- Tombol 4: Download Excel -->
+            <button
+              type="button"
+              @click="downloadExcel(selectedExamDetail?.id)"
+              class="px-3.5 py-2 bg-emerald-100 hover:bg-emerald-200 active:scale-95 text-emerald-800 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+              title="Download rekap nilai kelas format Excel (.xlsx)"
+            >
+              <Download class="w-4 h-4" />
+              <span>Excel</span>
+            </button>
+          </div>
+
           <button
-            @click="downloadExcel(selectedExamDetail?.id)"
-            class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-          >
-            <Download class="w-4 h-4" />
-            <span>Download Rekap Nilai Kelas Ini</span>
-          </button>
-          <button
+            type="button"
             @click="showDetailModal = false"
-            class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+            class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer w-full md:w-auto"
           >
             Tutup
           </button>
@@ -432,6 +480,19 @@
         </form>
       </div>
     </div>
+
+    <!-- COMPONENT PRINT MODALS UNTUK KURIKULUM / ADMIN -->
+    <ExamCorrectionPrintModals
+      v-model:show-recap="showRecapPrintModal"
+      v-model:show-adjusted="showAdjustedPrintModal"
+      v-model:show-analysis="showAnalysisPrintModal"
+      :exam="printExamData"
+      :questions="printQuestions"
+      :students="printStudents"
+      :school-profile="printSchoolProfile"
+      :analysis-data="printAnalysisData"
+      id-prefix="admin"
+    />
   </div>
 </template>
 
@@ -440,6 +501,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { api } from '../api';
 import { useToast } from '../composables/useToast';
+import ExamCorrectionPrintModals from '../components/ExamCorrectionPrintModals.vue';
 import {
   CheckSquare,
   BookOpen,
@@ -452,7 +514,9 @@ import {
   Eye,
   FileSpreadsheet,
   Settings,
-  X
+  X,
+  Printer,
+  BarChart2
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -471,6 +535,17 @@ const searchQuery = ref('');
 const showDetailModal = ref(false);
 const selectedExamDetail = ref(null);
 const inspectAnalysis = ref(null);
+
+// Print Preview States untuk Kurikulum & Admin
+const showRecapPrintModal = ref(false);
+const showAdjustedPrintModal = ref(false);
+const showAnalysisPrintModal = ref(false);
+const printExamData = ref(null);
+const printQuestions = ref([]);
+const printStudents = ref([]);
+const printSchoolProfile = ref(null);
+const printAnalysisData = ref(null);
+const printLoading = ref(false);
 
 const showSettingsModal = ref(false);
 const savingSettings = ref(false);
@@ -576,10 +651,64 @@ async function inspectExam(id) {
     const dExam = detailRes?.data || detailRes || {};
     selectedExamDetail.value = dExam.exam || dExam;
     inspectAnalysis.value = analysisRes?.data || analysisRes;
+
+    // Siapkan data cetak sekaligus
+    printExamData.value = dExam.exam || dExam;
+    printQuestions.value = dExam.questions || [];
+    printStudents.value = dExam.students || [];
+    printSchoolProfile.value = dExam.school_profile || null;
+    printAnalysisData.value = analysisRes?.data || analysisRes || null;
+
     showDetailModal.value = true;
   } catch (err) {
     toast.error('Gagal memuat detail analisis ujian.');
   }
+}
+
+async function loadExamForPrint(id) {
+  if (printExamData.value?.id === id && printStudents.value?.length > 0) {
+    return true;
+  }
+  printLoading.value = true;
+  try {
+    const [detailRes, analysisRes] = await Promise.all([
+      api.get(`/teacher/exam-corrections/${id}`),
+      api.get(`/teacher/exam-corrections/${id}/analysis`)
+    ]);
+    const dExam = detailRes?.data || detailRes || {};
+    printExamData.value = dExam.exam || dExam;
+    printQuestions.value = dExam.questions || [];
+    printStudents.value = dExam.students || [];
+    printSchoolProfile.value = dExam.school_profile || null;
+    printAnalysisData.value = analysisRes?.data || analysisRes || null;
+    return true;
+  } catch (err) {
+    toast.error('Gagal memuat data dokumen cetak ujian.');
+    return false;
+  } finally {
+    printLoading.value = false;
+  }
+}
+
+async function openRecapPrint(id) {
+  const targetId = id || selectedExamDetail.value?.id;
+  if (!targetId) return;
+  const ok = await loadExamForPrint(targetId);
+  if (ok) showRecapPrintModal.value = true;
+}
+
+async function openAdjustedPrint(id) {
+  const targetId = id || selectedExamDetail.value?.id;
+  if (!targetId) return;
+  const ok = await loadExamForPrint(targetId);
+  if (ok) showAdjustedPrintModal.value = true;
+}
+
+async function openAnalysisPrint(id) {
+  const targetId = id || selectedExamDetail.value?.id;
+  if (!targetId) return;
+  const ok = await loadExamForPrint(targetId);
+  if (ok) showAnalysisPrintModal.value = true;
 }
 
 function downloadExcel(id) {
