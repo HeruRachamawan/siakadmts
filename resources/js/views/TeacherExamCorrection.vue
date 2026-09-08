@@ -615,19 +615,21 @@
       <!-- SUB-TAB 2: KOREKSI SISWA (FAST MATRIX) -->
       <div v-if="activeTab === 'grading'" class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 space-y-6">
         <!-- Action Toolbar -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-teal-50/60 rounded-2xl border border-teal-100">
-          <div>
-            <h3 class="text-xs font-black text-teal-950 uppercase tracking-wider">🎯 Mode Koreksi Siswa (Cepat & Detail)</h3>
-            <p class="text-xs text-teal-700 mt-0.5 font-medium">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-5 bg-teal-50/60 rounded-2xl border border-teal-100">
+          <div class="space-y-1">
+            <h3 class="text-xs sm:text-sm font-black text-teal-950 uppercase tracking-wider flex items-center gap-1.5">
+              <span>🎯</span> Mode Koreksi Siswa (Cepat & Detail)
+            </h3>
+            <p class="text-[11px] sm:text-xs text-teal-700 font-medium leading-relaxed">
               Ketik deretan jawaban di kolom, atau klik tombol <strong class="text-teal-900 bg-white px-1.5 py-0.5 rounded border border-teal-200">Form Jawaban</strong>. Untuk siswa remedial, ketik nilai perbaikan pada kolom <strong class="text-teal-900">Nilai Remedial</strong> lalu klik <strong class="text-teal-900">Simpan & Hitung Koreksi</strong>.
             </p>
           </div>
 
-          <div class="flex items-center gap-2 flex-wrap flex-shrink-0">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-shrink-0 w-full md:w-auto">
             <button
               @click="openPrintPreview"
               type="button"
-              class="px-4 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold rounded-2xl text-xs transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              class="px-4 py-2.5 sm:py-3 bg-white hover:bg-slate-50 active:scale-98 text-slate-700 border border-slate-200 font-bold rounded-2xl text-xs transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto"
               title="Buka Lembar Cetak Rekap Capaian Kelas per Bentuk Soal (Konsep 1)"
             >
               <Printer class="w-4 h-4 text-emerald-600" />
@@ -637,7 +639,7 @@
             <button
               type="button"
               @click="resetAllCorrections"
-              class="px-4 py-3 bg-white hover:bg-rose-50 text-rose-600 hover:text-rose-700 border border-slate-200 hover:border-rose-200 font-bold rounded-2xl text-xs transition-all shadow-sm flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+              class="px-4 py-2.5 sm:py-3 bg-white hover:bg-rose-50 active:scale-98 text-rose-600 hover:text-rose-700 border border-slate-200 hover:border-rose-200 font-bold rounded-2xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0 w-full sm:w-auto"
               title="Kosongkan seluruh koreksi dan nilai siswa pada ujian ini"
             >
               <RotateCcw class="w-4 h-4" />
@@ -647,7 +649,7 @@
             <button
               @click="submitAllGrades"
               :disabled="gradingProcessing"
-              class="px-7 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-2xl text-xs transition-all shadow-md shadow-teal-600/20 flex items-center gap-2 cursor-pointer disabled:opacity-50 flex-shrink-0"
+              class="px-6 sm:px-7 py-2.5 sm:py-3 bg-teal-600 hover:bg-teal-700 active:scale-98 text-white font-bold rounded-2xl text-xs transition-all shadow-md shadow-teal-600/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 flex-shrink-0 w-full sm:w-auto"
             >
               <Zap class="w-4 h-4" />
               <span>{{ gradingProcessing ? 'Memproses Koreksi...' : 'Simpan & Hitung Koreksi' }}</span>
@@ -661,18 +663,18 @@
             <thead class="bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100">
               <tr>
                 <th class="px-4 py-3.5 w-12 text-center">No</th>
-                <th class="px-4 py-3.5">Nama Siswa</th>
-                <th class="px-4 py-3.5">
+                <th class="px-4 py-3.5 min-w-[160px] sm:min-w-[180px]">Nama Siswa</th>
+                <th class="px-4 py-3.5 min-w-[340px] sm:min-w-[420px]">
                   <div>Jawaban PG Biasa ({{ pgBiasaQuestionsCount }} Butir)</div>
                   <span v-if="hasComplexQuestions" class="text-[9px] font-normal text-teal-700 normal-case block">
                     *Gunakan tombol "Form Jawaban" untuk PGK, Menjodohkan, B/S & Isian
                   </span>
                 </th>
-                <th v-if="essayQuestionsCount > 0" class="px-4 py-3.5 text-center">Nilai Uraian / Essay</th>
-                <th class="px-4 py-3.5 text-center">Benar / Salah</th>
-                <th class="px-4 py-3.5 text-center">Nilai Ujian</th>
-                <th class="px-4 py-3.5 text-center">Nilai Remedial</th>
-                <th class="px-4 py-3.5 text-center">Status</th>
+                <th v-if="essayQuestionsCount > 0" class="px-4 py-3.5 text-center min-w-[130px]">Nilai Uraian / Essay</th>
+                <th class="px-4 py-3.5 text-center min-w-[90px]">Benar / Salah</th>
+                <th class="px-4 py-3.5 text-center min-w-[80px]">Nilai Ujian</th>
+                <th class="px-4 py-3.5 text-center min-w-[100px]">Nilai Remedial</th>
+                <th class="px-4 py-3.5 text-center min-w-[90px]">Status</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -682,23 +684,24 @@
                   <div class="font-bold text-slate-800 font-lexend">{{ student.name }}</div>
                   <div class="text-[10px] text-slate-400 font-mono">NISN: {{ student.nisn || '-' }} • {{ student.gender === 'L' ? 'Laki-laki' : 'Perempuan' }}</div>
                 </td>
-                <td class="px-4 py-3">
-                  <div class="flex items-center gap-1.5">
+                <td class="px-4 py-3 min-w-[340px] sm:min-w-[420px]">
+                  <div class="flex items-center gap-1 sm:gap-1.5 flex-nowrap">
                     <button
                       type="button"
                       @click="openStudentModal(student, idx)"
-                      class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 shadow-2xs"
+                      class="px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer flex-shrink-0 shadow-2xs active:scale-95"
                       :class="hasComplexQuestions ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-teal-600/20' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'"
                       :title="hasComplexQuestions ? 'Buka form interaktif untuk mengisi PGK, B/S, Menjodohkan, Isian' : 'Buka form jawaban lengkap'"
                     >
                       <FileText class="w-3.5 h-3.5" />
-                      <span>{{ hasComplexQuestions ? 'Form Jawaban' : 'Detail' }}</span>
+                      <span class="hidden sm:inline">{{ hasComplexQuestions ? 'Form Jawaban' : 'Detail' }}</span>
+                      <span class="sm:hidden text-[11px]">Form</span>
                     </button>
 
                     <button
                       type="button"
                       @click="fillStudentWithKKM(student)"
-                      class="p-1.5 rounded-xl bg-slate-100 hover:bg-amber-50 text-slate-400 hover:text-amber-600 border border-slate-200 hover:border-amber-200 transition-all cursor-pointer flex-shrink-0"
+                      class="p-1.5 sm:p-2 rounded-xl bg-slate-100 hover:bg-amber-50 active:scale-95 text-slate-500 hover:text-amber-600 border border-slate-200 hover:border-amber-200 transition-all cursor-pointer flex-shrink-0"
                       :title="`Isi jawaban siswa ini pas dengan KKM (${activeExam?.kkm || 75})`"
                     >
                       <Target class="w-3.5 h-3.5" />
@@ -707,7 +710,7 @@
                     <button
                       type="button"
                       @click="fillStudentWithAnswerKeys(student)"
-                      class="p-1.5 rounded-xl bg-slate-100 hover:bg-teal-50 text-slate-400 hover:text-teal-700 border border-slate-200 hover:border-teal-200 transition-all cursor-pointer flex-shrink-0"
+                      class="p-1.5 sm:p-2 rounded-xl bg-slate-100 hover:bg-teal-50 active:scale-95 text-slate-500 hover:text-teal-700 border border-slate-200 hover:border-teal-200 transition-all cursor-pointer flex-shrink-0"
                       title="Salin 100% kunci jawaban lengkap ke siswa ini"
                     >
                       <Sparkles class="w-3.5 h-3.5" />
@@ -716,7 +719,7 @@
                     <button
                       type="button"
                       @click="resetStudentCorrection(student)"
-                      class="p-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 hover:border-rose-200 transition-all cursor-pointer flex-shrink-0"
+                      class="p-1.5 sm:p-2 rounded-xl bg-slate-100 hover:bg-rose-50 active:scale-95 text-slate-500 hover:text-rose-600 border border-slate-200 hover:border-rose-200 transition-all cursor-pointer flex-shrink-0"
                       title="Kosongkan / Reset koreksi dan nilai siswa ini"
                     >
                       <RotateCcw class="w-3.5 h-3.5" />
@@ -729,9 +732,9 @@
                       :maxlength="pgBiasaQuestionsCount"
                       :placeholder="pgBiasaQuestionsCount > 0 ? `Ketik ${pgBiasaQuestionsCount} jawaban PG...` : 'Gunakan Form Jawaban'"
                       :disabled="pgBiasaQuestionsCount === 0"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 tracking-widest uppercase focus:ring-2 focus:ring-teal-400 disabled:opacity-40"
+                      class="w-full min-w-[80px] bg-slate-50 border border-slate-200 rounded-xl px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-mono font-bold text-slate-800 tracking-widest uppercase focus:ring-2 focus:ring-teal-400 disabled:opacity-40"
                     />
-                    <span class="text-[10px] font-mono text-slate-400 font-bold flex-shrink-0 w-12 text-right">
+                    <span class="text-[10px] font-mono text-slate-400 font-bold flex-shrink-0 w-10 sm:w-12 text-right">
                       {{ (student.answer_string || '').length }}/{{ pgBiasaQuestionsCount }}
                     </span>
                   </div>
@@ -1386,29 +1389,29 @@
     <div v-if="showStudentModal && selectedStudent" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
       <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
         <!-- Modal Header -->
-        <div class="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/70 flex-shrink-0">
+        <div class="px-4 sm:px-8 py-4 sm:py-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/70 flex-shrink-0">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-teal-600/20 font-lexend">
+            <div class="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-teal-600/20 font-lexend flex-shrink-0">
               {{ selectedStudentIndex + 1 }}
             </div>
             <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <h2 class="text-base font-black text-slate-800 font-lexend">{{ selectedStudent.name }}</h2>
-                <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700">NISN: {{ selectedStudent.nisn || '-' }}</span>
+              <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <h2 class="text-sm sm:text-base font-black text-slate-800 font-lexend">{{ selectedStudent.name }}</h2>
+                <span class="text-[10px] sm:text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700">NISN: {{ selectedStudent.nisn || '-' }}</span>
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" :class="selectedStudent.gender === 'L' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'">
                   {{ selectedStudent.gender === 'L' ? 'Laki-laki' : 'Perempuan' }}
                 </span>
               </div>
-              <p class="text-xs text-slate-400 font-medium mt-0.5">Siswa ke-{{ selectedStudentIndex + 1 }} dari {{ activeStudents.length }} siswa • Kelas {{ activeExam?.class_room?.name }}</p>
+              <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5">Siswa ke-{{ selectedStudentIndex + 1 }} dari {{ activeStudents.length }} siswa • Kelas {{ activeExam?.class_room?.name }}</p>
             </div>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-between sm:justify-end">
             <button
               type="button"
               @click="prevStudent"
               :disabled="selectedStudentIndex <= 0"
-              class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all disabled:opacity-30 cursor-pointer flex items-center gap-1 shadow-2xs"
+              class="px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 text-xs font-bold transition-all disabled:opacity-30 cursor-pointer flex items-center gap-1 shadow-2xs"
             >
               <ChevronLeft class="w-4 h-4" />
               <span>Sebelumnya</span>
@@ -1418,7 +1421,7 @@
               type="button"
               @click="nextStudent"
               :disabled="selectedStudentIndex >= activeStudents.length - 1"
-              class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all disabled:opacity-30 cursor-pointer flex items-center gap-1 shadow-2xs"
+              class="px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 text-xs font-bold transition-all disabled:opacity-30 cursor-pointer flex items-center gap-1 shadow-2xs"
             >
               <span>Berikutnya</span>
               <ChevronRight class="w-4 h-4" />
@@ -1426,7 +1429,7 @@
 
             <button
               @click="closeStudentModal"
-              class="w-9 h-9 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors border border-slate-100 shadow-sm cursor-pointer ml-2"
+              class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors border border-slate-100 shadow-sm cursor-pointer ml-1 sm:ml-2"
             >
               <X class="w-4 h-4" />
             </button>
@@ -1570,42 +1573,44 @@
         </div>
 
         <!-- Modal Footer -->
-        <div class="px-8 py-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50/50 flex-shrink-0">
-          <span class="text-xs text-slate-400 font-medium">Jawaban disimpan ke draft lembar koreksi. Klik "Simpan & Hitung Koreksi" untuk menghitung nilai.</span>
-          <div class="flex items-center gap-2 flex-wrap">
+        <div class="px-4 sm:px-8 py-3.5 sm:py-4 border-t border-slate-100 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 bg-slate-50/50 flex-shrink-0">
+          <span class="text-[11px] sm:text-xs text-slate-400 font-medium text-center md:text-left">
+            Jawaban otomatis tersimpan ke draft. Klik "Simpan & Hitung Koreksi" di tabel utama untuk memproses nilai.
+          </span>
+          <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full md:w-auto">
             <button
               type="button"
               @click="fillStudentWithKKM(selectedStudent)"
-              class="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              class="px-3 sm:px-4 py-2 sm:py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
               :title="`Isi jawaban siswa ini otomatis pas dengan batas KKM (${activeExam?.kkm || 75})`"
             >
               <Target class="w-3.5 h-3.5 text-amber-600" />
-              <span>Isi Pas KKM ({{ activeExam?.kkm || 75 }})</span>
+              <span>Pas KKM ({{ activeExam?.kkm || 75 }})</span>
             </button>
             <button
               type="button"
               @click="fillStudentWithAnswerKeys(selectedStudent)"
-              class="px-4 py-2.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              class="px-3 sm:px-4 py-2 sm:py-2.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
               title="Salin 100% kunci jawaban lengkap (PG, PG Kompleks, Menjodohkan, Uraian) ke siswa ini"
             >
               <Sparkles class="w-3.5 h-3.5 text-teal-600" />
-              <span>Salin dari Kunci Jawaban</span>
+              <span class="truncate">Salin Kunci</span>
             </button>
             <button
               type="button"
               @click="resetStudentCorrection(selectedStudent)"
-              class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              class="px-3 sm:px-4 py-2 sm:py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
               title="Kosongkan seluruh koreksi dan nilai siswa ini"
             >
               <RotateCcw class="w-3.5 h-3.5 text-rose-600" />
-              <span>Kosongkan / Reset</span>
+              <span>Reset Siswa</span>
             </button>
             <button
               type="button"
               @click="closeStudentModal"
-              class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              class="px-4 sm:px-5 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center active:scale-95"
             >
-              Selesai & Tutup
+              Tutup
             </button>
           </div>
         </div>
@@ -1867,6 +1872,7 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { api } from '../api';
 import { useToast } from '../composables/useToast';
+import { useConfirm } from '../composables/useConfirm';
 import {
   CheckSquare,
   PlusCircle,
@@ -1897,6 +1903,7 @@ import {
 } from 'lucide-vue-next';
 
 const toast = useToast();
+const { confirm } = useConfirm();
 
 const loading = ref(false);
 const exams = ref([]);
@@ -2120,22 +2127,29 @@ function addQuestion(type = 'pg') {
   toast.success(`Butir soal No. ${newNum} (${questionTypeLabel(type)}) berhasil ditambahkan! Silakan klik "Simpan Format & Kunci".`);
 }
 
-function removeQuestion(qNum) {
+async function removeQuestion(qNum) {
   if (activeQuestions.value.length <= 1) {
     toast.error('Minimal harus ada 1 butir soal dalam paket ujian.');
     return;
   }
-  if (confirm(`Apakah Anda yakin ingin menghapus butir soal No. ${qNum}?`)) {
-    activeQuestions.value = activeQuestions.value.filter(q => q.question_number !== qNum);
-    // Renumber sequentially
-    activeQuestions.value.forEach((q, idx) => {
-      q.question_number = idx + 1;
-    });
-    if (activeExam.value) {
-      activeExam.value.total_questions = activeQuestions.value.length;
-    }
-    toast.info(`Nomor ${qNum} dihapus. Nomor soal diurutkan kembali (Total: ${activeQuestions.value.length} butir).`);
+  const isConfirmed = await confirm({
+    title: 'Hapus Butir Soal',
+    message: `Apakah Anda yakin ingin menghapus butir soal No. ${qNum}? Penomoran soal lainnya akan diurutkan kembali secara otomatis.`,
+    type: 'danger',
+    confirmText: 'Ya, Hapus Soal',
+    cancelText: 'Batal'
+  });
+  if (!isConfirmed) return;
+
+  activeQuestions.value = activeQuestions.value.filter(q => q.question_number !== qNum);
+  // Renumber sequentially
+  activeQuestions.value.forEach((q, idx) => {
+    q.question_number = idx + 1;
+  });
+  if (activeExam.value) {
+    activeExam.value.total_questions = activeQuestions.value.length;
   }
+  toast.info(`Nomor ${qNum} dihapus. Nomor soal diurutkan kembali (Total: ${activeQuestions.value.length} butir).`);
 }
 
 function onQuestionTypeChange(q) {
@@ -2515,11 +2529,17 @@ async function resetStudentCorrection(student) {
     return;
   }
 
-  const msg = hasSavedSubmission
-    ? `Kosongkan semua hasil koreksi dan nilai untuk "${student.name}"? Data jawaban dan nilai siswa ini akan dihapus dari server.`
-    : `Kosongkan draft jawaban untuk "${student.name}"?`;
+  const isConfirmed = await confirm({
+    title: 'Kosongkan Koreksi Siswa',
+    message: hasSavedSubmission
+      ? `Kosongkan semua hasil koreksi dan nilai untuk "${student.name}"? Data lembar jawaban dan nilai siswa ini akan dihapus dari server.`
+      : `Kosongkan draft jawaban untuk "${student.name}"?`,
+    type: 'danger',
+    confirmText: 'Ya, Kosongkan',
+    cancelText: 'Batal'
+  });
 
-  if (!confirm(msg)) return;
+  if (!isConfirmed) return;
 
   if (hasSavedSubmission && activeExam.value?.id) {
     try {
@@ -2550,9 +2570,15 @@ async function resetStudentCorrection(student) {
 
 async function resetAllCorrections() {
   if (!activeExam.value?.id) return;
-  if (!confirm(`Apakah Anda yakin ingin mengosongkan/mereset SEMUA hasil koreksi siswa untuk ujian "${activeExam.value.title}"? Semua lembar jawaban dan nilai siswa pada ujian ini akan dihapus.`)) {
-    return;
-  }
+  const isConfirmed = await confirm({
+    title: 'Reset Semua Koreksi Siswa',
+    message: `Apakah Anda yakin ingin mengosongkan/mereset SEMUA hasil koreksi siswa untuk ujian "${activeExam.value.title}"? Semua lembar jawaban dan nilai siswa pada ujian ini akan dihapus dari sistem.`,
+    type: 'danger',
+    confirmText: 'Ya, Reset Semua',
+    cancelText: 'Batal'
+  });
+
+  if (!isConfirmed) return;
 
   try {
     await api.post(`/teacher/exam-corrections/${activeExam.value.id}/reset-all`);
@@ -2851,14 +2877,21 @@ function downloadExcel(id) {
 }
 
 async function confirmDelete(exam) {
-  if (confirm(`Apakah mase yakin ingin menghapus paket ujian "${exam.title}"? Semua data jawaban & nilai ujian ini akan ikut terhapus.`)) {
-    try {
-      await api.delete(`/teacher/exam-corrections/${exam.id}`);
-      toast.success('Paket ujian berhasil dihapus.');
-      fetchExams();
-    } catch (err) {
-      toast.error('Gagal menghapus ujian.');
-    }
+  const isConfirmed = await confirm({
+    title: 'Hapus Paket Ujian',
+    message: `Apakah mase yakin ingin menghapus paket ujian "${exam.title}"? Semua butir soal, data lembar jawaban & nilai ujian ini akan ikut terhapus permanen.`,
+    type: 'danger',
+    confirmText: 'Ya, Hapus Paket Ujian',
+    cancelText: 'Batal'
+  });
+  if (!isConfirmed) return;
+
+  try {
+    await api.delete(`/teacher/exam-corrections/${exam.id}`);
+    toast.success('Paket ujian berhasil dihapus.');
+    fetchExams();
+  } catch (err) {
+    toast.error('Gagal menghapus ujian.');
   }
 }
 
