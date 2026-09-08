@@ -3458,19 +3458,10 @@ async function exportToWord() {
     }
   }
 
-  // Siapkan markup logo yang kompatibel dengan Word & VML
+  // Siapkan markup logo tunggal yang bersih & kompatibel
   let logoImgHtml = '';
   if (logoData) {
-    logoImgHtml = `
-      <!--[if gte vml 1]>
-      <v:shape style="width:65pt;height:65pt;" coordsize="21600,21600">
-        <v:imagedata src="logo_madrasah.png" title="Logo Madrasah"/>
-      </v:shape>
-      <![endif]-->
-      <![if !vml]>
-      <img width="80" height="80" src="logo_madrasah.png" style="width:80px;height:80px;object-fit:contain;" alt="Logo Madrasah" />
-      <![endif]>
-    `;
+    logoImgHtml = `<img width="80" height="80" src="logo_madrasah.png" style="width:80px;height:80px;object-fit:contain;" alt="Logo Madrasah" />`;
   } else {
     logoImgHtml = `<div style="width: 70px; height: 70px; line-height: 70px; text-align: center; background-color: #000000; color: #ffffff; font-weight: 900; font-size: 16pt; border-radius: 6px;">MTS</div>`;
   }
@@ -3553,8 +3544,7 @@ async function exportToWord() {
 
   // 4. HTML Template Dokumen Resmi dengan Standar Word (Tegas & Tebal)
   const wordHtml = `
-<html xmlns:v="urn:schemas-microsoft-com:vml"
-      xmlns:o="urn:schemas-microsoft-com:office:office"
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
       xmlns:w="urn:schemas-microsoft-com:office:word"
       xmlns="http://www.w3.org/TR/REC-html40">
 <head>
@@ -3589,13 +3579,13 @@ async function exportToWord() {
 </head>
 <body style="font-family: Arial, Helvetica, sans-serif; color: #000000; margin: 0; padding: 0;">
   <div class="Section1">
-    <!-- 1. KOP RESMI MADRASAH -->
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: none; width: 100%;">
+    <!-- 1. KOP RESMI MADRASAH DENGAN GARIS GANDA RAPAT -->
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: none; width: 100%; margin-bottom: 8pt;">
       <tr>
-        <td width="90" align="center" valign="middle" style="padding-right: 12pt; border: none;">
+        <td width="90" align="center" valign="middle" style="padding-right: 12pt; padding-bottom: 8pt; border: none;">
           ${logoImgHtml}
         </td>
-        <td align="center" valign="middle" style="border: none; text-align: center;">
+        <td align="center" valign="middle" style="border: none; text-align: center; padding-bottom: 8pt;">
           <div style="font-size: 10pt; font-weight: bold; letter-spacing: 1.5pt; text-transform: uppercase; color: #000000;">
             ${schoolProfile.value?.school_foundation || 'YAYASAN PENDIDIKAN ISLAM AL-HASANAH'}
           </div>
@@ -3613,19 +3603,15 @@ async function exportToWord() {
           </div>
         </td>
       </tr>
-    </table>
-
-    <!-- GARIS GANDA KOP SURAT RESMI (BULLETPROOF UNTUK WORD) -->
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin-top: 4pt; margin-bottom: 8pt; width: 100%;">
       <tr>
-        <td style="border: none; border-top: 1.5pt solid #000000; border-bottom: 3pt solid #000000; height: 2pt; font-size: 1pt; line-height: 1pt; padding: 0;">&nbsp;</td>
+        <td colspan="2" style="border: none; border-bottom: 3px double #000000; mso-border-bottom-alt: double windowtext 2.25pt; height: 2pt; font-size: 1pt; line-height: 1pt; padding: 0;">&nbsp;</td>
       </tr>
     </table>
 
-    <!-- 2. JUDUL LEMBAR REKAPITULASI -->
-    <div style="text-align: center; margin-bottom: 8pt;">
-      <div style="font-size: 12pt; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5pt; text-decoration: underline; color: #000000;">
-        LEMBAR REKAPITULASI CAPAIAN NILAI ASESMEN PER BENTUK SOAL
+    <!-- 2. JUDUL LEMBAR REKAPITULASI (UNDERLINE RAPAT PADA TEKS) -->
+    <div style="text-align: center; margin-top: 10pt; margin-bottom: 10pt;">
+      <div style="font-size: 12pt; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5pt; color: #000000;">
+        <u>LEMBAR REKAPITULASI CAPAIAN NILAI ASESMEN PER BENTUK SOAL</u>
       </div>
       <div style="font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #000000; margin-top: 3pt;">
         ${getExamTypeFullName(activeExam.value.exam_type)} • SEMESTER ${(activeExam.value.semester || 'ganjil').toUpperCase()} • TAHUN PELAJARAN ${activeExam.value.academic_year?.name || '2024/2025'}
