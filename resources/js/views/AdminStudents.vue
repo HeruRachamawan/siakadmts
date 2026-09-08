@@ -97,6 +97,16 @@
         <table class="w-full text-left">
           <thead>
             <tr class="border-b border-slate-100">
+              <th class="w-10 px-4 py-4 text-center">
+                <input
+                  type="checkbox"
+                  :checked="isAllSelected"
+                  :indeterminate="isPartiallySelected"
+                  @change="toggleSelectAll"
+                  class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                  title="Pilih Semua Siswa di Halaman Ini"
+                />
+              </th>
               <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">NO</th>
               <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">NAMA SISWA</th>
               <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">NISN / NIS / NIK</th>
@@ -106,7 +116,22 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-50">
-            <tr v-for="(row, index) in students" :key="row.id" class="hover:bg-slate-50/70 transition-colors">
+            <tr
+              v-for="(row, index) in students"
+              :key="row.id"
+              :class="selectedStudentIds.includes(row.id) ? 'bg-emerald-50/50' : 'hover:bg-slate-50/70'"
+              class="transition-colors"
+            >
+              <!-- Checkbox -->
+              <td class="w-10 px-4 py-4 text-center">
+                <input
+                  type="checkbox"
+                  :value="row.id"
+                  v-model="selectedStudentIds"
+                  class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                />
+              </td>
+
               <!-- NO -->
               <td class="px-6 py-4 text-sm font-bold text-slate-400">
                 {{ selectedPerPage === -1 ? index + 1 : (currentPage - 1) * selectedPerPage + index + 1 }}
@@ -152,6 +177,15 @@
               <!-- Actions -->
               <td class="px-6 py-4">
                 <div class="flex items-center justify-center gap-1.5">
+                  <!-- Pindah Kelas Siswa (Individual) -->
+                  <button
+                    @click="openTransferModal([row])"
+                    title="Pindahkan Siswa ke Kelas Lain"
+                    class="w-8 h-8 rounded-xl flex items-center justify-center bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 border border-indigo-200/80 transition-all shadow-2xs cursor-pointer"
+                  >
+                    <ArrowRightLeft class="w-3.5 h-3.5" />
+                  </button>
+
                   <!-- Login Sebagai Siswa (Khusus Super Admin) -->
                   <button
                     v-if="isAdminSuper"
@@ -203,7 +237,7 @@
 
             <!-- Empty state -->
             <tr v-if="!students.length">
-              <td colspan="6" class="px-6 py-16 text-center">
+              <td colspan="7" class="px-6 py-16 text-center">
                 <div class="flex flex-col items-center gap-2 text-slate-400">
                   <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-2">
                     <svg class="w-8 h-8 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
@@ -276,6 +310,142 @@
       @close="showImportModal = false"
       @success="load"
     />
+
+    <!-- Floating Bulk Action Bar -->
+    <Transition name="fade">
+      <div
+        v-if="selectedStudentIds.length > 0"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700/60 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-200 max-w-xl w-[92vw] sm:w-auto"
+      >
+        <div class="flex items-center gap-2.5">
+          <span class="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-xs sm:text-sm font-bold tracking-wide">
+            <strong>{{ selectedStudentIds.length }}</strong> siswa dipilih
+          </span>
+        </div>
+
+        <div class="h-4 w-px bg-slate-700"></div>
+
+        <div class="flex items-center gap-2">
+          <button
+            @click="openTransferModalFromSelection"
+            class="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+          >
+            <ArrowRightLeft class="w-3.5 h-3.5" />
+            <span>Pindahkan ke Kelas...</span>
+          </button>
+
+          <button
+            @click="selectedStudentIds = []"
+            class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium rounded-xl text-xs transition-all cursor-pointer"
+          >
+            Batal
+          </button>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Modal Pindah Kelas Siswa (Single & Bulk) -->
+    <Transition name="modal-fade">
+      <div v-if="showTransferModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 font-inter">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-xs" @click="showTransferModal = false"></div>
+
+        <div class="relative bg-white rounded-3xl p-6 shadow-2xl w-full max-w-lg flex flex-col space-y-5 border border-slate-100 animate-slide-up">
+          <!-- Header Modal -->
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200/80 flex items-center justify-center font-bold">
+                <ArrowRightLeft class="w-5 h-5" />
+              </div>
+              <div>
+                <h3 class="font-lexend font-black text-slate-800 text-lg uppercase tracking-wider">Pindahkan Siswa</h3>
+                <p class="text-xs text-slate-500 font-medium">Pindahkan siswa terpilih ke rombel/kelas baru</p>
+              </div>
+            </div>
+            <button @click="showTransferModal = false" class="text-slate-400 hover:text-slate-600 font-bold text-xl cursor-pointer">&times;</button>
+          </div>
+
+          <!-- Body Modal -->
+          <div class="space-y-4">
+            <!-- Siswa yang dipindahkan -->
+            <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Siswa yang Dipindahkan</span>
+                <span class="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">
+                  {{ transferStudentsList.length }} Siswa
+                </span>
+              </div>
+
+              <!-- Jika 1 siswa: tampilkan detail singkat -->
+              <div v-if="transferStudentsList.length === 1" class="flex items-center gap-3 pt-1">
+                <div class="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">
+                  {{ getInitials(transferStudentsList[0].full_name) }}
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-slate-800">{{ transferStudentsList[0].full_name }}</h4>
+                  <p class="text-xs text-slate-400">
+                    Kelas Sekarang: <strong class="text-slate-600">{{ transferStudentsList[0].class_name || transferStudentsList[0].classRoom?.name || '-' }}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Jika banyak siswa: pill list ringkas -->
+              <div v-else class="max-h-28 overflow-y-auto pr-1 flex flex-wrap gap-1.5 pt-1">
+                <span
+                  v-for="st in transferStudentsList"
+                  :key="st.id"
+                  class="inline-flex items-center gap-1 text-[11px] font-semibold bg-white border border-slate-200 text-slate-700 px-2.5 py-1 rounded-lg shadow-2xs"
+                >
+                  <span>{{ st.full_name }}</span>
+                  <span class="text-[10px] text-slate-400">({{ st.class_name || '-' }})</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Pilih Kelas Tujuan -->
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Pilih Kelas Tujuan <span class="text-rose-500">*</span>
+              </label>
+              <div class="relative">
+                <select
+                  v-model="targetClassId"
+                  class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-500 cursor-pointer shadow-xs"
+                >
+                  <option value="" disabled>-- Pilih Kelas Tujuan --</option>
+                  <option v-for="cls in classes" :key="cls.id" :value="cls.id">
+                    {{ cls.name }} (Tingkat: {{ cls.grade_level || '-' }} - Wali: {{ cls.homeroom_teacher?.full_name || cls.homeroomTeacher?.full_name || 'Belum ada' }})
+                  </option>
+                </select>
+              </div>
+              <p class="text-[11px] text-slate-400">
+                Siswa yang dipindahkan akan otomatis terdaftar di rombel kelas baru ini.
+              </p>
+            </div>
+          </div>
+
+          <!-- Footer Buttons -->
+          <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              @click="showTransferModal = false"
+              class="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              @click="executeTransfer"
+              :disabled="!targetClassId || submittingTransfer"
+              class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <svg v-if="submittingTransfer" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" stroke="currentColor" stroke-width="4" d="M4 12a8 8 0 1116 0 8 8 0 01-16 0m8-4v4l3 3m0-7l-3 3"></circle></svg>
+              <span>{{ submittingTransfer ? 'Memindahkan...' : 'Konfirmasi Pindahkan' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -291,7 +461,7 @@ import ExcelImportModal from '../components/ExcelImportModal.vue';
 import { useToast } from '../composables/useToast';
 import { useConfirm } from '../composables/useConfirm';
 import { useAuthStore } from '../stores/auth';
-import { Eye, Key, Pencil, Trash2, LogIn } from 'lucide-vue-next';
+import { Eye, Key, Pencil, Trash2, LogIn, ArrowRightLeft } from 'lucide-vue-next';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -374,6 +544,60 @@ const selectedPerPage = ref(10);
 const totalPages = ref(1);
 const totalRecords = ref(0);
 
+// Checkbox Multi-Selection
+const selectedStudentIds = ref([]);
+const isAllSelected = computed(() => {
+  if (!students.value.length) return false;
+  return students.value.every(s => selectedStudentIds.value.includes(s.id));
+});
+const isPartiallySelected = computed(() => {
+  return selectedStudentIds.value.length > 0 && !isAllSelected.value;
+});
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    selectedStudentIds.value = [];
+  } else {
+    selectedStudentIds.value = students.value.map(s => s.id);
+  }
+}
+
+// Transfer Class State
+const showTransferModal = ref(false);
+const transferStudentsList = ref([]);
+const targetClassId = ref('');
+const submittingTransfer = ref(false);
+
+function openTransferModal(selectedRows) {
+  transferStudentsList.value = selectedRows;
+  targetClassId.value = '';
+  showTransferModal.value = true;
+}
+
+function openTransferModalFromSelection() {
+  const selected = students.value.filter(s => selectedStudentIds.value.includes(s.id));
+  if (selected.length === 0) return;
+  openTransferModal(selected);
+}
+
+async function executeTransfer() {
+  if (!targetClassId.value || transferStudentsList.value.length === 0) return;
+  submittingTransfer.value = true;
+  try {
+    const res = await api.post('admin/students/transfer-class', {
+      student_ids: transferStudentsList.value.map(s => s.id),
+      target_class_id: targetClassId.value,
+    });
+    success(res?.message || 'Siswa berhasil dipindahkan ke kelas baru!');
+    showTransferModal.value = false;
+    selectedStudentIds.value = [];
+    await load();
+  } catch (err) {
+    showError(err.response?.data?.message || 'Gagal memindahkan siswa.');
+  } finally {
+    submittingTransfer.value = false;
+  }
+}
+
 const columns = [
   { label: 'Nama Siswa', field: 'full_name' },
   { label: 'NIS', field: 'nis' },
@@ -422,6 +646,7 @@ async function loadClasses() {
 
 async function load() {
   loading.value = true;
+  selectedStudentIds.value = [];
   try {
     const params = new URLSearchParams();
     if (selectedPerPage.value !== -1) {

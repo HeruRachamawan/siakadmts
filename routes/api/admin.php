@@ -53,6 +53,7 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::apiResource('calendar-events', \App\Http\Controllers\Admin\CalendarEventController::class);
     Route::get('students/template', [AdminStudentController::class, 'template'])->name('students.template');
     Route::post('students/import', [AdminStudentController::class, 'import'])->name('students.import');
+    Route::post('students/transfer-class', [AdminStudentController::class, 'transferClass'])->name('students.transfer-class');
     Route::apiResource('students', AdminStudentController::class);
     Route::post('students/{student}/reset-credentials', [AdminStudentController::class, 'resetCredentials'])
         ->name('students.reset-credentials');

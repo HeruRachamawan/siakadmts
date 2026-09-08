@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Api\BaseController;
+use App\Models\ClassRoom;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -423,5 +424,32 @@ class StudentController extends BaseController
             'user' => \App\Http\Controllers\Auth\AuthController::formatUserPayload($user),
             'impersonated' => true,
         ], "Berhasil masuk sebagai siswa {$student->full_name}");
+    }
+
+    /**
+     * Transfer one or multiple students to another class.
+     */
+    public function transferClass(Request $request)
+    {
+        $request->validate([
+            'student_ids' => ['required', 'array', 'min:1'],
+            'student_ids.*' => ['exists:students,id'],
+            'target_class_id' => ['required', 'exists:classes,id'],
+        ]);
+
+        $targetClass = ClassRoom::findOrFail($request->input('target_class_id'));
+        $studentIds = $request->input('student_ids');
+
+        $count = Student::whereIn('id', $studentIds)
+            ->update(['class_id' => $targetClass->id]);
+
+        return $this->success([
+            'updated_count' => $count,
+            'target_class' => [
+                'id' => $targetClass->id,
+                'name' => $targetClass->name,
+                'grade_level' => $targetClass->grade_level,
+            ],
+        ], "Berhasil memindahkan {$count} siswa ke kelas {$targetClass->name}");
     }
 }
