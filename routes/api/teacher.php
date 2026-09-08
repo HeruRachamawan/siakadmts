@@ -61,6 +61,8 @@ Route::middleware(['auth:sanctum', 'role:teacher,admin,operator,kurikulum,kepala
     Route::delete('exam-corrections/{id}', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'destroy']);
     Route::post('exam-corrections/{id}/keys', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'saveKeys']);
     Route::post('exam-corrections/{id}/grade', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'gradeSubmissions']);
+    Route::post('exam-corrections/{id}/reset-student/{student_id}', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'resetStudentSubmission']);
+    Route::post('exam-corrections/{id}/reset-all', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'resetAllSubmissions']);
     Route::get('exam-corrections/{id}/analysis', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'analysis']);
     Route::post('exam-corrections/{id}/sync-grades', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'syncToGrades']);
     Route::get('exam-corrections/{id}/export-excel', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'exportExcel']);

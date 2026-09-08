@@ -630,6 +630,44 @@ class ExamCorrectionController extends Controller
     }
 
     /**
+     * Reset / clear single student exam submission.
+     */
+    public function resetStudentSubmission($id, $studentId)
+    {
+        $exam = ExamPackage::findOrFail($id);
+        ExamSubmission::where('exam_package_id', $exam->id)
+            ->where('student_id', $studentId)
+            ->delete();
+
+        if ($exam->submissions()->count() === 0 && $exam->status === 'completed') {
+            $exam->update(['status' => 'draft']);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Koreksi siswa berhasil dikosongkan/direset!'
+        ]);
+    }
+
+    /**
+     * Reset / clear all student submissions for an exam package.
+     */
+    public function resetAllSubmissions($id)
+    {
+        $exam = ExamPackage::findOrFail($id);
+        ExamSubmission::where('exam_package_id', $exam->id)->delete();
+
+        if ($exam->status === 'completed') {
+            $exam->update(['status' => 'draft']);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Semua koreksi ujian berhasil dikosongkan!'
+        ]);
+    }
+
+    /**
      * Item Analysis (Analisis Butir Soal, Tingkat Kesukaran & Daya Pembeda).
      */
     public function analysis($id)

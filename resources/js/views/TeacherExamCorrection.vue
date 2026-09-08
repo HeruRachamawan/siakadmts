@@ -635,6 +635,16 @@
             </button>
 
             <button
+              type="button"
+              @click="resetAllCorrections"
+              class="px-4 py-3 bg-white hover:bg-rose-50 text-rose-600 hover:text-rose-700 border border-slate-200 hover:border-rose-200 font-bold rounded-2xl text-xs transition-all shadow-sm flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+              title="Kosongkan seluruh koreksi dan nilai siswa pada ujian ini"
+            >
+              <RotateCcw class="w-4 h-4" />
+              <span>Reset Semua</span>
+            </button>
+
+            <button
               @click="submitAllGrades"
               :disabled="gradingProcessing"
               class="px-7 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-2xl text-xs transition-all shadow-md shadow-teal-600/20 flex items-center gap-2 cursor-pointer disabled:opacity-50 flex-shrink-0"
@@ -701,6 +711,15 @@
                       title="Salin 100% kunci jawaban lengkap ke siswa ini"
                     >
                       <Sparkles class="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      @click="resetStudentCorrection(student)"
+                      class="p-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 hover:border-rose-200 transition-all cursor-pointer flex-shrink-0"
+                      title="Kosongkan / Reset koreksi dan nilai siswa ini"
+                    >
+                      <RotateCcw class="w-3.5 h-3.5" />
                     </button>
 
                     <input
@@ -1574,6 +1593,15 @@
             </button>
             <button
               type="button"
+              @click="resetStudentCorrection(selectedStudent)"
+              class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Kosongkan seluruh koreksi dan nilai siswa ini"
+            >
+              <RotateCcw class="w-3.5 h-3.5 text-rose-600" />
+              <span>Kosongkan / Reset</span>
+            </button>
+            <button
+              type="button"
               @click="closeStudentModal"
               class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
             >
@@ -1864,7 +1892,8 @@ import {
   Sparkles,
   Target,
   Printer,
-  Copy
+  Copy,
+  RotateCcw
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -2471,6 +2500,67 @@ function fillStudentWithKKM(student) {
 
   syncStudentAnswerString(student);
   toast.success(`Jawaban ${student.name} berhasil diatur pas KKM (${kkm})!`);
+}
+
+async function resetStudentCorrection(student) {
+  if (!student) return;
+  const hasSavedSubmission = !!student.has_submitted || !!student.submission_id;
+  const hasDraftAnswers = !!student.answer_string ||
+    (student.student_answers && Object.keys(student.student_answers).length > 0) ||
+    (student.essay_scores && Object.keys(student.essay_scores).length > 0) ||
+    (student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '');
+
+  if (!hasSavedSubmission && !hasDraftAnswers) {
+    toast.info(`Koreksi untuk ${student.name} sudah kosong.`);
+    return;
+  }
+
+  const msg = hasSavedSubmission
+    ? `Kosongkan semua hasil koreksi dan nilai untuk "${student.name}"? Data jawaban dan nilai siswa ini akan dihapus dari server.`
+    : `Kosongkan draft jawaban untuk "${student.name}"?`;
+
+  if (!confirm(msg)) return;
+
+  if (hasSavedSubmission && activeExam.value?.id) {
+    try {
+      await api.post(`/teacher/exam-corrections/${activeExam.value.id}/reset-student/${student.id}`);
+      toast.success(`Koreksi dan nilai ${student.name} berhasil dikosongkan!`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal mengosongkan koreksi siswa di server.');
+      return;
+    }
+  } else {
+    toast.success(`Draft jawaban ${student.name} berhasil dikosongkan!`);
+  }
+
+  // Clear local state
+  student.has_submitted = false;
+  student.submission_id = null;
+  student.student_answers = {};
+  student.answer_string = '';
+  student.essay_scores = {};
+  student.correct_pg_count = 0;
+  student.wrong_pg_count = 0;
+  student.pg_score = 0;
+  student.essay_score = 0;
+  student.total_score = null;
+  student.remedial_score = null;
+  student.is_passed = false;
+}
+
+async function resetAllCorrections() {
+  if (!activeExam.value?.id) return;
+  if (!confirm(`Apakah Anda yakin ingin mengosongkan/mereset SEMUA hasil koreksi siswa untuk ujian "${activeExam.value.title}"? Semua lembar jawaban dan nilai siswa pada ujian ini akan dihapus.`)) {
+    return;
+  }
+
+  try {
+    await api.post(`/teacher/exam-corrections/${activeExam.value.id}/reset-all`);
+    toast.success('Semua koreksi ujian berhasil dikosongkan!');
+    await openExamDetail(activeExam.value.id);
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal mereset semua koreksi di server.');
+  }
 }
 
 function copyQuickKeysToClipboard() {
