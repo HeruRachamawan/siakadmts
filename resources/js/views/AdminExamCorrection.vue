@@ -95,8 +95,8 @@
           <select v-model="filterType" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-teal-400">
             <option value="">Semua Jenis Ujian</option>
             <option value="uh">Penilaian Harian (UH)</option>
-            <option value="sts">Sumatif Tengah Semester (STS)</option>
-            <option value="sas">Sumatif Akhir Semester (SAS)</option>
+            <option value="sts">Asesmen Sumatif Tengah Semester (ASTS)</option>
+            <option value="sas">Asesmen Sumatif Akhir Semester (ASAS)</option>
             <option value="pat">Penilaian Akhir Tahun (PAT)</option>
             <option value="am">Asesmen Madrasah (AM)</option>
             <option value="quiz">Kuis / Latihan</option>
@@ -625,9 +625,11 @@ const filteredExams = computed(() => {
 
 function examTypeLabel(type) {
   const map = {
-    uh: 'Penilaian Harian',
-    sts: 'Sumatif Tengah Smt',
-    sas: 'Sumatif Akhir Smt',
+    uh: 'Penilaian Harian (UH)',
+    sts: 'ASTS',
+    sas: 'ASAS',
+    asts: 'ASTS',
+    asas: 'ASAS',
     pat: 'PAT',
     am: 'Asesmen Madrasah',
     quiz: 'Kuis'

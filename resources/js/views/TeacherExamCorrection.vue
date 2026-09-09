@@ -87,8 +87,8 @@
           <select v-model="filterType" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-teal-400">
             <option value="">Semua Jenis Ujian</option>
             <option value="uh">Penilaian Harian (UH)</option>
-            <option value="sts">Sumatif Tengah Semester (STS)</option>
-            <option value="sas">Sumatif Akhir Semester (SAS)</option>
+            <option value="sts">Asesmen Sumatif Tengah Semester (ASTS)</option>
+            <option value="sas">Asesmen Sumatif Akhir Semester (ASAS)</option>
             <option value="pat">Penilaian Akhir Tahun (PAT)</option>
             <option value="am">Asesmen Madrasah (AM)</option>
             <option value="quiz">Kuis / Latihan</option>
@@ -1538,7 +1538,7 @@
               v-model="examForm.title"
               type="text"
               required
-              placeholder="Contoh: STS Ganjil - IPA Terpadu Kelas 7"
+              placeholder="Contoh: ASTS Ganjil - IPA Terpadu Kelas 7"
               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400"
             />
           </div>
@@ -1570,8 +1570,8 @@
               <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Jenis Ujian *</label>
               <select v-model="examForm.exam_type" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400">
                 <option value="uh">Penilaian Harian (UH)</option>
-                <option value="sts">Sumatif Tengah Semester (STS)</option>
-                <option value="sas">Sumatif Akhir Semester (SAS)</option>
+                <option value="sts">Asesmen Sumatif Tengah Semester (ASTS)</option>
+                <option value="sas">Asesmen Sumatif Akhir Semester (ASAS)</option>
                 <option value="pat">Penilaian Akhir Tahun (PAT)</option>
                 <option value="am">Asesmen Madrasah (AM)</option>
                 <option value="quiz">Kuis / Latihan</option>
@@ -4005,9 +4005,11 @@ const totalRemedialStudents = computed(() => {
 
 function examTypeLabel(type) {
   const map = {
-    uh: 'Penilaian Harian',
-    sts: 'Sumatif Tengah Smt',
-    sas: 'Sumatif Akhir Smt',
+    uh: 'Penilaian Harian (UH)',
+    sts: 'ASTS',
+    sas: 'ASAS',
+    asts: 'ASTS',
+    asas: 'ASAS',
     pat: 'PAT',
     am: 'Asesmen Madrasah',
     quiz: 'Kuis'
@@ -4479,8 +4481,10 @@ function getPrintDateFormatted() {
 function getExamTypeFullName(type) {
   const map = {
     uh: 'Penilaian Harian (UH)',
-    sts: 'Sumatif Tengah Semester (STS)',
-    sas: 'Sumatif Akhir Semester (SAS)',
+    sts: 'Asesmen Sumatif Tengah Semester (ASTS)',
+    sas: 'Asesmen Sumatif Akhir Semester (ASAS)',
+    asts: 'Asesmen Sumatif Tengah Semester (ASTS)',
+    asas: 'Asesmen Sumatif Akhir Semester (ASAS)',
     pat: 'Penilaian Akhir Tahun (PAT)',
     am: 'Asesmen Madrasah (AM)',
     quiz: 'Kuis / Latihan Harian'

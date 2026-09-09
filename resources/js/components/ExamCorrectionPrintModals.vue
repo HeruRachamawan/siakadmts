@@ -1078,8 +1078,10 @@ function getPrintDateFormatted() {
 function getExamTypeFullName(type) {
   const map = {
     uh: 'Penilaian Harian (UH)',
-    sts: 'Sumatif Tengah Semester (STS)',
-    sas: 'Sumatif Akhir Semester (SAS)',
+    sts: 'Asesmen Sumatif Tengah Semester (ASTS)',
+    sas: 'Asesmen Sumatif Akhir Semester (ASAS)',
+    asts: 'Asesmen Sumatif Tengah Semester (ASTS)',
+    asas: 'Asesmen Sumatif Akhir Semester (ASAS)',
     pat: 'Penilaian Akhir Tahun (PAT)',
     am: 'Asesmen Madrasah (AM)',
     quiz: 'Kuis / Latihan Harian'
