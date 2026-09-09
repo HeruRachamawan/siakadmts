@@ -13,6 +13,13 @@ class AcademicYear extends Model
         'is_active' => 'boolean',
     ];
 
+    protected $appends = ['name'];
+
+    public function getNameAttribute(): string
+    {
+        return $this->year ?? '';
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

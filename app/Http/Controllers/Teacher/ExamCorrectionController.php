@@ -92,8 +92,18 @@ class ExamCorrectionController extends Controller
 
         $exams = $query->orderBy('created_at', 'desc')->paginate($request->get('per_page', 15));
 
+        $activeYear = AcademicYear::where('is_active', true)->first()
+            ?? AcademicYear::orderBy('id', 'desc')->first();
+
         // Append average score & passed count
-        $exams->getCollection()->transform(function ($exam) {
+        $exams->getCollection()->transform(function ($exam) use ($activeYear) {
+            if (!$exam->academicYear && $activeYear) {
+                $exam->setRelation('academicYear', $activeYear);
+                if (!$exam->academic_year_id) {
+                    $exam->academic_year_id = $activeYear->id;
+                    $exam->saveQuietly();
+                }
+            }
             $submissions = ExamSubmission::where('exam_package_id', $exam->id)->get();
             $exam->avg_score = $submissions->count() > 0 ? round($submissions->avg('total_score'), 2) : 0;
             $exam->passed_count = $submissions->where('is_passed', true)->count();
@@ -246,6 +256,18 @@ class ExamCorrectionController extends Controller
     {
         $exam = ExamPackage::with(['classRoom', 'subject', 'academicYear', 'teacher', 'questions'])
             ->findOrFail($id);
+
+        if (!$exam->academicYear) {
+            $activeYear = AcademicYear::where('is_active', true)->first()
+                ?? AcademicYear::orderBy('id', 'desc')->first();
+            if ($activeYear) {
+                $exam->setRelation('academicYear', $activeYear);
+                if (!$exam->academic_year_id) {
+                    $exam->academic_year_id = $activeYear->id;
+                    $exam->saveQuietly();
+                }
+            }
+        }
 
         // Fetch all active students in this classroom
         $students = Student::where('class_id', $exam->class_room_id)

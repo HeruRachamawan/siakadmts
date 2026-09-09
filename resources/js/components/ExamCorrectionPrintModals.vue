@@ -124,7 +124,7 @@
                 LEMBAR REKAPITULASI CAPAIAN NILAI ASESMEN PER BENTUK SOAL
               </h2>
               <p class="text-xs font-bold text-slate-700 uppercase tracking-wide">
-                {{ getExamTypeFullName(exam.exam_type) }} • SEMESTER {{ (exam.semester || 'ganjil').toUpperCase() }} • TAHUN PELAJARAN {{ exam.academic_year?.name || '2024/2025' }}
+                {{ getExamTypeFullName(exam.exam_type) }} • SEMESTER {{ formatSemester(exam.semester || exam.academic_year?.semester) }} • TAHUN PELAJARAN {{ formatAcademicYear(exam) }}
               </p>
             </div>
 
@@ -391,7 +391,7 @@
                 Daftar Rekapitulasi Nilai Asesmen (Standar Rapor Bebas Remedial)
               </h2>
               <p class="text-xs sm:text-sm font-bold text-slate-700 uppercase">
-                {{ getExamTypeFullName(exam.exam_type) }} • SEMESTER {{ (exam.semester || 'ganjil').toUpperCase() }} • TAHUN PELAJARAN {{ exam.academic_year?.name || '2024/2025' }}
+                {{ getExamTypeFullName(exam.exam_type) }} • SEMESTER {{ formatSemester(exam.semester || exam.academic_year?.semester) }} • TAHUN PELAJARAN {{ formatAcademicYear(exam) }}
               </p>
             </div>
 
@@ -637,7 +637,7 @@
                 Laporan Analisis Butir Soal & Daya Serap Asesmen
               </h2>
               <p class="text-xs sm:text-sm font-bold text-slate-700 uppercase">
-                {{ getExamTypeFullName(exam.exam_type) }} • SEMESTER {{ (exam.semester || 'ganjil').toUpperCase() }} • TAHUN PELAJARAN {{ exam.academic_year?.name || '2024/2025' }}
+                {{ getExamTypeFullName(exam.exam_type) }} • SEMESTER {{ formatSemester(exam.semester || exam.academic_year?.semester) }} • TAHUN PELAJARAN {{ formatAcademicYear(exam) }}
               </p>
             </div>
 
@@ -897,6 +897,22 @@ const QUESTION_TYPE_LABELS = {
   short_answer: 'Isian Singkat',
   essay: 'Uraian / Essay'
 };
+
+function formatAcademicYear(exam) {
+  return exam?.academic_year?.year ||
+    exam?.academic_year?.name ||
+    exam?.academicYear?.year ||
+    exam?.academicYear?.name ||
+    '2026/2027';
+}
+
+function formatSemester(sem) {
+  if (!sem) return 'GANJIL';
+  const s = String(sem).toLowerCase().trim();
+  if (s === 'odd' || s === 'ganjil' || s === '1') return 'GANJIL';
+  if (s === 'even' || s === 'genap' || s === '2') return 'GENAP';
+  return s.toUpperCase();
+}
 
 const activeQuestionTypesList = computed(() => {
   const typeMap = {};
@@ -2069,7 +2085,7 @@ async function exportToWord() {
         LEMBAR REKAPITULASI CAPAIAN NILAI ASESMEN PER BENTUK SOAL
       </div>
       <div style="font-size: 8.5pt; font-weight: bold; text-transform: uppercase; margin-top: 1pt; color: #000000;">
-        ${getExamTypeFullName(props.exam.exam_type)} • SEMESTER ${(props.exam.semester || 'ganjil').toUpperCase()} • TAHUN PELAJARAN ${props.exam.academic_year?.name || '2024/2025'}
+        ${getExamTypeFullName(props.exam.exam_type)} • SEMESTER ${formatSemester(props.exam.semester || props.exam.academic_year?.semester)} • TAHUN PELAJARAN ${formatAcademicYear(props.exam)}
       </div>
     </div>
 

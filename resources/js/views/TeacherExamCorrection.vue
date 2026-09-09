@@ -2300,7 +2300,7 @@
                 LEMBAR REKAPITULASI CAPAIAN NILAI ASESMEN PER BENTUK SOAL
               </h2>
               <p class="text-xs font-bold text-slate-700 uppercase tracking-wide">
-                {{ getExamTypeFullName(activeExam.exam_type) }} • SEMESTER {{ (activeExam.semester || 'ganjil').toUpperCase() }} • TAHUN PELAJARAN {{ activeExam.academic_year?.name || '2024/2025' }}
+                {{ getExamTypeFullName(activeExam.exam_type) }} • SEMESTER {{ formatSemester(activeExam.semester || activeExam.academic_year?.semester) }} • TAHUN PELAJARAN {{ formatAcademicYear(activeExam) }}
               </p>
             </div>
 
@@ -2597,7 +2597,7 @@
                 Laporan Analisis Butir Soal & Daya Serap Asesmen
               </h2>
               <p class="text-xs sm:text-sm font-bold text-slate-700 uppercase">
-                {{ getExamTypeFullName(activeExam.exam_type) }} • SEMESTER {{ (activeExam.semester || 'ganjil').toUpperCase() }} • TAHUN PELAJARAN {{ activeExam.academic_year?.name || '2024/2025' }}
+                {{ getExamTypeFullName(activeExam.exam_type) }} • SEMESTER {{ formatSemester(activeExam.semester || activeExam.academic_year?.semester) }} • TAHUN PELAJARAN {{ formatAcademicYear(activeExam) }}
               </p>
             </div>
 
@@ -2908,7 +2908,7 @@
                 Daftar Rekapitulasi Nilai Asesmen (Standar Rapor Bebas Remedial)
               </h2>
               <p class="text-xs sm:text-sm font-bold text-slate-700 uppercase">
-                {{ getExamTypeFullName(activeExam.exam_type) }} • SEMESTER {{ (activeExam.semester || 'ganjil').toUpperCase() }} • TAHUN PELAJARAN {{ activeExam.academic_year?.name || '2024/2025' }}
+                {{ getExamTypeFullName(activeExam.exam_type) }} • SEMESTER {{ formatSemester(activeExam.semester || activeExam.academic_year?.semester) }} • TAHUN PELAJARAN {{ formatAcademicYear(activeExam) }}
               </p>
             </div>
 
@@ -3083,6 +3083,25 @@ const loading = ref(false);
 const exams = ref([]);
 const classes = ref([]);
 const subjects = ref([]);
+const activeAcademicYear = ref(null);
+
+function formatAcademicYear(exam) {
+  return exam?.academic_year?.year ||
+    exam?.academic_year?.name ||
+    exam?.academicYear?.year ||
+    exam?.academicYear?.name ||
+    activeAcademicYear.value?.year ||
+    activeAcademicYear.value?.name ||
+    '2026/2027';
+}
+
+function formatSemester(sem) {
+  if (!sem) return 'GANJIL';
+  const s = String(sem).toLowerCase().trim();
+  if (s === 'odd' || s === 'ganjil' || s === '1') return 'GANJIL';
+  if (s === 'even' || s === 'genap' || s === '2') return 'GENAP';
+  return s.toUpperCase();
+}
 
 const filterClass = ref('');
 const filterSubject = ref('');
@@ -3898,6 +3917,7 @@ async function fetchMeta() {
     const optData = res?.data || res || {};
     classes.value = optData.classes || [];
     subjects.value = optData.subjects || [];
+    activeAcademicYear.value = optData.active_academic_year || null;
 
     if (optData.settings) {
       examForm.kkm = optData.settings.default_kkm ?? 75;
@@ -4027,6 +4047,9 @@ async function openExamDetail(id) {
     const res = await api.get(`/teacher/exam-corrections/${id}`);
     const data = res?.data || res || {};
     activeExam.value = data.exam;
+    if (activeExam.value && !activeExam.value.academic_year && activeAcademicYear.value) {
+      activeExam.value.academic_year = activeAcademicYear.value;
+    }
     activeQuestions.value = data.questions || [];
     schoolProfile.value = data.school_profile || null;
 
@@ -5440,7 +5463,7 @@ async function exportToWord() {
         <u>LEMBAR REKAPITULASI CAPAIAN NILAI ASESMEN PER BENTUK SOAL</u>
       </div>
       <div style="font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #000000; margin-top: 3pt;">
-        ${getExamTypeFullName(activeExam.value.exam_type)} • SEMESTER ${(activeExam.value.semester || 'ganjil').toUpperCase()} • TAHUN PELAJARAN ${activeExam.value.academic_year?.name || '2024/2025'}
+        ${getExamTypeFullName(activeExam.value.exam_type)} • SEMESTER ${formatSemester(activeExam.value.semester || activeExam.value.academic_year?.semester)} • TAHUN PELAJARAN ${formatAcademicYear(activeExam.value)}
       </div>
     </div>
 
