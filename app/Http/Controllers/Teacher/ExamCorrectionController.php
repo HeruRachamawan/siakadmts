@@ -346,7 +346,9 @@ class ExamCorrectionController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'exam_type' => 'required|string|in:uh,sts,sas,pat,am,quiz',
+            'class_room_id' => 'nullable|exists:classes,id',
+            'subject_id' => 'nullable|exists:subjects,id',
+            'exam_type' => 'required|string|in:uh,sts,sas,pat,am,quiz,asts,asas',
             'semester' => 'nullable|string|in:ganjil,genap',
             'kkm' => 'required|numeric|min:0|max:100',
             'pg_weight' => 'required|numeric|min:0|max:100',
@@ -355,12 +357,25 @@ class ExamCorrectionController extends Controller
             'description' => 'nullable|string',
         ]);
 
+        if (isset($validated['exam_type'])) {
+            if ($validated['exam_type'] === 'asts') $validated['exam_type'] = 'sts';
+            if ($validated['exam_type'] === 'asas') $validated['exam_type'] = 'sas';
+        }
+
+        $weightsOrKkmChanged = ($exam->kkm != $validated['kkm']) ||
+                               ($exam->pg_weight != $validated['pg_weight']) ||
+                               ($exam->essay_weight != $validated['essay_weight']);
+
         $exam->update($validated);
+
+        if ($weightsOrKkmChanged) {
+            $this->regradeAllSubmissions($exam);
+        }
 
         return response()->json([
             'status' => 'success',
             'message' => 'Informasi paket ujian berhasil diperbarui!',
-            'data' => $exam
+            'data' => $exam->fresh(['classRoom', 'subject', 'teacher', 'academicYear'])
         ]);
     }
 

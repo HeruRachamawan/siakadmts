@@ -163,6 +163,14 @@
                   </button>
 
                   <button
+                    @click="openEditExam(exam)"
+                    title="Edit Informasi Paket Ujian"
+                    class="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 hover:text-amber-700 border border-amber-200/60 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <Pencil class="w-4 h-4" />
+                  </button>
+
+                  <button
                     @click="downloadExcel(exam.id)"
                     title="Export Rekap Nilai Excel"
                     class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors cursor-pointer"
@@ -1527,15 +1535,19 @@
       <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-100 transform transition-all">
         <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div>
-            <h2 class="text-lg font-black text-slate-800 font-lexend uppercase tracking-wider">Buat Paket Ujian Baru</h2>
-            <p class="text-xs text-slate-400 font-medium mt-0.5">Tentukan kelas, mata pelajaran, jumlah soal, dan bobot penilaian.</p>
+            <h2 class="text-lg font-black text-slate-800 font-lexend uppercase tracking-wider">
+              {{ isEditingExam ? 'Edit Informasi Paket Ujian' : 'Buat Paket Ujian Baru' }}
+            </h2>
+            <p class="text-xs text-slate-400 font-medium mt-0.5">
+              {{ isEditingExam ? 'Perbarui judul, kelas, mata pelajaran, KKM, atau bobot penilaian ujian.' : 'Tentukan kelas, mata pelajaran, jumlah soal, dan bobot penilaian.' }}
+            </p>
           </div>
           <button @click="showCreateModal = false" class="w-9 h-9 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors border border-slate-100 shadow-sm cursor-pointer">
             <X class="w-4 h-4" />
           </button>
         </div>
 
-        <form @submit.prevent="createExam" class="p-8 space-y-4 max-h-[75vh] overflow-y-auto">
+        <form @submit.prevent="handleExamFormSubmit" class="p-8 space-y-4 max-h-[75vh] overflow-y-auto">
           <!-- Title -->
           <div class="space-y-1.5">
             <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Judul Paket Ujian *</label>
@@ -1593,7 +1605,13 @@
           </div>
 
           <!-- Question Composition Breakdown (Custom per Tipe Soal) -->
-          <div class="p-5 bg-slate-50/80 border border-slate-200 rounded-3xl space-y-4">
+          <div v-if="isEditingExam" class="p-4 bg-teal-50/70 border border-teal-200 rounded-3xl flex items-start gap-3">
+            <Sliders class="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+            <div class="text-xs text-teal-800 font-medium leading-relaxed">
+              Paket ujian ini saat ini memiliki <strong>{{ examForm.total_questions }} butir soal</strong>. Untuk menambah atau mengubah butir soal, kunci jawaban, dan skor, silakan gunakan tab <strong>Kunci Jawaban & Bobot</strong> di dalam menu <em>Buka & Koreksi</em>.
+            </div>
+          </div>
+          <div v-else class="p-5 bg-slate-50/80 border border-slate-200 rounded-3xl space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <label class="block text-xs font-black text-slate-800 uppercase tracking-wider">🎯 Komposisi Bentuk Soal Sesuai Kebutuhan Mapel</label>
@@ -1917,8 +1935,8 @@
             </div>
           </div>
 
-          <!-- Quick Keys String (Optional) -->
-          <div class="space-y-1.5">
+          <!-- Quick Keys String (Optional - Hanya Saat Buat Paket Baru) -->
+          <div v-if="!isEditingExam" class="space-y-1.5">
             <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Kunci Jawaban Cepat (Opsional)</label>
             <input
               v-model="examForm.quick_keys"
@@ -1942,7 +1960,7 @@
               :disabled="creatingExam"
               class="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-teal-600/20 cursor-pointer disabled:opacity-50"
             >
-              {{ creatingExam ? 'Membuat...' : 'Buat Paket Ujian' }}
+              {{ creatingExam ? (isEditingExam ? 'Menyimpan...' : 'Membuat...') : (isEditingExam ? 'Simpan Perubahan' : 'Buat Paket Ujian') }}
             </button>
           </div>
         </form>
@@ -3103,7 +3121,8 @@ import {
   Target,
   Printer,
   Copy,
-  RotateCcw
+  RotateCcw,
+  Pencil
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -3149,6 +3168,8 @@ const selectedAdjustedPaperSize = ref('f4'); // 'f4' (rekomendasi folio) atau 'a
 const selectedAdjustedOrientation = ref('portrait'); // 'portrait' (rekomendasi daftar nilai) atau 'landscape'
 
 const showCreateModal = ref(false);
+const editingExamId = ref(null);
+const isEditingExam = computed(() => !!editingExamId.value);
 const creatingExam = ref(false);
 const examForm = reactive({
   title: '',
@@ -4033,6 +4054,7 @@ function examTypeLabel(type) {
 }
 
 function openCreateModal() {
+  editingExamId.value = null;
   examForm.title = '';
   const classWithStudents = classes.value.find(c => (c.students_count || 0) > 0) || classes.value[0];
   examForm.class_room_id = classWithStudents?.id || '';
@@ -4054,10 +4076,36 @@ function openCreateModal() {
   examForm.essay_count = 0;
   examForm.essay_point = 10;
   examForm.total_questions = 20;
+  examForm.kkm = 75;
   examForm.pg_weight = 100;
   examForm.essay_weight = 0;
   examForm.quick_keys = '';
   showCreateModal.value = true;
+}
+
+function openEditExam(exam) {
+  if (!exam) return;
+  editingExamId.value = exam.id;
+  examForm.title = exam.title || '';
+  examForm.class_room_id = exam.class_room_id || '';
+  examForm.subject_id = exam.subject_id || '';
+  examForm.exam_type = exam.exam_type || 'uh';
+  examForm.semester = exam.semester || 'ganjil';
+  examForm.kkm = exam.kkm ?? 75;
+  examForm.pg_weight = exam.pg_weight ?? 70;
+  examForm.essay_weight = exam.essay_weight ?? 30;
+  examForm.total_questions = exam.total_questions || 0;
+  examForm.description = exam.description || '';
+  examForm.status = exam.status || 'draft';
+  showCreateModal.value = true;
+}
+
+async function handleExamFormSubmit() {
+  if (isEditingExam.value) {
+    await updateExam();
+  } else {
+    await createExam();
+  }
 }
 
 async function createExam() {
@@ -4073,6 +4121,38 @@ async function createExam() {
     }
   } catch (err) {
     toast.error(err.response?.data?.message || 'Gagal membuat ujian.');
+  } finally {
+    creatingExam.value = false;
+  }
+}
+
+async function updateExam() {
+  if (!editingExamId.value) return;
+  creatingExam.value = true;
+  try {
+    const payload = {
+      title: examForm.title,
+      class_room_id: examForm.class_room_id,
+      subject_id: examForm.subject_id,
+      exam_type: examForm.exam_type,
+      semester: examForm.semester,
+      kkm: examForm.kkm,
+      pg_weight: examForm.pg_weight,
+      essay_weight: examForm.essay_weight,
+      description: examForm.description,
+      status: examForm.status
+    };
+    await api.put(`/teacher/exam-corrections/${editingExamId.value}`, payload);
+    toast.success('Informasi paket ujian berhasil diperbarui!');
+    showCreateModal.value = false;
+    const currentEditingId = editingExamId.value;
+    editingExamId.value = null;
+    await fetchExams();
+    if (activeExam.value && activeExam.value.id === currentEditingId) {
+      await openExamDetail(activeExam.value.id);
+    }
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal memperbarui paket ujian.');
   } finally {
     creatingExam.value = false;
   }
