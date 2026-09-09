@@ -450,14 +450,12 @@
               <p class="font-bold">Kepala Sekolah / Madrasah</p>
               <div class="h-16"></div>
               <p class="font-bold underline">{{ settings.principal_name || '............................................' }}</p>
-              <p class="text-[10px] text-slate-500 font-mono">NIP: {{ settings.principal_nip || '-' }}</p>
             </div>
             <div>
               <p>{{ getTodayDateFormatted() }}</p>
               <p class="font-bold">Waka Kurikulum / Akademik</p>
               <div class="h-16"></div>
               <p class="font-bold underline">( ............................................ )</p>
-              <p class="text-[10px] text-slate-500 font-mono">NIP: -</p>
             </div>
           </div>
         </div>

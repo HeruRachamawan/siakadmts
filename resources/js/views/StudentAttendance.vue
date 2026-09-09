@@ -100,7 +100,6 @@
           <p class="font-bold">Wali Kelas</p>
           <div class="h-20"></div>
           <p class="font-bold underline">( ............................................ )</p>
-          <p class="text-[10px] text-slate-500 font-mono">NIP: -</p>
         </div>
       </div>
     </div>

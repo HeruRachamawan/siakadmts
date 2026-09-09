@@ -532,7 +532,6 @@
               <p class="text-xs font-semibold">Kepala Madrasah,</p>
               <div class="h-16"></div>
               <p class="text-xs font-bold underline">{{ appSettings.principal_name || 'Dr. H. Ahmad Fauzi, M.Pd.I.' }}</p>
-              <p class="text-[10px] text-slate-500">NIP. {{ appSettings.principal_nip || '197508122005011002' }}</p>
             </div>
           </div>
 

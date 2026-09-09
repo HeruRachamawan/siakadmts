@@ -98,7 +98,6 @@
           <p class="font-bold">Kepala Madrasah / Sekolah</p>
           <div class="h-20"></div>
           <p class="font-bold underline uppercase">{{ appSettings?.principal_name || '............................................' }}</p>
-          <p class="text-[10px] text-slate-500 font-mono">NIP: {{ appSettings?.principal_nip || '-' }}</p>
         </div>
       </div>
     </div>

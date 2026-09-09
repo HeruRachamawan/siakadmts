@@ -171,14 +171,12 @@
               <p class="font-bold">Kepala Madrasah / Sekolah</p>
               <div class="h-16"></div>
               <p class="font-bold underline uppercase">{{ appSettings?.principal_name || '............................................' }}</p>
-              <p class="text-[10px] text-slate-500 font-mono">NIP: {{ appSettings?.principal_nip || '-' }}</p>
             </div>
             <div>
               <p>{{ getTodayDateFormatted() }}</p>
               <p class="font-bold">Wali Kelas {{ cls.name }}</p>
               <div class="h-16"></div>
               <p class="font-bold underline uppercase">{{ cls.homeroom_teacher?.full_name || cls.homeroomTeacher?.full_name || '( ............................................ )' }}</p>
-              <p class="text-[10px] text-slate-500 font-mono">NIP: {{ cls.homeroom_teacher?.nip || cls.homeroomTeacher?.nip || '-' }}</p>
             </div>
           </div>
         </div>
@@ -316,14 +314,12 @@
             <p class="font-bold">Kepala Madrasah / Sekolah</p>
             <div class="h-20"></div>
             <p class="font-bold underline uppercase">{{ appSettings?.principal_name || '............................................' }}</p>
-            <p class="text-[10px] text-slate-500 font-mono">NIP: {{ appSettings?.principal_nip || '-' }}</p>
           </div>
           <div>
             <p>{{ getTodayDateFormatted() }}</p>
             <p class="font-bold">Kepala Tata Usaha / Pendataan</p>
             <div class="h-20"></div>
             <p class="font-bold underline uppercase">( ............................................ )</p>
-            <p class="text-[10px] text-slate-500 font-mono">NIP: -</p>
           </div>
         </div>
       </div>
@@ -451,14 +447,12 @@
             <p class="font-bold">Kepala Madrasah / Sekolah</p>
             <div class="h-20"></div>
             <p class="font-bold underline uppercase">{{ appSettings?.principal_name || '............................................' }}</p>
-            <p class="text-[10px] text-slate-500 font-mono">NIP: {{ appSettings?.principal_nip || '-' }}</p>
           </div>
           <div>
             <p>{{ getTodayDateFormatted() }}</p>
             <p class="font-bold">Kepala Tata Usaha / Kepegawaian</p>
             <div class="h-20"></div>
             <p class="font-bold underline uppercase">( ............................................ )</p>
-            <p class="text-[10px] text-slate-500 font-mono">NIP: -</p>
           </div>
         </div>
       </div>
@@ -656,14 +650,12 @@
             <p class="font-bold">Kepala Madrasah / Sekolah</p>
             <div class="h-16"></div>
             <p class="font-bold underline uppercase">{{ appSettings?.principal_name || 'H. UMAR USMAN ALI, S.PD, S.PDI' }}</p>
-            <p class="text-[10px] text-slate-500 font-mono">NIP: {{ appSettings?.principal_nip || '-' }}</p>
           </div>
           <div>
             <p>{{ getTodayDateFormatted() }}</p>
             <p class="font-bold">Waka Kurikulum / Akademik</p>
             <div class="h-16"></div>
             <p class="font-bold underline">( ............................................ )</p>
-            <p class="text-[10px] text-slate-500 font-mono">NIP: -</p>
           </div>
         </div>
       </div>

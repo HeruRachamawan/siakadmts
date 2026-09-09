@@ -259,7 +259,6 @@
                   <div>Kepala MTs Al - Hasanah</div>
                   <div class="h-20 flex items-center justify-center"></div>
                   <div class="font-black text-slate-900 underline">{{ schoolProfile?.principal_name || 'Kepala Madrasah' }}</div>
-                  <div class="text-[11px] text-slate-600 font-mono">NIP: {{ schoolProfile?.principal_nip || '-' }}</div>
                 </div>
 
                 <div>
@@ -267,7 +266,6 @@
                   <div>Mata Pelajaran {{ exam.subject?.name || '' }}</div>
                   <div class="h-20 flex items-center justify-center"></div>
                   <div class="font-black text-slate-900 underline">{{ exam.teacher?.full_name || exam.teacher?.name || 'Guru Mata Pelajaran' }}</div>
-                  <div class="text-[11px] text-slate-600 font-mono">NIP: {{ exam.teacher?.nip || '-' }}</div>
                 </div>
               </div>
             </div>
@@ -524,7 +522,6 @@
                   <div>Kepala MTs Al - Hasanah</div>
                   <div class="h-20 flex items-center justify-center"></div>
                   <div class="font-black text-slate-900 underline">{{ schoolProfile?.principal_name || 'Kepala Madrasah' }}</div>
-                  <div class="text-[11px] text-slate-600 font-mono">NIP: {{ schoolProfile?.principal_nip || '-' }}</div>
                 </div>
 
                 <div>
@@ -532,7 +529,6 @@
                   <div>Mata Pelajaran {{ exam.subject?.name || '' }}</div>
                   <div class="h-20 flex items-center justify-center"></div>
                   <div class="font-black text-slate-900 underline">{{ exam.teacher?.full_name || exam.teacher?.name || 'Guru Mata Pelajaran' }}</div>
-                  <div class="text-[11px] text-slate-600 font-mono">NIP: {{ exam.teacher?.nip || '-' }}</div>
                 </div>
               </div>
             </div>
@@ -821,7 +817,6 @@
                   <div>Kepala MTs Al - Hasanah</div>
                   <div class="h-20 flex items-center justify-center"></div>
                   <div class="font-black text-slate-900 underline">{{ schoolProfile?.principal_name || 'Kepala Madrasah' }}</div>
-                  <div class="text-[11px] text-slate-600 font-mono">NIP: {{ schoolProfile?.principal_nip || '-' }}</div>
                 </div>
 
                 <div>
@@ -829,7 +824,6 @@
                   <div>Mata Pelajaran {{ exam.subject?.name || '' }}</div>
                   <div class="h-20 flex items-center justify-center"></div>
                   <div class="font-black text-slate-900 underline">{{ exam.teacher?.full_name || exam.teacher?.name || 'Guru Mata Pelajaran' }}</div>
-                  <div class="text-[11px] text-slate-600 font-mono">NIP: {{ exam.teacher?.nip || '-' }}</div>
                 </div>
               </div>
             </div>
@@ -2206,14 +2200,12 @@ async function exportToWord() {
         <td width="50%" align="center" valign="top" style="border: none; font-size: 9pt; color: #000000;">
           <b style="color: #000000;">Mengetahui,</b><br>
           <span style="font-weight: bold; color: #000000;">Kepala MTs Al - Hasanah</span><br><br><br><br><br>
-          <b style="text-decoration: underline; font-size: 10pt; color: #000000; font-weight: 900;">${props.schoolProfile?.principal_name || 'Kepala Madrasah'}</b><br>
-          <div style="font-family: Arial, monospace; font-size: 8.5pt; font-weight: bold; color: #000000; margin-top: 2pt;">NIP: ${props.schoolProfile?.principal_nip || '-'}</div>
+          <b style="text-decoration: underline; font-size: 10pt; color: #000000; font-weight: 900;">${props.schoolProfile?.principal_name || 'Kepala Madrasah'}</b>
         </td>
         <td width="50%" align="center" valign="top" style="border: none; font-size: 9pt; color: #000000;">
           <b style="color: #000000;">Guru Pengampu,</b><br>
           <span style="font-weight: bold; color: #000000;">Mata Pelajaran ${props.exam.subject?.name || ''}</span><br><br><br><br><br>
-          <b style="text-decoration: underline; font-size: 10pt; color: #000000; font-weight: 900;">${props.exam.teacher?.full_name || props.exam.teacher?.name || 'Guru Mata Pelajaran'}</b><br>
-          <div style="font-family: Arial, monospace; font-size: 8.5pt; font-weight: bold; color: #000000; margin-top: 2pt;">NIP: ${props.exam.teacher?.nip || '-'}</div>
+          <b style="text-decoration: underline; font-size: 10pt; color: #000000; font-weight: 900;">${props.exam.teacher?.full_name || props.exam.teacher?.name || 'Guru Mata Pelajaran'}</b>
         </td>
       </tr>
     </table>
