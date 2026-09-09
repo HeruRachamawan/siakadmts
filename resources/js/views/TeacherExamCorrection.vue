@@ -1092,9 +1092,9 @@
                   <div class="flex items-center justify-center gap-1.5">
                     <button
                       type="button"
-                      @click="student.remedial_score = activeExam.kkm"
+                      @click="student.remedial_score = Math.max(Number(student.total_score || 0), activeExam.kkm)"
                       class="px-2 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-black cursor-pointer transition-colors"
-                      :title="`Set nilai jadi pas KKM (${activeExam.kkm})`"
+                      :title="`Set nilai jadi pas KKM (${activeExam.kkm}) jika di bawah KKM`"
                     >
                       KKM ({{ activeExam.kkm }})
                     </button>
@@ -4188,9 +4188,15 @@ async function openExamDetail(id) {
         essayScoresMap[k] = Number(rawEssay[k]);
       });
 
+      const rawInitial = (s.total_score !== null && s.total_score !== undefined) ? Number(s.total_score) : null;
+      let remScore = (s.remedial_score !== null && s.remedial_score !== undefined) ? Number(s.remedial_score) : null;
+      if (remScore === null && rawInitial !== null && rawInitial >= Number(activeExam.value?.kkm || 75)) {
+        remScore = rawInitial;
+      }
+
       return {
         ...s,
-        remedial_score: (s.remedial_score !== null && s.remedial_score !== undefined) ? Number(s.remedial_score) : null,
+        remedial_score: remScore,
         student_answers: rawAnswers,
         answer_string: str,
         essay_scores: essayScoresMap
@@ -4305,16 +4311,30 @@ async function syncToGrades() {
 function applyBoostToKKM() {
   if (!activeExam.value) return;
   const kkm = Number(activeExam.value.kkm) || 75;
+  let boostedCount = 0;
+  let preservedCount = 0;
+
   activeStudents.value.forEach(s => {
-    const raw = Number(s.total_score);
-    if (isNaN(raw)) return;
+    // Lewati siswa yang belum mengikuti ujian sama sekali
+    if (!s.has_submitted && s.total_score === null) return;
+
+    const raw = Number(s.total_score || 0);
     if (raw < kkm) {
+      // HANYA siswa yang nilainya belum mencapai KKM yang didongkrak
       s.remedial_score = kkm;
+      boostedCount++;
     } else {
-      s.remedial_score = raw;
+      // Siswa yang SUDAH >= KKM TETAP mempertahankan nilai aslinya yang tinggi!
+      s.remedial_score = Math.max(raw, Number(s.remedial_score || raw));
+      preservedCount++;
     }
   });
-  toast.success(`Semua siswa di bawah KKM berhasil didongkrak ke KKM (${kkm}).`);
+
+  if (boostedCount > 0) {
+    toast.success(`${boostedCount} siswa di bawah KKM berhasil didongkrak ke KKM (${kkm}). ${preservedCount} siswa yang tuntas tetap mempertahankan nilai aslinya.`);
+  } else {
+    toast.info(`Semua siswa yang mengikuti ujian sudah mencapai batas KKM (${kkm}). Nilai asli tetap dipertahankan.`);
+  }
 }
 
 function applyProportionalCurve() {
@@ -4346,7 +4366,7 @@ function applyProportionalCurve() {
 
     if (curved < kkm) curved = kkm;
     if (curved > 100) curved = 100;
-    s.remedial_score = curved;
+    s.remedial_score = Math.max(raw, curved);
   });
 
   toast.success('Konversi kurva proporsional berhasil diterapkan.');
@@ -4559,8 +4579,8 @@ function getStudentFinalGrade(student) {
   const rem = (student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? Number(student.remedial_score) : null;
   const initial = Number(student.total_score || 0);
 
-  if (rem !== null && rem >= kkm && initial < kkm) {
-    return rem;
+  if (rem !== null) {
+    return Math.max(initial, rem);
   }
   return initial;
 }

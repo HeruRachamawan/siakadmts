@@ -1061,8 +1061,8 @@ function getStudentFinalGrade(student) {
   const rem = (student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? Number(student.remedial_score) : null;
   const initial = Number(student.total_score || 0);
 
-  if (rem !== null && rem >= kkm && initial < kkm) {
-    return rem;
+  if (rem !== null) {
+    return Math.max(initial, rem);
   }
   return initial;
 }
