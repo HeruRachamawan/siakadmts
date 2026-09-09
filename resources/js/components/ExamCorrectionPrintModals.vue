@@ -292,11 +292,11 @@
                   Pratinjau Lembar Nilai Jadi (Standar Rapor Bebas Remedial)
                 </h3>
                 <span
-                  :class="selectedAdjustedPaperSize === 'f4' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'"
+                  :class="selectedAdjustedPaperSize === 'f4' ? 'bg-teal-100 text-teal-800 border-teal-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'"
                   class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1"
                 >
-                  <span class="w-1.5 h-1.5 rounded-full" :class="selectedAdjustedPaperSize === 'f4' ? 'bg-amber-600' : 'bg-emerald-600'"></span>
-                  {{ selectedAdjustedPaperSize === 'f4' ? 'Ukuran F4 / Folio (33 × 21.5 cm)' : 'Ukuran A4 (29.7 × 21 cm)' }}
+                  <span class="w-1.5 h-1.5 rounded-full" :class="selectedAdjustedPaperSize === 'f4' ? 'bg-teal-600' : 'bg-emerald-600'"></span>
+                  {{ (selectedAdjustedPaperSize === 'f4' ? 'Ukuran F4 / Folio (33 × 21.5 cm)' : 'Ukuran A4 (29.7 × 21 cm)') + (selectedAdjustedOrientation === 'portrait' ? ' • Potret' : ' • Lanskap') }}
                 </span>
               </div>
               <p class="text-xs text-slate-500 font-medium">Dokumen rekapitulasi nilai akhir siap setor rapor & kurikulum dengan tingkat ketuntasan 100%.</p>
@@ -304,27 +304,50 @@
           </div>
 
           <div class="flex items-center gap-2 flex-wrap justify-end">
-            <!-- Pilihan Ukuran Kertas -->
-            <div class="flex items-center bg-slate-200/90 p-1 rounded-xl border border-slate-300 shadow-inner">
-              <button
-                type="button"
-                @click="selectedAdjustedPaperSize = 'f4'"
-                :class="selectedAdjustedPaperSize === 'f4' ? 'bg-white text-amber-800 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
-                class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                title="Kertas F4 / Folio Lanskap (330 x 215 mm)"
-              >
-                <span>F4 / Folio</span>
-                <span class="px-1.5 py-0.2 bg-amber-100 text-amber-800 text-[9px] font-black rounded-full uppercase tracking-tighter">Rekomendasi</span>
-              </button>
-              <button
-                type="button"
-                @click="selectedAdjustedPaperSize = 'a4'"
-                :class="selectedAdjustedPaperSize === 'a4' ? 'bg-white text-slate-900 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
-                class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                title="Kertas A4 Lanskap (297 x 210 mm)"
-              >
-                <span>A4</span>
-              </button>
+            <!-- Pilihan Ukuran Kertas (F4 / A4) & Orientasi (Potret / Lanskap) -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <div class="flex items-center bg-slate-200/90 p-1 rounded-xl border border-slate-300 shadow-inner">
+                <button
+                  type="button"
+                  @click="selectedAdjustedPaperSize = 'f4'"
+                  :class="selectedAdjustedPaperSize === 'f4' ? 'bg-white text-amber-800 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                  class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  title="Kertas F4 / Folio (330 x 215 mm) - Rekomendasi standar madrasah"
+                >
+                  <span>F4 / Folio</span>
+                  <span class="px-1.5 py-0.2 bg-amber-100 text-amber-800 text-[9px] font-black rounded-full uppercase tracking-tighter">Rekomendasi</span>
+                </button>
+                <button
+                  type="button"
+                  @click="selectedAdjustedPaperSize = 'a4'"
+                  :class="selectedAdjustedPaperSize === 'a4' ? 'bg-white text-slate-900 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                  class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  title="Kertas A4 (297 x 210 mm)"
+                >
+                  <span>A4</span>
+                </button>
+              </div>
+
+              <div class="flex items-center bg-slate-200/90 p-1 rounded-xl border border-slate-300 shadow-inner">
+                <button
+                  type="button"
+                  @click="selectedAdjustedOrientation = 'portrait'"
+                  :class="selectedAdjustedOrientation === 'portrait' ? 'bg-white text-amber-800 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                  class="px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1 cursor-pointer"
+                  title="Format Potret (Tegak) - Sangat cocok untuk daftar nilai rapor"
+                >
+                  <span>Potret (Tegak)</span>
+                </button>
+                <button
+                  type="button"
+                  @click="selectedAdjustedOrientation = 'landscape'"
+                  :class="selectedAdjustedOrientation === 'landscape' ? 'bg-white text-slate-900 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                  class="px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1 cursor-pointer"
+                  title="Format Lanskap (Mendatar)"
+                >
+                  <span>Lanskap</span>
+                </button>
+              </div>
             </div>
 
             <button
@@ -350,7 +373,7 @@
         <div class="flex-1 overflow-auto bg-slate-200/90 p-4 sm:p-8 flex justify-start xl:justify-center items-start">
           <div
             :id="adjustedSheetId"
-            :class="selectedAdjustedPaperSize === 'f4' ? 'w-[1240px] min-w-[1240px]' : 'w-[1080px] min-w-[1080px]'"
+            :class="selectedAdjustedOrientation === 'portrait' ? (selectedAdjustedPaperSize === 'f4' ? 'w-[860px] min-w-[860px]' : 'w-[820px] min-w-[820px]') : (selectedAdjustedPaperSize === 'f4' ? 'w-[1240px] min-w-[1240px]' : 'w-[1080px] min-w-[1080px]')"
             class="printable-recap-sheet bg-white p-8 sm:p-10 shadow-2xl border border-slate-300 text-slate-900 rounded-xl space-y-5 my-2 transition-all duration-200"
           >
             <!-- Kop -->
@@ -411,19 +434,18 @@
               </div>
             </div>
 
-            <!-- Tabel Nilai Jadi -->
+            <!-- Tabel Nilai Jadi (Standar Rapor Bebas Remedial Tanpa Nilai Asli) -->
             <div class="overflow-x-auto">
               <table class="w-full text-left text-[11px] border-collapse border border-slate-400 bg-white">
                 <thead>
                   <tr class="bg-slate-100 text-slate-900 uppercase font-black text-center text-[10px]">
                     <th class="border border-slate-400 px-2 py-2 w-10">No</th>
                     <th class="border border-slate-400 px-3 py-2 w-28">NISN</th>
-                    <th class="border border-slate-400 px-3 py-2 text-left min-w-[220px]">Nama Lengkap Siswa</th>
-                    <th class="border border-slate-400 px-2 py-2 w-14">L/P</th>
-                    <th class="border border-slate-400 px-2 py-2 w-20">Nilai Asli</th>
-                    <th class="border border-slate-400 px-2 py-2 w-24 bg-amber-50 text-amber-900 font-black">Nilai Jadi (Rapor)</th>
-                    <th class="border border-slate-400 px-2 py-2 w-20">Predikat</th>
-                    <th class="border border-slate-400 px-3 py-2 w-28">Status</th>
+                    <th class="border border-slate-400 px-3 py-2 text-left">Nama Lengkap Siswa</th>
+                    <th class="border border-slate-400 px-2 py-2 w-12">L/P</th>
+                    <th class="border border-slate-400 px-3 py-2 w-28 bg-amber-50 text-amber-900 font-black">Nilai Akhir (Rapor)</th>
+                    <th class="border border-slate-400 px-2 py-2 w-16">Predikat</th>
+                    <th class="border border-slate-400 px-3 py-2 w-24">Status</th>
                     <th class="border border-slate-400 px-3 py-2 text-left">Keterangan</th>
                   </tr>
                 </thead>
@@ -437,10 +459,7 @@
                     <td class="border border-slate-300 px-3 py-1.5 text-center font-mono font-medium">{{ student.nisn || '-' }}</td>
                     <td class="border border-slate-300 px-3 py-1.5 text-left font-bold text-slate-900 uppercase">{{ student.name }}</td>
                     <td class="border border-slate-300 px-2 py-1.5 text-center font-medium">{{ student.gender || '-' }}</td>
-                    <td class="border border-slate-300 px-2 py-1.5 text-center font-bold text-slate-500">
-                      {{ student.total_score !== null ? student.total_score : '-' }}
-                    </td>
-                    <td class="border border-slate-400 px-2 py-1.5 text-center font-black text-sm bg-amber-50/50 text-slate-900">
+                    <td class="border border-slate-400 px-3 py-1.5 text-center font-black text-sm bg-amber-50/50 text-slate-900">
                       {{ (student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? student.remedial_score : (student.total_score !== null ? student.total_score : '-') }}
                     </td>
                     <td class="border border-slate-300 px-2 py-1.5 text-center font-bold">
@@ -882,6 +901,7 @@ const toast = useToast();
 
 const selectedPaperSize = ref('f4');
 const selectedAdjustedPaperSize = ref('f4');
+const selectedAdjustedOrientation = ref('portrait'); // 'portrait' atau 'landscape'
 const selectedAnalysisPaperSize = ref('f4');
 
 const recapSheetId = computed(() => `${props.idPrefix}_printableRecapSheet`);
@@ -1444,15 +1464,16 @@ function printAdjustedDocument() {
   }
 
   const isF4 = selectedAdjustedPaperSize.value === 'f4';
-  const paperCssSize = isF4 ? '330mm 215mm' : '297mm 210mm';
-  const paperTitle = isF4 ? 'F4 / Folio' : 'A4';
+  const isPortrait = selectedAdjustedOrientation.value === 'portrait';
+  let paperCssSize = isPortrait ? (isF4 ? '215mm 330mm' : '210mm 297mm') : (isF4 ? '330mm 215mm' : '297mm 210mm');
+  const paperTitle = (isF4 ? 'F4 / Folio' : 'A4') + (isPortrait ? ' Potret' : ' Lanskap');
 
   printWindow.document.open();
   printWindow.document.write(`<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <title>Rekapitulasi Nilai Rapor Bebas Remedial (${paperTitle}) - ${props.exam?.title || 'Ujian'}</title>
+  <title>Daftar Rekapitulasi Nilai Asesmen (${paperTitle}) - ${props.exam?.title || 'Ujian'}</title>
   <style>
     @page {
       size: ${paperCssSize};
@@ -1469,7 +1490,7 @@ function printAdjustedDocument() {
       color: #0f172a;
       padding: 0;
       margin: 0;
-      font-size: ${isF4 ? '11px' : '10px'};
+      font-size: ${isPortrait ? (isF4 ? '10px' : '9.5px') : (isF4 ? '11px' : '10px')};
       line-height: 1.35;
     }
     .text-center { text-align: center; }
