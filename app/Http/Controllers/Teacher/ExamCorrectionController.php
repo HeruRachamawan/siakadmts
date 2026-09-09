@@ -579,6 +579,20 @@ class ExamCorrectionController extends Controller
                     $studentAns = $answers[(string)$num] ?? null;
                     $correctAns = $q->correct_answer;
 
+                    if ($q->question_type === 'short_answer') {
+                        $eScore = $essayScoresInput[(string)$num] ?? null;
+                        if ($eScore !== null && $eScore !== '') {
+                            $val = min(max(0, floatval($eScore)), $q->score_weight);
+                            $earnedPgPoints += $val;
+                            if ($val >= $q->score_weight) {
+                                $correctPgCount++;
+                            } else {
+                                $wrongPgCount++;
+                            }
+                            continue;
+                        }
+                    }
+
                     if ($correctAns !== null && $studentAns !== null && self::checkAnswerCorrectness($q->question_type, $studentAns, $correctAns)) {
                         $correctPgCount++;
                         $earnedPgPoints += $q->score_weight;
@@ -752,6 +766,8 @@ class ExamCorrectionController extends Controller
 
             foreach ($submissions as $sub) {
                 $ans = $sub->student_answers[$qNum] ?? null;
+                $eScore = $sub->essay_scores[$qNum] ?? null;
+
                 if ($ans) {
                     if (isset($optionCounts[$ans])) {
                         $optionCounts[$ans]++;
@@ -759,8 +775,23 @@ class ExamCorrectionController extends Controller
                         $optionCounts['OTHER']++;
                     }
                 }
-                if ($correctAns !== null && $ans !== null && self::checkAnswerCorrectness($q->question_type, $ans, $correctAns)) {
-                    $correctCount++;
+
+                if ($q->question_type === 'short_answer') {
+                    if ($eScore !== null && $eScore !== '') {
+                        if (floatval($eScore) >= $q->score_weight) {
+                            $correctCount++;
+                        }
+                    } elseif ($correctAns !== null && $ans !== null && self::checkAnswerCorrectness($q->question_type, $ans, $correctAns)) {
+                        $correctCount++;
+                    }
+                } elseif ($q->question_type === 'essay') {
+                    if ($eScore !== null && $eScore !== '' && floatval($eScore) > 0) {
+                        $correctCount += (floatval($eScore) / max(1, $q->score_weight));
+                    }
+                } else {
+                    if ($correctAns !== null && $ans !== null && self::checkAnswerCorrectness($q->question_type, $ans, $correctAns)) {
+                        $correctCount++;
+                    }
                 }
             }
 
@@ -777,15 +808,44 @@ class ExamCorrectionController extends Controller
             $upperCorrect = 0;
             foreach ($upperGroup as $uSub) {
                 $uAns = $uSub->student_answers[$qNum] ?? null;
-                if ($correctAns !== null && $uAns !== null && self::checkAnswerCorrectness($q->question_type, $uAns, $correctAns)) {
-                    $upperCorrect++;
+                $uEScore = $uSub->essay_scores[$qNum] ?? null;
+
+                if ($q->question_type === 'short_answer') {
+                    if ($uEScore !== null && $uEScore !== '') {
+                        if (floatval($uEScore) >= $q->score_weight) $upperCorrect++;
+                    } elseif ($correctAns !== null && $uAns !== null && self::checkAnswerCorrectness($q->question_type, $uAns, $correctAns)) {
+                        $upperCorrect++;
+                    }
+                } elseif ($q->question_type === 'essay') {
+                    if ($uEScore !== null && $uEScore !== '' && floatval($uEScore) > 0) {
+                        $upperCorrect += (floatval($uEScore) / max(1, $q->score_weight));
+                    }
+                } else {
+                    if ($correctAns !== null && $uAns !== null && self::checkAnswerCorrectness($q->question_type, $uAns, $correctAns)) {
+                        $upperCorrect++;
+                    }
                 }
             }
+
             $lowerCorrect = 0;
             foreach ($lowerGroup as $lSub) {
                 $lAns = $lSub->student_answers[$qNum] ?? null;
-                if ($correctAns !== null && $lAns !== null && self::checkAnswerCorrectness($q->question_type, $lAns, $correctAns)) {
-                    $lowerCorrect++;
+                $lEScore = $lSub->essay_scores[$qNum] ?? null;
+
+                if ($q->question_type === 'short_answer') {
+                    if ($lEScore !== null && $lEScore !== '') {
+                        if (floatval($lEScore) >= $q->score_weight) $lowerCorrect++;
+                    } elseif ($correctAns !== null && $lAns !== null && self::checkAnswerCorrectness($q->question_type, $lAns, $correctAns)) {
+                        $lowerCorrect++;
+                    }
+                } elseif ($q->question_type === 'essay') {
+                    if ($lEScore !== null && $lEScore !== '' && floatval($lEScore) > 0) {
+                        $lowerCorrect += (floatval($lEScore) / max(1, $q->score_weight));
+                    }
+                } else {
+                    if ($correctAns !== null && $lAns !== null && self::checkAnswerCorrectness($q->question_type, $lAns, $correctAns)) {
+                        $lowerCorrect++;
+                    }
                 }
             }
 
@@ -1009,6 +1069,20 @@ class ExamCorrectionController extends Controller
             foreach ($pgQuestions as $num => $q) {
                 $studentAns = $answers[(string)$num] ?? null;
                 $correctAns = $q->correct_answer;
+
+                if ($q->question_type === 'short_answer') {
+                    $eScore = $essayScoresInput[(string)$num] ?? null;
+                    if ($eScore !== null && $eScore !== '') {
+                        $val = min(max(0, floatval($eScore)), $q->score_weight);
+                        $earnedPgPoints += $val;
+                        if ($val >= $q->score_weight) {
+                            $correctPgCount++;
+                        } else {
+                            $wrongPgCount++;
+                        }
+                        continue;
+                    }
+                }
 
                 if ($correctAns !== null && $studentAns !== null && self::checkAnswerCorrectness($q->question_type, $studentAns, $correctAns)) {
                     $correctPgCount++;

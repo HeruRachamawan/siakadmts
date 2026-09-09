@@ -584,13 +584,15 @@
 
               <!-- 6. Isian Singkat (Short Answer) -->
               <div v-else-if="q.question_type === 'short_answer'" class="space-y-1">
+                <label class="block text-[8px] font-bold text-blue-700 uppercase">Maks Skor</label>
                 <input
-                  v-model="q.correct_answer"
-                  type="text"
-                  placeholder="Kunci teks..."
-                  class="w-full bg-white border border-blue-300 rounded-lg px-2 py-1 text-center text-xs font-bold text-blue-900 focus:ring-1 focus:ring-blue-400"
+                  v-model.number="q.score_weight"
+                  type="number"
+                  min="0.5"
+                  step="any"
+                  placeholder="Skor"
+                  class="w-full bg-white border border-blue-300 rounded-lg px-1.5 py-1 text-center text-xs font-bold text-blue-900 focus:ring-1 focus:ring-blue-400"
                 />
-                <div class="text-[8px] text-blue-700 font-medium truncate" title="Gunakan | untuk alternatif sinonim">Pisahkan | utk opsi</div>
               </div>
 
               <!-- 7. Uraian / Essay -->
@@ -690,7 +692,7 @@
                     *Gunakan tombol "Form Jawaban" untuk PGK, Menjodohkan, B/S & Isian
                   </span>
                 </th>
-                <th v-if="essayQuestionsCount > 0" class="px-4 py-3.5 text-center min-w-[130px]">Nilai Uraian / Essay</th>
+                <th v-if="manualScoredQuestionsCount > 0" class="px-4 py-3.5 text-center min-w-[130px]">Nilai Isian / Uraian</th>
                 <th class="px-4 py-3.5 text-center min-w-[90px]">Benar / Salah</th>
                 <th class="px-4 py-3.5 text-center min-w-[80px]">Nilai Ujian</th>
                 <th class="px-4 py-3.5 text-center min-w-[100px]">Nilai Remedial</th>
@@ -759,18 +761,21 @@
                     </span>
                   </div>
                 </td>
-                <td v-if="essayQuestionsCount > 0" class="px-4 py-3 text-center">
+                <td v-if="manualScoredQuestionsCount > 0" class="px-4 py-3 text-center">
                   <div class="flex items-center justify-center gap-1.5 flex-wrap">
-                    <div v-for="eq in essayQuestions" :key="eq.id || eq.question_number" class="flex flex-col items-center">
-                      <span class="text-[9px] font-bold text-slate-400">No.{{ eq.question_number }}</span>
+                    <div v-for="eq in manualScoredQuestions" :key="eq.id || eq.question_number" class="flex flex-col items-center">
+                      <span class="text-[9px] font-bold" :class="eq.question_type === 'short_answer' ? 'text-blue-600' : 'text-amber-600'">
+                        No.{{ eq.question_number }}
+                      </span>
                       <input
                         v-model.number="student.essay_scores[String(eq.question_number)]"
                         type="number"
                         min="0"
-                        :max="eq.score_weight || 10"
+                        :max="eq.score_weight || (eq.question_type === 'essay' ? 10 : 2)"
                         step="any"
-                        :placeholder="`0-${eq.score_weight || 10}`"
+                        :placeholder="`0-${eq.score_weight || (eq.question_type === 'essay' ? 10 : 2)}`"
                         class="w-14 bg-white border border-slate-200 rounded-lg py-1 text-center text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400"
+                        :title="eq.question_type === 'short_answer' ? `Isian Singkat (Maks: ${eq.score_weight || 2})` : `Uraian (Maks: ${eq.score_weight || 10})`"
                       />
                     </div>
                   </div>
@@ -2012,7 +2017,7 @@
 
               <!-- Question Correct Answer Display for Teacher Reference -->
               <div class="text-[10px] text-slate-500 font-medium">
-                Kunci: <strong class="text-teal-700 font-mono">{{ q.correct_answer || (q.question_type === 'essay' ? `Maks ${q.score_weight}` : '-') }}</strong>
+                Kunci: <strong class="text-teal-700 font-mono">{{ q.correct_answer || (['essay', 'short_answer'].includes(q.question_type) ? `Maks ${q.score_weight || (q.question_type === 'essay' ? 10 : 2)}` : '-') }}</strong>
               </div>
 
               <!-- Input Controls for Student's Answer -->
@@ -2102,11 +2107,17 @@
 
               <!-- 6. Isian Singkat -->
               <div v-else-if="q.question_type === 'short_answer'" class="space-y-1">
+                <div class="flex items-center justify-between text-[10px] font-bold text-blue-800">
+                  <span>Nilai:</span>
+                  <span>Maks: {{ q.score_weight || 2 }}</span>
+                </div>
                 <input
-                  :value="getStudentAnswer(selectedStudent, q.question_number)"
-                  @input="e => setStudentAnswer(selectedStudent, q.question_number, e.target.value)"
-                  type="text"
-                  placeholder="Jawaban teks..."
+                  v-model.number="selectedStudent.essay_scores[String(q.question_number)]"
+                  type="number"
+                  min="0"
+                  :max="q.score_weight || 2"
+                  step="any"
+                  :placeholder="`0-${q.score_weight || 2}`"
                   class="w-full bg-white border border-blue-300 rounded-lg px-2 py-1 text-center text-xs font-bold text-blue-900 focus:ring-1 focus:ring-blue-400"
                 />
               </div>
@@ -3389,8 +3400,10 @@ function getGradePredicate(score) {
 
 const pgQuestions = computed(() => activeQuestions.value.filter(q => q.question_type !== 'essay'));
 const essayQuestions = computed(() => activeQuestions.value.filter(q => q.question_type === 'essay'));
+const manualScoredQuestions = computed(() => activeQuestions.value.filter(q => ['essay', 'short_answer'].includes(q.question_type)));
 const pgQuestionsCount = computed(() => pgQuestions.value.length);
 const essayQuestionsCount = computed(() => essayQuestions.value.length);
+const manualScoredQuestionsCount = computed(() => manualScoredQuestions.value.length);
 const totalEssayMaxScore = computed(() => essayQuestions.value.reduce((sum, q) => sum + (Number(q.score_weight) || 0), 0));
 
 const pgBiasaQuestions = computed(() => activeQuestions.value.filter(q => q.question_type === 'pg'));
@@ -3679,8 +3692,8 @@ function fillStudentWithAnswerKeys(student) {
 
   activeQuestions.value.forEach(q => {
     const qNum = String(q.question_number);
-    if (q.question_type === 'essay') {
-      student.essay_scores[qNum] = Number(q.score_weight || 10);
+    if (['essay', 'short_answer'].includes(q.question_type)) {
+      student.essay_scores[qNum] = Number(q.score_weight || (q.question_type === 'essay' ? 10 : 2));
     } else {
       student.student_answers[qNum] = q.correct_answer || '';
     }
@@ -3760,10 +3773,6 @@ function findBestObjectiveSubset(questions, targetPoints) {
 
   for (const [w] of dp.entries()) {
     const diff = Math.abs(w - targetScaled);
-    if (diff === 0) {
-      bestW = w;
-      break;
-    }
     // Prefer w >= targetScaled so the score reaches/passes KKM
     const penalty = w >= targetScaled ? 0 : 0.05;
     if (diff + penalty < minDiff) {
@@ -3805,9 +3814,15 @@ function fillStudentWithKKM(student) {
     const qNum = String(q.question_number);
     const weight = Number(q.score_weight || 1);
     if (bestSubsetIndices.has(idx)) {
+      if (q.question_type === 'short_answer') {
+        student.essay_scores[qNum] = weight;
+      }
       student.student_answers[qNum] = q.correct_answer || 'A';
       earnedObjPoints += weight;
     } else {
+      if (q.question_type === 'short_answer') {
+        student.essay_scores[qNum] = 0;
+      }
       student.student_answers[qNum] = getWrongAnswerForQuestion(q);
     }
   });
@@ -4421,6 +4436,20 @@ function calculateStudentTypeScore(student, typeObj) {
       const sScore = Number(student.essay_scores?.[String(q.question_number)] || 0);
       const cap = Number(q.score_weight || 10);
       earned += Math.min(Math.max(0, sScore), cap);
+    } else if (q.question_type === 'short_answer') {
+      const sScore = student.essay_scores?.[String(q.question_number)];
+      const cap = Number(q.score_weight || 2);
+      if (sScore !== undefined && sScore !== null && sScore !== '') {
+        const val = Math.min(Math.max(0, Number(sScore)), cap);
+        earned += val;
+        if (val >= cap) correctCount++;
+      } else {
+        const studentAns = student.student_answers?.[String(q.question_number)] ?? (student.answer_string ? student.answer_string[q.question_number - 1] : '');
+        if (checkAnswerMatch(q.question_type, studentAns, q.correct_answer)) {
+          earned += cap;
+          correctCount++;
+        }
+      }
     } else {
       const studentAns = student.student_answers?.[String(q.question_number)] ?? (student.answer_string ? student.answer_string[q.question_number - 1] : '');
       if (checkAnswerMatch(q.question_type, studentAns, q.correct_answer)) {

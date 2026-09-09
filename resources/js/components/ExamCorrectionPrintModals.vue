@@ -1018,6 +1018,20 @@ function calculateStudentTypeScore(student, typeObj) {
       const sScore = Number(student.essay_scores?.[String(q.question_number)] || 0);
       const cap = Number(q.score_weight || 10);
       earned += Math.min(Math.max(0, sScore), cap);
+    } else if (q.question_type === 'short_answer') {
+      const sScore = student.essay_scores?.[String(q.question_number)];
+      const cap = Number(q.score_weight || 2);
+      if (sScore !== undefined && sScore !== null && sScore !== '') {
+        const val = Math.min(Math.max(0, Number(sScore)), cap);
+        earned += val;
+        if (val >= cap) correctCount++;
+      } else {
+        const studentAns = student.student_answers?.[String(q.question_number)] ?? (student.answer_string ? student.answer_string[q.question_number - 1] : '');
+        if (checkAnswerMatch(q.question_type, studentAns, q.correct_answer)) {
+          earned += cap;
+          correctCount++;
+        }
+      }
     } else {
       const studentAns = student.student_answers?.[String(q.question_number)] ?? (student.answer_string ? student.answer_string[q.question_number - 1] : '');
       if (checkAnswerMatch(q.question_type, studentAns, q.correct_answer)) {
