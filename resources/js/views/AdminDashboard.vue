@@ -1,57 +1,57 @@
 <template>
-  <div class="space-y-6 font-inter">
+  <div class="space-y-5 font-inter">
 
-    <!-- Fresh Vibrant Emerald Hero Banner (Portal Utama Administrator) -->
-    <div class="relative bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 text-white rounded-2xl shadow-lg shadow-emerald-700/20 overflow-hidden border border-emerald-500/40">
-      <!-- Subtle Background Mesh Grid & Glow -->
-      <div class="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:22px_22px] opacity-60 pointer-events-none"></div>
-      <div class="absolute -top-16 -right-16 w-64 h-64 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none"></div>
-      
-      <!-- Content -->
-      <div class="relative z-10 p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div class="flex items-center gap-5">
-          <!-- Logo Frame -->
-          <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white/15 backdrop-blur-md rounded-2xl border border-white/30 p-2 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-md">
-            <img v-if="appSettings?.app_logo" :src="getImageUrl(appSettings.app_logo)" class="w-full h-full object-contain filter drop-shadow" alt="Logo Sekolah" />
-            <svg v-else class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-            </svg>
+    <!-- Executive Page Header (Institutional & Dignified) -->
+    <div class="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-2xs">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 bg-slate-50 rounded-xl border border-slate-200 p-2 flex items-center justify-center flex-shrink-0 shadow-2xs">
+            <img v-if="appSettings?.app_logo" :src="getImageUrl(appSettings.app_logo)" class="w-full h-full object-contain" alt="Logo Sekolah" />
+            <School v-else class="w-7 h-7 text-emerald-800" />
           </div>
-          
-          <div class="space-y-1.5">
-            <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md text-white rounded-full text-[11px] font-bold border border-white/30 shadow-xs">
-              <span class="w-2 h-2 rounded-full bg-emerald-200 animate-pulse"></span>
-              <span>Portal Utama Administrator</span>
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                Portal Utama Administrator
+              </span>
+              <span class="text-xs text-slate-300 font-medium">&bull;</span>
+              <span class="text-xs font-semibold text-slate-600 font-mono tabular-nums">T.A. 2026/2027</span>
             </div>
-            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight uppercase text-white leading-tight drop-shadow-xs">
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 uppercase font-sans">
               {{ appSettings?.app_name || 'MTs AL - HASANAH' }}
             </h1>
-            <p class="text-emerald-50 text-xs sm:text-sm max-w-xl font-normal leading-relaxed">
-              {{ appSettings?.app_tagline || 'Pusat kendali utama. Kelola data siswa, guru, mata pelajaran, dan kelas secara terintegrasi.' }}
+            <p class="text-slate-500 text-xs sm:text-sm mt-0.5 max-w-2xl font-normal">
+              {{ appSettings?.app_tagline || 'Pusat kendali operasional madrasah. Kelola data siswa, guru, mata pelajaran, dan kelas secara terpadu.' }}
             </p>
           </div>
         </div>
 
-        <!-- Quick Info Badge Right -->
-        <div class="hidden lg:flex flex-col items-end justify-center border-l border-white/20 pl-6 space-y-1.5 flex-shrink-0">
-          <span class="text-xs font-semibold text-emerald-100 uppercase tracking-wider">Tahun Ajaran Aktif</span>
-          <span class="px-3.5 py-1.5 bg-white/20 text-white text-xs font-bold rounded-xl border border-white/30 backdrop-blur-md shadow-xs">2026 / 2027</span>
+        <!-- Action Shortcuts -->
+        <div class="flex items-center gap-2 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+          <RouterLink to="/admin/students" class="btn btn-outline">
+            <Users class="w-3.5 h-3.5 text-slate-600" />
+            <span>Data Siswa</span>
+          </RouterLink>
+          <RouterLink to="/admin/print-center" class="btn btn-primary">
+            <Printer class="w-3.5 h-3.5" />
+            <span>Pusat Cetak</span>
+          </RouterLink>
         </div>
       </div>
     </div>
 
-    <!-- Shadcn Stat Cards Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <!-- Metric Cards Grid (High-Density Enterprise Standard) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div
         v-for="stat in stats"
         :key="stat.label"
-        class="shadcn-card p-5 flex items-center justify-between cursor-pointer hover:border-slate-300 transition-all"
+        class="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs hover:border-slate-300 transition-colors cursor-pointer flex items-center justify-between"
         @click="$router.push(stat.link)"
       >
-        <div class="space-y-1">
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ stat.label }}</p>
-          <p class="text-2xl font-bold tracking-tight text-slate-900">
+        <div class="space-y-0.5">
+          <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{{ stat.label }}</p>
+          <p class="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
             {{ loadingStats ? '—' : stat.value }}
           </p>
         </div>
@@ -206,7 +206,9 @@ import {
   Building2,
   ChevronRight,
   User,
-  GraduationCap
+  GraduationCap,
+  School,
+  Printer
 } from 'lucide-vue-next';
 
 ChartJS.register(ArcElement, Tooltip, Legend);

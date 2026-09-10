@@ -18,12 +18,8 @@
 @layer utilities {
     body {
         font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
-        letter-spacing: -0.015em;
-        @apply bg-[#F8FAFC] text-slate-900 antialiased selection:bg-emerald-600 selection:text-white;
-        background-image: 
-            radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.04) 0px, transparent 50%),
-            radial-gradient(at 0% 100%, rgba(14, 165, 233, 0.03) 0px, transparent 50%);
-        background-attachment: fixed;
+        letter-spacing: -0.012em;
+        @apply bg-[#F8FAFC] text-slate-900 antialiased selection:bg-emerald-700 selection:text-white;
     }
 
     /* Modern Typography */
@@ -31,66 +27,63 @@
     .font-inter { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; }
     .font-lexend { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
     
-    /* Fresh Premium Glass Card */
-    .fresh-card {
-        @apply bg-white/95 backdrop-blur-sm rounded-3xl border border-slate-200/80 shadow-xs transition-all duration-300 hover:shadow-md hover:border-emerald-200/80;
-    }
-    
+    /* Institutional Grounded Cards (Enterprise & Academic standard) */
+    .fresh-card,
     .shadcn-card {
-        @apply bg-white rounded-2xl border border-slate-200/80 shadow-xs transition-all duration-200 hover:border-emerald-300 hover:shadow-sm;
+        @apply bg-white rounded-xl border border-slate-200/90 shadow-2xs transition-all duration-150 hover:border-slate-300;
     }
     
-    /* Navigation Link (Shadcn Sidebar Style with Emerald Theme) */
+    /* Navigation Link (Institutional Sidebar Style) */
     .nav-link {
-        @apply flex items-center gap-3 px-3.5 py-2.5 text-slate-600 font-semibold text-xs rounded-xl mx-2 my-0.5 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-800 outline-none focus:outline-none;
+        @apply flex items-center gap-2.5 px-3 py-2 text-slate-600 font-medium text-xs rounded-lg mx-2 my-0.5 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900 outline-none focus:outline-none;
     }
     .nav-link-active {
-        @apply bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30 hover:bg-emerald-700 hover:text-white;
+        @apply bg-emerald-50 text-emerald-900 font-semibold border-l-2 border-emerald-600 shadow-2xs hover:bg-emerald-50/80 hover:text-emerald-950;
     }
     .nav-link-active svg {
-        @apply text-white;
+        @apply text-emerald-700;
     }
     .nav-section {
-        @apply px-3.5 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest mx-2 mt-4 mb-1.5;
+        @apply px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mx-2 mt-3.5 mb-1;
     }
     
-    /* Buttons */
+    /* Enterprise Buttons */
     .btn {
-        @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-900 shadow-xs hover:bg-slate-50 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+        @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-800 shadow-2xs hover:bg-slate-50 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/20 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
     }
     .btn-primary {
-        @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-sm shadow-emerald-600/25 hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+        @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-700 text-white shadow-2xs hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20 focus-visible:ring-offset-1 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
     }
     .btn-accent {
-        @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-sm shadow-emerald-600/25 hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+        @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-700 text-white shadow-2xs hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
     }
     .btn-danger {
-        @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-rose-600 text-white shadow-sm shadow-rose-600/25 hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-600 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+        @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-rose-600 text-white shadow-2xs hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-600/20 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
     }
     .btn-secondary {
-        @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-900 hover:bg-slate-200/80 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+        @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-800 hover:bg-slate-200/80 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
     }
     .btn-outline {
-        @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white text-slate-900 hover:bg-slate-50 hover:border-slate-300 transition-all duration-150 cursor-pointer;
+        @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-150 cursor-pointer;
     }
     
-    /* Inputs */
+    /* Institutional Form Inputs */
     .form-input {
-        @apply flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 shadow-2xs transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-emerald-500 disabled:cursor-not-allowed disabled:opacity-50;
+        @apply flex h-9 w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 shadow-2xs transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/20 focus-visible:border-emerald-600 disabled:cursor-not-allowed disabled:opacity-50;
     }
     
     /* Badges */
     .badge {
-        @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2;
+        @apply inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-1;
     }
     .badge-primary {
-        @apply border-transparent bg-emerald-600 text-white hover:bg-emerald-700;
+        @apply border-transparent bg-emerald-700 text-white hover:bg-emerald-800;
     }
     .badge-secondary {
-        @apply border-transparent bg-slate-100 text-slate-900 hover:bg-slate-200;
+        @apply border-transparent bg-slate-100 text-slate-800 hover:bg-slate-200;
     }
     .badge-outline {
-        @apply text-slate-950 border-slate-200 bg-white;
+        @apply text-slate-800 border-slate-200 bg-white;
     }
     .badge-success {
         @apply border-emerald-200 bg-emerald-50 text-emerald-800;

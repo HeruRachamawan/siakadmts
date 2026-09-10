@@ -1,27 +1,27 @@
 <template>
-  <div class="space-y-6 font-inter">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div class="space-y-5 font-inter">
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 flex-shrink-0">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-10 h-10 bg-slate-100 border border-slate-200 text-slate-700 rounded-lg flex items-center justify-center flex-shrink-0 shadow-2xs">
+          <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
         </div>
         <div>
-          <h1 class="text-xl font-black text-slate-800 font-lexend tracking-wide uppercase">Data Siswa</h1>
-          <p class="text-xs text-slate-400 font-medium">{{ totalRecords }} data ditemukan</p>
+          <h1 class="text-xl font-bold text-slate-900 tracking-tight font-sans">Data Peserta Didik</h1>
+          <p class="text-xs text-slate-500 font-medium">Buku induk siswa &bull; <span class="font-mono tabular-nums font-semibold text-slate-700">{{ totalRecords }}</span> siswa terdaftar</p>
         </div>
       </div>
     </div>
 
-    <!-- Action Bar (filters + buttons, styled like reference) -->
-    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+    <!-- Action Bar (filters + buttons) -->
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2.5">
       <!-- Per Page -->
-      <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-600 shadow-sm">
+      <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 shadow-2xs">
         <select
           v-model.number="selectedPerPage"
-          class="bg-transparent border-none p-0 text-slate-700 font-semibold focus:ring-0 cursor-pointer text-sm pr-1"
+          class="bg-transparent border-none p-0 text-slate-800 font-semibold focus:ring-0 cursor-pointer text-xs pr-1"
           @change="onPerPageChange"
         >
           <option :value="10">10 Baris</option>
@@ -29,20 +29,20 @@
           <option :value="50">50 Baris</option>
           <option :value="-1">Semua</option>
         </select>
-        <svg class="w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg class="w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </div>
 
       <!-- Class Filter -->
-      <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-600 shadow-sm">
+      <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 shadow-2xs">
         <select
           v-model="selectedClass"
-          class="bg-transparent border-none p-0 text-slate-700 font-semibold focus:ring-0 cursor-pointer text-sm pr-1"
+          class="bg-transparent border-none p-0 text-slate-800 font-semibold focus:ring-0 cursor-pointer text-xs pr-1"
           @change="load"
         >
           <option value="">Semua Kelas</option>
           <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
         </select>
-        <svg class="w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg class="w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </div>
 
       <!-- Search -->
@@ -50,11 +50,11 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Cari data..."
-          class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all"
+          placeholder="Cari nama, NISN, NIS, atau NIK..."
+          class="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-colors"
           @input="onSearchInput"
         />
-        <svg class="absolute left-3.5 top-3 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
         </svg>
       </div>
@@ -64,62 +64,62 @@
         <button
           @click="exportExcelFile('students')"
           :disabled="exportingExcel"
-          class="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold rounded-xl text-xs hover:bg-emerald-100 disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
+          class="btn btn-outline"
         >
-          <svg v-if="exportingExcel" class="animate-spin h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" stroke="currentColor" stroke-width="4" d="M4 12a8 8 0 1116 0 8 8 0 01-16 0m8-4v4l3 3m0-7l-3 3"></circle></svg>
-          <svg v-else class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <svg v-if="exportingExcel" class="animate-spin h-3.5 w-3.5 text-slate-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" stroke="currentColor" stroke-width="4" d="M4 12a8 8 0 1116 0 8 8 0 01-16 0m8-4v4l3 3m0-7l-3 3"></circle></svg>
+          <svg v-else class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span>{{ exportingExcel ? 'Mengekspor...' : 'Export Excel' }}</span>
         </button>
         <button
           @click="showImportModal = true"
-          class="flex items-center gap-2 px-4 py-2.5 bg-teal-50 border border-teal-200 text-teal-700 font-bold rounded-xl text-xs hover:bg-teal-100 transition-colors shadow-sm cursor-pointer"
+          class="btn btn-outline"
         >
-          <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
           <span>Import Excel</span>
         </button>
         <button
           @click="showForm = true; editing = null"
-          class="flex items-center gap-2 px-5 py-2.5 bg-[#111827] hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors shadow-sm cursor-pointer"
+          class="btn btn-primary"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"></path></svg>
-          Tambah
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"></path></svg>
+          <span>Tambah Siswa</span>
         </button>
       </div>
     </div>
 
-    <!-- Table -->
-    <div class="bg-white rounded-[2rem] shadow-[0_4px_24px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
+    <!-- Table Container -->
+    <div class="bg-white rounded-xl shadow-2xs border border-slate-200 overflow-hidden">
       <!-- Loading -->
       <SkeletonTable v-if="loading" :columns="6" :rows="5" :avatar="true" class="py-4" />
 
       <!-- Table Body -->
       <div v-else class="overflow-x-auto">
-        <table class="w-full text-left">
+        <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="border-b border-slate-100">
-              <th class="w-10 px-4 py-4 text-center">
+            <tr class="bg-slate-50/90 border-b border-slate-200 text-slate-600">
+              <th class="w-10 px-4 py-3 text-center">
                 <input
                   type="checkbox"
                   :checked="isAllSelected"
                   :indeterminate="isPartiallySelected"
                   @change="toggleSelectAll"
-                  class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                  class="rounded text-emerald-700 focus:ring-emerald-600 w-3.5 h-3.5 cursor-pointer"
                   title="Pilih Semua Siswa di Halaman Ini"
                 />
               </th>
-              <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">NO</th>
-              <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">NAMA SISWA</th>
-              <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">NISN / NIS / NIK</th>
-              <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">JENIS KELAMIN</th>
-              <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">KELAS</th>
-              <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">AKSI</th>
+              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">NO</th>
+              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">NAMA SISWA</th>
+              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">NISN / NIS / NIK / KK</th>
+              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">L/P</th>
+              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">KELAS</th>
+              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-center">AKSI</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-50">
+          <tbody class="divide-y divide-slate-100 text-xs text-slate-800">
             <tr
               v-for="(row, index) in students"
               :key="row.id"
-              :class="selectedStudentIds.includes(row.id) ? 'bg-emerald-50/50' : 'hover:bg-slate-50/70'"
+              :class="selectedStudentIds.includes(row.id) ? 'bg-emerald-50/50' : 'hover:bg-slate-50/80'"
               class="transition-colors"
             >
               <!-- Checkbox -->
@@ -133,56 +133,56 @@
               </td>
 
               <!-- NO -->
-              <td class="px-6 py-4 text-sm font-bold text-slate-400">
+              <td class="px-4 py-3 text-xs font-semibold text-slate-400 font-mono tabular-nums">
                 {{ selectedPerPage === -1 ? index + 1 : (currentPage - 1) * selectedPerPage + index + 1 }}
               </td>
 
               <!-- Nama + Avatar -->
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2.5">
                   <!-- Avatar / Photo -->
-                  <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm border border-slate-200">
+                  <div class="w-8 h-8 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 border border-slate-200 shadow-2xs">
                     <img v-if="row.photo_url" :src="row.photo_url" alt="Photo" class="w-full h-full object-cover" />
                     <div v-else :class="getAvatarColor(row.gender)" class="w-full h-full flex items-center justify-center">
                       {{ getInitials(row.full_name) }}
                     </div>
                   </div>
                   <div>
-                    <span class="text-sm font-bold text-slate-800 block">{{ row.full_name || '-' }}</span>
-                    <span class="text-[10px] text-slate-400 font-medium">{{ row.birth_place || '-' }}</span>
+                    <span class="text-xs font-bold text-slate-900 block leading-tight">{{ row.full_name || '-' }}</span>
+                    <span class="text-[10px] text-slate-400 font-normal">{{ row.birth_place || '-' }}</span>
                   </div>
                 </div>
               </td>
 
               <!-- Identitas NISN / NIS / NIK -->
-              <td class="px-6 py-4">
-                <div class="text-xs font-bold text-slate-800 font-mono">{{ row.nisn || '-' }} / {{ row.nis || '-' }}</div>
-                <div v-if="row.nik" class="text-[10px] text-emerald-700 font-mono font-medium mt-0.5">NIK: {{ row.nik }}</div>
-                <div v-if="row.no_kk" class="text-[10px] text-indigo-700 font-mono font-medium mt-0.5">KK: {{ row.no_kk }}</div>
+              <td class="px-4 py-3">
+                <div class="text-xs font-semibold text-slate-800 font-mono tabular-nums">{{ row.nisn || '-' }} / {{ row.nis || '-' }}</div>
+                <div v-if="row.nik" class="text-[10px] text-slate-500 font-mono tabular-nums font-normal mt-0.5">NIK: {{ row.nik }}</div>
+                <div v-if="row.no_kk" class="text-[10px] text-slate-500 font-mono tabular-nums font-normal mt-0.5">KK: {{ row.no_kk }}</div>
               </td>
 
               <!-- Gender Badge -->
-              <td class="px-6 py-4">
-                <span :class="row.gender === 'L' ? 'text-blue-600' : (row.gender === 'P' ? 'text-pink-600' : 'text-slate-400')" class="text-sm font-medium">
+              <td class="px-4 py-3">
+                <span :class="row.gender === 'L' ? 'bg-blue-50 text-blue-700 border-blue-200/80' : 'bg-pink-50 text-pink-700 border-pink-200/80'" class="px-2 py-0.5 rounded text-[11px] font-semibold border">
                   {{ formatGender(row.gender) }}
                 </span>
               </td>
 
               <!-- Kelas -->
-              <td class="px-6 py-4">
-                <span class="px-3 py-1.5 bg-slate-100 text-slate-700 text-[11px] font-bold rounded-lg">
+              <td class="px-4 py-3">
+                <span class="px-2.5 py-1 bg-slate-100 text-slate-700 text-[11px] font-semibold rounded-md border border-slate-200/60">
                   {{ row.class_name || row.class_room?.name || row.classRoom?.name || '-' }}
                 </span>
               </td>
 
               <!-- Actions -->
-              <td class="px-6 py-4">
-                <div class="flex items-center justify-center gap-1.5">
+              <td class="px-4 py-3">
+                <div class="flex items-center justify-center gap-1">
                   <!-- Pindah Kelas Siswa (Individual) -->
                   <button
                     @click="openTransferModal([row])"
                     title="Pindahkan Siswa ke Kelas Lain"
-                    class="w-8 h-8 rounded-xl flex items-center justify-center bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 border border-indigo-200/80 transition-all shadow-2xs cursor-pointer"
+                    class="w-7 h-7 rounded-lg flex items-center justify-center bg-white text-slate-600 hover:text-indigo-600 hover:border-indigo-200 border border-slate-200 transition-colors shadow-2xs cursor-pointer"
                   >
                     <ArrowRightLeft class="w-3.5 h-3.5" />
                   </button>
@@ -192,7 +192,7 @@
                     v-if="isAdminSuper"
                     @click="loginAsStudent(row)"
                     title="Login Sebagai Siswa Ini (Mode Peninjauan)"
-                    class="w-8 h-8 rounded-xl flex items-center justify-center bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 border border-purple-200 transition-all shadow-2xs cursor-pointer"
+                    class="w-7 h-7 rounded-lg flex items-center justify-center bg-white text-slate-600 hover:text-purple-600 hover:border-purple-200 border border-slate-200 transition-colors shadow-2xs cursor-pointer"
                   >
                     <LogIn class="w-3.5 h-3.5" />
                   </button>
@@ -201,7 +201,7 @@
                   <button
                     @click="viewDetail(row)"
                     title="Lihat Detail"
-                    class="w-8 h-8 rounded-xl flex items-center justify-center bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border border-slate-200/80 transition-all shadow-2xs cursor-pointer"
+                    class="w-7 h-7 rounded-lg flex items-center justify-center bg-white text-slate-600 hover:text-emerald-700 hover:border-emerald-200 border border-slate-200 transition-colors shadow-2xs cursor-pointer"
                   >
                     <Eye class="w-3.5 h-3.5" />
                   </button>
@@ -210,7 +210,7 @@
                   <button
                     @click="resetPassword(row)"
                     title="Reset Password"
-                    class="w-8 h-8 rounded-xl flex items-center justify-center bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200 border border-slate-200/80 transition-all shadow-2xs cursor-pointer"
+                    class="w-7 h-7 rounded-lg flex items-center justify-center bg-white text-slate-600 hover:text-amber-600 hover:border-amber-200 border border-slate-200 transition-colors shadow-2xs cursor-pointer"
                   >
                     <Key class="w-3.5 h-3.5" />
                   </button>
@@ -219,7 +219,7 @@
                   <button
                     @click="edit(row)"
                     title="Edit Siswa"
-                    class="w-8 h-8 rounded-xl flex items-center justify-center bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border border-slate-200/80 transition-all shadow-2xs cursor-pointer"
+                    class="w-7 h-7 rounded-lg flex items-center justify-center bg-white text-slate-600 hover:text-emerald-700 hover:border-emerald-200 border border-slate-200 transition-colors shadow-2xs cursor-pointer"
                   >
                     <Pencil class="w-3.5 h-3.5" />
                   </button>
@@ -228,7 +228,7 @@
                   <button
                     @click="remove(row)"
                     title="Hapus Siswa"
-                    class="w-8 h-8 rounded-xl flex items-center justify-center bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 border border-slate-200/80 transition-all shadow-2xs cursor-pointer"
+                    class="w-7 h-7 rounded-lg flex items-center justify-center bg-white text-slate-600 hover:text-rose-600 hover:border-rose-200 border border-slate-200 transition-colors shadow-2xs cursor-pointer"
                   >
                     <Trash2 class="w-3.5 h-3.5" />
                   </button>

@@ -1,57 +1,51 @@
 <template>
   <div class="space-y-6 font-inter">
 
-    <!-- Fresh Vibrant Emerald Hero Banner (Teacher Profile & Subjects) -->
-    <div class="relative bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 text-white rounded-2xl shadow-lg shadow-emerald-700/20 overflow-hidden border border-emerald-500/40">
-      <!-- Subtle Background Mesh Grid & Glow -->
-      <div class="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:22px_22px] opacity-60 pointer-events-none"></div>
-      <div class="absolute -top-16 -right-16 w-64 h-64 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none"></div>
-
-      <!-- Banner Content -->
-      <div class="relative z-10 p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div class="flex flex-col sm:flex-row sm:items-center gap-5">
-          
+    <!-- Executive Teacher Header (Institutional & Dignified) -->
+    <div class="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-2xs">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
           <!-- Teacher Photo Frame -->
-          <div class="w-20 h-20 sm:w-24 sm:h-24 bg-white/15 backdrop-blur-md rounded-2xl border border-white/30 p-1 flex items-center justify-center flex-shrink-0 overflow-hidden relative group shadow-md">
-            <img v-if="teacherInfo.photo_url && typeof teacherInfo.photo_url === 'string' && teacherInfo.photo_url.length > 5" :src="getImageUrl(teacherInfo.photo_url)" class="w-full h-full object-cover rounded-xl shadow-inner" alt="Foto Guru" />
-            <div v-else class="w-full h-full rounded-xl bg-emerald-800 flex items-center justify-center text-white font-bold text-2xl uppercase">
+          <div class="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 rounded-xl border border-slate-200 p-1 flex items-center justify-center flex-shrink-0 overflow-hidden relative shadow-2xs">
+            <img v-if="teacherInfo.photo_url && typeof teacherInfo.photo_url === 'string' && teacherInfo.photo_url.length > 5" :src="getImageUrl(teacherInfo.photo_url)" class="w-full h-full object-cover rounded-lg" alt="Foto Guru" />
+            <div v-else class="w-full h-full rounded-lg bg-emerald-800 flex items-center justify-center text-white font-bold text-xl uppercase">
               {{ (teacherInfo.full_name || user?.name || 'G').charAt(0) }}
             </div>
             <!-- Online status indicator -->
-            <span class="absolute bottom-1 right-1 w-3.5 h-3.5 bg-emerald-300 border-2 border-emerald-800 rounded-full shadow-xs"></span>
+            <span class="absolute bottom-1 right-1 w-2.5 h-2.5 bg-emerald-500 border border-white rounded-full"></span>
           </div>
 
           <!-- Teacher Profile Info -->
-          <div class="space-y-1.5">
+          <div class="space-y-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 backdrop-blur-md text-white rounded-full text-[11px] font-bold border border-white/30 shadow-xs">
-                <svg class="w-3.5 h-3.5 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                <span>Portal Guru &bull; NIP: {{ teacherInfo.nip || '-' }}</span>
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded text-[11px] font-semibold border border-emerald-200/80">
+                <svg class="w-3.5 h-3.5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <span>Portal Dewan Guru &bull; {{ teacherInfo.nip ? `NIP: ${teacherInfo.nip}` : `@${user?.username}` }}</span>
               </span>
 
               <!-- Jabatan Badge -->
-              <span v-if="teacherInfo.position" class="inline-flex items-center gap-1 px-3 py-1 bg-amber-300/20 backdrop-blur-md text-amber-100 rounded-full text-[11px] font-bold border border-amber-300/40">
+              <span v-if="teacherInfo.position" class="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[11px] font-semibold border border-slate-200/80">
                 <span>Jabatan: {{ teacherInfo.position }}</span>
               </span>
             </div>
 
-            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white uppercase leading-tight drop-shadow-xs">
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 uppercase font-sans leading-tight">
               {{ teacherInfo.full_name || user?.name }}
             </h1>
 
             <!-- Mata Pelajaran Yang Diampu -->
             <div class="flex items-center gap-2 flex-wrap pt-0.5">
-              <span class="text-xs font-semibold text-emerald-100">Mapel Diampu:</span>
+              <span class="text-xs font-semibold text-slate-500">Mapel:</span>
               <template v-if="teacherInfo.subjects && teacherInfo.subjects.length > 0">
                 <span
                   v-for="(subj, idx) in teacherInfo.subjects"
                   :key="idx"
-                  class="px-2.5 py-0.5 bg-white/20 text-white text-xs font-semibold rounded-lg border border-white/30 backdrop-blur-md"
+                  class="px-2 py-0.5 bg-slate-100 text-slate-700 text-xs font-medium rounded border border-slate-200/80"
                 >
                   {{ subj }}
                 </span>
               </template>
-              <span v-else class="text-xs text-emerald-200/80 italic">
+              <span v-else class="text-xs text-slate-400 italic">
                 Belum Ditentukan
               </span>
             </div>
@@ -59,47 +53,47 @@
         </div>
 
         <!-- School Name & Active TA Badge Right -->
-        <div class="flex flex-col sm:flex-row items-end justify-center gap-3 flex-shrink-0">
+        <div class="flex flex-col sm:flex-row items-start md:items-end justify-center gap-3 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
           <button
             v-if="auth.isDualRole"
             @click="switchToStaff"
-            class="inline-flex items-center gap-2 px-3.5 py-2 bg-indigo-900/70 hover:bg-indigo-900 text-white text-xs font-bold rounded-xl border border-indigo-400/40 backdrop-blur-md shadow-xs transition-all active:scale-95 cursor-pointer"
+            class="btn btn-outline"
             :title="`Beralih ke Dashboard ${auth.primaryRole === 'kurikulum' ? 'Kurikulum' : 'Operator TU'}`"
           >
-            <Building2 class="w-4 h-4 text-indigo-200" />
+            <Building2 class="w-3.5 h-3.5 text-slate-600" />
             <span>Mode {{ auth.primaryRole === 'kurikulum' ? 'Kurikulum' : 'Operator TU' }} &rarr;</span>
           </button>
-          <div class="hidden lg:flex flex-col items-end border-l border-white/20 pl-4 space-y-1">
-            <span class="text-xs font-semibold text-emerald-100 uppercase tracking-wider">{{ appSettings?.app_name || 'MTs AL - HASANAH' }}</span>
-            <span class="px-3.5 py-1 bg-white/20 text-white text-xs font-bold rounded-xl border border-white/30 backdrop-blur-md shadow-xs">T.A. 2026 / 2027</span>
+          <div class="flex flex-col items-start md:items-end space-y-0.5">
+            <span class="text-xs font-semibold text-slate-700 uppercase tracking-wider">{{ appSettings?.app_name || 'MTs AL - HASANAH' }}</span>
+            <span class="text-xs font-semibold text-slate-500 font-mono tabular-nums">T.A. 2026/2027</span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Holiday Notice Banner (Jika hari ini Libur) -->
-    <div v-if="holidayInfo.is_holiday" class="bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900 rounded-2xl p-5 text-white shadow-md flex items-center justify-between gap-4 border border-purple-400/40">
-      <div class="flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center text-2xl flex-shrink-0 backdrop-blur-md border border-white/20">
+    <div v-if="holidayInfo.is_holiday" class="bg-slate-900 rounded-xl p-4 text-white shadow-2xs flex items-center justify-between gap-4 border border-slate-800">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-xl flex-shrink-0 border border-slate-700">
           🏖️
         </div>
         <div class="space-y-0.5">
           <div class="flex items-center gap-2">
-            <span class="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[9px] font-black uppercase">
+            <span class="px-2 py-0.5 rounded bg-amber-400 text-slate-950 text-[10px] font-bold uppercase">
               {{ holidayInfo.holiday_type === 'weekly_holiday' ? 'HARI LIBUR MINGGUAN' : 'HARI LIBUR NASIONAL / PHBI' }}
             </span>
           </div>
-          <h3 class="text-sm font-black font-lexend text-white">{{ holidayInfo.holiday_name || 'Hari Libur Resmi' }}</h3>
-          <p class="text-[11px] text-purple-200">Bapak/Ibu Dewan Guru tidak diwajibkan melakukan presensi harian pada hari ini.</p>
+          <h3 class="text-xs sm:text-sm font-bold text-white">{{ holidayInfo.holiday_name || 'Hari Libur Resmi' }}</h3>
+          <p class="text-[11px] text-slate-300">Bapak/Ibu Dewan Guru tidak diwajibkan melakukan presensi harian pada hari ini.</p>
         </div>
       </div>
-      <RouterLink to="/teacher/calendar" class="px-3.5 py-1.5 bg-white text-purple-950 hover:bg-purple-50 text-xs font-bold rounded-xl shadow-xs transition-all whitespace-nowrap">
+      <RouterLink to="/teacher/calendar" class="btn btn-secondary text-xs font-semibold">
         Lihat Kalender &rarr;
       </RouterLink>
     </div>
 
     <!-- Quick Attendance Card Widget (Presensi Harian Cepat GPS) -->
-    <div class="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 space-y-5">
+    <div class="bg-white rounded-xl shadow-2xs border border-slate-200 p-5 space-y-4">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
         <div class="flex items-center gap-3.5">
           <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0 font-bold border border-emerald-200/80 shadow-2xs">
