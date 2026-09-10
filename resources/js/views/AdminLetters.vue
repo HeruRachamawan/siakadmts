@@ -1,135 +1,158 @@
 <template>
-  <div class="space-y-6 font-sans">
-    <!-- Header Page -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
-      <div>
-        <div class="flex items-center gap-2 text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">
-          <FileText class="w-4 h-4" />
-          <span>Administrasi & Tata Usaha</span>
+  <div class="space-y-5 font-inter pb-12">
+    <!-- Header Page (Deep Madrasah Emerald - Institutional & Dignified) -->
+    <div class="relative bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-950 text-white rounded-lg border border-emerald-800/80 p-5 sm:p-6 shadow-sm overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="absolute right-0 top-0 bottom-0 w-96 bg-radial from-emerald-500/10 to-transparent pointer-events-none"></div>
+
+      <div class="relative z-10 flex items-center gap-3.5">
+        <div class="w-12 h-12 bg-white/10 rounded-md border border-white/20 p-2 flex items-center justify-center shadow-inner flex-shrink-0">
+          <FileText class="w-6 h-6 text-emerald-300" />
         </div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Manajemen Persuratan & Arsip Digital</h1>
-        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Buku agenda surat masuk, surat keluar, lembar disposisi, dan generator surat keterangan siswa aktif.</p>
+        <div>
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              Administrasi & Tata Usaha Madrasah
+            </span>
+          </div>
+          <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white uppercase font-sans">
+            Manajemen Persuratan & Arsip Digital
+          </h1>
+          <p class="text-emerald-200/80 text-xs mt-0.5 max-w-2xl font-normal">
+            Buku agenda surat masuk, surat keluar, lembar disposisi digital pimpinan, dan generator surat keterangan siswa aktif.
+          </p>
+        </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2.5">
+      <div class="relative z-10 flex flex-wrap items-center gap-2">
         <button
           @click="openAddModal('incoming')"
-          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/25 transition-all active:scale-95 cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500 shadow-2xs transition-colors cursor-pointer"
         >
           <Plus class="w-4 h-4" />
-          <span>+ Surat Masuk</span>
+          <span>Catat Surat Masuk</span>
         </button>
 
         <button
           @click="openAddModal('outgoing')"
-          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/25 transition-all active:scale-95 cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-2xs transition-colors cursor-pointer"
         >
-          <Send class="w-4 h-4" />
-          <span>+ Surat Keluar</span>
+          <Send class="w-4 h-4 text-emerald-200" />
+          <span>Catat Surat Keluar</span>
         </button>
       </div>
     </div>
 
-    <!-- Quick Stat Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+    <!-- Quick Stat Cards (High-Density Enterprise Standard) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs flex items-center justify-between">
         <div>
-          <p class="text-xs font-medium text-slate-500">Total Surat Masuk</p>
-          <p class="text-2xl font-black text-slate-900 mt-1">{{ stats.total_incoming || 0 }}</p>
-          <span class="text-[11px] text-emerald-600 font-semibold">{{ stats.this_month_incoming || 0 }} bulan ini</span>
+          <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Surat Masuk</p>
+          <p class="text-xl font-bold text-slate-900 font-mono tabular-nums mt-0.5">{{ stats.total_incoming || 0 }}</p>
+          <span class="text-[11px] text-emerald-700 font-semibold font-mono tabular-nums">{{ stats.this_month_incoming || 0 }} bulan ini</span>
         </div>
-        <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center flex-shrink-0">
           <Inbox class="w-5 h-5" />
         </div>
       </div>
 
-      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+      <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs flex items-center justify-between">
         <div>
-          <p class="text-xs font-medium text-slate-500">Total Surat Keluar</p>
-          <p class="text-2xl font-black text-slate-900 mt-1">{{ stats.total_outgoing || 0 }}</p>
-          <span class="text-[11px] text-indigo-600 font-semibold">{{ stats.this_month_outgoing || 0 }} bulan ini</span>
+          <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Surat Keluar</p>
+          <p class="text-xl font-bold text-slate-900 font-mono tabular-nums mt-0.5">{{ stats.total_outgoing || 0 }}</p>
+          <span class="text-[11px] text-blue-700 font-semibold font-mono tabular-nums">{{ stats.this_month_outgoing || 0 }} bulan ini</span>
         </div>
-        <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-md bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center flex-shrink-0">
           <Send class="w-5 h-5" />
         </div>
       </div>
 
-      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+      <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs flex items-center justify-between">
         <div>
-          <p class="text-xs font-medium text-slate-500">Perlu Disposisi</p>
-          <p class="text-2xl font-black text-amber-600 mt-1">{{ stats.pending_disposition || 0 }}</p>
-          <span class="text-[11px] text-slate-400 font-normal">Menunggu arahan</span>
+          <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Perlu Disposisi</p>
+          <p class="text-xl font-bold text-amber-700 font-mono tabular-nums mt-0.5">{{ stats.pending_disposition || 0 }}</p>
+          <span class="text-[11px] text-slate-500 font-normal">Menunggu arahan</span>
         </div>
-        <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-md bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center flex-shrink-0">
           <AlertCircle class="w-5 h-5" />
         </div>
       </div>
 
-      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+      <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs flex items-center justify-between">
         <div>
-          <p class="text-xs font-medium text-slate-500">Surat Keterangan</p>
-          <p class="text-2xl font-black text-teal-600 mt-1">1 Klik</p>
-          <span class="text-[11px] text-slate-400 font-normal">Cetak instan siswa</span>
+          <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Surat Keterangan</p>
+          <p class="text-xl font-bold text-teal-700 font-mono tabular-nums mt-0.5">1 Klik</p>
+          <span class="text-[11px] text-slate-500 font-normal">Cetak instan siswa</span>
         </div>
-        <div class="w-11 h-11 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-md bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center flex-shrink-0">
           <Award class="w-5 h-5" />
         </div>
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-1">
+    <!-- Navigation Tabs (Filament Style Segmented Bar - Tanpa Emoji) -->
+    <div class="bg-slate-100/90 p-1 rounded-lg border border-slate-200 inline-flex items-center gap-1 overflow-x-auto w-full sm:w-auto">
       <button
         @click="activeTab = 'incoming'"
-        :class="activeTab === 'incoming' ? 'text-emerald-700 border-emerald-600 font-bold bg-emerald-50/70' : 'text-slate-500 border-transparent hover:text-slate-700'"
-        class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 transition-colors whitespace-nowrap cursor-pointer"
+        :class="activeTab === 'incoming' ? 'bg-white text-emerald-800 font-bold shadow-2xs border border-slate-200/80' : 'text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200/60 font-medium'"
+        class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs rounded-md border transition-all whitespace-nowrap cursor-pointer"
       >
-        <Inbox class="w-4 h-4" />
-        <span>📥 Surat Masuk</span>
-        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">{{ stats.total_incoming || 0 }}</span>
+        <Inbox class="w-4 h-4 text-emerald-700" />
+        <span>Surat Masuk</span>
+        <span
+          class="px-1.5 py-0.2 rounded text-[10px] font-bold font-mono tabular-nums"
+          :class="activeTab === 'incoming' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'"
+        >
+          {{ stats.total_incoming || 0 }}
+        </span>
       </button>
 
       <button
         @click="activeTab = 'outgoing'"
-        :class="activeTab === 'outgoing' ? 'text-indigo-700 border-indigo-600 font-bold bg-indigo-50/70' : 'text-slate-500 border-transparent hover:text-slate-700'"
-        class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 transition-colors whitespace-nowrap cursor-pointer"
+        :class="activeTab === 'outgoing' ? 'bg-white text-emerald-800 font-bold shadow-2xs border border-slate-200/80' : 'text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200/60 font-medium'"
+        class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs rounded-md border transition-all whitespace-nowrap cursor-pointer"
       >
-        <Send class="w-4 h-4" />
-        <span>📤 Surat Keluar</span>
-        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">{{ stats.total_outgoing || 0 }}</span>
+        <Send class="w-4 h-4 text-emerald-700" />
+        <span>Surat Keluar</span>
+        <span
+          class="px-1.5 py-0.2 rounded text-[10px] font-bold font-mono tabular-nums"
+          :class="activeTab === 'outgoing' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'"
+        >
+          {{ stats.total_outgoing || 0 }}
+        </span>
       </button>
 
       <button
         @click="activeTab = 'student_cert'"
-        :class="activeTab === 'student_cert' ? 'text-teal-700 border-teal-600 font-bold bg-teal-50/70' : 'text-slate-500 border-transparent hover:text-slate-700'"
-        class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 transition-colors whitespace-nowrap cursor-pointer"
+        :class="activeTab === 'student_cert' ? 'bg-white text-emerald-800 font-bold shadow-2xs border border-slate-200/80' : 'text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200/60 font-medium'"
+        class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs rounded-md border transition-all whitespace-nowrap cursor-pointer"
       >
-        <FileCheck class="w-4 h-4" />
-        <span>🎓 Generator Surat Siswa Aktif</span>
+        <FileCheck class="w-4 h-4 text-emerald-700" />
+        <span>Generator Surat Siswa Aktif</span>
       </button>
 
       <button
         @click="activeTab = 'agenda_print'"
-        :class="activeTab === 'agenda_print' ? 'text-slate-900 border-slate-700 font-bold bg-slate-100' : 'text-slate-500 border-transparent hover:text-slate-700'"
-        class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 transition-colors whitespace-nowrap cursor-pointer"
+        :class="activeTab === 'agenda_print' ? 'bg-white text-emerald-800 font-bold shadow-2xs border border-slate-200/80' : 'text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200/60 font-medium'"
+        class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs rounded-md border transition-all whitespace-nowrap cursor-pointer"
       >
-        <Printer class="w-4 h-4" />
-        <span>📑 Cetak Buku Agenda Resmi</span>
+        <Printer class="w-4 h-4 text-emerald-700" />
+        <span>Cetak Buku Agenda Resmi</span>
       </button>
     </div>
 
     <!-- TAB 1: SURAT MASUK -->
     <div v-if="activeTab === 'incoming'" class="space-y-4">
       <!-- Search & Filters -->
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-3 items-center justify-between">
+      <div class="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div class="relative w-full sm:w-80">
-          <Search class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             v-model="filters.search"
             @input="debouncedFetch"
             type="text"
             placeholder="Cari pengirim, nomor surat, perihal..."
-            class="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            class="w-full pl-8.5 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
           />
         </div>
 
@@ -137,9 +160,9 @@
           <select
             v-model="filters.status"
             @change="fetchLetters"
-            class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
           >
-            <option value="all">Semua Status</option>
+            <option value="all">Semua Status Disposisi</option>
             <option value="pending">Belum Disposisi</option>
             <option value="dispositioned">Telah Disposisi</option>
             <option value="processed">Selesai</option>
@@ -147,20 +170,20 @@
 
           <button
             @click="fetchLetters"
-            class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer"
+            class="btn btn-outline p-2"
             title="Muat Ulang"
           >
-            <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" />
+            <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
           </button>
         </div>
       </div>
 
       <!-- Table View Desktop -->
-      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div class="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse text-xs min-w-[850px]">
             <thead>
-              <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider whitespace-nowrap">
+              <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">
                 <th class="py-3 px-4 w-28">No. Agenda</th>
                 <th class="py-3 px-4 w-48">Nomor & Tanggal Surat</th>
                 <th class="py-3 px-4 w-44">Asal Pengirim</th>
@@ -289,42 +312,42 @@
     <!-- TAB 2: SURAT KELUAR -->
     <div v-if="activeTab === 'outgoing'" class="space-y-4">
       <!-- Search & Filters -->
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-3 items-center justify-between">
+      <div class="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-2xs flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div class="relative w-full sm:w-80">
-          <Search class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             v-model="filters.search"
             @input="debouncedFetch"
             type="text"
             placeholder="Cari nomor surat keluar, penerima, perihal..."
-            class="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
         </div>
 
         <div class="flex items-center gap-2 w-full sm:w-auto">
           <button
             @click="fetchLetters"
-            class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer"
+            class="btn btn-outline p-2"
             title="Muat Ulang"
           >
-            <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" />
+            <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
           </button>
         </div>
       </div>
 
       <!-- Table View Desktop -->
-      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div class="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
+          <table class="w-full text-left border-collapse text-xs min-w-[850px]">
             <thead>
-              <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
-                <th class="py-3 px-4">No. Agenda</th>
-                <th class="py-3 px-4">Nomor Surat Resmi</th>
-                <th class="py-3 px-4">Tanggal Surat</th>
-                <th class="py-3 px-4">Tujuan / Penerima</th>
+              <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">
+                <th class="py-3 px-4 w-28">No. Agenda</th>
+                <th class="py-3 px-4 w-52">Nomor Surat Resmi</th>
+                <th class="py-3 px-4 w-32">Tanggal Surat</th>
+                <th class="py-3 px-4 w-44">Tujuan / Penerima</th>
                 <th class="py-3 px-4">Perihal</th>
-                <th class="py-3 px-4">Berkas Arsip</th>
-                <th class="py-3 px-4 text-center">Aksi</th>
+                <th class="py-3 px-4 w-20 text-center">Berkas</th>
+                <th class="py-3 px-4 w-24 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -335,27 +358,27 @@
                 <td colspan="7" class="py-10 text-slate-400">Belum ada catatan surat keluar.</td>
               </tr>
               <tr v-for="item in outgoingLetters" :key="item.id" class="hover:bg-slate-50/60 transition-colors">
-                <td class="py-3.5 px-4 font-mono font-bold text-indigo-800">{{ item.agenda_number }}</td>
-                <td class="py-3.5 px-4 font-semibold text-slate-900">{{ item.reference_number }}</td>
-                <td class="py-3.5 px-4 text-slate-600">{{ formatDate(item.letter_date) }}</td>
+                <td class="py-3.5 px-4 font-mono font-bold text-emerald-800 whitespace-nowrap">{{ item.agenda_number }}</td>
+                <td class="py-3.5 px-4 font-semibold text-slate-900">{{ item.reference_number || '-' }}</td>
+                <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">{{ formatDate(item.letter_date) }}</td>
                 <td class="py-3.5 px-4 font-medium text-slate-800">{{ item.recipient }}</td>
-                <td class="py-3.5 px-4 max-w-xs">
-                  <span class="inline-block px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-700 rounded-md mb-1">{{ item.category }}</span>
-                  <div class="line-clamp-2 text-slate-700">{{ item.subject }}</div>
-                </td>
                 <td class="py-3.5 px-4">
+                  <span class="inline-block px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-700 rounded-md mb-1">{{ item.category }}</span>
+                  <div class="line-clamp-2 text-slate-700 leading-snug">{{ item.subject }}</div>
+                </td>
+                <td class="py-3.5 px-4 text-center">
                   <a
                     v-if="item.file_path"
                     :href="getStorageUrl(item.file_path)"
                     target="_blank"
-                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors whitespace-nowrap"
                   >
                     <FileText class="w-3.5 h-3.5" />
                     <span>Arsip</span>
                   </a>
                   <span v-else class="text-slate-400 text-[11px]">-</span>
                 </td>
-                <td class="py-3.5 px-4 text-center">
+                <td class="py-3.5 px-4 text-center whitespace-nowrap">
                   <div class="inline-flex items-center gap-1">
                     <button
                       @click="openEditModal(item)"
@@ -398,7 +421,7 @@
                 @click="fetchLetters(p)"
                 :class="[
                   p === pagination.current_page
-                    ? 'bg-indigo-600 text-white font-bold shadow-xs'
+                    ? 'bg-emerald-600 text-white font-bold shadow-xs'
                     : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
                 ]"
                 class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs font-semibold cursor-pointer transition-all"
@@ -420,10 +443,10 @@
 
     <!-- TAB 3: GENERATOR SURAT SISWA AKTIF -->
     <div v-if="activeTab === 'student_cert'" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div class="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
-        <div>
-          <h3 class="text-lg font-bold text-slate-900">Formulir Surat Keterangan Siswa</h3>
-          <p class="text-xs text-slate-500 mt-1">Cari siswa aktif dan terbitkan surat keterangan resmi dengan nomor agenda otomatis.</p>
+      <div class="lg:col-span-5 bg-white p-5 sm:p-6 rounded-lg border border-slate-200 shadow-2xs space-y-5">
+        <div class="border-b border-slate-100 pb-3">
+          <h3 class="text-base font-bold text-slate-900">Formulir Surat Keterangan Siswa</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Cari siswa aktif dan terbitkan surat keterangan resmi dengan nomor agenda otomatis.</p>
         </div>
 
         <div class="space-y-4">
@@ -432,7 +455,7 @@
             <select
               v-model="certForm.student_id"
               @change="onSelectCertStudent"
-              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">-- Pilih Siswa --</option>
               <option v-for="s in studentList" :key="s.id" :value="s.id">
@@ -447,7 +470,7 @@
               v-model="certForm.purpose"
               type="text"
               placeholder="Contoh: Persyaratan Beasiswa PIP / Tunjangan Orang Tua"
-              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -456,14 +479,14 @@
             <input
               v-model="certForm.letter_date"
               type="date"
-              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
           <button
             @click="generateCertificate"
             :disabled="!certForm.student_id || generatingCert"
-            class="w-full flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs shadow-md shadow-teal-600/25 transition-all disabled:opacity-50 cursor-pointer"
+            class="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
           >
             <Printer class="w-4 h-4" />
             <span>{{ generatingCert ? 'Menerbitkan...' : 'Terbitkan & Cetak Surat' }}</span>
@@ -472,8 +495,8 @@
       </div>
 
       <!-- Preview Printable Sheet -->
-      <div class="lg:col-span-7 bg-white p-8 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
-        <div id="printable-student-cert" class="p-4 sm:p-8 bg-white border border-slate-100 rounded-2xl text-slate-900 font-serif leading-relaxed text-sm">
+      <div class="lg:col-span-7 bg-white p-5 sm:p-6 rounded-lg border border-slate-200 shadow-2xs flex flex-col justify-between">
+        <div id="printable-student-cert" class="p-6 sm:p-8 bg-white border border-slate-200 rounded-lg text-slate-900 font-serif leading-relaxed text-sm shadow-xs">
           
           <!-- Kop Surat Madrasah -->
           <div class="text-center border-b-4 border-double border-slate-900 pb-3 mb-6">
@@ -540,7 +563,7 @@
         <div class="mt-4 flex justify-end">
           <button
             @click="printDocument('printable-student-cert', 'Surat Keterangan Aktif Siswa')"
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-md cursor-pointer"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-xs cursor-pointer"
           >
             <Printer class="w-4 h-4" />
             <span>Cetak Surat (Print / PDF)</span>
@@ -550,17 +573,17 @@
     </div>
 
     <!-- TAB 4: CETAK BUKU AGENDA RESMI -->
-    <div v-if="activeTab === 'agenda_print'" class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-5">
+    <div v-if="activeTab === 'agenda_print'" class="bg-white p-5 sm:p-6 rounded-lg border border-slate-200 shadow-2xs space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
-          <h3 class="text-lg font-bold text-slate-900">Cetak Buku Agenda Surat</h3>
+          <h3 class="text-base font-bold text-slate-900">Cetak Buku Agenda Surat</h3>
           <p class="text-xs text-slate-500 mt-0.5">Ekspor dan cetak buku agenda surat masuk & keluar untuk akreditasi dan arsip tata usaha.</p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2.5">
           <select
             v-model="agendaPrintType"
-            class="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700"
+            class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           >
             <option value="incoming">Buku Agenda Surat Masuk</option>
             <option value="outgoing">Buku Agenda Surat Keluar</option>
@@ -568,7 +591,7 @@
 
           <button
             @click="printDocument('printable-agenda-book', 'Buku Agenda Persuratan')"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm cursor-pointer"
+            class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs cursor-pointer"
           >
             <Printer class="w-4 h-4" />
             <span>Cetak Agenda</span>
@@ -577,7 +600,7 @@
       </div>
 
       <!-- Printable Table Container -->
-      <div id="printable-agenda-book" class="p-6 bg-white border border-slate-200 rounded-2xl">
+      <div id="printable-agenda-book" class="p-6 bg-white border border-slate-200 rounded-lg">
         <div class="text-center mb-6">
           <h2 class="text-base font-bold uppercase">{{ appSettings.app_name || 'MTs AL - HASANAH CIOMAS' }}</h2>
           <h1 class="text-lg font-extrabold uppercase text-slate-900">
@@ -602,7 +625,7 @@
             <tr v-for="(item, idx) in letters" :key="item.id">
               <td class="border border-slate-400 p-2 text-center">{{ idx + 1 }}</td>
               <td class="border border-slate-400 p-2 font-mono font-bold">{{ item.agenda_number }}</td>
-              <td class="border border-slate-400 p-2">{{ item.reference_number }}</td>
+              <td class="border border-slate-400 p-2">{{ item.reference_number || '-' }}</td>
               <td class="border border-slate-400 p-2 text-center">{{ formatDate(item.letter_date) }}</td>
               <td class="border border-slate-400 p-2 font-medium">{{ agendaPrintType === 'incoming' ? item.sender : item.recipient }}</td>
               <td class="border border-slate-400 p-2">{{ item.subject }}</td>
@@ -617,32 +640,32 @@
 
     <!-- MODAL: TAMBAH / EDIT SURAT -->
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-      <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-200">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+      <div class="bg-white rounded-lg max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
-            <h3 class="text-lg font-bold text-slate-900">
+            <h3 class="text-base font-bold text-slate-900">
               {{ editingLetter ? 'Edit Data Surat' : (form.type === 'incoming' ? 'Catat Surat Masuk' : 'Catat Surat Keluar') }}
             </h3>
             <p class="text-xs text-slate-500">Isi kelengkapan data persuratan madrasah.</p>
           </div>
-          <button @click="showModal = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer">
-            <X class="w-5 h-5" />
+          <button @click="showModal = false" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer">
+            <X class="w-4 h-4" />
           </button>
         </div>
 
-        <form @submit.prevent="submitLetterForm" class="space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form @submit.prevent="submitLetterForm" class="space-y-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">Jenis Agenda Surat</label>
-              <select v-model="form.type" :disabled="true" class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 cursor-not-allowed">
-                <option value="incoming">📥 Surat Masuk</option>
-                <option value="outgoing">📤 Surat Keluar</option>
+              <select v-model="form.type" :disabled="true" class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-md text-xs font-bold text-slate-700 cursor-not-allowed">
+                <option value="incoming">Surat Masuk</option>
+                <option value="outgoing">Surat Keluar</option>
               </select>
             </div>
 
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori</label>
-              <select v-model="form.category" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+              <select v-model="form.category" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 <option value="Dinas">Dinas / Resmi</option>
                 <option value="Undangan">Undangan Kegiatan</option>
                 <option value="Edaran">Surat Edaran</option>
@@ -652,7 +675,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">
                 {{ form.type === 'incoming' ? 'Nomor Surat Asal' : 'Nomor Surat Resmi' }}
@@ -661,13 +684,14 @@
                 v-model="form.reference_number"
                 type="text"
                 :placeholder="form.type === 'incoming' ? 'Contoh: 123/Kemenag/2026' : 'Kosongkan untuk nomor otomatis'"
-                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
 
               <!-- Hint Note for Previous Letter Number -->
-              <div v-if="form.type === 'outgoing' && stats.last_outgoing_number" class="mt-2 p-2.5 bg-amber-50/90 border border-amber-200/80 rounded-xl text-[11px] text-amber-900 leading-snug">
+              <div v-if="form.type === 'outgoing' && stats.last_outgoing_number" class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md text-[11px] text-amber-900 leading-snug">
                 <div class="flex items-center gap-1 font-bold text-amber-950">
-                  <span>📌 Surat Keluar Terakhir:</span>
+                  <FileText class="w-3 h-3 text-amber-700" />
+                  <span>Surat Keluar Terakhir:</span>
                   <span class="font-mono text-amber-900 underline">{{ stats.last_outgoing_number }}</span>
                 </div>
                 <div v-if="stats.last_outgoing_date" class="text-[10px] text-amber-800/90 mt-0.5">
@@ -675,9 +699,10 @@
                 </div>
               </div>
 
-              <div v-else-if="form.type === 'incoming' && stats.last_incoming_number" class="mt-2 p-2.5 bg-emerald-50/90 border border-emerald-200/80 rounded-xl text-[11px] text-emerald-900 leading-snug">
+              <div v-else-if="form.type === 'incoming' && stats.last_incoming_number" class="mt-2 p-2 bg-emerald-50 border border-emerald-200 rounded-md text-[11px] text-emerald-900 leading-snug">
                 <div class="flex items-center gap-1 font-bold text-emerald-950">
-                  <span>📌 Surat Masuk Terakhir:</span>
+                  <Inbox class="w-3 h-3 text-emerald-700" />
+                  <span>Surat Masuk Terakhir:</span>
                   <span class="font-mono text-emerald-900">{{ stats.last_incoming_number }}</span>
                 </div>
                 <div v-if="stats.last_agenda_incoming" class="text-[10px] text-emerald-800/90 mt-0.5">
@@ -692,7 +717,7 @@
                 v-model="form.letter_date"
                 type="date"
                 required
-                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
           </div>
@@ -707,7 +732,7 @@
               type="text"
               required
               placeholder="Contoh: Kantor Kementerian Agama Kab. Bogor"
-              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
             <input
               v-else
@@ -715,7 +740,7 @@
               type="text"
               required
               placeholder="Contoh: Seluruh Dewan Guru & Wali Murid"
-              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -726,7 +751,7 @@
               rows="2"
               required
               placeholder="Perihal pokok surat..."
-              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             ></textarea>
           </div>
 
@@ -736,22 +761,22 @@
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
               @change="handleFileUpload"
-              class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"
+              class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs"
             />
           </div>
 
-          <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
             <button
               type="button"
               @click="showModal = false"
-              class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
               :disabled="submitting"
-              class="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm disabled:opacity-50 cursor-pointer"
+              class="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs disabled:opacity-50 cursor-pointer"
             >
               {{ submitting ? 'Menyimpan...' : 'Simpan Surat' }}
             </button>
@@ -762,30 +787,30 @@
 
     <!-- MODAL: LEMBAR DISPOSISI KEPALA MADRASAH -->
     <div v-if="showDispositionModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-      <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-200">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+      <div class="bg-white rounded-lg max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
-            <h3 class="text-lg font-bold text-slate-900">Lembar Disposisi Kepala Madrasah</h3>
+            <h3 class="text-base font-bold text-slate-900">Lembar Disposisi Kepala Madrasah</h3>
             <p class="text-xs text-slate-500">Instruksi tindak lanjut surat masuk.</p>
           </div>
-          <button @click="showDispositionModal = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer">
-            <X class="w-5 h-5" />
+          <button @click="showDispositionModal = false" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer">
+            <X class="w-4 h-4" />
           </button>
         </div>
 
-        <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs space-y-1">
-          <p><b>No. Agenda:</b> {{ selectedLetter?.agenda_number }}</p>
+        <div class="bg-slate-50 p-3 rounded-md border border-slate-200 text-xs space-y-1">
+          <p><b>No. Agenda:</b> <span class="font-mono font-bold text-emerald-800">{{ selectedLetter?.agenda_number }}</span></p>
           <p><b>Pengirim:</b> {{ selectedLetter?.sender }}</p>
           <p><b>Perihal:</b> {{ selectedLetter?.subject }}</p>
         </div>
 
-        <form @submit.prevent="submitDisposition" class="space-y-4">
+        <form @submit.prevent="submitDisposition" class="space-y-3.5">
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Diteruskan Kepada (Pejabat / Posisi) <span class="text-rose-500">*</span></label>
             <select
               v-model="dispositionForm.disposition_to"
               required
-              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">-- Pilih Penerima Disposisi --</option>
               <option value="Waka Kurikulum">Waka Kurikulum</option>
@@ -805,24 +830,24 @@
               rows="3"
               required
               placeholder="Contoh: Mohon dipelajari dan ditindaklanjuti pada rapat dewan guru besok..."
-              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             ></textarea>
           </div>
 
-          <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+          <div class="flex items-center justify-between pt-3 border-t border-slate-100">
             <button
               type="button"
               @click="printDispositionSlip"
-              class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 cursor-pointer"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 cursor-pointer"
             >
-              <Printer class="w-4 h-4" />
+              <Printer class="w-3.5 h-3.5" />
               <span>Cetak Lembar Disposisi</span>
             </button>
 
             <button
               type="submit"
               :disabled="submitting"
-              class="px-5 py-2.5 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm disabled:opacity-50 cursor-pointer"
+              class="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs disabled:opacity-50 cursor-pointer"
             >
               {{ submitting ? 'Menyimpan...' : 'Simpan Disposisi' }}
             </button>
