@@ -2,26 +2,26 @@
   <div class="space-y-5 font-inter">
 
     <!-- Executive Page Header (Institutional & Dignified) -->
-    <div class="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-2xs">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
-        <div class="flex items-center gap-4">
-          <div class="w-14 h-14 bg-slate-50 rounded-xl border border-slate-200 p-2 flex items-center justify-center flex-shrink-0 shadow-2xs">
+    <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-2xs">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 bg-slate-50 rounded-md border border-slate-200 p-1.5 flex items-center justify-center flex-shrink-0 shadow-2xs">
             <img v-if="appSettings?.app_logo" :src="getImageUrl(appSettings.app_logo)" class="w-full h-full object-contain" alt="Logo Sekolah" />
-            <School v-else class="w-7 h-7 text-emerald-800" />
+            <School v-else class="w-6 h-6 text-emerald-800" />
           </div>
           <div>
-            <div class="flex items-center gap-2 mb-1">
-              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                 Portal Utama Administrator
               </span>
               <span class="text-xs text-slate-300 font-medium">&bull;</span>
               <span class="text-xs font-semibold text-slate-600 font-mono tabular-nums">T.A. 2026/2027</span>
             </div>
-            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 uppercase font-sans">
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 uppercase font-sans">
               {{ appSettings?.app_name || 'MTs AL - HASANAH' }}
             </h1>
-            <p class="text-slate-500 text-xs sm:text-sm mt-0.5 max-w-2xl font-normal">
+            <p class="text-slate-500 text-xs mt-0.5 max-w-2xl font-normal">
               {{ appSettings?.app_tagline || 'Pusat kendali operasional madrasah. Kelola data siswa, guru, mata pelajaran, dan kelas secara terpadu.' }}
             </p>
           </div>
@@ -42,11 +42,11 @@
     </div>
 
     <!-- Metric Cards Grid (High-Density Enterprise Standard) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
       <div
         v-for="stat in stats"
         :key="stat.label"
-        class="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs hover:border-slate-300 transition-colors cursor-pointer flex items-center justify-between"
+        class="bg-white rounded-lg border border-slate-200 p-4 shadow-2xs hover:border-slate-300 transition-colors cursor-pointer flex items-center justify-between"
         @click="$router.push(stat.link)"
       >
         <div class="space-y-0.5">
@@ -55,22 +55,22 @@
             {{ loadingStats ? '—' : stat.value }}
           </p>
         </div>
-        <div :class="[stat.iconBg, 'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 border']">
-          <component :is="stat.iconComp" class="w-5 h-5" />
+        <div :class="[stat.iconBg, 'w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 border']">
+          <component :is="stat.iconComp" class="w-4 h-4" />
         </div>
       </div>
     </div>
 
     <!-- Recent Students Table Section -->
-    <div class="shadcn-card p-6 space-y-6">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold border border-indigo-100">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+    <div class="shadcn-card p-5 space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center font-semibold border border-slate-200">
+            <Users class="w-4 h-4 text-slate-600" />
           </div>
           <div>
-            <h3 class="text-sm font-semibold text-slate-900 tracking-tight">Siswa Terdaftar Terbaru</h3>
-            <p class="text-xs text-slate-500 font-normal">5 siswa yang baru diinputkan ke dalam sistem</p>
+            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Siswa Terdaftar Terbaru</h3>
+            <p class="text-[11px] text-slate-500 font-normal">5 siswa yang baru diinputkan ke dalam sistem</p>
           </div>
         </div>
         <RouterLink to="/admin/students" class="btn btn-secondary">

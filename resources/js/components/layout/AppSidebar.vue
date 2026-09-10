@@ -12,14 +12,14 @@
       :class="[
         isCollapsed ? 'w-[68px]' : 'w-[240px]',
         isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0',
-        'bg-white border-r border-slate-200 flex flex-col transition-all duration-150 z-40 flex-shrink-0 fixed sm:relative h-full shadow-2xs no-print'
+        'bg-[#0f172a] border-r border-slate-800 text-slate-300 flex flex-col transition-all duration-150 z-40 flex-shrink-0 fixed sm:relative h-full shadow-lg no-print'
       ]"
     >
       <!-- Logo Area -->
-      <div class="h-16 flex items-center border-b border-slate-200 flex-shrink-0 bg-white"
+      <div class="h-16 flex items-center border-b border-slate-800 flex-shrink-0 bg-slate-950/80"
            :class="isCollapsed ? 'justify-center px-0' : 'px-4'">
         <div class="flex items-center gap-3 min-w-0">
-          <div class="w-8 h-8 bg-emerald-800 rounded-lg flex items-center justify-center shadow-2xs border border-emerald-900/60 flex-shrink-0 overflow-hidden p-1">
+          <div class="w-8 h-8 bg-emerald-700 rounded-md flex items-center justify-center shadow-xs border border-emerald-600/50 flex-shrink-0 overflow-hidden p-1">
             <img 
               v-if="appSettings?.app_logo && !logoError" 
               :src="resolveImageUrl(appSettings.app_logo)" 
@@ -31,8 +31,8 @@
           </div>
           <Transition name="label-fade">
             <div v-if="!isCollapsed" class="flex flex-col overflow-hidden">
-              <span class="font-bold text-sm text-slate-900 tracking-tight leading-none truncate max-w-[145px] uppercase font-sans">{{ appSettings?.app_name || 'PORTAL' }}</span>
-              <span class="text-[10px] font-semibold text-emerald-800 uppercase tracking-wider mt-1 whitespace-nowrap">
+              <span class="font-bold text-sm text-white tracking-tight leading-none truncate max-w-[145px] uppercase font-sans">{{ appSettings?.app_name || 'PORTAL' }}</span>
+              <span class="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider mt-1 whitespace-nowrap">
                 {{ currentRole }} &bull; T.A. 2026/2027
               </span>
             </div>
@@ -41,21 +41,21 @@
       </div>
 
       <!-- DUAL-ROLE QUICK SWITCH CARD IN SIDEBAR -->
-      <div v-if="auth.isDualRole && !isCollapsed" class="px-3 py-2 border-b border-slate-200 bg-slate-50/90 space-y-1.5 flex-shrink-0">
-        <div class="flex items-center justify-between text-[10px] font-bold text-slate-500 tracking-wider">
+      <div v-if="auth.isDualRole && !isCollapsed" class="px-3 py-2 border-b border-slate-800 bg-slate-900/90 space-y-1.5 flex-shrink-0">
+        <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 tracking-wider">
           <span>PERAN AKTIF</span>
           <span
             class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase"
-            :class="currentRole === 'teacher' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200/80' : 'bg-slate-200 text-slate-800 border border-slate-300'"
+            :class="currentRole === 'teacher' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-300 border border-slate-700'"
           >
             {{ currentRole === 'teacher' ? 'Dewan Guru' : (auth.primaryRole === 'kurikulum' ? 'Kurikulum' : (auth.primaryRole === 'kepala_sekolah' ? 'Kepala Madrasah' : 'Operator TU')) }}
           </span>
         </div>
         <button
           @click="handleSidebarSwitchRole(currentRole === 'teacher' ? (auth.primaryRole || 'operator') : 'teacher')"
-          class="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-2xs border bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
+          class="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer border bg-slate-800/80 hover:bg-slate-800 text-slate-300 border-slate-700"
         >
-          <ArrowRightLeft class="w-3.5 h-3.5 text-slate-500" />
+          <ArrowRightLeft class="w-3.5 h-3.5 text-slate-400" />
           <span>Ganti ke Mode {{ currentRole === 'teacher' ? (auth.primaryRole === 'kurikulum' ? 'Kurikulum' : (auth.primaryRole === 'kepala_sekolah' ? 'Kepala Madrasah' : 'Operator TU')) : 'Guru' }}</span>
         </button>
       </div>
@@ -716,17 +716,17 @@
       </nav>
 
       <!-- Bottom: Logout -->
-      <div class="border-t border-slate-200/50 flex-shrink-0"
+      <div class="border-t border-slate-800 flex-shrink-0 bg-slate-950/40"
            :class="isCollapsed ? 'p-2 space-y-1' : 'p-3 space-y-1'">
         <button
           @click="$emit('logout')"
           :title="isCollapsed ? 'Keluar Aplikasi' : ''"
-          class="flex items-center gap-3 px-3 py-2 text-slate-500 font-medium rounded-lg transition-all duration-150 hover:text-red-600 hover:bg-red-50 cursor-pointer w-full text-left"
+          class="flex items-center gap-2.5 px-3 py-2 text-slate-400 font-medium text-xs rounded-md transition-colors hover:text-rose-400 hover:bg-rose-950/30 cursor-pointer w-full text-left"
           :class="isCollapsed ? 'justify-center' : ''"
         >
           <LogOut class="w-4 h-4 flex-shrink-0" />
           <Transition name="label-fade">
-            <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Keluar Aplikasi</span>
+            <span v-if="!isCollapsed" class="text-xs whitespace-nowrap overflow-hidden">Keluar Aplikasi</span>
           </Transition>
         </button>
       </div>

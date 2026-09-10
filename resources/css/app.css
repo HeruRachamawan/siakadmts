@@ -7,69 +7,69 @@
 @source '../**/*.vue';
 
 @theme {
-    --font-sans: 'Outfit', 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
-    --font-outfit: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
-    --font-inter: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
-    --font-jakarta: 'Plus Jakarta Sans', system-ui, sans-serif;
-    --font-poppins: 'Poppins', system-ui, sans-serif;
-    --font-lexend: 'Plus Jakarta Sans', 'Lexend', system-ui, sans-serif;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-outfit: 'Inter', system-ui, sans-serif;
+    --font-inter: 'Inter', system-ui, sans-serif;
+    --font-jakarta: 'Inter', system-ui, sans-serif;
+    --font-poppins: 'Inter', system-ui, sans-serif;
+    --font-lexend: 'Inter', system-ui, sans-serif;
 }
 
 @layer utilities {
     body {
-        font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
-        letter-spacing: -0.012em;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        letter-spacing: -0.011em;
         @apply bg-[#F8FAFC] text-slate-900 antialiased selection:bg-emerald-700 selection:text-white;
     }
 
     /* Modern Typography */
-    .font-outfit { font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif; }
-    .font-inter { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; }
-    .font-lexend { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+    .font-outfit { font-family: 'Inter', system-ui, sans-serif; }
+    .font-inter { font-family: 'Inter', system-ui, sans-serif; }
+    .font-lexend { font-family: 'Inter', system-ui, sans-serif; }
     
     /* Institutional Grounded Cards (Enterprise & Academic standard) */
     .fresh-card,
     .shadcn-card {
-        @apply bg-white rounded-xl border border-slate-200/90 shadow-2xs transition-all duration-150 hover:border-slate-300;
+        @apply bg-white rounded-md border border-slate-200 shadow-2xs transition-colors;
     }
     
-    /* Navigation Link (Institutional Sidebar Style) */
+    /* Navigation Link (Dark Institutional Sidebar Style - RDM / Filament style) */
     .nav-link {
-        @apply flex items-center gap-2.5 px-3 py-2 text-slate-600 font-medium text-xs rounded-lg mx-2 my-0.5 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900 outline-none focus:outline-none;
+        @apply flex items-center gap-2.5 px-3 py-2 text-slate-400 font-medium text-xs rounded-md mx-2 my-0.5 transition-colors duration-150 hover:bg-slate-800/70 hover:text-slate-100 outline-none focus:outline-none;
     }
     .nav-link-active {
-        @apply bg-emerald-50 text-emerald-900 font-semibold border-l-2 border-emerald-600 shadow-2xs hover:bg-emerald-50/80 hover:text-emerald-950;
+        @apply bg-emerald-500/10 text-emerald-400 font-semibold border-l-2 border-emerald-500 hover:bg-emerald-500/15 hover:text-emerald-300;
     }
     .nav-link-active svg {
-        @apply text-emerald-700;
+        @apply text-emerald-400;
     }
     .nav-section {
-        @apply px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mx-2 mt-3.5 mb-1;
+        @apply px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mx-2 mt-3 mb-1;
     }
     
-    /* Enterprise Buttons */
+    /* Enterprise Micro-Radius Buttons */
     .btn {
-        @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-800 shadow-2xs hover:bg-slate-50 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/20 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+        @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-white border border-slate-200 text-slate-800 shadow-2xs hover:bg-slate-50 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/20 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
     }
     .btn-primary {
-        @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-700 text-white shadow-2xs hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20 focus-visible:ring-offset-1 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+        @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-emerald-700 text-white shadow-2xs hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20 focus-visible:ring-offset-1 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
     }
     .btn-accent {
-        @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-700 text-white shadow-2xs hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+        @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-emerald-700 text-white shadow-2xs hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
     }
     .btn-danger {
-        @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-rose-600 text-white shadow-2xs hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-600/20 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+        @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-rose-600 text-white shadow-2xs hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-600/20 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
     }
     .btn-secondary {
-        @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-800 hover:bg-slate-200/80 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+        @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-slate-100 text-slate-800 hover:bg-slate-200/80 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
     }
     .btn-outline {
-        @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-150 cursor-pointer;
+        @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-150 cursor-pointer;
     }
     
     /* Institutional Form Inputs */
     .form-input {
-        @apply flex h-9 w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 shadow-2xs transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/20 focus-visible:border-emerald-600 disabled:cursor-not-allowed disabled:opacity-50;
+        @apply flex h-8.5 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-xs text-slate-900 shadow-2xs transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/20 focus-visible:border-emerald-600 disabled:cursor-not-allowed disabled:opacity-50;
     }
     
     /* Badges */

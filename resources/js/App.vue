@@ -53,9 +53,9 @@
             @logout="handleLogout"
           />
 
-          <!-- Main Scrollable Content -->
-          <main class="flex-1 overflow-y-auto bg-[#F4F7F6]">
-            <div class="p-8 max-w-[1400px] mx-auto">
+          <!-- Main Scrollable Content (Full-Width Workspace) -->
+          <main class="flex-1 overflow-y-auto bg-slate-50/60">
+            <div class="w-full px-6 py-5">
               <router-view v-slot="{ Component }">
                 <transition name="fade" mode="out-in">
                   <component :is="Component" />
