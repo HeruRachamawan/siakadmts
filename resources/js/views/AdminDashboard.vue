@@ -1,39 +1,42 @@
 <template>
   <div class="space-y-5 font-inter">
 
-    <!-- Executive Page Header (Institutional & Dignified) -->
-    <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-2xs">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <!-- Executive Page Header (Deep Madrasah Emerald - Institutional & Dignified) -->
+    <div class="relative bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-950 text-white rounded-lg border border-emerald-800/80 p-5 sm:p-6 shadow-sm overflow-hidden">
+      <!-- Ambient depth -->
+      <div class="absolute right-0 top-0 bottom-0 w-96 bg-radial from-emerald-500/10 to-transparent pointer-events-none"></div>
+
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div class="flex items-center gap-3.5">
-          <div class="w-12 h-12 bg-slate-50 rounded-md border border-slate-200 p-1.5 flex items-center justify-center flex-shrink-0 shadow-2xs">
+          <div class="w-12 h-12 bg-white/10 rounded-md border border-white/20 p-1.5 flex items-center justify-center flex-shrink-0 shadow-inner">
             <img v-if="appSettings?.app_logo" :src="getImageUrl(appSettings.app_logo)" class="w-full h-full object-contain" alt="Logo Sekolah" />
-            <School v-else class="w-6 h-6 text-emerald-800" />
+            <School v-else class="w-6 h-6 text-emerald-300" />
           </div>
           <div>
             <div class="flex items-center gap-2 mb-0.5">
-              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                 Portal Utama Administrator
               </span>
-              <span class="text-xs text-slate-300 font-medium">&bull;</span>
-              <span class="text-xs font-semibold text-slate-600 font-mono tabular-nums">T.A. 2026/2027</span>
+              <span class="text-xs text-emerald-300/40 font-medium">&bull;</span>
+              <span class="text-xs font-semibold text-emerald-200/90 font-mono tabular-nums">T.A. 2026/2027</span>
             </div>
-            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 uppercase font-sans">
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white uppercase font-sans">
               {{ appSettings?.app_name || 'MTs AL - HASANAH' }}
             </h1>
-            <p class="text-slate-500 text-xs mt-0.5 max-w-2xl font-normal">
+            <p class="text-emerald-200/80 text-xs mt-0.5 max-w-2xl font-normal">
               {{ appSettings?.app_tagline || 'Pusat kendali operasional madrasah. Kelola data siswa, guru, mata pelajaran, dan kelas secara terpadu.' }}
             </p>
           </div>
         </div>
 
         <!-- Action Shortcuts -->
-        <div class="flex items-center gap-2 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
-          <RouterLink to="/admin/students" class="btn btn-outline">
-            <Users class="w-3.5 h-3.5 text-slate-600" />
+        <div class="flex items-center gap-2 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-emerald-800/60">
+          <RouterLink to="/admin/students" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors">
+            <Users class="w-3.5 h-3.5 text-emerald-200" />
             <span>Data Siswa</span>
           </RouterLink>
-          <RouterLink to="/admin/print-center" class="btn btn-primary">
+          <RouterLink to="/admin/print-center" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-emerald-600 text-white border border-emerald-500 hover:bg-emerald-500 transition-colors shadow-2xs">
             <Printer class="w-3.5 h-3.5" />
             <span>Pusat Cetak</span>
           </RouterLink>

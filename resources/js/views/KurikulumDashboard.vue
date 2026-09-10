@@ -1,71 +1,74 @@
 <template>
   <div class="space-y-5 sm:space-y-6 font-inter pb-16 max-w-7xl mx-auto px-1 sm:px-2">
     
-    <!-- 1. EXECUTIVE HEADER (Waka Kurikulum) -->
-    <div class="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-2xs">
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+    <!-- 1. EXECUTIVE HEADER (Waka Kurikulum - Deep Madrasah Emerald) -->
+    <div class="relative bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-950 text-white rounded-lg border border-emerald-800/80 p-5 sm:p-6 shadow-sm overflow-hidden">
+      <!-- Ambient depth -->
+      <div class="absolute right-0 top-0 bottom-0 w-96 bg-radial from-emerald-500/10 to-transparent pointer-events-none"></div>
+
+      <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
         <div class="flex items-start sm:items-center gap-4">
           <!-- Photo Frame -->
-          <div class="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 rounded-xl border border-slate-200 p-1 flex items-center justify-center flex-shrink-0 overflow-hidden relative shadow-2xs">
+          <div class="w-14 h-14 sm:w-16 sm:h-16 bg-white/10 rounded-lg border border-white/20 p-1 flex items-center justify-center flex-shrink-0 overflow-hidden relative shadow-inner">
             <img
               v-if="userPhoto"
               :src="getImageUrl(userPhoto)"
-              class="w-full h-full object-cover rounded-lg"
+              class="w-full h-full object-cover rounded-md"
               alt="Foto Profil"
             />
-            <div v-else class="w-full h-full rounded-lg bg-emerald-800 flex items-center justify-center text-white font-bold text-xl uppercase">
+            <div v-else class="w-full h-full rounded-md bg-emerald-800 flex items-center justify-center text-white font-bold text-xl uppercase">
               {{ (auth.user?.name || 'K').charAt(0) }}
             </div>
             <!-- Online status indicator -->
-            <span class="absolute bottom-1 right-1 w-2.5 h-2.5 bg-emerald-500 border border-white rounded-full"></span>
+            <span class="absolute bottom-1 right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-emerald-950 rounded-full"></span>
           </div>
 
           <!-- Profile Details -->
           <div class="space-y-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded text-[11px] font-semibold border border-emerald-200/80">
-                <GraduationCap class="w-3.5 h-3.5 text-emerald-700" />
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/20 text-emerald-200 rounded text-[11px] font-semibold border border-emerald-400/30">
+                <GraduationCap class="w-3.5 h-3.5 text-emerald-300" />
                 <span>Waka Kurikulum &bull; {{ auth.user?.teacher?.nip ? `NIP: ${auth.user.teacher.nip}` : `@${auth.user?.username}` }}</span>
               </span>
-              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[11px] font-semibold border border-slate-200/80 font-mono tabular-nums">
-                <Clock class="w-3.5 h-3.5 text-slate-500" />
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-white/10 text-emerald-200 rounded text-[11px] font-semibold border border-white/15 font-mono tabular-nums">
+                <Clock class="w-3.5 h-3.5 text-emerald-300" />
                 <span>{{ currentTimeFormatted }} WIB</span>
               </span>
             </div>
 
-            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 uppercase leading-tight font-sans truncate">
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white uppercase leading-tight font-sans truncate">
               {{ auth.user?.name || 'Waka Kurikulum' }}
             </h1>
-            <p class="text-slate-500 text-xs sm:text-sm font-normal max-w-xl leading-relaxed hidden sm:block">
+            <p class="text-emerald-200/80 text-xs sm:text-sm font-normal max-w-xl leading-relaxed hidden sm:block">
               Monitoring distribusi jadwal pelajaran harian, beban mengajar guru, kalender akademik, dan rekapitulasi nilai siswa secara akurat.
             </p>
           </div>
         </div>
 
         <!-- Action Shortcuts -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 lg:flex gap-2 flex-shrink-0 pt-2 lg:pt-0 border-t border-slate-100 lg:border-t-0">
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:flex gap-2 flex-shrink-0 pt-2 lg:pt-0 border-t border-emerald-800/60 lg:border-t-0">
           <RouterLink
             to="/admin/schedules"
-            class="btn btn-outline"
+            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors"
           >
-            <Calendar class="w-3.5 h-3.5 text-slate-600" />
+            <Calendar class="w-3.5 h-3.5 text-emerald-200" />
             <span>Master Jadwal</span>
           </RouterLink>
 
           <RouterLink
             to="/admin/grades"
-            class="btn btn-outline"
+            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors"
           >
-            <Award class="w-3.5 h-3.5 text-slate-600" />
+            <Award class="w-3.5 h-3.5 text-emerald-200" />
             <span>Rekap Nilai</span>
           </RouterLink>
 
           <RouterLink
-            to="/admin/profile"
-            class="btn btn-outline"
+            to="/admin/exam-corrections"
+            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-emerald-600 text-white border border-emerald-500 hover:bg-emerald-500 transition-colors shadow-2xs"
           >
-            <UserCircle class="w-3.5 h-3.5 text-slate-600" />
-            <span>Biodata Diri</span>
+            <CheckSquare class="w-3.5 h-3.5" />
+            <span>Koreksi Ujian</span>
           </RouterLink>
 
           <RouterLink

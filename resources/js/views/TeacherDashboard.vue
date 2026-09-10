@@ -1,51 +1,54 @@
 <template>
   <div class="space-y-6 font-inter">
 
-    <!-- Executive Teacher Header (Institutional & Dignified) -->
-    <div class="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-2xs">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
+    <!-- Executive Teacher Header (Deep Madrasah Emerald - Institutional & Dignified) -->
+    <div class="relative bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-950 text-white rounded-lg border border-emerald-800/80 p-5 sm:p-6 shadow-sm overflow-hidden">
+      <!-- Subtle ambient depth -->
+      <div class="absolute right-0 top-0 bottom-0 w-96 bg-radial from-emerald-500/10 to-transparent pointer-events-none"></div>
+
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
           <!-- Teacher Photo Frame -->
-          <div class="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 rounded-xl border border-slate-200 p-1 flex items-center justify-center flex-shrink-0 overflow-hidden relative shadow-2xs">
-            <img v-if="teacherInfo.photo_url && typeof teacherInfo.photo_url === 'string' && teacherInfo.photo_url.length > 5" :src="getImageUrl(teacherInfo.photo_url)" class="w-full h-full object-cover rounded-lg" alt="Foto Guru" />
-            <div v-else class="w-full h-full rounded-lg bg-emerald-800 flex items-center justify-center text-white font-bold text-xl uppercase">
+          <div class="w-14 h-14 sm:w-16 sm:h-16 bg-white/10 rounded-lg border border-white/20 p-1 flex items-center justify-center flex-shrink-0 overflow-hidden relative shadow-inner">
+            <img v-if="teacherInfo.photo_url && typeof teacherInfo.photo_url === 'string' && teacherInfo.photo_url.length > 5" :src="getImageUrl(teacherInfo.photo_url)" class="w-full h-full object-cover rounded-md" alt="Foto Guru" />
+            <div v-else class="w-full h-full rounded-md bg-emerald-800 flex items-center justify-center text-white font-bold text-xl uppercase">
               {{ (teacherInfo.full_name || user?.name || 'G').charAt(0) }}
             </div>
             <!-- Online status indicator -->
-            <span class="absolute bottom-1 right-1 w-2.5 h-2.5 bg-emerald-500 border border-white rounded-full"></span>
+            <span class="absolute bottom-1 right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-emerald-950 rounded-full"></span>
           </div>
 
           <!-- Teacher Profile Info -->
           <div class="space-y-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded text-[11px] font-semibold border border-emerald-200/80">
-                <svg class="w-3.5 h-3.5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/20 text-emerald-200 rounded text-[11px] font-semibold border border-emerald-400/30">
+                <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                 <span>Portal Dewan Guru &bull; {{ teacherInfo.nip ? `NIP: ${teacherInfo.nip}` : `@${user?.username}` }}</span>
               </span>
 
               <!-- Jabatan Badge -->
-              <span v-if="teacherInfo.position" class="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[11px] font-semibold border border-slate-200/80">
+              <span v-if="teacherInfo.position" class="inline-flex items-center gap-1 px-2 py-0.5 bg-white/10 text-slate-200 rounded text-[11px] font-semibold border border-white/15">
                 <span>Jabatan: {{ teacherInfo.position }}</span>
               </span>
             </div>
 
-            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 uppercase font-sans leading-tight">
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white uppercase font-sans leading-tight">
               {{ teacherInfo.full_name || user?.name }}
             </h1>
 
             <!-- Mata Pelajaran Yang Diampu -->
             <div class="flex items-center gap-2 flex-wrap pt-0.5">
-              <span class="text-xs font-semibold text-slate-500">Mapel:</span>
+              <span class="text-xs font-semibold text-emerald-200/80">Mapel:</span>
               <template v-if="teacherInfo.subjects && teacherInfo.subjects.length > 0">
                 <span
                   v-for="(subj, idx) in teacherInfo.subjects"
                   :key="idx"
-                  class="px-2 py-0.5 bg-slate-100 text-slate-700 text-xs font-medium rounded border border-slate-200/80"
+                  class="px-2 py-0.5 bg-emerald-800/60 text-emerald-100 text-xs font-medium rounded border border-emerald-700/60"
                 >
                   {{ subj }}
                 </span>
               </template>
-              <span v-else class="text-xs text-slate-400 italic">
+              <span v-else class="text-xs text-emerald-300/60 italic">
                 Belum Ditentukan
               </span>
             </div>
@@ -53,19 +56,19 @@
         </div>
 
         <!-- School Name & Active TA Badge Right -->
-        <div class="flex flex-col sm:flex-row items-start md:items-end justify-center gap-3 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+        <div class="flex flex-col sm:flex-row items-start md:items-end justify-center gap-3 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-emerald-800/60">
           <button
             v-if="auth.isDualRole"
             @click="switchToStaff"
-            class="btn btn-outline"
+            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors cursor-pointer"
             :title="`Beralih ke Dashboard ${auth.primaryRole === 'kurikulum' ? 'Kurikulum' : 'Operator TU'}`"
           >
-            <Building2 class="w-3.5 h-3.5 text-slate-600" />
+            <Building2 class="w-3.5 h-3.5 text-emerald-200" />
             <span>Mode {{ auth.primaryRole === 'kurikulum' ? 'Kurikulum' : 'Operator TU' }} &rarr;</span>
           </button>
           <div class="flex flex-col items-start md:items-end space-y-0.5">
-            <span class="text-xs font-semibold text-slate-700 uppercase tracking-wider">{{ appSettings?.app_name || 'MTs AL - HASANAH' }}</span>
-            <span class="text-xs font-semibold text-slate-500 font-mono tabular-nums">T.A. 2026/2027</span>
+            <span class="text-xs font-semibold text-emerald-100 uppercase tracking-wider">{{ appSettings?.app_name || 'MTs AL - HASANAH' }}</span>
+            <span class="text-xs font-semibold text-emerald-300/90 font-mono tabular-nums">T.A. 2026/2027</span>
           </div>
         </div>
       </div>
