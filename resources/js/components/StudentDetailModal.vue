@@ -62,6 +62,11 @@
             </div>
 
             <div class="p-3 bg-slate-50 rounded-xl space-y-1">
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">No. Kartu Keluarga (KK)</p>
+              <p class="font-bold text-slate-800 font-mono text-sm">{{ student.no_kk || '-' }}</p>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl space-y-1">
               <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">NISN / NIS</p>
               <p class="font-bold text-slate-800 font-mono">{{ student.nisn || '-' }} / {{ student.nis || '-' }}</p>
             </div>
@@ -72,8 +77,32 @@
             </div>
 
             <div class="p-3 bg-slate-50 rounded-xl space-y-1">
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Agama</p>
+              <p class="font-bold text-emerald-800">{{ student.religion || 'Islam' }}</p>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl space-y-1">
               <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tempat, Tanggal Lahir</p>
               <p class="font-bold text-slate-800">{{ student.birth_place || '-' }}, {{ student.birth_date || '-' }}</p>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl space-y-1">
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Posisi dalam Keluarga</p>
+              <p class="font-bold text-slate-800">
+                <span v-if="student.child_number">Anak ke-{{ student.child_number }}</span>
+                <span v-else>-</span>
+                <span v-if="student.siblings_count" class="text-slate-500 font-normal"> (dari {{ student.siblings_count }} bersaudara)</span>
+              </p>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl space-y-1">
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Hobi</p>
+              <p class="font-semibold text-slate-800">{{ student.hobby || '-' }}</p>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl space-y-1">
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cita - cita</p>
+              <p class="font-semibold text-indigo-700">{{ student.aspiration || '-' }}</p>
             </div>
 
             <div class="p-3 bg-slate-50 rounded-xl space-y-1">
@@ -83,7 +112,10 @@
 
             <div class="p-3 bg-slate-50 rounded-xl space-y-1">
               <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">No. Kontak Orang Tua</p>
-              <p class="font-bold text-emerald-700 font-mono">{{ student.parent_phone ? '+62 ' + student.parent_phone : '-' }}</p>
+              <p v-if="!student.parent_phone || student.parent_phone === '-' || student.parent_phone === 'Tidak Memiliki Telepon'" class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 text-xs font-semibold">
+                Tidak Memiliki Telepon
+              </p>
+              <p v-else class="font-bold text-emerald-700 font-mono">+62 {{ student.parent_phone }}</p>
             </div>
 
             <div class="sm:col-span-2 md:col-span-3 p-3 bg-slate-50 rounded-xl space-y-1">

@@ -32,9 +32,15 @@ class ProfileController extends StudentController
         $request->validate([
             'full_name'        => ['sometimes', 'required', 'string', 'max:255'],
             'nik'              => ['nullable', 'string', 'max:20'],
+            'no_kk'            => ['nullable', 'string', 'max:20'],
             'gender'           => ['sometimes', 'required', Rule::in(['L', 'P'])],
             'birth_place'      => ['nullable', 'string', 'max:255'],
             'birth_date'       => ['nullable', 'date'],
+            'religion'         => ['nullable', 'string', 'max:30'],
+            'child_number'     => ['nullable', 'integer', 'min:1', 'max:50'],
+            'siblings_count'   => ['nullable', 'integer', 'min:0', 'max:50'],
+            'hobby'            => ['nullable', 'string', 'max:100'],
+            'aspiration'       => ['nullable', 'string', 'max:100'],
             'address'          => ['nullable', 'string'],
             'parent_phone'     => ['nullable', 'string', 'max:30'],
             'previous_school'  => ['nullable', 'string', 'max:255'],
@@ -58,7 +64,8 @@ class ProfileController extends StudentController
         ]);
 
         $updateData = $request->only([
-            'full_name', 'nik', 'gender', 'birth_place', 'birth_date', 'address', 'parent_phone', 'previous_school',
+            'full_name', 'nik', 'no_kk', 'gender', 'birth_place', 'birth_date', 'religion',
+            'child_number', 'siblings_count', 'hobby', 'aspiration', 'address', 'parent_phone', 'previous_school',
             'mother_name', 'mother_status', 'mother_nik', 'mother_job', 'mother_income',
             'father_name', 'father_status', 'father_nik', 'father_job', 'father_income',
             'guardian_name', 'guardian_relation', 'guardian_nik', 'guardian_job', 'guardian_phone', 'guardian_income',

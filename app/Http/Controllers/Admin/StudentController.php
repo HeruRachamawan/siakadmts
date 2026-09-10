@@ -42,12 +42,18 @@ class StudentController extends BaseController
             'nisn' => ['required', 'string', 'max:255', 'unique:students,nisn'],
             'nis' => ['required', 'string', 'max:255', 'unique:students,nis'],
             'nik' => ['nullable', 'string', 'max:20'],
+            'no_kk' => ['nullable', 'string', 'max:20'],
             'full_name' => ['required', 'string', 'max:255'],
             'gender' => ['required', Rule::in(['L', 'P'])],
             'birth_place' => ['nullable', 'string', 'max:255'],
             'birth_date' => ['nullable', 'date'],
+            'religion' => ['nullable', 'string', 'max:30'],
+            'child_number' => ['nullable', 'integer', 'min:1', 'max:50'],
+            'siblings_count' => ['nullable', 'integer', 'min:0', 'max:50'],
+            'hobby' => ['nullable', 'string', 'max:100'],
+            'aspiration' => ['nullable', 'string', 'max:100'],
             'address' => ['nullable', 'string'],
-            'parent_phone' => ['nullable', 'string', 'max:20'],
+            'parent_phone' => ['nullable', 'string', 'max:30'],
             'class_id' => ['nullable', 'exists:classes,id'],
             'mother_name' => ['nullable', 'string', 'max:255'],
             'mother_status' => ['nullable', Rule::in(['hidup', 'meninggal', 'tidak_diketahui', 'pisah', 'lainnya'])],
@@ -93,7 +99,8 @@ class StudentController extends BaseController
         ]);
 
         $studentData = $request->only([
-            'nisn', 'nis', 'nik', 'full_name', 'gender', 'birth_place', 'birth_date', 'address', 'parent_phone', 'class_id',
+            'nisn', 'nis', 'nik', 'no_kk', 'full_name', 'gender', 'birth_place', 'birth_date', 'religion',
+            'child_number', 'siblings_count', 'hobby', 'aspiration', 'address', 'parent_phone', 'class_id',
             'mother_name', 'mother_status', 'mother_nik', 'mother_job', 'mother_income',
             'father_name', 'father_status', 'father_nik', 'father_job', 'father_income',
             'guardian_name', 'guardian_relation', 'guardian_nik', 'guardian_job', 'guardian_phone', 'guardian_income',
@@ -120,12 +127,18 @@ class StudentController extends BaseController
             'nisn' => ['sometimes', 'string', 'max:255', Rule::unique('students', 'nisn')->ignore($student->id)],
             'nis' => ['sometimes', 'string', 'max:255', Rule::unique('students', 'nis')->ignore($student->id)],
             'nik' => ['nullable', 'string', 'max:20'],
+            'no_kk' => ['nullable', 'string', 'max:20'],
             'full_name' => ['sometimes', 'string', 'max:255'],
             'gender' => ['sometimes', Rule::in(['L', 'P'])],
             'birth_place' => ['nullable', 'string', 'max:255'],
             'birth_date' => ['nullable', 'date'],
+            'religion' => ['nullable', 'string', 'max:30'],
+            'child_number' => ['nullable', 'integer', 'min:1', 'max:50'],
+            'siblings_count' => ['nullable', 'integer', 'min:0', 'max:50'],
+            'hobby' => ['nullable', 'string', 'max:100'],
+            'aspiration' => ['nullable', 'string', 'max:100'],
             'address' => ['nullable', 'string'],
-            'parent_phone' => ['nullable', 'string', 'max:20'],
+            'parent_phone' => ['nullable', 'string', 'max:30'],
             'class_id' => ['nullable', 'exists:classes,id'],
             'mother_name' => ['nullable', 'string', 'max:255'],
             'mother_status' => ['nullable', Rule::in(['hidup', 'meninggal', 'tidak_diketahui', 'pisah', 'lainnya'])],
@@ -148,7 +161,8 @@ class StudentController extends BaseController
         ]);
 
         $updateData = $request->only([
-            'nisn', 'nis', 'nik', 'full_name', 'gender', 'birth_place', 'birth_date', 'address', 'parent_phone', 'class_id',
+            'nisn', 'nis', 'nik', 'no_kk', 'full_name', 'gender', 'birth_place', 'birth_date', 'religion',
+            'child_number', 'siblings_count', 'hobby', 'aspiration', 'address', 'parent_phone', 'class_id',
             'mother_name', 'mother_status', 'mother_nik', 'mother_job', 'mother_income',
             'father_name', 'father_status', 'father_nik', 'father_job', 'father_income',
             'guardian_name', 'guardian_relation', 'guardian_nik', 'guardian_job', 'guardian_phone', 'guardian_income',
@@ -210,8 +224,9 @@ class StudentController extends BaseController
         
         // Baris 1: Header Kolom
         $headers = [
-            'NISN (10 Digit)*', 'NIS*', 'NIK Siswa (16 Digit)*', 'Nama Lengkap*', 'Gender (L/P)*', 'Nama Kelas*',
-            'Tempat Lahir*', 'Tanggal Lahir (YYYY-MM-DD)*', 'Sekolah Asal', 'Alamat Lengkap*', 'No HP / WA Ortu*',
+            'NISN (10 Digit)*', 'NIS*', 'NIK Siswa (16 Digit)*', 'No KK (16 Digit)', 'Nama Lengkap*', 'Gender (L/P)*', 'Nama Kelas*',
+            'Tempat Lahir*', 'Tanggal Lahir (YYYY-MM-DD)*', 'Agama', 'Anak Ke', 'Jumlah Saudara', 'Hobi', 'Cita-cita',
+            'Sekolah Asal', 'Alamat Lengkap*', 'No HP / WA Ortu (Isi - jika tidak ada)*',
             'Nama Ayah', 'Status Ayah (hidup/meninggal/tidak_diketahui)', 'NIK Ayah', 'Pekerjaan Ayah', 'Penghasilan Ayah',
             'Nama Ibu', 'Status Ibu (hidup/meninggal/tidak_diketahui)', 'NIK Ibu', 'Pekerjaan Ibu', 'Penghasilan Ibu',
             'Nama Wali', 'Hubungan Wali', 'NIK Wali', 'Pekerjaan Wali', 'No HP Wali', 'Penghasilan Wali'
@@ -221,8 +236,9 @@ class StudentController extends BaseController
         
         // Baris 2: Contoh Format Pengisian (using explicit strings)
         $sampleData = [
-            '0051234567', '2026001', '3201011505100001', 'Ahmad Rizky Pratama', 'L', '7A',
-            'Bandung', '2010-05-15', 'SDN 01 Ciwidey', 'Jl. Raya Ciwidey No. 10 RT 01/02', '081234567890',
+            '0051234567', '2026001', '3201011505100001', '3201010101100005', 'Ahmad Rizky Pratama', 'L', '7A',
+            'Bandung', '2010-05-15', 'Islam', '1', '2', 'Membaca', 'Guru',
+            'SDN 01 Ciwidey', 'Jl. Raya Ciwidey No. 10 RT 01/02', '081234567890',
             'Sukardi', 'hidup', '3201010101750001', 'Wiraswasta', '2.500.001 - 3.500.000',
             'Siti Aminah', 'hidup', '3201010101800002', 'Ibu Rumah Tangga', 'dibawah 800.000',
             '', '', '', '', '', ''
@@ -271,8 +287,17 @@ class StudentController extends BaseController
         try {
             foreach ($reader->getSheetIterator() as $sheet) {
                 $isFirstRow = true;
+                $headersMap = [];
+
                 foreach ($sheet->getRowIterator() as $rowObj) {
                     if ($isFirstRow) {
+                        $rawHeaders = $rowObj->toArray();
+                        foreach ($rawHeaders as $idx => $hName) {
+                            $clean = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', (string)$hName));
+                            if (!empty($clean)) {
+                                $headersMap[$clean] = $idx;
+                            }
+                        }
                         $isFirstRow = false;
                         continue; // Skip header
                     }
@@ -284,20 +309,41 @@ class StudentController extends BaseController
                         continue;
                     }
                     
-                    $row = array_pad($row, 28, null);
+                    $row = array_pad($row, 40, null);
                     
                     // Get cell values safely
                     $getValue = function($val) {
                         if ($val instanceof \DateTimeInterface) return $val->format('Y-m-d');
                         return trim((string)($val ?? ''));
                     };
+
+                    $getCol = function(array $keys, $fallbackIdx) use ($headersMap, $getValue, $row) {
+                        foreach ($keys as $k) {
+                            if (isset($headersMap[$k]) && isset($row[$headersMap[$k]])) {
+                                return $getValue($row[$headersMap[$k]]);
+                            }
+                        }
+                        return isset($row[$fallbackIdx]) ? $getValue($row[$fallbackIdx]) : '';
+                    };
                     
-                    $nisn = $getValue($row[0]);
-                    $nis = $getValue($row[1]);
-                    $nik = $getValue($row[2]);
-                    $nama = $getValue($row[3]);
-                    $gender = strtoupper($getValue($row[4]));
-                    $className = $getValue($row[5]);
+                    $nisn = $getCol(['nisn10digit', 'nisn'], 0);
+                    $nis = $getCol(['nis'], 1);
+                    $nik = $getCol(['niksiswa16digit', 'niksiswa', 'nik'], 2);
+                    $noKk = $getCol(['nokk16digit', 'nokk', 'kartukeluarga'], 3);
+                    $nama = $getCol(['namalengkap', 'nama'], 4);
+                    $gender = strtoupper($getCol(['genderlp', 'gender', 'jeniskelamin'], 5));
+                    $className = $getCol(['namakelas', 'kelas'], 6);
+
+                    // If old template where column 3 is Nama and 4 is Gender
+                    if (empty($nama) && !empty($noKk) && in_array(strtoupper($gender), ['L', 'P'])) {
+                        // Looks like new template
+                    } elseif (in_array(strtoupper($nama), ['L', 'P'])) {
+                        // Detected old template without No KK: col 2=nik, col 3=nama, col 4=gender, col 5=kelas
+                        $gender = strtoupper($nama);
+                        $nama = $noKk;
+                        $noKk = null;
+                        $className = $getCol([], 5);
+                    }
                     
                     if (empty($nisn) || empty($nama) || !in_array($gender, ['L', 'P'])) {
                         $failed++;
@@ -316,6 +362,17 @@ class StudentController extends BaseController
                             $classId = $class->id;
                         }
                     }
+
+                    $birthPlace = $getCol(['tempatlahir'], 7) ?: 'Bandung';
+                    $birthDate = $getCol(['tanggallahiryyyymmdd', 'tanggallahir'], 8) ?: '2010-01-01';
+                    $religion = $getCol(['agama'], 9) ?: 'Islam';
+                    $childNumber = $getCol(['anakke'], 10);
+                    $siblingsCount = $getCol(['jumlahsaudara'], 11);
+                    $hobby = $getCol(['hobi'], 12);
+                    $aspiration = $getCol(['citacita'], 13);
+                    $prevSchool = $getCol(['sekolahasal'], 14);
+                    $address = $getCol(['alamatlengkap', 'alamat'], 15) ?: '-';
+                    $parentPhone = $getCol(['nohpwaortuisijikatidakada', 'nohpwaortu', 'nohportu', 'nohp'], 16) ?: '-';
 
                     $username = $nisn;
                     if (User::where('username', $username)->exists()) {
@@ -339,33 +396,39 @@ class StudentController extends BaseController
                         'nisn' => $nisn,
                         'nis' => $nis ?: $nisn,
                         'nik' => $nik ?: null,
+                        'no_kk' => $noKk ?: null,
                         'full_name' => $nama,
                         'gender' => $gender,
                         'class_id' => $classId,
-                        'birth_place' => $getValue($row[6]) ?: 'Bandung',
-                        'birth_date' => !empty($row[7]) ? $getValue($row[7]) : '2010-01-01',
-                        'previous_school' => $getValue($row[8]),
-                        'address' => $getValue($row[9]) ?: '-',
-                        'parent_phone' => $getValue($row[10]) ?: '-',
+                        'birth_place' => $birthPlace,
+                        'birth_date' => $birthDate,
+                        'religion' => $religion,
+                        'child_number' => is_numeric($childNumber) ? (int)$childNumber : null,
+                        'siblings_count' => is_numeric($siblingsCount) ? (int)$siblingsCount : null,
+                        'hobby' => $hobby ?: null,
+                        'aspiration' => $aspiration ?: null,
+                        'previous_school' => $prevSchool ?: null,
+                        'address' => $address,
+                        'parent_phone' => $parentPhone,
                         
-                        'father_name' => $getValue($row[11]),
-                        'father_status' => strtolower($getValue($row[12])) ?: 'hidup',
-                        'father_nik' => $getValue($row[13]),
-                        'father_job' => $getValue($row[14]),
-                        'father_income' => $getValue($row[15]),
+                        'father_name' => $getCol(['namaayah'], 17),
+                        'father_status' => strtolower($getCol(['statusayahhidupmeninggaltidakketahui', 'statusayah'], 18)) ?: 'hidup',
+                        'father_nik' => $getCol(['nikayah'], 19),
+                        'father_job' => $getCol(['pekerjaanayah'], 20),
+                        'father_income' => $getCol(['penghasilanayah'], 21),
                         
-                        'mother_name' => $getValue($row[16]),
-                        'mother_status' => strtolower($getValue($row[17])) ?: 'hidup',
-                        'mother_nik' => $getValue($row[18]),
-                        'mother_job' => $getValue($row[19]),
-                        'mother_income' => $getValue($row[20]),
+                        'mother_name' => $getCol(['namaibu'], 22),
+                        'mother_status' => strtolower($getCol(['statusibuhidupmeninggaltidakketahui', 'statusibu'], 23)) ?: 'hidup',
+                        'mother_nik' => $getCol(['nikibu'], 24),
+                        'mother_job' => $getCol(['pekerjaanibu'], 25),
+                        'mother_income' => $getCol(['penghasilanibu'], 26),
 
-                        'guardian_name' => $getValue($row[21]),
-                        'guardian_relation' => $getValue($row[22]),
-                        'guardian_nik' => $getValue($row[23]),
-                        'guardian_job' => $getValue($row[24]),
-                        'guardian_phone' => $getValue($row[25]),
-                        'guardian_income' => $getValue($row[26]),
+                        'guardian_name' => $getCol(['namawali'], 27),
+                        'guardian_relation' => $getCol(['hubunganwali'], 28),
+                        'guardian_nik' => $getCol(['nikwali'], 29),
+                        'guardian_job' => $getCol(['pekerjaanwali'], 30),
+                        'guardian_phone' => $getCol(['nohpwali'], 31),
+                        'guardian_income' => $getCol(['penghasilanwali'], 32),
                     ]);
 
                     $success++;

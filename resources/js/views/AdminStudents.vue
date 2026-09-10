@@ -158,6 +158,7 @@
               <td class="px-6 py-4">
                 <div class="text-xs font-bold text-slate-800 font-mono">{{ row.nisn || '-' }} / {{ row.nis || '-' }}</div>
                 <div v-if="row.nik" class="text-[10px] text-emerald-700 font-mono font-medium mt-0.5">NIK: {{ row.nik }}</div>
+                <div v-if="row.no_kk" class="text-[10px] text-indigo-700 font-mono font-medium mt-0.5">KK: {{ row.no_kk }}</div>
               </td>
 
               <!-- Gender Badge -->

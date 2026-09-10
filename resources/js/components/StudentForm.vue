@@ -123,6 +123,31 @@
                 </p>
               </div>
 
+              <!-- No. Kartu Keluarga (KK) -->
+              <div class="space-y-1.5">
+                <label class="flex justify-between items-end">
+                  <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">
+                    No. Kartu Keluarga (KK)
+                  </span>
+                  <span class="text-[10px] font-semibold text-slate-400">16 digit angka</span>
+                </label>
+                <input
+                  v-model="form.no_kk"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="16"
+                  @input="form.no_kk=form.no_kk.replace(/[^0-9]/g,''); clearError('no_kk')"
+                  :class="[
+                    errors.no_kk ? 'border-red-500 bg-red-50/40 focus:ring-red-300' : 'border-slate-200 bg-slate-50 focus:ring-emerald-400/30 focus:border-emerald-400',
+                    'w-full border rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 transition-all font-medium font-mono'
+                  ]"
+                  placeholder="Contoh: 3201010101100005"
+                />
+                <p v-if="errors.no_kk" class="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1">
+                  <span>🔴</span> {{ errors.no_kk }}
+                </p>
+              </div>
+
               <!-- NIS -->
               <div class="space-y-1.5">
                 <label class="flex justify-between items-end">
@@ -235,6 +260,19 @@
                 </p>
               </div>
 
+              <!-- Agama Siswa -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide">
+                  Agama <span class="text-red-500 font-bold">*</span>
+                </label>
+                <select
+                  v-model="form.religion"
+                  class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium"
+                >
+                  <option v-for="rel in religionOptions" :key="rel" :value="rel">{{ rel }}</option>
+                </select>
+              </div>
+
               <!-- Sekolah Asal -->
               <div class="md:col-span-2 space-y-1.5">
                 <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide">Sekolah Asal</label>
@@ -263,6 +301,73 @@
             </div>
           </div>
           
+          <div class="md:col-span-2 border-t border-slate-100 my-1"></div>
+
+          <!-- Posisi Keluarga & Karakter Siswa -->
+          <div class="md:col-span-2">
+            <h3 class="text-[13px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Posisi Keluarga & Minat Bakat Siswa
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+              <!-- Anak Ke -->
+              <div class="space-y-1.5">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide">Anak Ke-</label>
+                <input
+                  v-model.number="form.child_number"
+                  type="number"
+                  min="1"
+                  max="30"
+                  class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-semibold"
+                  placeholder="Contoh: 1"
+                />
+              </div>
+
+              <!-- Dari Jumlah Saudara -->
+              <div class="space-y-1.5">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide">Jumlah Saudara</label>
+                <input
+                  v-model.number="form.siblings_count"
+                  type="number"
+                  min="0"
+                  max="30"
+                  class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-semibold"
+                  placeholder="Contoh: 2"
+                />
+              </div>
+
+              <!-- Hobi Siswa -->
+              <div class="space-y-1.5 sm:col-span-2 md:col-span-1">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide">Hobi</label>
+                <input
+                  v-model="form.hobby"
+                  type="text"
+                  list="hobby-suggestions-list"
+                  class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium"
+                  placeholder="Pilih / ketik hobi..."
+                />
+                <datalist id="hobby-suggestions-list">
+                  <option v-for="item in hobbySuggestions" :key="item" :value="item" />
+                </datalist>
+              </div>
+
+              <!-- Cita-cita Siswa -->
+              <div class="space-y-1.5 sm:col-span-2 md:col-span-1">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide">Cita - cita</label>
+                <input
+                  v-model="form.aspiration"
+                  type="text"
+                  list="aspiration-suggestions-list"
+                  class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium"
+                  placeholder="Pilih / ketik cita-cita..."
+                />
+                <datalist id="aspiration-suggestions-list">
+                  <option v-for="item in aspirationSuggestions" :key="item" :value="item" />
+                </datalist>
+              </div>
+            </div>
+          </div>
+          
           <div class="md:col-span-2 border-t border-slate-100 my-2"></div>
 
           <!-- Informasi Orang Tua -->
@@ -276,21 +381,34 @@
                 <p class="text-[11px] text-slate-400 mt-0.5">Status orang tua mempengaruhi pengaturan data wali otomatis.</p>
               </div>
 
-              <div class="space-y-1.5 w-full sm:w-64">
+              <div class="space-y-1.5 w-full sm:w-72">
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">+62</span>
                   <input
                     v-model="form.parent_phone"
                     type="text"
+                    :disabled="form.has_no_phone"
                     @input="clearError('parent_phone')"
                     :class="[
-                      errors.parent_phone ? 'border-red-500 bg-red-50/40' : 'border-slate-200 bg-slate-50',
+                      form.has_no_phone ? 'border-slate-300 bg-slate-200/80 text-slate-500 cursor-not-allowed' : (errors.parent_phone ? 'border-red-500 bg-red-50/40' : 'border-slate-200 bg-slate-50'),
                       'w-full border rounded-xl pl-12 pr-4 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 transition-all font-medium'
                     ]"
-                    placeholder="No. WA Orang Tua *"
+                    :placeholder="form.has_no_phone ? 'Tidak Memiliki Telepon' : 'No. WA Orang Tua *'"
                   />
                 </div>
-                <p v-if="errors.parent_phone" class="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1">
+                <div class="flex items-center gap-2 pt-0.5">
+                  <input
+                    type="checkbox"
+                    id="has_no_phone"
+                    v-model="form.has_no_phone"
+                    @change="onToggleNoPhone"
+                    class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                  />
+                  <label for="has_no_phone" class="text-[11px] font-semibold text-slate-600 select-none cursor-pointer">
+                    Tidak memiliki nomor telepon
+                  </label>
+                </div>
+                <p v-if="errors.parent_phone && !form.has_no_phone" class="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1">
                   <span>🔴</span> {{ errors.parent_phone }}
                 </p>
               </div>
@@ -636,16 +754,59 @@ const incomeOptions = ref([
   'diatas 20.000.001',
 ]);
 
+const religionOptions = ref([
+  'Islam',
+  'Kristen Protestan',
+  'Katolik',
+  'Hindu',
+  'Buddha',
+  'Khonghucu',
+]);
+
+const hobbySuggestions = ref([
+  'Membaca Buku / Novel',
+  'Olahraga / Futsal / Sepakbola',
+  'Menggambar / Melukis',
+  'Coding / Komputer',
+  'Kaligrafi Islam',
+  'Bermain Musik / Hadrah',
+  'Menulis / Jurnalistik',
+  'Memasak / Tata Boga',
+  'Fotografi / Videografi',
+  'Pramuka / Menjelajah Alam',
+]);
+
+const aspirationSuggestions = ref([
+  'Guru / Dosen / Pendidik',
+  'Dokter / Tenaga Medis',
+  'Polisi / TNI',
+  'Programmer / Software Engineer',
+  'Pengusaha / Wirausahawan',
+  'Da\'i / Ustadz / Tokoh Agama',
+  'Arsitek / Insinyur Teknik',
+  'Pilot / Penerbang',
+  'Atlet Nasional',
+  'Seniman / Desainer Grafis',
+  'Akuntan / Bankir',
+]);
+
 const form = reactive({
   nis: '',
   nisn: '',
   nik: '',
+  no_kk: '',
   full_name: '',
   gender: '',
   birth_place: '',
   birth_date: '',
+  religion: 'Islam',
+  child_number: '',
+  siblings_count: '',
+  hobby: '',
+  aspiration: '',
   address: '',
   parent_phone: '',
+  has_no_phone: false,
   class_id: '',
   photo_url: '',
   previous_school: '',
@@ -666,6 +827,17 @@ const form = reactive({
   guardian_phone: '',
   guardian_income: '',
 });
+
+function onToggleNoPhone() {
+  if (form.has_no_phone) {
+    form.parent_phone = '-';
+    clearError('parent_phone');
+  } else {
+    if (form.parent_phone === '-' || form.parent_phone === 'Tidak Memiliki Telepon') {
+      form.parent_phone = '';
+    }
+  }
+}
 
 const photoFile = ref(null);
 const photoPreview = ref(null);
@@ -812,11 +984,20 @@ function validateForm() {
     errors.nisn = 'NISN harus tepat 10 digit angka';
   }
 
+  if (form.no_kk?.trim() && !/^\d{16}$/.test(form.no_kk.trim())) {
+    errors.no_kk = 'No. KK harus berupa 16 digit angka';
+  }
+
   if (!form.birth_place?.trim()) errors.birth_place = 'Tempat lahir wajib diisi';
   if (!form.birth_date) errors.birth_date = 'Tanggal lahir wajib diisi';
   if (!form.class_id) errors.class_id = 'Kelas wajib dipilih';
   if (!form.address?.trim()) errors.address = 'Alamat lengkap siswa wajib diisi';
-  if (!form.parent_phone?.trim()) errors.parent_phone = 'No. HP orang tua wajib diisi';
+  
+  if (!form.has_no_phone) {
+    if (!form.parent_phone?.trim() || form.parent_phone === '-') {
+      errors.parent_phone = 'No. HP orang tua wajib diisi (centang jika tidak memiliki HP)';
+    }
+  }
 
   if (!form.guardian_name?.trim()) errors.guardian_name = 'Nama wali wajib diisi';
   if (!form.guardian_relation) errors.guardian_relation = 'Hubungan wali dengan siswa wajib dipilih';
@@ -832,12 +1013,19 @@ watch(
     form.nis = val.nis || '';
     form.nisn = val.nisn || '';
     form.nik = val.nik || '';
+    form.no_kk = val.no_kk || '';
     form.full_name = val.full_name || '';
     form.gender = val.gender || '';
     form.birth_place = val.birth_place || '';
     form.birth_date = val.birth_date ? String(val.birth_date).substring(0, 10) : '';
+    form.religion = val.religion || 'Islam';
+    form.child_number = val.child_number ?? '';
+    form.siblings_count = val.siblings_count ?? '';
+    form.hobby = val.hobby || '';
+    form.aspiration = val.aspiration || '';
     form.address = val.address || '';
     form.parent_phone = val.parent_phone || '';
+    form.has_no_phone = (val.parent_phone === '-' || val.parent_phone === 'Tidak Memiliki Telepon');
     form.class_id = val.class_id ? String(val.class_id) : (val.class_room?.id ? String(val.class_room.id) : (val.classRoom?.id ? String(val.classRoom.id) : ''));
     form.photo_url = val.photo_url || '';
     form.previous_school = val.previous_school || '';
@@ -905,15 +1093,20 @@ function onSubmit() {
   };
 
   const fields = [
-    'nis', 'nisn', 'nik', 'full_name', 'gender', 'birth_place', 'birth_date',
+    'nis', 'nisn', 'nik', 'no_kk', 'full_name', 'gender', 'birth_place', 'birth_date',
+    'religion', 'child_number', 'siblings_count', 'hobby', 'aspiration',
     'address', 'parent_phone', 'class_id', 'previous_school',
     'mother_name', 'mother_status', 'mother_nik', 'mother_job', 'mother_income',
     'father_name', 'father_status', 'father_nik', 'father_job', 'father_income',
     'guardian_name', 'guardian_relation', 'guardian_nik', 'guardian_job', 'guardian_phone', 'guardian_income',
   ];
 
+  if (form.has_no_phone) {
+    form.parent_phone = '-';
+  }
+
   fields.forEach((key) => {
-    appendData(key, form[key] || '');
+    appendData(key, form[key] ?? '');
   });
 
   if (photoFile.value) {

@@ -105,6 +105,22 @@
                 />
               </div>
 
+              <!-- No. Kartu Keluarga (KK) -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                  No. Kartu Keluarga (KK)
+                </label>
+                <input
+                  v-model="form.no_kk"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="16"
+                  @input="form.no_kk = form.no_kk.replace(/[^0-9]/g, '')"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all"
+                  placeholder="16 digit No. KK"
+                />
+              </div>
+
               <!-- Jenis Kelamin -->
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
@@ -142,14 +158,93 @@
                 />
               </div>
 
+              <!-- Agama Siswa -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Agama</label>
+                <select
+                  v-model="form.religion"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all"
+                >
+                  <option value="Islam">Islam</option>
+                  <option value="Kristen Protestan">Kristen Protestan</option>
+                  <option value="Katolik">Katolik</option>
+                  <option value="Hindu">Hindu</option>
+                  <option value="Buddha">Buddha</option>
+                  <option value="Khonghucu">Khonghucu</option>
+                </select>
+              </div>
+
+              <!-- Anak Ke -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Anak Ke-</label>
+                <input
+                  v-model.number="form.child_number"
+                  type="number"
+                  min="1"
+                  max="30"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all"
+                  placeholder="Contoh: 1"
+                />
+              </div>
+
+              <!-- Jumlah Saudara -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Jumlah Saudara</label>
+                <input
+                  v-model.number="form.siblings_count"
+                  type="number"
+                  min="0"
+                  max="30"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all"
+                  placeholder="Contoh: 2"
+                />
+              </div>
+
+              <!-- Hobi -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Hobi Siswa</label>
+                <input
+                  v-model="form.hobby"
+                  type="text"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all"
+                  placeholder="Contoh: Membaca, Sepakbola"
+                />
+              </div>
+
+              <!-- Cita-cita -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Cita - cita</label>
+                <input
+                  v-model="form.aspiration"
+                  type="text"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all"
+                  placeholder="Contoh: Guru, Dokter, Da'i"
+                />
+              </div>
+
               <!-- No. HP / WhatsApp Orang Tua -->
               <div class="space-y-1.5">
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">No. HP / WA Orang Tua</label>
+                <div class="flex items-center justify-between">
+                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">No. HP / WA Orang Tua</label>
+                  <label class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      v-model="form.has_no_phone"
+                      @change="onToggleNoPhone"
+                      class="rounded text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 cursor-pointer"
+                    />
+                    <span>Tidak Ada HP</span>
+                  </label>
+                </div>
                 <input
                   v-model="form.parent_phone"
                   type="text"
-                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all"
-                  placeholder="Contoh: 081234567890"
+                  :disabled="form.has_no_phone"
+                  :class="[
+                    form.has_no_phone ? 'bg-slate-200/70 text-slate-500 cursor-not-allowed border-slate-300' : 'bg-slate-50 border-slate-200 text-slate-800',
+                    'w-full border rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all'
+                  ]"
+                  :placeholder="form.has_no_phone ? 'Tidak Memiliki Telepon' : 'Contoh: 081234567890'"
                 />
               </div>
 
@@ -342,11 +437,18 @@ const studentData = ref(null);
 const form = reactive({
   full_name: '',
   nik: '',
+  no_kk: '',
   gender: '',
   birth_place: '',
   birth_date: '',
+  religion: 'Islam',
+  child_number: '',
+  siblings_count: '',
+  hobby: '',
+  aspiration: '',
   address: '',
   parent_phone: '',
+  has_no_phone: false,
   previous_school: '',
   mother_name: '',
   mother_status: 'hidup',
@@ -359,6 +461,16 @@ const form = reactive({
   guardian_nik: '',
   guardian_phone: '',
 });
+
+function onToggleNoPhone() {
+  if (form.has_no_phone) {
+    form.parent_phone = '-';
+  } else {
+    if (form.parent_phone === '-' || form.parent_phone === 'Tidak Memiliki Telepon') {
+      form.parent_phone = '';
+    }
+  }
+}
 
 const photoFile = ref(null);
 const photoPreview = ref(null);
@@ -390,11 +502,18 @@ async function loadProfile() {
     const s = studentData.value;
     form.full_name = s.full_name || user.value.name || '';
     form.nik = s.nik || '';
+    form.no_kk = s.no_kk || '';
     form.gender = s.gender || '';
     form.birth_place = s.birth_place || '';
     form.birth_date = s.birth_date ? String(s.birth_date).substring(0, 10) : '';
+    form.religion = s.religion || 'Islam';
+    form.child_number = s.child_number ?? '';
+    form.siblings_count = s.siblings_count ?? '';
+    form.hobby = s.hobby || '';
+    form.aspiration = s.aspiration || '';
     form.address = s.address || '';
     form.parent_phone = s.parent_phone || '';
+    form.has_no_phone = (s.parent_phone === '-' || s.parent_phone === 'Tidak Memiliki Telepon');
     form.previous_school = s.previous_school || '';
     form.mother_name = s.mother_name || '';
     form.mother_status = s.mother_status || 'hidup';
@@ -425,9 +544,13 @@ async function saveProfile() {
 
   saving.value = true;
   try {
+    if (form.has_no_phone) {
+      form.parent_phone = '-';
+    }
+
     const formData = new FormData();
     Object.keys(form).forEach((key) => {
-      if (form[key] !== null && form[key] !== undefined) {
+      if (key !== 'has_no_phone' && form[key] !== null && form[key] !== undefined) {
         formData.append(key, form[key]);
       }
     });

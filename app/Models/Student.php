@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Student extends Model
 {
     protected $fillable = [
-        'user_id', 'class_id', 'nisn', 'nis', 'nik', 'full_name', 'gender',
-        'birth_place', 'birth_date', 'address', 'parent_phone',
+        'user_id', 'class_id', 'nisn', 'nis', 'nik', 'no_kk', 'full_name', 'gender',
+        'birth_place', 'birth_date', 'religion', 'child_number', 'siblings_count',
+        'hobby', 'aspiration', 'address', 'parent_phone',
         'mother_name', 'mother_status', 'mother_nik', 'mother_job', 'mother_income',
         'father_name', 'father_status', 'father_nik', 'father_job', 'father_income',
         'guardian_name', 'guardian_relation', 'guardian_nik', 'guardian_job', 'guardian_phone', 'guardian_income',
@@ -21,6 +22,8 @@ class Student extends Model
 
     protected $casts = [
         'birth_date' => 'date:Y-m-d',
+        'child_number' => 'integer',
+        'siblings_count' => 'integer',
     ];
 
     public function getPhotoUrlAttribute(): ?string

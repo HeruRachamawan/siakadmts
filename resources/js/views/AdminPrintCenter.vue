@@ -282,6 +282,7 @@
                 <td class="p-2 text-center font-bold text-slate-500 border border-slate-300">{{ idx + 1 }}</td>
                 <td class="p-2 text-center font-mono font-bold text-slate-700 border border-slate-300 text-[11px]">
                   {{ st.nisn || st.nis || '-' }}
+                  <div v-if="st.no_kk" class="text-[9px] text-slate-500 font-normal">KK: {{ st.no_kk }}</div>
                 </td>
                 <td class="p-2 font-bold text-slate-900 uppercase border border-slate-300">{{ st.full_name }}</td>
                 <td class="p-2 text-center font-black border border-slate-300" :class="st.gender === 'L' ? 'text-blue-700' : 'text-pink-700'">
