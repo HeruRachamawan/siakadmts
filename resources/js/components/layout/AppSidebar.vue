@@ -163,11 +163,11 @@
           <RouterLink
             to="/admin/exam-corrections"
             :title="isCollapsed ? 'Monitoring Koreksi Ujian' : ''"
-            class="nav-link bg-teal-50/50 text-teal-800 border border-teal-200/60 font-semibold"
+            class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <CheckSquare class="w-4 h-4 text-teal-600 flex-shrink-0" />
+            <CheckSquare class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Koreksi</span>
             </Transition>
@@ -270,11 +270,11 @@
             v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kepala_sekolah'"
             to="/admin/ppdb"
             :title="isCollapsed ? 'Penerimaan Siswa (PPDB)' : ''"
-            class="nav-link bg-emerald-50/50 text-emerald-800 border border-emerald-200/60 font-semibold"
+            class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <UserPlus class="w-4 h-4 flex-shrink-0 text-emerald-600" />
+            <UserPlus class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Penerimaan Siswa (PPDB)</span>
             </Transition>
@@ -323,15 +323,15 @@
             v-if="isHomeroomTeacher"
             to="/teacher/homeroom-attendance"
             :title="isCollapsed ? 'Absensi Harian Kelas' : ''"
-            class="nav-link bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-bold"
+            class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <ClipboardList class="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <ClipboardList class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
                 <span class="text-sm whitespace-nowrap overflow-hidden">Absensi Harian</span>
-                <span class="px-1.5 py-0.2 bg-emerald-600 text-white rounded-md text-[9px] font-black uppercase">Wali</span>
+                <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold uppercase">Wali</span>
               </div>
             </Transition>
           </RouterLink>
@@ -368,11 +368,11 @@
           <RouterLink
             to="/teacher/exam-corrections"
             :title="isCollapsed ? 'Koreksi Soal & Asesmen' : ''"
-            class="nav-link bg-teal-50/60 text-teal-800 border border-teal-200/80 font-bold"
+            class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <CheckSquare class="w-4 h-4 text-teal-600 flex-shrink-0" />
+            <CheckSquare class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Koreksi Soal</span>
             </Transition>
@@ -412,11 +412,11 @@
             v-if="user?.teacher?.is_ppdb_committee || isPpdbCommittee"
             to="/teacher/ppdb"
             :title="isCollapsed ? 'Panitia PPDB' : ''"
-            class="nav-link bg-emerald-50/50 text-emerald-800 border border-emerald-200/60 font-semibold"
+            class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <UserPlus class="w-4 h-4 flex-shrink-0 text-emerald-600" />
+            <UserPlus class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Panitia PPDB</span>
             </Transition>
@@ -446,11 +446,11 @@
           <RouterLink
             to="/admin/daily-student-attendance"
             :title="isCollapsed ? 'Monitoring Absensi Siswa' : ''"
-            class="nav-link bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-bold"
+            class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <ClipboardList class="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <ClipboardList class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Siswa</span>
             </Transition>
@@ -460,11 +460,11 @@
           <RouterLink
             to="/admin/exam-corrections"
             :title="isCollapsed ? 'Monitoring Koreksi Ujian' : ''"
-            class="nav-link bg-teal-50/50 text-teal-800 border border-teal-200/60 font-semibold"
+            class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <CheckSquare class="w-4 h-4 text-teal-600 flex-shrink-0" />
+            <CheckSquare class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Koreksi</span>
             </Transition>
@@ -670,11 +670,11 @@
           <RouterLink
             to="/admin/users"
             :title="isCollapsed ? 'Manajemen Pengguna' : ''"
-            class="nav-link bg-indigo-50/50 text-indigo-900 border border-indigo-200/60 font-semibold"
+            class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <Users class="w-4 h-4 flex-shrink-0 text-indigo-600" />
+            <Users class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Manajemen Pengguna</span>
             </Transition>
@@ -703,11 +703,11 @@
           <RouterLink
             to="/admin/profile"
             :title="isCollapsed ? 'Profil & Biodata Diri' : ''"
-            class="nav-link bg-emerald-50/50 text-emerald-800 border border-emerald-200/60 font-semibold"
+            class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <UserCircle class="w-4 h-4 flex-shrink-0 text-emerald-600" />
+            <UserCircle class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Profil & Biodata Diri</span>
             </Transition>
