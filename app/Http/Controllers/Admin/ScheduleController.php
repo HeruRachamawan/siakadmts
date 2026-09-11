@@ -34,6 +34,16 @@ class ScheduleController extends Controller
             $query->where('is_activity', filter_var($request->is_activity, FILTER_VALIDATE_BOOLEAN));
         }
 
+        if ($request->filled('room')) {
+            if ($request->room === 'lokal') {
+                $query->where('room', 'lokal');
+            } else {
+                $query->where(function($q) {
+                    $q->where('room', 'utama')->orWhereNull('room');
+                });
+            }
+        }
+
         // Filter out any corrupted nighttime hours (e.g. 22:31)
         $query->where('start_time', '<=', '18:00');
 
@@ -226,6 +236,7 @@ class ScheduleController extends Controller
         $isActivity = $data['is_activity'] ?? false;
         $classId = $data['class_id'] ?? null;
         $teacherId = $data['teacher_id'] ?? null;
+        $room = ($data['room'] ?? 'utama') === 'lokal' ? 'lokal' : 'utama';
 
         // Helper time overlap condition: Two intervals [startA, endA) and [startB, endB) overlap iff startA < endB AND endA > startB
         $overlapCondition = function ($q) use ($start, $end) {
@@ -233,29 +244,42 @@ class ScheduleController extends Controller
               ->where('end_time', '>', $start);
         };
 
+        // Helper room condition to separate Jadwal Utama and Jadwal Lokal
+        $roomCondition = function ($q) use ($room) {
+            if ($room === 'lokal') {
+                $q->where('room', 'lokal');
+            } else {
+                $q->where(function ($sq) {
+                    $sq->where('room', 'utama')->orWhereNull('room');
+                });
+            }
+        };
+
         // 1. Check General All-Classes Activity Conflict
         // If an activity for ALL classes (class_id = null) exists in this time slot
         $generalActivity = Schedule::where('day', $day)
             ->whereNull('class_id')
             ->where('is_activity', true)
+            ->where($roomCondition)
             ->where($overlapCondition)
             ->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))
             ->first();
 
         if ($generalActivity) {
             $actName = $generalActivity->activity_name ?? 'Kegiatan Umum';
-            return "Bentrok Kegiatan Sekolah: Slot waktu ($start - $end) telah terisi kegiatan '$actName' untuk seluruh sekolah.";
+            return "Bentrok Kegiatan: Slot waktu ($start - $end) telah terisi kegiatan '$actName' di kategori jadwal ini.";
         }
 
         // If trying to add a General Activity for ALL classes, check if any class has a schedule at this time
         if ($isActivity && empty($classId)) {
             $existingSchedule = Schedule::where('day', $day)
+                ->where($roomCondition)
                 ->where($overlapCondition)
                 ->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))
                 ->first();
 
             if ($existingSchedule) {
-                return "Gagal Menambahkan Kegiatan Umum: Sudah ada jadwal pelajaran/kegiatan lain pada hari " . ucfirst($day) . " jam $start - $end.";
+                return "Gagal Menambahkan Kegiatan: Sudah ada jadwal pelajaran/kegiatan lain pada hari " . ucfirst($day) . " jam $start - $end.";
             }
         }
 
@@ -263,6 +287,7 @@ class ScheduleController extends Controller
         if ($teacherId) {
             $teacherConflict = Schedule::where('day', $day)
                 ->where('teacher_id', $teacherId)
+                ->where($roomCondition)
                 ->where($overlapCondition)
                 ->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))
                 ->with(['classRoom', 'subject'])
@@ -284,6 +309,7 @@ class ScheduleController extends Controller
         if ($classId) {
             $classConflict = Schedule::where('day', $day)
                 ->where('class_id', $classId)
+                ->where($roomCondition)
                 ->where($overlapCondition)
                 ->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))
                 ->with(['subject', 'teacher'])
@@ -344,16 +370,54 @@ class ScheduleController extends Controller
         ];
     }
 
-    public function getTimeSlots()
+    public static function getDefaultTimeSlotsLokal(): array
     {
-        $raw = \App\Models\Setting::where('key', 'schedule_time_slots')->value('value');
-        $defaults = self::getDefaultTimeSlots();
+        return [
+            'senin' => [
+                ['no' => '1', 'start' => '07.30', 'end' => '08.10', 'isSlot' => true, 'title' => ''],
+                ['no' => '2', 'start' => '08.10', 'end' => '08.50', 'isSlot' => true, 'title' => ''],
+                ['no' => '3', 'start' => '08.50', 'end' => '09.30', 'isSlot' => true, 'title' => ''],
+                ['no' => '4', 'start' => '09.30', 'end' => '10.10', 'isSlot' => true, 'title' => ''],
+                ['no' => '5', 'start' => '10.10', 'end' => '10.40', 'isBreak' => true, 'title' => 'ISTIRAHAT'],
+                ['no' => '6', 'start' => '10.40', 'end' => '11.20', 'isSlot' => true, 'title' => ''],
+                ['no' => '7', 'start' => '11.20', 'end' => '12.00', 'isSlot' => true, 'title' => ''],
+                ['no' => '8', 'start' => '12.00', 'end' => '12.30', 'isGeneral' => true, 'title' => "SHALAT DZUHUR BERJAMA'AH"],
+            ],
+            'selasa_sabtu' => [
+                ['no' => '1', 'start' => '07.30', 'end' => '08.10', 'isSlot' => true, 'title' => ''],
+                ['no' => '2', 'start' => '08.10', 'end' => '08.50', 'isSlot' => true, 'title' => ''],
+                ['no' => '3', 'start' => '08.50', 'end' => '09.30', 'isSlot' => true, 'title' => ''],
+                ['no' => '4', 'start' => '09.30', 'end' => '10.10', 'isSlot' => true, 'title' => ''],
+                ['no' => '5', 'start' => '10.10', 'end' => '10.40', 'isBreak' => true, 'title' => 'ISTIRAHAT'],
+                ['no' => '6', 'start' => '10.40', 'end' => '11.20', 'isSlot' => true, 'title' => ''],
+                ['no' => '7', 'start' => '11.20', 'end' => '12.00', 'isSlot' => true, 'title' => ''],
+                ['no' => '8', 'start' => '12.00', 'end' => '12.30', 'isGeneral' => true, 'title' => "SHALAT DZUHUR BERJAMA'AH"],
+            ],
+            'jumat' => [
+                ['no' => '1', 'start' => '07.30', 'end' => '08.10', 'isSlot' => true, 'title' => ''],
+                ['no' => '2', 'start' => '08.10', 'end' => '08.50', 'isSlot' => true, 'title' => ''],
+                ['no' => '3', 'start' => '08.50', 'end' => '09.30', 'isSlot' => true, 'title' => ''],
+                ['no' => '4', 'start' => '09.30', 'end' => '10.00', 'isBreak' => true, 'title' => "ISTIRAHAT JUM'AT"],
+                ['no' => '5', 'start' => '10.00', 'end' => '10.40', 'isSlot' => true, 'title' => ''],
+                ['no' => '6', 'start' => '11.00', 'end' => '12.30', 'isGeneral' => true, 'title' => "SHALAT JUM'AT BERJAMA'AH"],
+            ],
+        ];
+    }
+
+    public function getTimeSlots(Request $request)
+    {
+        $group = $request->input('group', 'utama');
+        $settingKey = ($group === 'lokal') ? 'schedule_time_slots_lokal' : 'schedule_time_slots';
+        $defaults = ($group === 'lokal') ? self::getDefaultTimeSlotsLokal() : self::getDefaultTimeSlots();
+
+        $raw = \App\Models\Setting::where('key', $settingKey)->value('value');
 
         if ($raw) {
             $saved = json_decode($raw, true);
             if (is_array($saved)) {
                 return response()->json([
                     'status' => 'success',
+                    'group' => $group,
                     'data' => [
                         'senin' => $saved['senin'] ?? $defaults['senin'],
                         'selasa_sabtu' => $saved['selasa_sabtu'] ?? $defaults['selasa_sabtu'],
@@ -365,6 +429,7 @@ class ScheduleController extends Controller
 
         return response()->json([
             'status' => 'success',
+            'group' => $group,
             'data' => $defaults
         ]);
     }
@@ -372,31 +437,47 @@ class ScheduleController extends Controller
     public function saveTimeSlots(Request $request)
     {
         $validated = $request->validate([
+            'group' => 'nullable|string|in:utama,lokal',
             'senin' => 'required|array',
             'selasa_sabtu' => 'required|array',
             'jumat' => 'required|array',
         ]);
 
+        $group = $request->input('group', 'utama');
+        $settingKey = ($group === 'lokal') ? 'schedule_time_slots_lokal' : 'schedule_time_slots';
+
+        $dataToSave = [
+            'senin' => $validated['senin'],
+            'selasa_sabtu' => $validated['selasa_sabtu'],
+            'jumat' => $validated['jumat'],
+        ];
+
         \App\Models\Setting::updateOrCreate(
-            ['key' => 'schedule_time_slots'],
-            ['value' => json_encode($validated)]
+            ['key' => $settingKey],
+            ['value' => json_encode($dataToSave)]
         );
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Pengaturan slot waktu jadwal pelajaran berhasil disimpan',
-            'data' => $validated
+            'group' => $group,
+            'message' => 'Pengaturan slot waktu jadwal ' . ($group === 'lokal' ? 'lokal' : 'utama') . ' berhasil disimpan',
+            'data' => $dataToSave
         ]);
     }
 
-    public function resetTimeSlots()
+    public function resetTimeSlots(Request $request)
     {
-        \App\Models\Setting::where('key', 'schedule_time_slots')->delete();
+        $group = $request->input('group', 'utama');
+        $settingKey = ($group === 'lokal') ? 'schedule_time_slots_lokal' : 'schedule_time_slots';
+        $defaults = ($group === 'lokal') ? self::getDefaultTimeSlotsLokal() : self::getDefaultTimeSlots();
+
+        \App\Models\Setting::where('key', $settingKey)->delete();
 
         return response()->json([
             'status' => 'success',
+            'group' => $group,
             'message' => 'Slot waktu berhasil dikembalikan ke standar madrasah',
-            'data' => self::getDefaultTimeSlots()
+            'data' => $defaults
         ]);
     }
 }

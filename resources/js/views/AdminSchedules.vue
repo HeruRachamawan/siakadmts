@@ -63,13 +63,65 @@
       </div>
     </div>
 
+    <!-- Tab Switcher: Jadwal Utama vs Jadwal Lokal -->
+    <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div class="flex items-center gap-2 p-1 bg-slate-100/90 rounded-xl">
+        <button
+          type="button"
+          @click="setScheduleType('utama')"
+          :class="activeScheduleType === 'utama' ? 'bg-white text-emerald-800 font-extrabold shadow-sm' : 'text-slate-500 hover:text-slate-800 font-bold'"
+          class="px-5 py-2 rounded-lg text-xs transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <span class="text-sm">🏫</span>
+          <span>Jadwal Utama</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-md font-bold" :class="activeScheduleType === 'utama' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'">
+            {{ mainClassesCount }} Kelas
+          </span>
+        </button>
+
+        <button
+          type="button"
+          @click="setScheduleType('lokal')"
+          :class="activeScheduleType === 'lokal' ? 'bg-white text-teal-800 font-extrabold shadow-sm' : 'text-slate-500 hover:text-slate-800 font-bold'"
+          class="px-5 py-2 rounded-lg text-xs transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <span class="text-sm">📍</span>
+          <span>Jadwal Lokal</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-md font-bold" :class="activeScheduleType === 'lokal' ? 'bg-teal-100 text-teal-800' : 'bg-slate-200 text-slate-600'">
+            {{ lokalClassesCount }} Kelas (7, 8, 9A, 9B)
+          </span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3 text-xs text-slate-500 font-medium px-1">
+        <span v-if="activeScheduleType === 'utama'" class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>Jadwal KBM <b>Utama</b> dengan jam pelajaran standar madrasah.</span>
+        </span>
+        <div v-else class="flex items-center gap-2">
+          <span class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+            <span>Jadwal KBM <b>Lokal</b> khusus <b>Kelas 7, 8, 9A, dan 9B</b> dengan slot jam mandiri.</span>
+          </span>
+          <button
+            type="button"
+            @click="openLokalClassPicker"
+            class="px-2 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold rounded-lg text-[10px] border border-teal-200 transition-colors cursor-pointer"
+            title="Ubah pilihan 4 kelas untuk Jadwal Lokal jika diperlukan"
+          >
+            ⚙️ Sesuaikan 4 Kelas
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Filter Bar -->
     <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-wrap items-center gap-4">
       <div class="flex-1 min-w-[180px]">
         <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Filter Kelas</label>
         <select v-model="selectedClass" @change="fetchSchedules" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 cursor-pointer">
-          <option value="">-- Semua Kelas --</option>
-          <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+          <option value="">-- Semua Kelas ({{ activeScheduleType === 'lokal' ? 'Jadwal Lokal' : 'Jadwal Utama' }}) --</option>
+          <option v-for="cls in scheduleActiveClasses" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
         </select>
       </div>
 
@@ -106,8 +158,8 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           </div>
           <div>
-            <h3 class="font-bold text-sm sm:text-base text-white">Matriks Jadwal: Hari {{ getActiveDayName() }}</h3>
-            <p class="text-xs text-slate-400 font-normal">Tampilan jadwal pelajaran visual per kelas</p>
+            <h3 class="font-bold text-sm sm:text-base text-white">Matriks {{ activeScheduleType === 'lokal' ? 'Jadwal Lokal (4 Kelas)' : 'Jadwal Utama' }}: Hari {{ getActiveDayName() }}</h3>
+            <p class="text-xs text-slate-400 font-normal">{{ activeScheduleType === 'lokal' ? 'Tampilan jadwal KBM khusus Kelas 7, 8, 9A, dan 9B' : 'Tampilan jadwal pelajaran visual per kelas reguler' }}</p>
           </div>
         </div>
 
@@ -325,8 +377,8 @@
               <div class="space-y-1">
                 <label class="block text-[11px] font-bold text-slate-600 uppercase">Target Kelas</label>
                 <select v-model="form.class_id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 cursor-pointer">
-                  <option :value="null">-- Semua Kelas (Seluruh Sekolah) --</option>
-                  <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+                  <option :value="null">-- Semua Kelas ({{ activeScheduleType === 'lokal' ? 'Jadwal Lokal' : 'Seluruh Sekolah' }}) --</option>
+                  <option v-for="cls in scheduleActiveClasses" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
                 </select>
               </div>
             </div>
@@ -339,7 +391,7 @@
                 <label class="block text-[11px] font-bold text-slate-600 uppercase">Pilih Kelas</label>
                 <select v-model="form.class_id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 cursor-pointer" required>
                   <option value="">-- Pilih Kelas --</option>
-                  <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+                  <option v-for="cls in scheduleActiveClasses" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
                 </select>
               </div>
 
@@ -583,6 +635,35 @@
           </button>
         </div>
 
+        <!-- Schedule Group Switcher inside modal (Utama vs Lokal) -->
+        <div class="px-5 sm:px-6 pt-3 pb-2.5 bg-slate-100/90 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2 flex-shrink-0">
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kategori Jadwal:</span>
+            <div class="flex p-1 bg-white rounded-xl border border-slate-200 shadow-2xs">
+              <button
+                type="button"
+                @click="switchConfigGroup('utama')"
+                :class="configActiveGroupTab === 'utama' ? 'bg-emerald-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                class="px-3.5 py-1 text-xs rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <span>🏫 Jadwal Utama</span>
+              </button>
+              <button
+                type="button"
+                @click="switchConfigGroup('lokal')"
+                :class="configActiveGroupTab === 'lokal' ? 'bg-teal-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                class="px-3.5 py-1 text-xs rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <span>📍 Jadwal Lokal (4 Kelas)</span>
+              </button>
+            </div>
+          </div>
+
+          <span class="text-[11px] text-slate-500 font-medium">
+            Mengatur slot waktu untuk: <strong :class="configActiveGroupTab === 'lokal' ? 'text-teal-700' : 'text-emerald-700'">{{ configActiveGroupTab === 'lokal' ? 'Jadwal Lokal (Kelas 7, 8, 9A, 9B)' : 'Jadwal Utama' }}</strong>
+          </span>
+        </div>
+
         <!-- Day Tabs Switcher inside modal -->
         <div class="px-5 sm:px-6 pt-4 pb-2 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 flex-shrink-0">
           <div class="flex p-1 bg-slate-200/80 rounded-xl gap-1 overflow-x-auto max-w-full">
@@ -762,6 +843,69 @@
         </div>
       </div>
     </div>
+
+    <!-- MODAL: SESUAIKAN 4 KELAS JADWAL LOKAL -->
+    <div v-if="showLokalClassPicker" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div class="bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
+        <div class="px-5 py-4 bg-gradient-to-r from-teal-900 via-teal-800 to-slate-900 text-white flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl">📍</span>
+            <div>
+              <h3 class="font-bold text-sm sm:text-base text-white">Sesuaikan Kelas Jadwal Lokal</h3>
+              <p class="text-[11px] text-teal-200">Pilih kelas yang masuk ke dalam kategori Jadwal Lokal.</p>
+            </div>
+          </div>
+          <button @click="showLokalClassPicker = false" class="p-1.5 text-teal-300 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <div class="p-5 overflow-y-auto space-y-3 flex-1">
+          <p class="text-xs text-slate-600">
+            Centang kelas yang menggunakan <b>Jadwal Lokal</b> (default otomatis: <b>Kelas 7, 8, 9A, dan 9B</b>).
+          </p>
+
+          <div class="grid grid-cols-1 gap-2 pt-1">
+            <label
+              v-for="cls in classes"
+              :key="'lokal-pick-' + cls.id"
+              class="flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none"
+              :class="customLokalClassIds.includes(cls.id) ? 'bg-teal-50/80 border-teal-300 text-teal-900 font-bold' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'"
+            >
+              <div class="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  :checked="customLokalClassIds.includes(cls.id)"
+                  @change="toggleLokalClassId(cls.id)"
+                  class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 cursor-pointer"
+                />
+                <span class="text-xs">{{ cls.name }}</span>
+              </div>
+              <span v-if="customLokalClassIds.includes(cls.id)" class="text-[10px] px-2 py-0.5 rounded-md bg-teal-200/70 text-teal-900 font-bold">
+                Aktif di Jadwal Lokal
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            @click="resetLokalClassIds"
+            class="px-3.5 py-1.5 text-xs text-slate-600 hover:text-rose-600 font-semibold cursor-pointer"
+          >
+            Reset ke Otomatis
+          </button>
+          <button
+            type="button"
+            @click="showLokalClassPicker = false"
+            class="px-5 py-1.5 bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold rounded-xl shadow-sm cursor-pointer"
+          >
+            Selesai
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -820,6 +964,73 @@ const selectedTeacher = ref('');
 const filterType = ref('all');
 const activeYaspinDay = ref('senin');
 
+// ================= DUAL SCHEDULE SYSTEM (UTAMA & LOKAL) =================
+const activeScheduleType = ref('utama'); // 'utama' | 'lokal'
+const configActiveGroupTab = ref('utama'); // 'utama' | 'lokal'
+const showLokalClassPicker = ref(false);
+
+const customLokalClassIds = ref(
+  JSON.parse(localStorage.getItem('siakad_lokal_class_ids') || '[]')
+);
+
+const isLokalClass = (cls) => {
+  if (!cls) return false;
+  if (customLokalClassIds.value && customLokalClassIds.value.length > 0) {
+    return customLokalClassIds.value.includes(cls.id);
+  }
+  const name = (cls.name || '').trim().toLowerCase();
+  const isClass7 = /(^(kelas\s*)?7$|\bvii\b)/i.test(name) || (name.includes('7') && !name.includes('7a') && !name.includes('7b') && !name.includes('7c') && !name.includes('7d'));
+  const isClass8 = /(^(kelas\s*)?8$|\bviii\b)/i.test(name) || (name.includes('8') && !name.includes('8a') && !name.includes('8b') && !name.includes('8c') && !name.includes('8d'));
+  const isClass9A = /(9\s*a|ix[\s-]*a)/i.test(name);
+  const isClass9B = /(9\s*b|ix[\s-]*b)/i.test(name);
+
+  return isClass7 || isClass8 || isClass9A || isClass9B;
+};
+
+const scheduleActiveClasses = computed(() => {
+  if (activeScheduleType.value === 'lokal') {
+    const lokal = classes.value.filter(isLokalClass);
+    return lokal.length > 0 ? lokal : classes.value.slice(0, 4);
+  }
+  return classes.value;
+});
+
+const mainClassesCount = computed(() => classes.value.length);
+const lokalClassesCount = computed(() => scheduleActiveClasses.value.length);
+
+const setScheduleType = (type) => {
+  activeScheduleType.value = type;
+  selectedClass.value = '';
+  fetchSchedules();
+};
+
+const openLokalClassPicker = () => {
+  if (!customLokalClassIds.value || customLokalClassIds.value.length === 0) {
+    customLokalClassIds.value = classes.value.filter(isLokalClass).map(c => c.id);
+    if (customLokalClassIds.value.length === 0 && classes.value.length > 0) {
+      customLokalClassIds.value = classes.value.slice(0, 4).map(c => c.id);
+    }
+  }
+  showLokalClassPicker.value = true;
+};
+
+const toggleLokalClassId = (classId) => {
+  const idx = customLokalClassIds.value.indexOf(classId);
+  if (idx > -1) {
+    customLokalClassIds.value.splice(idx, 1);
+  } else {
+    customLokalClassIds.value.push(classId);
+  }
+  localStorage.setItem('siakad_lokal_class_ids', JSON.stringify(customLokalClassIds.value));
+};
+
+const resetLokalClassIds = () => {
+  customLokalClassIds.value = [];
+  localStorage.removeItem('siakad_lokal_class_ids');
+  toast.success('Pilihan kelas Jadwal Lokal dikembalikan ke deteksi otomatis (7, 8, 9A, 9B)');
+  showLokalClassPicker.value = false;
+};
+
 const daysList = [
   { key: 'senin', name: 'Senin' },
   { key: 'selasa', name: 'Selasa' },
@@ -829,6 +1040,7 @@ const daysList = [
   { key: 'sabtu', name: 'Sabtu' },
 ];
 
+// Default slots for Jadwal Utama
 const defaultSeninSlots = [
   { no: '0', start: '07.00', end: '07.30', isGeneral: true, title: 'UPACARA BENDERA' },
   { no: '1', start: '07.30', end: '07.50', isGeneral: true, title: "TADARUSAN AL-QUR'AN" },
@@ -864,10 +1076,56 @@ const defaultJumatSlots = [
   { no: '6', start: '11.00', end: '12.30', isGeneral: true, title: "SHALAT JUM'AT BERJAMA'AH" },
 ];
 
-const slotsData = ref({
+// Default slots for Jadwal Lokal (4 Kelas: 7, 8, 9A, 9B)
+const defaultSeninSlotsLokal = [
+  { no: '0', start: '07.00', end: '07.30', isGeneral: true, title: 'UPACARA BENDERA' },
+  { no: '1', start: '07.30', end: '08.00', isGeneral: true, title: "TADARUSAN AL-QUR'AN" },
+  { no: '2', start: '08.00', end: '08.40', isSlot: true, title: '' },
+  { no: '3', start: '08.40', end: '09.20', isSlot: true, title: '' },
+  { no: '4', start: '09.20', end: '10.00', isSlot: true, title: '' },
+  { no: '5', start: '10.00', end: '10.30', isBreak: true, title: 'ISTIRAHAT' },
+  { no: '6', start: '10.30', end: '11.10', isSlot: true, title: '' },
+  { no: '7', start: '11.10', end: '11.50', isSlot: true, title: '' },
+  { no: '8', start: '11.50', end: '12.30', isSlot: true, title: '' },
+  { no: '9', start: '12.30', end: '13.00', isGeneral: true, title: "SHALAT DZUHUR BERJAMA'AH" },
+];
+
+const defaultSelasaSabtuSlotsLokal = [
+  { no: '0', start: '07.00', end: '07.30', isGeneral: true, title: "TADARUSAN AL-QUR'AN" },
+  { no: '1', start: '07.30', end: '08.10', isSlot: true, title: '' },
+  { no: '2', start: '08.10', end: '08.50', isSlot: true, title: '' },
+  { no: '3', start: '08.50', end: '09.30', isSlot: true, title: '' },
+  { no: '4', start: '09.30', end: '10.00', isBreak: true, title: 'ISTIRAHAT' },
+  { no: '5', start: '10.00', end: '10.40', isSlot: true, title: '' },
+  { no: '6', start: '10.40', end: '11.20', isSlot: true, title: '' },
+  { no: '7', start: '11.20', end: '12.00', isSlot: true, title: '' },
+  { no: '8', start: '12.00', end: '12.30', isGeneral: true, title: "SHALAT DZUHUR BERJAMA'AH" },
+];
+
+const defaultJumatSlotsLokal = [
+  { no: '0', start: '07.00', end: '07.45', isGeneral: true, title: 'SHOLAT DHUHA & YASINAN' },
+  { no: '1', start: '07.45', end: '08.25', isSlot: true, title: '' },
+  { no: '2', start: '08.25', end: '09.05', isSlot: true, title: '' },
+  { no: '3', start: '09.05', end: '09.45', isSlot: true, title: '' },
+  { no: '4', start: '09.45', end: '10.15', isBreak: true, title: "ISTIRAHAT JUM'AT" },
+  { no: '5', start: '10.15', end: '10.55', isSlot: true, title: '' },
+  { no: '6', start: '11.00', end: '12.30', isGeneral: true, title: "SHALAT JUM'AT BERJAMA'AH" },
+];
+
+const slotsDataUtama = ref({
   senin: JSON.parse(JSON.stringify(defaultSeninSlots)),
   selasa_sabtu: JSON.parse(JSON.stringify(defaultSelasaSabtuSlots)),
   jumat: JSON.parse(JSON.stringify(defaultJumatSlots)),
+});
+
+const slotsDataLokal = ref({
+  senin: JSON.parse(JSON.stringify(defaultSeninSlotsLokal)),
+  selasa_sabtu: JSON.parse(JSON.stringify(defaultSelasaSabtuSlotsLokal)),
+  jumat: JSON.parse(JSON.stringify(defaultJumatSlotsLokal)),
+});
+
+const slotsData = computed(() => {
+  return activeScheduleType.value === 'lokal' ? slotsDataLokal.value : slotsDataUtama.value;
 });
 
 const activeYaspinSlots = computed(() => {
@@ -891,9 +1149,17 @@ const currentDayEditingSlots = computed(() => {
 });
 
 function openSlotConfigModal() {
-  editingSlots.value = JSON.parse(JSON.stringify(slotsData.value));
+  configActiveGroupTab.value = activeScheduleType.value;
+  const source = configActiveGroupTab.value === 'lokal' ? slotsDataLokal.value : slotsDataUtama.value;
+  editingSlots.value = JSON.parse(JSON.stringify(source));
   configActiveDayTab.value = activeYaspinDay.value === 'senin' ? 'senin' : (activeYaspinDay.value === 'jumat' ? 'jumat' : 'selasa_sabtu');
   showSlotConfigModal.value = true;
+}
+
+function switchConfigGroup(group) {
+  configActiveGroupTab.value = group;
+  const source = group === 'lokal' ? slotsDataLokal.value : slotsDataUtama.value;
+  editingSlots.value = JSON.parse(JSON.stringify(source));
 }
 
 function addNewSlot() {
@@ -941,13 +1207,24 @@ function getSlotType(slot) {
 
 async function fetchTimeSlots() {
   try {
-    const res = await api.get('admin/schedules/time-slots');
-    const d = res?.data?.data || res?.data;
-    if (d && (d.senin || d.selasa_sabtu || d.jumat)) {
-      slotsData.value = {
-        senin: d.senin || defaultSeninSlots,
-        selasa_sabtu: d.selasa_sabtu || defaultSelasaSabtuSlots,
-        jumat: d.jumat || defaultJumatSlots,
+    const [resUtama, resLokal] = await Promise.all([
+      api.get('admin/schedules/time-slots', { group: 'utama' }).catch(() => null),
+      api.get('admin/schedules/time-slots', { group: 'lokal' }).catch(() => null),
+    ]);
+    const dUtama = resUtama?.data?.data || resUtama?.data;
+    if (dUtama && (dUtama.senin || dUtama.selasa_sabtu || dUtama.jumat)) {
+      slotsDataUtama.value = {
+        senin: dUtama.senin || defaultSeninSlots,
+        selasa_sabtu: dUtama.selasa_sabtu || defaultSelasaSabtuSlots,
+        jumat: dUtama.jumat || defaultJumatSlots,
+      };
+    }
+    const dLokal = resLokal?.data?.data || resLokal?.data;
+    if (dLokal && (dLokal.senin || dLokal.selasa_sabtu || dLokal.jumat)) {
+      slotsDataLokal.value = {
+        senin: dLokal.senin || defaultSeninSlotsLokal,
+        selasa_sabtu: dLokal.selasa_sabtu || defaultSelasaSabtuSlotsLokal,
+        jumat: dLokal.jumat || defaultJumatSlotsLokal,
       };
     }
   } catch (err) {
@@ -958,9 +1235,18 @@ async function fetchTimeSlots() {
 async function saveSlotConfig() {
   savingSlots.value = true;
   try {
-    await api.post('admin/schedules/time-slots', editingSlots.value);
-    slotsData.value = JSON.parse(JSON.stringify(editingSlots.value));
-    toast.success('Pengaturan slot waktu jadwal pelajaran berhasil disimpan!');
+    const payload = {
+      group: configActiveGroupTab.value,
+      slots: editingSlots.value
+    };
+    await api.post('admin/schedules/time-slots', payload);
+    if (configActiveGroupTab.value === 'lokal') {
+      slotsDataLokal.value = JSON.parse(JSON.stringify(editingSlots.value));
+    } else {
+      slotsDataUtama.value = JSON.parse(JSON.stringify(editingSlots.value));
+    }
+    const groupName = configActiveGroupTab.value === 'lokal' ? 'Jadwal Lokal' : 'Jadwal Utama';
+    toast.success(`Pengaturan slot waktu ${groupName} berhasil disimpan!`);
     showSlotConfigModal.value = false;
   } catch (err) {
     console.error('Error saving slot config', err);
@@ -971,9 +1257,10 @@ async function saveSlotConfig() {
 }
 
 async function resetSlotConfigToDefault() {
+  const groupName = configActiveGroupTab.value === 'lokal' ? 'Jadwal Lokal' : 'Jadwal Utama';
   const isConfirmed = await confirm({
-    title: 'Reset Slot Waktu ke Standar?',
-    message: 'Semua kustomisasi jam pelajaran akan dikembalikan ke pengaturan bawaan standar madrasah.',
+    title: `Reset Slot Waktu ${groupName}?`,
+    message: `Semua kustomisasi jam pelajaran ${groupName} akan dikembalikan ke pengaturan bawaan standar madrasah.`,
     confirmText: 'Ya, Kembalikan ke Standar',
     cancelText: 'Batal',
     type: 'danger'
@@ -981,23 +1268,24 @@ async function resetSlotConfigToDefault() {
   if (!isConfirmed) return;
 
   try {
-    const res = await api.post('admin/schedules/reset-time-slots');
+    const res = await api.post('admin/schedules/reset-time-slots', { group: configActiveGroupTab.value });
     const d = res?.data?.data || res?.data;
-    if (d) {
-      slotsData.value = {
-        senin: d.senin || defaultSeninSlots,
-        selasa_sabtu: d.selasa_sabtu || defaultSelasaSabtuSlots,
-        jumat: d.jumat || defaultJumatSlots,
+    if (configActiveGroupTab.value === 'lokal') {
+      slotsDataLokal.value = {
+        senin: d?.senin || defaultSeninSlotsLokal,
+        selasa_sabtu: d?.selasa_sabtu || defaultSelasaSabtuSlotsLokal,
+        jumat: d?.jumat || defaultJumatSlotsLokal,
       };
+      editingSlots.value = JSON.parse(JSON.stringify(slotsDataLokal.value));
     } else {
-      slotsData.value = {
-        senin: JSON.parse(JSON.stringify(defaultSeninSlots)),
-        selasa_sabtu: JSON.parse(JSON.stringify(defaultSelasaSabtuSlots)),
-        jumat: JSON.parse(JSON.stringify(defaultJumatSlots)),
+      slotsDataUtama.value = {
+        senin: d?.senin || defaultSeninSlots,
+        selasa_sabtu: d?.selasa_sabtu || defaultSelasaSabtuSlots,
+        jumat: d?.jumat || defaultJumatSlots,
       };
+      editingSlots.value = JSON.parse(JSON.stringify(slotsDataUtama.value));
     }
-    editingSlots.value = JSON.parse(JSON.stringify(slotsData.value));
-    toast.success('Slot waktu berhasil dikembalikan ke standar madrasah!');
+    toast.success(`Slot waktu ${groupName} berhasil dikembalikan ke standar madrasah!`);
   } catch (err) {
     console.error('Error resetting slots', err);
     toast.error('Gagal mereset slot waktu.');
@@ -1005,8 +1293,9 @@ async function resetSlotConfigToDefault() {
 }
 
 const filteredClasses = computed(() => {
-  if (!selectedClass.value) return classes.value;
-  return classes.value.filter(c => c.id == selectedClass.value);
+  const base = scheduleActiveClasses.value;
+  if (!selectedClass.value) return base;
+  return base.filter(c => c.id == selectedClass.value);
 });
 
 const getActiveDayName = () => {
@@ -1037,6 +1326,7 @@ const form = reactive({
   day: 'senin',
   start_time: '07:00',
   end_time: '08:00',
+  room: 'utama',
 });
 
 const currentDayKbmSlots = computed(() => {
@@ -1181,6 +1471,7 @@ const getYaspinScheduleItem = (dayKey, classId, slot) => {
 const openYaspinSlot = (dayKey, classId, slot) => {
   openModal(false, dayKey);
   form.class_id = classId;
+  form.room = activeScheduleType.value;
   const startFormatted = slot.start.replace('.', ':');
   form.start_time = startFormatted;
   
@@ -1199,6 +1490,7 @@ const applyActivityPreset = (name, type, start, end) => {
   form.activity_name = name;
   form.activity_type = type;
   form.class_id = null; // Applies to All Classes
+  form.room = activeScheduleType.value;
   if (start) form.start_time = start;
   if (end) form.end_time = end;
 };
@@ -1206,7 +1498,9 @@ const applyActivityPreset = (name, type, start, end) => {
 const fetchSchedules = async () => {
   loading.value = true;
   try {
-    const params = {};
+    const params = {
+      room: activeScheduleType.value
+    };
     if (selectedClass.value) params.class_id = selectedClass.value;
     if (selectedTeacher.value) params.teacher_id = selectedTeacher.value;
 
@@ -1268,7 +1562,16 @@ const openModal = (isActivityMode = false, targetDayKey = null) => {
   form.is_activity = isActivityMode;
   form.activity_name = isActivityMode ? 'Upacara Bendera' : '';
   form.activity_type = 'upacara';
-  form.class_id = selectedClass.value || null;
+  form.room = activeScheduleType.value;
+
+  if (selectedClass.value) {
+    form.class_id = selectedClass.value;
+  } else if (!isActivityMode && activeScheduleType.value === 'lokal' && scheduleActiveClasses.value.length > 0) {
+    form.class_id = scheduleActiveClasses.value[0].id;
+  } else {
+    form.class_id = null;
+  }
+
   form.subject_id = '';
   form.teacher_id = '';
   form.day = targetDayKey || activeYaspinDay.value || 'senin';
@@ -1311,6 +1614,7 @@ const editSchedule = (item) => {
   form.day = item.day;
   form.start_time = item.start_time;
   form.end_time = item.end_time;
+  form.room = item.room || activeScheduleType.value;
 
   if (!item.is_activity) {
     const kbm = getDayKbmSlots(item.day);
@@ -1335,6 +1639,7 @@ const submitForm = async () => {
       day: form.day,
       start_time: form.start_time,
       end_time: form.end_time,
+      room: form.room || activeScheduleType.value,
     };
 
     if (form.is_activity) {
