@@ -733,7 +733,7 @@ const activeAcademicYear = computed(() => {
   return appSettings.value?.active_academic_year || { year: '2026/2027', semester: 'odd' };
 });
 
-const activeYaspinSlots = [
+const activeYaspinSlots = ref([
   { no: '0', start: '07.00', end: '07.30', isGeneral: true, title: 'UPACARA / TADARUS' },
   { no: '1', start: '07.30', end: '08.10', isSlot: true },
   { no: '2', start: '08.10', end: '08.50', isSlot: true },
@@ -742,8 +742,8 @@ const activeYaspinSlots = [
   { no: '5', start: '10.10', end: '10.40', isBreak: true, title: 'ISTIRAHAT' },
   { no: '6', start: '10.40', end: '11.20', isSlot: true },
   { no: '7', start: '11.20', end: '12.00', isSlot: true },
-  { no: '8', start: '12.00', end: '12.30', isGeneral: true, title: 'SHALAT DZUHUR BERJAMA\'AH' },
-];
+  { no: '8', start: '12.00', end: '12.30', isGeneral: true, title: "SHALAT DZUHUR BERJAMA'AH" },
+]);
 
 const getImageUrl = (path) => {
   if (!path) return '';
@@ -1625,13 +1625,14 @@ const getCellPrintStyle = (year, monthNum, date) => {
 
 onMounted(async () => {
   try {
-    const [settRes, clsRes, stdRes, schRes, calRes, tchRes] = await Promise.all([
+    const [settRes, clsRes, stdRes, schRes, calRes, tchRes, slotRes] = await Promise.all([
       api.get('/settings').catch(() => null),
       api.get('admin/classes').catch(() => null),
       api.get('admin/students?per_page=999').catch(() => null),
       api.get('admin/schedules').catch(() => null),
       api.get('admin/calendar-events?per_page=1000').catch(() => null),
       api.get('admin/teachers?per_page=999').catch(() => null),
+      api.get('admin/schedules/time-slots').catch(() => null),
     ]);
 
     if (settRes?.data) appSettings.value = settRes.data;
@@ -1648,6 +1649,13 @@ onMounted(async () => {
     }
 
     schedules.value = Array.isArray(schRes?.data) ? schRes.data : (Array.isArray(schRes?.data?.data) ? schRes.data.data : (Array.isArray(schRes) ? schRes : []));
+
+    const customSlots = slotRes?.data?.data || slotRes?.data;
+    if (customSlots?.selasa_sabtu?.length) {
+      activeYaspinSlots.value = customSlots.selasa_sabtu;
+    } else if (customSlots?.senin?.length) {
+      activeYaspinSlots.value = customSlots.senin;
+    }
     calendarEvents.value = calRes?.data?.data || calRes?.data || [];
   } catch (err) {
     console.error('Error initializing print center:', err);

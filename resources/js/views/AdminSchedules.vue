@@ -16,6 +16,15 @@
 
       <div class="flex items-center gap-2.5 flex-wrap">
         <button
+          @click="openSlotConfigModal"
+          class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center gap-2 cursor-pointer active:scale-95"
+          title="Atur Jam Pelajaran, Durasi, dan Slot Waktu Matriks (Senin, Selasa-Sabtu, Jumat)"
+        >
+          <Clock class="w-4 h-4" />
+          <span>Atur Jam Pelajaran</span>
+        </button>
+
+        <button
           @click="syncOfficialActivities"
           :disabled="syncingActivities"
           class="px-4 py-2.5 bg-amber-50 border border-amber-200 text-amber-800 font-bold rounded-xl text-xs hover:bg-amber-100 transition-colors flex items-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
@@ -471,6 +480,205 @@
         </div>
       </div>
     </div>
+
+    <!-- MODAL: PENGATURAN JAM PELAJARAN & SLOT WAKTU (KURIKULUM) -->
+    <div v-if="showSlotConfigModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div class="bg-white w-full max-w-4xl rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-150">
+        <!-- Modal Header -->
+        <div class="px-5 sm:px-6 py-4 bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white flex items-center justify-between border-b border-slate-800 flex-shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
+              <Clock class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="font-bold text-base sm:text-lg text-white">Pengaturan Jam Pelajaran & Slot Waktu</h3>
+              <p class="text-xs text-slate-300 font-normal">Atur jam mulai, selesai, istirahat, dan kegiatan harian pada matriks jadwal madrasah.</p>
+            </div>
+          </div>
+          <button @click="showSlotConfigModal = false" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Day Tabs Switcher inside modal -->
+        <div class="px-5 sm:px-6 pt-4 pb-2 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 flex-shrink-0">
+          <div class="flex p-1 bg-slate-200/80 rounded-xl gap-1 overflow-x-auto max-w-full">
+            <button
+              type="button"
+              @click="configActiveDayTab = 'senin'"
+              :class="configActiveDayTab === 'senin' ? 'bg-white text-emerald-800 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+              class="px-3.5 py-1.5 text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+            >
+              <span>🇮🇩 Hari Senin</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded-md font-bold" :class="configActiveDayTab === 'senin' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-300/60 text-slate-600'">
+                {{ editingSlots.senin?.length || 0 }}
+              </span>
+            </button>
+            <button
+              type="button"
+              @click="configActiveDayTab = 'selasa_sabtu'"
+              :class="configActiveDayTab === 'selasa_sabtu' ? 'bg-white text-emerald-800 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+              class="px-3.5 py-1.5 text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+            >
+              <span>📅 Selasa – Kamis & Sabtu</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded-md font-bold" :class="configActiveDayTab === 'selasa_sabtu' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-300/60 text-slate-600'">
+                {{ editingSlots.selasa_sabtu?.length || 0 }}
+              </span>
+            </button>
+            <button
+              type="button"
+              @click="configActiveDayTab = 'jumat'"
+              :class="configActiveDayTab === 'jumat' ? 'bg-white text-emerald-800 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+              class="px-3.5 py-1.5 text-xs rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+            >
+              <span>🕌 Hari Jumat</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded-md font-bold" :class="configActiveDayTab === 'jumat' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-300/60 text-slate-600'">
+                {{ editingSlots.jumat?.length || 0 }}
+              </span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            @click="addNewSlot"
+            class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-95"
+          >
+            <Plus class="w-3.5 h-3.5" />
+            <span>Tambah Jam / Baris Slot</span>
+          </button>
+        </div>
+
+        <!-- Table of Slots (Scrollable Body) -->
+        <div class="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3">
+          <div class="bg-amber-50 border border-amber-200 text-amber-900 text-xs p-3 rounded-xl flex items-start gap-2.5">
+            <AlertCircle class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <p>
+              Tipe <b>KBM</b> akan menjadi baris kotak jadwal per kelas. Tipe <b>Kegiatan Bersama</b> (seperti Upacara/Tadarus/Sholat) dan <b>Istirahat</b> akan membentang otomatis ke seluruh kelas.
+            </p>
+          </div>
+
+          <div class="overflow-x-auto border border-slate-200 rounded-xl">
+            <table class="w-full text-left text-xs border-collapse min-w-[650px]">
+              <thead>
+                <tr class="bg-slate-100/80 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                  <th class="py-2.5 px-3 w-20 text-center">Jam Ke-</th>
+                  <th class="py-2.5 px-3 w-32">Jam Mulai</th>
+                  <th class="py-2.5 px-3 w-32">Jam Selesai</th>
+                  <th class="py-2.5 px-3 w-48">Tipe Slot</th>
+                  <th class="py-2.5 px-3">Keterangan / Nama Kegiatan</th>
+                  <th class="py-2.5 px-3 w-16 text-center">Hapus</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr v-if="!currentDayEditingSlots || currentDayEditingSlots.length === 0">
+                  <td colspan="6" class="py-8 text-center text-slate-400 text-xs">
+                    Belum ada slot waktu untuk hari ini. Klik tombol "Tambah Jam / Baris Slot" di atas.
+                  </td>
+                </tr>
+                <tr v-for="(slot, idx) in currentDayEditingSlots" :key="idx" class="hover:bg-slate-50/70 transition-colors">
+                  <!-- No -->
+                  <td class="py-2 px-3 text-center">
+                    <input
+                      v-model="slot.no"
+                      type="text"
+                      class="w-14 text-center px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      placeholder="0"
+                    />
+                  </td>
+
+                  <!-- Jam Mulai -->
+                  <td class="py-2 px-3">
+                    <input
+                      v-model="slot.start"
+                      type="text"
+                      class="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      placeholder="07.00"
+                    />
+                  </td>
+
+                  <!-- Jam Selesai -->
+                  <td class="py-2 px-3">
+                    <input
+                      v-model="slot.end"
+                      type="text"
+                      class="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      placeholder="07.30"
+                    />
+                  </td>
+
+                  <!-- Tipe Slot -->
+                  <td class="py-2 px-3">
+                    <select
+                      :value="getSlotType(slot)"
+                      @change="onSlotTypeChange(slot, $event.target.value)"
+                      class="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    >
+                      <option value="slot">KBM (Pelajaran Kelas)</option>
+                      <option value="break">Istirahat</option>
+                      <option value="general">Kegiatan Bersama</option>
+                    </select>
+                  </td>
+
+                  <!-- Keterangan / Nama Kegiatan -->
+                  <td class="py-2 px-3">
+                    <input
+                      v-model="slot.title"
+                      type="text"
+                      :disabled="!slot.isGeneral && !slot.isBreak"
+                      :placeholder="slot.isSlot ? '(Otomatis per mata pelajaran)' : 'Contoh: UPACARA BENDERA / ISTIRAHAT'"
+                      class="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 disabled:bg-slate-100 disabled:text-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </td>
+
+                  <!-- Aksi Hapus -->
+                  <td class="py-2 px-3 text-center">
+                    <button
+                      type="button"
+                      @click="removeSlot(idx)"
+                      class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                      title="Hapus baris ini"
+                    >
+                      <Trash2 class="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-5 sm:px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 flex-shrink-0">
+          <button
+            type="button"
+            @click="resetSlotConfigToDefault"
+            class="px-4 py-2 text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <RotateCcw class="w-3.5 h-3.5" />
+            <span>Reset ke Standar Madrasah</span>
+          </button>
+
+          <div class="flex items-center gap-2 justify-end">
+            <button
+              type="button"
+              @click="showSlotConfigModal = false"
+              class="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              @click="saveSlotConfig"
+              :disabled="savingSlots"
+              class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <Save class="w-3.5 h-3.5" />
+              <span>{{ savingSlots ? 'Menyimpan...' : 'Simpan Pengaturan Waktu' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -480,6 +688,7 @@ import * as XLSX from 'xlsx';
 import { api } from '../api';
 import { useToast } from '../composables/useToast';
 import { useConfirm } from '../composables/useConfirm';
+import { Clock, Plus, Trash2, RotateCcw, Save, X, AlertCircle } from 'lucide-vue-next';
 
 const toast = useToast();
 const { confirm } = useConfirm();
@@ -537,46 +746,180 @@ const daysList = [
   { key: 'sabtu', name: 'Sabtu' },
 ];
 
-const yaspinSeninSlots = [
+const defaultSeninSlots = [
   { no: '0', start: '07.00', end: '07.30', isGeneral: true, title: 'UPACARA BENDERA' },
-  { no: '1', start: '07.30', end: '07.50', isGeneral: true, title: 'TADARUSAN AL-QUR\'AN' },
-  { no: '2', start: '07.50', end: '08.30', isSlot: true },
-  { no: '3', start: '08.30', end: '09.10', isSlot: true },
-  { no: '4', start: '09.10', end: '09.50', isSlot: true },
-  { no: '5', start: '09.50', end: '10.30', isSlot: true },
+  { no: '1', start: '07.30', end: '07.50', isGeneral: true, title: "TADARUSAN AL-QUR'AN" },
+  { no: '2', start: '07.50', end: '08.30', isSlot: true, title: '' },
+  { no: '3', start: '08.30', end: '09.10', isSlot: true, title: '' },
+  { no: '4', start: '09.10', end: '09.50', isSlot: true, title: '' },
+  { no: '5', start: '09.50', end: '10.30', isSlot: true, title: '' },
   { no: '6', start: '10.30', end: '11.00', isBreak: true, title: 'ISTIRAHAT' },
-  { no: '7', start: '11.00', end: '11.40', isSlot: true },
-  { no: '8', start: '11.40', end: '12.20', isSlot: true },
-  { no: '9', start: '12.20', end: '12.40', isGeneral: true, title: 'SHALAT DZUHUR BERJAMA\'AH' },
+  { no: '7', start: '11.00', end: '11.40', isSlot: true, title: '' },
+  { no: '8', start: '11.40', end: '12.20', isSlot: true, title: '' },
+  { no: '9', start: '12.20', end: '12.40', isGeneral: true, title: "SHALAT DZUHUR BERJAMA'AH" },
 ];
 
-const yaspinSelasaSabtuSlots = [
-  { no: '0', start: '07.00', end: '07.30', isGeneral: true, title: 'TADARUSAN AL-QUR\'AN' },
-  { no: '1', start: '07.30', end: '08.10', isSlot: true },
-  { no: '2', start: '08.10', end: '08.50', isSlot: true },
-  { no: '3', start: '08.50', end: '09.30', isSlot: true },
-  { no: '4', start: '09.30', end: '10.10', isSlot: true },
+const defaultSelasaSabtuSlots = [
+  { no: '0', start: '07.00', end: '07.30', isGeneral: true, title: "TADARUSAN AL-QUR'AN" },
+  { no: '1', start: '07.30', end: '08.10', isSlot: true, title: '' },
+  { no: '2', start: '08.10', end: '08.50', isSlot: true, title: '' },
+  { no: '3', start: '08.50', end: '09.30', isSlot: true, title: '' },
+  { no: '4', start: '09.30', end: '10.10', isSlot: true, title: '' },
   { no: '5', start: '10.10', end: '10.40', isBreak: true, title: 'ISTIRAHAT' },
-  { no: '6', start: '10.40', end: '11.20', isSlot: true },
-  { no: '7', start: '11.20', end: '12.00', isSlot: true },
-  { no: '8', start: '12.00', end: '12.20', isGeneral: true, title: 'SHALAT DZUHUR BERJAMA\'AH' },
+  { no: '6', start: '10.40', end: '11.20', isSlot: true, title: '' },
+  { no: '7', start: '11.20', end: '12.00', isSlot: true, title: '' },
+  { no: '8', start: '12.00', end: '12.20', isGeneral: true, title: "SHALAT DZUHUR BERJAMA'AH" },
 ];
 
-const yaspinJumatSlots = [
+const defaultJumatSlots = [
   { no: '0', start: '07.00', end: '07.45', isGeneral: true, title: 'SHOLAT DHUHA & YASINAN' },
-  { no: '1', start: '07.45', end: '08.25', isSlot: true },
-  { no: '2', start: '08.25', end: '09.05', isSlot: true },
-  { no: '3', start: '09.05', end: '09.45', isSlot: true },
-  { no: '4', start: '09.45', end: '10.15', isBreak: true, title: 'ISTIRAHAT JUM\'AT' },
-  { no: '5', start: '10.15', end: '10.55', isSlot: true },
-  { no: '6', start: '11.00', end: '12.30', isGeneral: true, title: 'SHALAT JUM\'AT BERJAMA\'AH' },
+  { no: '1', start: '07.45', end: '08.25', isSlot: true, title: '' },
+  { no: '2', start: '08.25', end: '09.05', isSlot: true, title: '' },
+  { no: '3', start: '09.05', end: '09.45', isSlot: true, title: '' },
+  { no: '4', start: '09.45', end: '10.15', isBreak: true, title: "ISTIRAHAT JUM'AT" },
+  { no: '5', start: '10.15', end: '10.55', isSlot: true, title: '' },
+  { no: '6', start: '11.00', end: '12.30', isGeneral: true, title: "SHALAT JUM'AT BERJAMA'AH" },
 ];
+
+const slotsData = ref({
+  senin: JSON.parse(JSON.stringify(defaultSeninSlots)),
+  selasa_sabtu: JSON.parse(JSON.stringify(defaultSelasaSabtuSlots)),
+  jumat: JSON.parse(JSON.stringify(defaultJumatSlots)),
+});
 
 const activeYaspinSlots = computed(() => {
-  if (activeYaspinDay.value === 'senin') return yaspinSeninSlots;
-  if (activeYaspinDay.value === 'jumat') return yaspinJumatSlots;
-  return yaspinSelasaSabtuSlots;
+  if (activeYaspinDay.value === 'senin') return slotsData.value.senin || [];
+  if (activeYaspinDay.value === 'jumat') return slotsData.value.jumat || [];
+  return slotsData.value.selasa_sabtu || [];
 });
+
+// Slot Configuration Modal State & Functions
+const showSlotConfigModal = ref(false);
+const configActiveDayTab = ref('senin');
+const editingSlots = ref({
+  senin: [],
+  selasa_sabtu: [],
+  jumat: []
+});
+const savingSlots = ref(false);
+
+const currentDayEditingSlots = computed(() => {
+  return editingSlots.value[configActiveDayTab.value] || [];
+});
+
+function openSlotConfigModal() {
+  editingSlots.value = JSON.parse(JSON.stringify(slotsData.value));
+  configActiveDayTab.value = activeYaspinDay.value === 'senin' ? 'senin' : (activeYaspinDay.value === 'jumat' ? 'jumat' : 'selasa_sabtu');
+  showSlotConfigModal.value = true;
+}
+
+function addNewSlot() {
+  const currentList = editingSlots.value[configActiveDayTab.value];
+  const nextNo = String(currentList.length);
+  currentList.push({
+    no: nextNo,
+    start: '12.20',
+    end: '13.00',
+    isSlot: true,
+    isGeneral: false,
+    isBreak: false,
+    title: ''
+  });
+}
+
+function removeSlot(index) {
+  editingSlots.value[configActiveDayTab.value].splice(index, 1);
+}
+
+function onSlotTypeChange(slot, type) {
+  if (type === 'break') {
+    slot.isBreak = true;
+    slot.isGeneral = false;
+    slot.isSlot = false;
+    if (!slot.title) slot.title = 'ISTIRAHAT';
+  } else if (type === 'general') {
+    slot.isGeneral = true;
+    slot.isBreak = false;
+    slot.isSlot = false;
+    if (!slot.title) slot.title = 'KEGIATAN BERSAMA';
+  } else {
+    slot.isSlot = true;
+    slot.isBreak = false;
+    slot.isGeneral = false;
+    slot.title = '';
+  }
+}
+
+function getSlotType(slot) {
+  if (slot.isBreak) return 'break';
+  if (slot.isGeneral) return 'general';
+  return 'slot';
+}
+
+async function fetchTimeSlots() {
+  try {
+    const res = await api.get('admin/schedules/time-slots');
+    const d = res?.data?.data || res?.data;
+    if (d && (d.senin || d.selasa_sabtu || d.jumat)) {
+      slotsData.value = {
+        senin: d.senin || defaultSeninSlots,
+        selasa_sabtu: d.selasa_sabtu || defaultSelasaSabtuSlots,
+        jumat: d.jumat || defaultJumatSlots,
+      };
+    }
+  } catch (err) {
+    console.warn('Could not load custom time slots, using defaults', err);
+  }
+}
+
+async function saveSlotConfig() {
+  savingSlots.value = true;
+  try {
+    await api.post('admin/schedules/time-slots', editingSlots.value);
+    slotsData.value = JSON.parse(JSON.stringify(editingSlots.value));
+    toast.success('Pengaturan slot waktu jadwal pelajaran berhasil disimpan!');
+    showSlotConfigModal.value = false;
+  } catch (err) {
+    console.error('Error saving slot config', err);
+    toast.error('Gagal menyimpan pengaturan slot waktu.');
+  } finally {
+    savingSlots.value = false;
+  }
+}
+
+async function resetSlotConfigToDefault() {
+  const isConfirmed = await confirm({
+    title: 'Reset Slot Waktu ke Standar?',
+    message: 'Semua kustomisasi jam pelajaran akan dikembalikan ke pengaturan bawaan standar madrasah.',
+    confirmText: 'Ya, Kembalikan ke Standar',
+    cancelText: 'Batal',
+    type: 'danger'
+  });
+  if (!isConfirmed) return;
+
+  try {
+    const res = await api.post('admin/schedules/reset-time-slots');
+    const d = res?.data?.data || res?.data;
+    if (d) {
+      slotsData.value = {
+        senin: d.senin || defaultSeninSlots,
+        selasa_sabtu: d.selasa_sabtu || defaultSelasaSabtuSlots,
+        jumat: d.jumat || defaultJumatSlots,
+      };
+    } else {
+      slotsData.value = {
+        senin: JSON.parse(JSON.stringify(defaultSeninSlots)),
+        selasa_sabtu: JSON.parse(JSON.stringify(defaultSelasaSabtuSlots)),
+        jumat: JSON.parse(JSON.stringify(defaultJumatSlots)),
+      };
+    }
+    editingSlots.value = JSON.parse(JSON.stringify(slotsData.value));
+    toast.success('Slot waktu berhasil dikembalikan ke standar madrasah!');
+  } catch (err) {
+    console.error('Error resetting slots', err);
+    toast.error('Gagal mereset slot waktu.');
+  }
+}
 
 const filteredClasses = computed(() => {
   if (!selectedClass.value) return classes.value;
@@ -669,6 +1012,7 @@ const fetchDropdownData = async () => {
 };
 
 onMounted(() => {
+  fetchTimeSlots();
   fetchSchedules();
   fetchDropdownData();
 });

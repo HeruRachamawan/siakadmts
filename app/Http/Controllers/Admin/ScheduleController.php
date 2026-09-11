@@ -299,4 +299,98 @@ class ScheduleController extends Controller
 
         return null; // No conflict found!
     }
+
+    public static function getDefaultTimeSlots(): array
+    {
+        return [
+            'senin' => [
+                ['no' => '0', 'start' => '07.00', 'end' => '07.30', 'isGeneral' => true, 'title' => 'UPACARA BENDERA'],
+                ['no' => '1', 'start' => '07.30', 'end' => '07.50', 'isGeneral' => true, 'title' => "TADARUSAN AL-QUR'AN"],
+                ['no' => '2', 'start' => '07.50', 'end' => '08.30', 'isSlot' => true, 'title' => ''],
+                ['no' => '3', 'start' => '08.30', 'end' => '09.10', 'isSlot' => true, 'title' => ''],
+                ['no' => '4', 'start' => '09.10', 'end' => '09.50', 'isSlot' => true, 'title' => ''],
+                ['no' => '5', 'start' => '09.50', 'end' => '10.30', 'isSlot' => true, 'title' => ''],
+                ['no' => '6', 'start' => '10.30', 'end' => '11.00', 'isBreak' => true, 'title' => 'ISTIRAHAT'],
+                ['no' => '7', 'start' => '11.00', 'end' => '11.40', 'isSlot' => true, 'title' => ''],
+                ['no' => '8', 'start' => '11.40', 'end' => '12.20', 'isSlot' => true, 'title' => ''],
+                ['no' => '9', 'start' => '12.20', 'end' => '12.40', 'isGeneral' => true, 'title' => "SHALAT DZUHUR BERJAMA'AH"],
+            ],
+            'selasa_sabtu' => [
+                ['no' => '0', 'start' => '07.00', 'end' => '07.30', 'isGeneral' => true, 'title' => "TADARUSAN AL-QUR'AN"],
+                ['no' => '1', 'start' => '07.30', 'end' => '08.10', 'isSlot' => true, 'title' => ''],
+                ['no' => '2', 'start' => '08.10', 'end' => '08.50', 'isSlot' => true, 'title' => ''],
+                ['no' => '3', 'start' => '08.50', 'end' => '09.30', 'isSlot' => true, 'title' => ''],
+                ['no' => '4', 'start' => '09.30', 'end' => '10.10', 'isSlot' => true, 'title' => ''],
+                ['no' => '5', 'start' => '10.10', 'end' => '10.40', 'isBreak' => true, 'title' => 'ISTIRAHAT'],
+                ['no' => '6', 'start' => '10.40', 'end' => '11.20', 'isSlot' => true, 'title' => ''],
+                ['no' => '7', 'start' => '11.20', 'end' => '12.00', 'isSlot' => true, 'title' => ''],
+                ['no' => '8', 'start' => '12.00', 'end' => '12.20', 'isGeneral' => true, 'title' => "SHALAT DZUHUR BERJAMA'AH"],
+            ],
+            'jumat' => [
+                ['no' => '0', 'start' => '07.00', 'end' => '07.45', 'isGeneral' => true, 'title' => 'SHOLAT DHUHA & YASINAN'],
+                ['no' => '1', 'start' => '07.45', 'end' => '08.25', 'isSlot' => true, 'title' => ''],
+                ['no' => '2', 'start' => '08.25', 'end' => '09.05', 'isSlot' => true, 'title' => ''],
+                ['no' => '3', 'start' => '09.05', 'end' => '09.45', 'isSlot' => true, 'title' => ''],
+                ['no' => '4', 'start' => '09.45', 'end' => '10.15', 'isBreak' => true, 'title' => "ISTIRAHAT JUM'AT"],
+                ['no' => '5', 'start' => '10.15', 'end' => '10.55', 'isSlot' => true, 'title' => ''],
+                ['no' => '6', 'start' => '11.00', 'end' => '12.30', 'isGeneral' => true, 'title' => "SHALAT JUM'AT BERJAMA'AH"],
+            ],
+        ];
+    }
+
+    public function getTimeSlots()
+    {
+        $raw = \App\Models\Setting::where('key', 'schedule_time_slots')->value('value');
+        $defaults = self::getDefaultTimeSlots();
+
+        if ($raw) {
+            $saved = json_decode($raw, true);
+            if (is_array($saved)) {
+                return response()->json([
+                    'status' => 'success',
+                    'data' => [
+                        'senin' => $saved['senin'] ?? $defaults['senin'],
+                        'selasa_sabtu' => $saved['selasa_sabtu'] ?? $defaults['selasa_sabtu'],
+                        'jumat' => $saved['jumat'] ?? $defaults['jumat'],
+                    ]
+                ]);
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $defaults
+        ]);
+    }
+
+    public function saveTimeSlots(Request $request)
+    {
+        $validated = $request->validate([
+            'senin' => 'required|array',
+            'selasa_sabtu' => 'required|array',
+            'jumat' => 'required|array',
+        ]);
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'schedule_time_slots'],
+            ['value' => json_encode($validated)]
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Pengaturan slot waktu jadwal pelajaran berhasil disimpan',
+            'data' => $validated
+        ]);
+    }
+
+    public function resetTimeSlots()
+    {
+        \App\Models\Setting::where('key', 'schedule_time_slots')->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Slot waktu berhasil dikembalikan ke standar madrasah',
+            'data' => self::getDefaultTimeSlots()
+        ]);
+    }
 }
