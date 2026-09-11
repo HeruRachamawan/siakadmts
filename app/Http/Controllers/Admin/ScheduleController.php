@@ -201,12 +201,18 @@ class ScheduleController extends Controller
             'activity_type' => 'nullable|required_if:is_activity,true|in:upacara,religi,ekstrakurikuler,kokurikuler,istirahat,lainnya',
             'class_id' => 'nullable|required_if:is_activity,false|exists:classes,id',
             'subject_id' => 'nullable|required_if:is_activity,false|exists:subjects,id',
-            'teacher_id' => 'nullable|required_if:is_activity,false|exists:teachers,id',
+            'teacher_id' => 'nullable|exists:teachers,id',
             'day' => 'required|in:senin,selasa,rabu,kamis,jumat,sabtu',
             'start_time' => 'required|string',
             'end_time' => 'required|string',
             'room' => 'nullable|string|max:100',
         ]);
+
+        if (empty($validated['teacher_id'])) {
+            $validated['teacher_id'] = null;
+        }
+
+        return $validated;
     }
 
     /**

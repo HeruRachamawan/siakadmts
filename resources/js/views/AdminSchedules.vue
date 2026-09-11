@@ -176,9 +176,12 @@
                     <div class="font-bold text-xs text-slate-900 text-center leading-snug">
                       {{ getYaspinScheduleItem(activeYaspinDay, cls.id, slot).subject?.name || getYaspinScheduleItem(activeYaspinDay, cls.id, slot).activity_name }}
                     </div>
-                    <div class="text-[11px] font-medium text-emerald-700 truncate max-w-[140px] mt-1 flex items-center gap-1 justify-center">
-                      <svg class="w-3 h-3 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                      <span>{{ getYaspinScheduleItem(activeYaspinDay, cls.id, slot).teacher?.full_name || '-' }}</span>
+                    <div
+                      class="text-[11px] font-medium truncate max-w-[140px] mt-1 flex items-center gap-1 justify-center"
+                      :class="getYaspinScheduleItem(activeYaspinDay, cls.id, slot).teacher ? 'text-emerald-700' : 'text-slate-400 italic'"
+                    >
+                      <svg class="w-3 h-3 flex-shrink-0" :class="getYaspinScheduleItem(activeYaspinDay, cls.id, slot).teacher ? 'text-emerald-600' : 'text-slate-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                      <span>{{ getYaspinScheduleItem(activeYaspinDay, cls.id, slot).teacher?.full_name || 'Belum Ditentukan' }}</span>
                     </div>
 
                     <!-- Quick action buttons on hover -->
@@ -343,11 +346,15 @@
             </div>
 
             <div class="space-y-1">
-              <label class="block text-[11px] font-bold text-slate-600 uppercase">Guru Pengajar</label>
-              <select v-model="form.teacher_id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 cursor-pointer" required>
-                <option value="">-- Pilih Guru --</option>
+              <div class="flex items-center justify-between">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase">Guru Pengajar</label>
+                <span class="text-[10px] text-slate-400 font-medium">(Opsional)</span>
+              </div>
+              <select v-model="form.teacher_id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 cursor-pointer">
+                <option value="">-- Tanpa Guru / Belum Ditentukan --</option>
                 <option v-for="tcher in teachers" :key="tcher.id" :value="tcher.id">{{ tcher.full_name }}</option>
               </select>
+              <p class="text-[10px] text-slate-400">Pilih guru pengajar, atau biarkan kosong jika pengajar masih tentatif / belum ditentukan.</p>
             </div>
           </template>
 
@@ -1072,7 +1079,7 @@ const submitForm = async () => {
     } else {
       payload.class_id = form.class_id;
       payload.subject_id = form.subject_id;
-      payload.teacher_id = form.teacher_id;
+      payload.teacher_id = form.teacher_id || null;
     }
 
     if (isEditing.value) {

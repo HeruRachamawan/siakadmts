@@ -154,7 +154,12 @@
                     <td v-for="d in ['senin','selasa','rabu','kamis','jumat','sabtu']" :key="d" class="p-2 border border-slate-300 vertical-middle">
                       <div v-if="getSingleScheduleCell(cls.id, d, slot)" class="leading-snug">
                         <p class="font-bold text-slate-900 text-xs uppercase">{{ getSingleScheduleCell(cls.id, d, slot).subject?.name || getSingleScheduleCell(cls.id, d, slot).activity_name }}</p>
-                        <p class="text-[10px] text-slate-500 font-medium mt-0.5">{{ getSingleScheduleCell(cls.id, d, slot).teacher?.full_name || '-' }}</p>
+                        <p
+                          class="text-[10px] font-medium mt-0.5"
+                          :class="getSingleScheduleCell(cls.id, d, slot).teacher ? 'text-slate-600' : 'text-slate-400 italic'"
+                        >
+                          {{ getSingleScheduleCell(cls.id, d, slot).teacher?.full_name || '(Belum Ditentukan)' }}
+                        </p>
                       </div>
                       <span v-else class="text-slate-300 font-mono text-[10px]">-</span>
                     </td>
