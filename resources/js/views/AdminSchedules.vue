@@ -184,6 +184,13 @@
                       <span>{{ getYaspinScheduleItem(activeYaspinDay, cls.id, slot).teacher?.full_name || 'Belum Ditentukan' }}</span>
                     </div>
 
+                    <!-- JP Duration Badge if spans multiple slots -->
+                    <div v-if="getScheduleJpBadge(activeYaspinDay, getYaspinScheduleItem(activeYaspinDay, cls.id, slot))" class="mt-1">
+                      <span class="text-[9px] px-1.5 py-0.2 bg-emerald-50 border border-emerald-200/80 text-emerald-800 rounded font-bold uppercase tracking-tight">
+                        {{ getScheduleJpBadge(activeYaspinDay, getYaspinScheduleItem(activeYaspinDay, cls.id, slot)) }}
+                      </span>
+                    </div>
+
                     <!-- Quick action buttons on hover -->
                     <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-xs text-white flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl p-1 z-10">
                       <button @click.stop="editSchedule(getYaspinScheduleItem(activeYaspinDay, cls.id, slot))" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 rounded-lg text-[10px] font-bold shadow-xs cursor-pointer">Edit</button>
@@ -358,6 +365,72 @@
             </div>
           </template>
 
+          <!-- Multi-JP Quick Selector (Pilihan Durasi Jam Pelajaran) -->
+          <div v-if="!form.is_activity" class="bg-emerald-50/70 border border-emerald-200/90 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <Clock class="w-4 h-4 text-emerald-700" />
+                <span class="text-xs font-bold text-emerald-900">Durasi Jam Pelajaran (JP)</span>
+              </div>
+              <span v-if="currentJpSummary" class="text-[11px] font-bold text-emerald-700 bg-white px-2.5 py-0.5 rounded-lg border border-emerald-200 shadow-2xs">
+                {{ currentJpSummary }}
+              </span>
+            </div>
+
+            <!-- Pill Buttons: 1 JP, 2 JP, 3 JP, 4 JP -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pilih Cepat Durasi:</label>
+                <span class="text-[10px] text-slate-400">Otomatis hitung jam selesai</span>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <button
+                  v-for="jp in availableJpOptions"
+                  :key="jp.count"
+                  type="button"
+                  @click="applyJpDuration(jp.count)"
+                  :class="[
+                    selectedJpCount === jp.count 
+                      ? 'bg-emerald-600 text-white shadow-sm font-bold ring-2 ring-emerald-600/30' 
+                      : 'bg-white text-slate-700 border border-slate-200 hover:border-emerald-400 hover:text-emerald-700 font-semibold'
+                  ]"
+                  class="px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer flex items-center gap-1 active:scale-95"
+                >
+                  <span>{{ jp.label }}</span>
+                  <span class="text-[10px] opacity-80 font-normal">({{ jp.endTime }})</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Rentang Dropdown Jam Ke- -->
+            <div class="grid grid-cols-2 gap-3 pt-2 border-t border-emerald-200/60">
+              <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase">Mulai Dari Jam Ke-</label>
+                <select 
+                  :value="currentStartSlotKey" 
+                  @change="onStartSlotChange($event.target.value)"
+                  class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
+                >
+                  <option v-for="s in currentDayKbmSlots" :key="'start-'+s.no" :value="s.no">
+                    Jam {{ s.no }} ({{ s.start }} - {{ s.end }})
+                  </option>
+                </select>
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase">Sampai Jam Ke-</label>
+                <select 
+                  :value="currentEndSlotKey" 
+                  @change="onEndSlotChange($event.target.value)"
+                  class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
+                >
+                  <option v-for="s in availableEndSlots" :key="'end-'+s.no" :value="s.no">
+                    Jam {{ s.no }} (Selesai {{ s.end }})
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           <!-- Day & Time Row -->
           <div class="grid grid-cols-3 gap-3 pt-2 border-t border-slate-100">
             <div class="space-y-1">
@@ -382,6 +455,9 @@
               <input v-model="form.end_time" type="time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400" required />
             </div>
           </div>
+          <p v-if="!form.is_activity" class="text-[10px] text-slate-400 -mt-2">
+            💡 Jam Mulai & Selesai otomatis disesuaikan dari alokasi JP di atas, atau bisa diketik manual jika ada jam khusus.
+          </p>
 
           <div class="pt-4 flex justify-end gap-3 border-t border-slate-100">
             <button type="button" @click="showModal = false" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer">
@@ -938,6 +1014,160 @@ const getActiveDayName = () => {
   return d ? d.name : 'Senin';
 };
 
+const getDaySlots = (dayKey) => {
+  const k = (dayKey || '').toLowerCase();
+  if (k === 'senin') return slotsData.value.senin || defaultSeninSlots;
+  if (k === 'jumat') return slotsData.value.jumat || defaultJumatSlots;
+  return slotsData.value.selasa_sabtu || defaultSelasaSabtuSlots;
+};
+
+const getDayKbmSlots = (dayKey) => {
+  return getDaySlots(dayKey).filter(s => !s.isGeneral && !s.isBreak);
+};
+
+const selectedJpCount = ref(2);
+
+const form = reactive({
+  is_activity: false,
+  activity_name: '',
+  activity_type: 'upacara',
+  class_id: null,
+  subject_id: '',
+  teacher_id: '',
+  day: 'senin',
+  start_time: '07:00',
+  end_time: '08:00',
+});
+
+const currentDayKbmSlots = computed(() => {
+  return getDayKbmSlots(form.day || 'senin');
+});
+
+const currentStartSlotIndex = computed(() => {
+  const slots = currentDayKbmSlots.value;
+  if (!slots.length) return -1;
+  const current = (form.start_time || '').replace('.', ':').trim();
+  const idx = slots.findIndex(s => s.start.replace('.', ':') === current);
+  return idx !== -1 ? idx : 0;
+});
+
+const currentStartSlotKey = computed(() => {
+  const idx = currentStartSlotIndex.value;
+  if (idx !== -1 && currentDayKbmSlots.value[idx]) {
+    return currentDayKbmSlots.value[idx].no;
+  }
+  return currentDayKbmSlots.value[0]?.no || '';
+});
+
+const availableEndSlots = computed(() => {
+  const slots = currentDayKbmSlots.value;
+  const startIdx = currentStartSlotIndex.value;
+  if (startIdx === -1) return slots;
+  return slots.slice(startIdx);
+});
+
+const currentEndSlotKey = computed(() => {
+  const currentEnd = (form.end_time || '').replace('.', ':').trim();
+  const slot = currentDayKbmSlots.value.find(s => s.end.replace('.', ':') === currentEnd);
+  return slot ? slot.no : '';
+});
+
+const availableJpOptions = computed(() => {
+  const slots = currentDayKbmSlots.value;
+  const startIdx = currentStartSlotIndex.value;
+  if (startIdx === -1 || !slots.length) return [];
+  
+  const options = [];
+  const maxJp = Math.min(4, slots.length - startIdx);
+  
+  for (let jp = 1; jp <= maxJp; jp++) {
+    const endSlot = slots[startIdx + jp - 1];
+    if (endSlot) {
+      options.push({
+        count: jp,
+        label: `${jp} JP`,
+        endTime: endSlot.end.replace('.', ':'),
+        slotNo: endSlot.no,
+      });
+    }
+  }
+  return options;
+});
+
+const currentJpSummary = computed(() => {
+  if (form.is_activity) return '';
+  const start = form.start_time;
+  const end = form.end_time;
+  if (!start || !end) return '';
+  
+  const slots = currentDayKbmSlots.value;
+  const covered = slots.filter(s => {
+    const sStart = s.start.replace('.', ':');
+    const sEnd = s.end.replace('.', ':');
+    return (start < sEnd && end > sStart);
+  });
+  
+  if (covered.length > 0) {
+    const firstNo = covered[0].no;
+    const lastNo = covered[covered.length - 1].no;
+    const rangeText = firstNo === lastNo ? `Jam ${firstNo}` : `Jam ${firstNo} - ${lastNo}`;
+    return `${covered.length} JP (${rangeText})`;
+  }
+  return `${start} - ${end}`;
+});
+
+const applyJpDuration = (count) => {
+  selectedJpCount.value = count;
+  const slots = currentDayKbmSlots.value;
+  const startIdx = currentStartSlotIndex.value;
+  if (startIdx === -1 || !slots.length) return;
+  
+  const targetIdx = Math.min(startIdx + count - 1, slots.length - 1);
+  const targetSlot = slots[targetIdx];
+  if (targetSlot) {
+    form.end_time = targetSlot.end.replace('.', ':');
+  }
+};
+
+const onStartSlotChange = (slotNo) => {
+  const slots = currentDayKbmSlots.value;
+  const foundIdx = slots.findIndex(s => s.no === slotNo);
+  if (foundIdx !== -1) {
+    const newStart = slots[foundIdx];
+    form.start_time = newStart.start.replace('.', ':');
+    applyJpDuration(selectedJpCount.value || 2);
+  }
+};
+
+const onEndSlotChange = (slotNo) => {
+  const slots = currentDayKbmSlots.value;
+  const foundIdx = slots.findIndex(s => s.no === slotNo);
+  if (foundIdx !== -1) {
+    const target = slots[foundIdx];
+    form.end_time = target.end.replace('.', ':');
+    const startIdx = currentStartSlotIndex.value;
+    if (startIdx !== -1 && foundIdx >= startIdx) {
+      selectedJpCount.value = foundIdx - startIdx + 1;
+    } else {
+      selectedJpCount.value = 'custom';
+    }
+  }
+};
+
+const getScheduleJpBadge = (dayKey, item) => {
+  if (!item || item.is_activity) return null;
+  const kbmSlots = getDayKbmSlots(dayKey);
+  const coveredSlots = kbmSlots.filter(s => {
+    const sStart = s.start.replace('.', ':');
+    const sEnd = s.end.replace('.', ':');
+    return (item.start_time < sEnd && item.end_time > sStart);
+  });
+  if (coveredSlots.length > 1) {
+    return `${coveredSlots.length} JP`;
+  }
+  return null;
+};
+
 const getYaspinScheduleItem = (dayKey, classId, slot) => {
   const slotStart = slot.start.replace('.', ':');
   const slotEnd = slot.end.replace('.', ':');
@@ -951,8 +1181,18 @@ const getYaspinScheduleItem = (dayKey, classId, slot) => {
 const openYaspinSlot = (dayKey, classId, slot) => {
   openModal(false, dayKey);
   form.class_id = classId;
-  form.start_time = slot.start.replace('.', ':');
-  form.end_time = slot.end.replace('.', ':');
+  const startFormatted = slot.start.replace('.', ':');
+  form.start_time = startFormatted;
+  
+  const kbm = getDayKbmSlots(dayKey);
+  const idx = kbm.findIndex(s => s.no === slot.no || s.start.replace('.', ':') === startFormatted);
+  if (idx !== -1 && idx + 1 < kbm.length) {
+    form.end_time = kbm[idx + 1].end.replace('.', ':');
+    selectedJpCount.value = 2;
+  } else {
+    form.end_time = slot.end.replace('.', ':');
+    selectedJpCount.value = 1;
+  }
 };
 
 const applyActivityPreset = (name, type, start, end) => {
@@ -962,18 +1202,6 @@ const applyActivityPreset = (name, type, start, end) => {
   if (start) form.start_time = start;
   if (end) form.end_time = end;
 };
-
-const form = reactive({
-  is_activity: false,
-  activity_name: '',
-  activity_type: 'upacara',
-  class_id: null,
-  subject_id: '',
-  teacher_id: '',
-  day: 'senin',
-  start_time: '07:30',
-  end_time: '09:00',
-});
 
 const fetchSchedules = async () => {
   loading.value = true;
@@ -1036,8 +1264,27 @@ const openModal = (isActivityMode = false, targetDayKey = null) => {
   form.subject_id = '';
   form.teacher_id = '';
   form.day = targetDayKey || activeYaspinDay.value || 'senin';
-  form.start_time = '07:30';
-  form.end_time = '09:00';
+
+  if (!isActivityMode) {
+    const kbm = getDayKbmSlots(form.day);
+    if (kbm.length > 0) {
+      form.start_time = kbm[0].start.replace('.', ':');
+      if (kbm.length > 1) {
+        form.end_time = kbm[1].end.replace('.', ':');
+        selectedJpCount.value = 2;
+      } else {
+        form.end_time = kbm[0].end.replace('.', ':');
+        selectedJpCount.value = 1;
+      }
+    } else {
+      form.start_time = '07:00';
+      form.end_time = '08:00';
+      selectedJpCount.value = 1;
+    }
+  } else {
+    form.start_time = '07:00';
+    form.end_time = '07:30';
+  }
 
   showModal.value = true;
 };
@@ -1056,6 +1303,16 @@ const editSchedule = (item) => {
   form.day = item.day;
   form.start_time = item.start_time;
   form.end_time = item.end_time;
+
+  if (!item.is_activity) {
+    const kbm = getDayKbmSlots(item.day);
+    const covered = kbm.filter(s => {
+      const sStart = s.start.replace('.', ':');
+      const sEnd = s.end.replace('.', ':');
+      return (item.start_time < sEnd && item.end_time > sStart);
+    });
+    selectedJpCount.value = covered.length > 0 ? covered.length : 'custom';
+  }
 
   showModal.value = true;
 };
