@@ -436,20 +436,36 @@ class ScheduleController extends Controller
 
     public function saveTimeSlots(Request $request)
     {
-        $validated = $request->validate([
-            'group' => 'nullable|string|in:utama,lokal',
-            'senin' => 'required|array',
-            'selasa_sabtu' => 'required|array',
-            'jumat' => 'required|array',
-        ]);
-
         $group = $request->input('group', 'utama');
+        if (!in_array($group, ['utama', 'lokal'])) {
+            $group = 'utama';
+        }
+
+        // Support both nested under 'slots' or flat root level
+        $slots = $request->input('slots');
+        if (is_array($slots)) {
+            $senin = $slots['senin'] ?? $request->input('senin');
+            $selasaSabtu = $slots['selasa_sabtu'] ?? $request->input('selasa_sabtu');
+            $jumat = $slots['jumat'] ?? $request->input('jumat');
+        } else {
+            $senin = $request->input('senin');
+            $selasaSabtu = $request->input('selasa_sabtu');
+            $jumat = $request->input('jumat');
+        }
+
+        if (!is_array($senin) || !is_array($selasaSabtu) || !is_array($jumat)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Format data slot waktu tidak valid. Memerlukan slot senin, selasa_sabtu, dan jumat.'
+            ], 422);
+        }
+
         $settingKey = ($group === 'lokal') ? 'schedule_time_slots_lokal' : 'schedule_time_slots';
 
         $dataToSave = [
-            'senin' => $validated['senin'],
-            'selasa_sabtu' => $validated['selasa_sabtu'],
-            'jumat' => $validated['jumat'],
+            'senin' => array_values($senin),
+            'selasa_sabtu' => array_values($selasaSabtu),
+            'jumat' => array_values($jumat),
         ];
 
         \App\Models\Setting::updateOrCreate(

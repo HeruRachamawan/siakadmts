@@ -1237,7 +1237,10 @@ async function saveSlotConfig() {
   try {
     const payload = {
       group: configActiveGroupTab.value,
-      slots: editingSlots.value
+      senin: editingSlots.value.senin || [],
+      selasa_sabtu: editingSlots.value.selasa_sabtu || [],
+      jumat: editingSlots.value.jumat || [],
+      slots: editingSlots.value,
     };
     await api.post('admin/schedules/time-slots', payload);
     if (configActiveGroupTab.value === 'lokal') {
