@@ -580,14 +580,28 @@
               </div>
 
               <!-- 5. Menjodohkan (Matching) -->
-              <div v-else-if="q.question_type === 'matching'" class="space-y-1">
-                <input
-                  v-model="q.correct_answer"
-                  type="text"
-                  placeholder="1A,2C,3B"
-                  class="w-full bg-white border border-emerald-300 rounded-lg px-2 py-1 text-center text-xs font-mono font-bold text-emerald-900 uppercase focus:ring-1 focus:ring-emerald-400"
-                />
-                <div class="text-[8px] text-emerald-700 font-medium">Format: 1A,2C,3B</div>
+              <div v-else-if="q.question_type === 'matching'" class="space-y-1.5">
+                <div class="flex items-center justify-between gap-1">
+                  <label class="block text-[8px] font-bold text-emerald-700 uppercase">Maks Skor</label>
+                  <input
+                    v-model.number="q.score_weight"
+                    type="number"
+                    min="0.5"
+                    step="any"
+                    placeholder="Skor"
+                    class="w-16 bg-white border border-emerald-300 rounded-lg px-1.5 py-0.5 text-center text-xs font-bold text-emerald-900 focus:ring-1 focus:ring-emerald-400"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[8px] font-bold text-emerald-700 uppercase">Kunci Jawaban</label>
+                  <input
+                    v-model="q.correct_answer"
+                    type="text"
+                    placeholder="1A,2C,3B"
+                    class="w-full bg-white border border-emerald-300 rounded-lg px-2 py-1 text-center text-xs font-mono font-bold text-emerald-900 uppercase focus:ring-1 focus:ring-emerald-400"
+                  />
+                  <div class="text-[8px] text-emerald-700 font-medium mt-0.5">Format: 1A,2C,3B</div>
+                </div>
               </div>
 
               <!-- 6. Isian Singkat (Short Answer) -->
@@ -700,7 +714,7 @@
                     *Gunakan tombol "Form Jawaban" untuk PGK, Menjodohkan, B/S & Isian
                   </span>
                 </th>
-                <th v-if="manualScoredQuestionsCount > 0" class="px-4 py-3.5 text-center min-w-[130px]">Nilai Isian / Uraian</th>
+                <th v-if="manualScoredQuestionsCount > 0" class="px-4 py-3.5 text-center min-w-[140px]">Nilai Menjodohkan / Isian / Uraian</th>
                 <th class="px-4 py-3.5 text-center min-w-[90px]">Benar / Salah</th>
                 <th class="px-4 py-3.5 text-center min-w-[80px]">Nilai Ujian</th>
                 <th class="px-4 py-3.5 text-center min-w-[100px]">Nilai Remedial</th>
@@ -772,18 +786,28 @@
                 <td v-if="manualScoredQuestionsCount > 0" class="px-4 py-3 text-center">
                   <div class="flex items-center justify-center gap-1.5 flex-wrap">
                     <div v-for="eq in manualScoredQuestions" :key="eq.id || eq.question_number" class="flex flex-col items-center">
-                      <span class="text-[9px] font-bold" :class="eq.question_type === 'short_answer' ? 'text-blue-600' : 'text-amber-600'">
+                      <span
+                        class="text-[9px] font-bold"
+                        :class="[
+                          eq.question_type === 'matching' ? 'text-emerald-700' :
+                          eq.question_type === 'short_answer' ? 'text-blue-600' : 'text-amber-600'
+                        ]"
+                      >
                         No.{{ eq.question_number }}
                       </span>
                       <input
                         v-model.number="student.essay_scores[String(eq.question_number)]"
                         type="number"
                         min="0"
-                        :max="eq.score_weight || (eq.question_type === 'essay' ? 10 : 2)"
+                        :max="eq.score_weight || (eq.question_type === 'essay' ? 10 : (eq.question_type === 'matching' ? 4 : 2))"
                         step="any"
-                        :placeholder="`0-${eq.score_weight || (eq.question_type === 'essay' ? 10 : 2)}`"
+                        :placeholder="`0-${eq.score_weight || (eq.question_type === 'essay' ? 10 : (eq.question_type === 'matching' ? 4 : 2))}`"
                         class="w-14 bg-white border border-slate-200 rounded-lg py-1 text-center text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400"
-                        :title="eq.question_type === 'short_answer' ? `Isian Singkat (Maks: ${eq.score_weight || 2})` : `Uraian (Maks: ${eq.score_weight || 10})`"
+                        :title="
+                          eq.question_type === 'matching' ? `Menjodohkan No. ${eq.question_number} (Maks: ${eq.score_weight || 4})` :
+                          eq.question_type === 'short_answer' ? `Isian Singkat (Maks: ${eq.score_weight || 2})` :
+                          `Uraian (Maks: ${eq.score_weight || 10})`
+                        "
                       />
                     </div>
                   </div>
@@ -2113,14 +2137,33 @@
               </div>
 
               <!-- 5. Menjodohkan -->
-              <div v-else-if="q.question_type === 'matching'" class="space-y-1">
+              <div v-else-if="q.question_type === 'matching'" class="space-y-1.5">
+                <div class="flex items-center justify-between text-[10px] font-bold text-emerald-800">
+                  <span>Nilai Skor:</span>
+                  <span>Maks: {{ q.score_weight || 4 }}</span>
+                </div>
                 <input
-                  :value="getStudentAnswer(selectedStudent, q.question_number)"
-                  @input="e => setStudentAnswer(selectedStudent, q.question_number, e.target.value.toUpperCase())"
-                  type="text"
-                  placeholder="1A,2C,3B"
-                  class="w-full bg-white border border-emerald-300 rounded-lg px-2 py-1 text-center text-xs font-mono font-bold text-emerald-900 uppercase focus:ring-1 focus:ring-emerald-400"
+                  v-model.number="selectedStudent.essay_scores[String(q.question_number)]"
+                  type="number"
+                  min="0"
+                  :max="q.score_weight || 4"
+                  step="any"
+                  :placeholder="`0-${q.score_weight || 4}`"
+                  class="w-full bg-white border border-emerald-300 rounded-lg px-2 py-1 text-center text-xs font-bold text-emerald-900 focus:ring-1 focus:ring-emerald-400"
                 />
+                <div>
+                  <div class="text-[8px] font-bold text-slate-500 uppercase flex items-center justify-between mb-0.5">
+                    <span>Jawaban Siswa:</span>
+                    <span v-if="q.correct_answer" class="text-emerald-700 font-mono font-normal">Kunci: {{ q.correct_answer }}</span>
+                  </div>
+                  <input
+                    :value="getStudentAnswer(selectedStudent, q.question_number)"
+                    @input="e => setStudentAnswer(selectedStudent, q.question_number, e.target.value.toUpperCase())"
+                    type="text"
+                    placeholder="1A,2C,3B"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-center text-xs font-mono font-bold text-slate-800 uppercase focus:ring-1 focus:ring-emerald-400"
+                  />
+                </div>
               </div>
 
               <!-- 6. Isian Singkat -->
@@ -3415,7 +3458,7 @@ function getGradePredicate(score) {
 
 const pgQuestions = computed(() => activeQuestions.value.filter(q => q.question_type !== 'essay'));
 const essayQuestions = computed(() => activeQuestions.value.filter(q => q.question_type === 'essay'));
-const manualScoredQuestions = computed(() => activeQuestions.value.filter(q => ['essay', 'short_answer'].includes(q.question_type)));
+const manualScoredQuestions = computed(() => activeQuestions.value.filter(q => ['essay', 'short_answer', 'matching'].includes(q.question_type)));
 const pgQuestionsCount = computed(() => pgQuestions.value.length);
 const essayQuestionsCount = computed(() => essayQuestions.value.length);
 const manualScoredQuestionsCount = computed(() => manualScoredQuestions.value.length);
@@ -3707,8 +3750,11 @@ function fillStudentWithAnswerKeys(student) {
 
   activeQuestions.value.forEach(q => {
     const qNum = String(q.question_number);
-    if (['essay', 'short_answer'].includes(q.question_type)) {
-      student.essay_scores[qNum] = Number(q.score_weight || (q.question_type === 'essay' ? 10 : 2));
+    if (['essay', 'short_answer', 'matching'].includes(q.question_type)) {
+      student.essay_scores[qNum] = Number(q.score_weight || (q.question_type === 'essay' ? 10 : (q.question_type === 'matching' ? 4 : 2)));
+      if (q.question_type === 'matching') {
+        student.student_answers[qNum] = q.correct_answer || '';
+      }
     } else {
       student.student_answers[qNum] = q.correct_answer || '';
     }

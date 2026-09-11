@@ -594,7 +594,7 @@ class ExamCorrectionController extends Controller
                     $studentAns = $answers[(string)$num] ?? null;
                     $correctAns = $q->correct_answer;
 
-                    if ($q->question_type === 'short_answer') {
+                    if (in_array($q->question_type, ['short_answer', 'matching'])) {
                         $eScore = $essayScoresInput[(string)$num] ?? null;
                         if ($eScore !== null && $eScore !== '') {
                             $val = min(max(0, floatval($eScore)), $q->score_weight);
@@ -791,7 +791,7 @@ class ExamCorrectionController extends Controller
                     }
                 }
 
-                if ($q->question_type === 'short_answer') {
+                if (in_array($q->question_type, ['short_answer', 'matching'])) {
                     if ($eScore !== null && $eScore !== '') {
                         if (floatval($eScore) >= $q->score_weight) {
                             $correctCount++;
@@ -825,7 +825,7 @@ class ExamCorrectionController extends Controller
                 $uAns = $uSub->student_answers[$qNum] ?? null;
                 $uEScore = $uSub->essay_scores[$qNum] ?? null;
 
-                if ($q->question_type === 'short_answer') {
+                if (in_array($q->question_type, ['short_answer', 'matching'])) {
                     if ($uEScore !== null && $uEScore !== '') {
                         if (floatval($uEScore) >= $q->score_weight) $upperCorrect++;
                     } elseif ($correctAns !== null && $uAns !== null && self::checkAnswerCorrectness($q->question_type, $uAns, $correctAns)) {
@@ -847,7 +847,7 @@ class ExamCorrectionController extends Controller
                 $lAns = $lSub->student_answers[$qNum] ?? null;
                 $lEScore = $lSub->essay_scores[$qNum] ?? null;
 
-                if ($q->question_type === 'short_answer') {
+                if (in_array($q->question_type, ['short_answer', 'matching'])) {
                     if ($lEScore !== null && $lEScore !== '') {
                         if (floatval($lEScore) >= $q->score_weight) $lowerCorrect++;
                     } elseif ($correctAns !== null && $lAns !== null && self::checkAnswerCorrectness($q->question_type, $lAns, $correctAns)) {
