@@ -1231,15 +1231,23 @@ const fetchSchedules = async () => {
 const fetchDropdownData = async () => {
   try {
     const [cRes, sRes, tRes, setRes] = await Promise.all([
-      api.get('admin/classes').catch(() => null),
-      api.get('admin/subjects').catch(() => null),
-      api.get('admin/teachers').catch(() => null),
+      api.get('admin/classes', { all: true, per_page: 500 }).catch(() => null),
+      api.get('admin/subjects', { all: true, per_page: 500 }).catch(() => null),
+      api.get('admin/teachers', { all: true, per_page: 500 }).catch(() => null),
       api.get('settings').catch(() => null),
     ]);
 
-    classes.value = cRes?.data?.data || cRes?.data || [];
-    subjects.value = sRes?.data?.data || sRes?.data || [];
-    teachers.value = tRes?.data?.data || tRes?.data || [];
+    const extractItems = (res) => {
+      if (!res) return [];
+      if (Array.isArray(res.data)) return res.data;
+      if (Array.isArray(res.data?.data)) return res.data.data;
+      if (Array.isArray(res)) return res;
+      return [];
+    };
+
+    classes.value = extractItems(cRes);
+    subjects.value = extractItems(sRes).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'id'));
+    teachers.value = extractItems(tRes).sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'id'));
     settings.value = setRes?.data || {};
   } catch (err) {
     console.error('Failed to load dropdown options:', err);

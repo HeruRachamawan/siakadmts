@@ -19,7 +19,15 @@ class SubjectController extends BaseController
             });
         }
 
-        $subjects = $query->orderBy('code')->paginate($request->get('per_page', 15));
+        if ($request->boolean('all') || $request->input('all') === 'true' || $request->input('all') === '1' || $request->input('per_page') == -1) {
+            $allSubjects = $query->orderBy('name')->get();
+            return $this->success($allSubjects);
+        }
+
+        $perPage = (int) $request->get('per_page', 15);
+        $perPage = max(1, min($perPage, 500));
+
+        $subjects = $query->orderBy('code')->paginate($perPage);
 
         return $this->success($this->paginate($subjects, $subjects->items()));
     }

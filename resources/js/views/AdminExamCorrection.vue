@@ -687,8 +687,8 @@ async function fetchMeta() {
     console.error('Failed to load exam correction options:', err);
     try {
       const [clsRes, sbjRes] = await Promise.all([
-        api.get('/admin/classes'),
-        api.get('/admin/subjects')
+        api.get('/admin/classes', { all: true, per_page: 500 }),
+        api.get('/admin/subjects', { all: true, per_page: 500 })
       ]);
       classes.value = clsRes?.data || clsRes || [];
       subjects.value = sbjRes?.data || sbjRes || [];

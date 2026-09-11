@@ -18,8 +18,16 @@ class ClassController extends BaseController
             $query->where('academic_year_id', $request->input('academic_year_id'));
         }
 
+        if ($request->boolean('all') || $request->input('all') === 'true' || $request->input('all') === '1' || $request->input('per_page') == -1) {
+            $allClasses = $query->orderBy('grade_level')->orderBy('name')->get();
+            return $this->success($allClasses);
+        }
+
+        $perPage = (int) $request->get('per_page', 15);
+        $perPage = max(1, min($perPage, 500));
+
         $classes = $query->orderBy('grade_level')
-            ->paginate($request->get('per_page', 15));
+            ->paginate($perPage);
 
         return $this->success($this->paginate($classes));
     }

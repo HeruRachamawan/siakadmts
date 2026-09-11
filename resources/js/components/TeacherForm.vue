@@ -350,8 +350,8 @@ watch(
 onMounted(async () => {
   try {
     const [subRes, classRes] = await Promise.all([
-      api.get('admin/subjects'),
-      api.get('admin/classes?per_page=999')
+      api.get('admin/subjects', { all: true, per_page: 500 }),
+      api.get('admin/classes', { all: true, per_page: 500 })
     ]);
     subjects.value = subRes.data?.data || subRes.data || [];
     classesList.value = classRes.data?.data || classRes.data || [];

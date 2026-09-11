@@ -26,8 +26,16 @@ class TeacherController extends BaseController
             });
         }
 
+        if ($request->boolean('all') || $request->input('all') === 'true' || $request->input('all') === '1' || $request->input('per_page') == -1) {
+            $allTeachers = $query->orderBy('full_name')->get();
+            return $this->success($allTeachers);
+        }
+
+        $perPage = (int) $request->get('per_page', 15);
+        $perPage = max(1, min($perPage, 500));
+
         $teachers = $query->orderBy('id', 'asc')
-            ->paginate($request->get('per_page', 15));
+            ->paginate($perPage);
 
         $data = $teachers->items();
         // Format is handled in Vue component now, as we'll pass the subjects array directly
