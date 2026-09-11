@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6 font-inter pb-12">
     <!-- Header Card -->
-    <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="bg-white rounded-2xl sm:rounded-[2rem] p-3.5 sm:p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <div class="w-11 h-11 bg-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20 flex-shrink-0">
           <CheckSquare class="w-6 h-6 text-white" />
@@ -68,7 +68,7 @@
     </div>
 
     <!-- MAIN VIEW 1: Exam List Table -->
-    <div v-if="!activeExam" class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 space-y-4">
+    <div v-if="!activeExam" class="bg-white rounded-2xl sm:rounded-[2rem] p-3.5 sm:p-6 shadow-sm border border-slate-100 space-y-4">
       <!-- Filter Controls -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-100">
         <div class="flex items-center gap-2 flex-wrap">
@@ -202,70 +202,71 @@
     <!-- MAIN VIEW 2: EXAM WORKSPACE (ACTIVE EXAM VIEW) -->
     <div v-if="activeExam" class="space-y-6">
       <!-- Active Exam Header Navigation -->
-      <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
+      <div class="bg-white rounded-2xl sm:rounded-[2rem] p-3.5 sm:p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-start sm:items-center gap-3 min-w-0">
           <button
             @click="closeExamDetail"
-            class="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer flex-shrink-0"
+            class="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer flex-shrink-0 mt-0.5 sm:mt-0"
+            title="Kembali ke Daftar Ujian"
           >
             <ArrowLeft class="w-4 h-4" />
           </button>
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-lg font-black text-slate-800 font-lexend">{{ activeExam.title }}</h2>
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-teal-50 text-teal-700 border border-teal-100">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-base sm:text-lg font-black text-slate-800 font-lexend truncate">{{ activeExam.title }}</h2>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-teal-50 text-teal-700 border border-teal-100 flex-shrink-0">
                 {{ examTypeLabel(activeExam.exam_type) }}
               </span>
             </div>
-            <p class="text-xs text-slate-400 font-medium">
-              Mapel: <strong>{{ activeExam.subject?.name }}</strong> • Kelas: <strong>{{ activeExam.class_room?.name }}</strong> • KKM: <strong>{{ activeExam.kkm }}</strong> • {{ activeExam.total_questions }} Soal (PG {{ activeExam.pg_weight }}% | Essay {{ activeExam.essay_weight }}%)
+            <p class="text-xs text-slate-400 font-medium leading-relaxed mt-0.5">
+              Mapel: <strong>{{ activeExam.subject?.name }}</strong> &bull; Kelas: <strong>{{ activeExam.class_room?.name }}</strong> &bull; KKM: <strong>{{ activeExam.kkm }}</strong> &bull; {{ activeExam.total_questions }} Soal (PG {{ activeExam.pg_weight }}% | Essay {{ activeExam.essay_weight }}%)
             </p>
           </div>
         </div>
 
         <!-- Navigation Tabs & Actions -->
-        <div class="flex items-center gap-2 flex-wrap">
-          <div class="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto overflow-hidden">
+          <div class="flex items-center gap-1.5 bg-slate-100 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl overflow-x-auto max-w-full touch-pan-x">
             <button
               @click="activeTab = 'keys'"
               :class="activeTab === 'keys' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
-              class="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
+              class="px-3.5 py-2 rounded-lg sm:rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
             >
-              <KeyRound class="w-3.5 h-3.5" />
+              <KeyRound class="w-3.5 h-3.5 flex-shrink-0" />
               <span>Kunci & Bobot</span>
             </button>
             <button
               @click="activeTab = 'grading'"
               :class="activeTab === 'grading' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
-              class="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
+              class="px-3.5 py-2 rounded-lg sm:rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
             >
-              <CheckSquare class="w-3.5 h-3.5" />
+              <CheckSquare class="w-3.5 h-3.5 flex-shrink-0" />
               <span>Koreksi Siswa ({{ activeStudents.length }})</span>
             </button>
             <button
               @click="activeTab = 'adjusted'"
               :class="activeTab === 'adjusted' ? 'bg-white text-amber-700 shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 font-bold'"
-              class="px-4 py-2 rounded-xl text-xs transition-all cursor-pointer flex items-center gap-1.5 relative"
+              class="px-3.5 py-2 rounded-lg sm:rounded-xl text-xs transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 relative"
               title="Pengolahan Nilai Jadi standar rapor bebas remedial"
             >
-              <Award class="w-3.5 h-3.5 text-amber-600" />
+              <Award class="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
               <span>Nilai Jadi (Rapor)</span>
               <span class="w-2 h-2 rounded-full bg-amber-500 absolute top-1.5 right-1.5"></span>
             </button>
             <button
               @click="fetchAnalysis"
               :class="activeTab === 'analysis' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
-              class="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
+              class="px-3.5 py-2 rounded-lg sm:rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
             >
-              <BarChart2 class="w-3.5 h-3.5" />
+              <BarChart2 class="w-3.5 h-3.5 flex-shrink-0" />
               <span>Analisis Butir Soal</span>
             </button>
             <button
               @click="activeTab = 'integration'"
               :class="activeTab === 'integration' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
-              class="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
+              class="px-3.5 py-2 rounded-lg sm:rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
             >
-              <Send class="w-3.5 h-3.5" />
+              <Send class="w-3.5 h-3.5 flex-shrink-0" />
               <span>Kirim Nilai & Ekspor</span>
             </button>
           </div>
@@ -273,18 +274,18 @@
           <button
             @click="openPrintPreview"
             type="button"
-            class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs transition-all shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+            class="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl sm:rounded-2xl text-xs transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap active:scale-95"
             title="Cetak Lembar Rekap Capaian per Bentuk Soal (Konsep 1)"
           >
-            <Printer class="w-4 h-4" />
+            <Printer class="w-4 h-4 flex-shrink-0" />
             <span class="hidden sm:inline">Cetak Rekap (Print/PDF)</span>
-            <span class="sm:hidden">Cetak</span>
+            <span class="sm:hidden">Cetak Rekap</span>
           </button>
         </div>
       </div>
 
       <!-- SUB-TAB 1: KUNCI JAWABAN & BOBOT -->
-      <div v-if="activeTab === 'keys'" class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 space-y-6">
+      <div v-if="activeTab === 'keys'" class="bg-white rounded-2xl sm:rounded-[2rem] p-3.5 sm:p-6 shadow-sm border border-slate-100 space-y-6">
         <!-- Quick String Input Bar -->
         <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-3">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
@@ -647,7 +648,7 @@
       </div>
 
       <!-- SUB-TAB 2: KOREKSI SISWA (FAST MATRIX) -->
-      <div v-if="activeTab === 'grading'" class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 space-y-6">
+      <div v-if="activeTab === 'grading'" class="bg-white rounded-2xl sm:rounded-[2rem] p-3.5 sm:p-6 shadow-sm border border-slate-100 space-y-6">
         <!-- Action Toolbar -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-5 bg-teal-50/60 rounded-2xl border border-teal-100">
           <div class="space-y-1">
@@ -868,7 +869,7 @@
       </div>
 
       <!-- SUB-TAB 2.5: PENGOLAHAN NILAI JADI (STANDAR RAPOR BEBAS REMEDIAL) -->
-      <div v-if="activeTab === 'adjusted'" class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 space-y-6">
+      <div v-if="activeTab === 'adjusted'" class="bg-white rounded-2xl sm:rounded-[2rem] p-3.5 sm:p-6 shadow-sm border border-slate-100 space-y-6">
         <!-- Header & Deskripsi Kebijakan Sekolah -->
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div class="space-y-1">
@@ -1147,7 +1148,7 @@
       </div>
 
       <!-- SUB-TAB 3: ANALISIS BUTIR SOAL -->
-      <div v-if="activeTab === 'analysis'" class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 space-y-6">
+      <div v-if="activeTab === 'analysis'" class="bg-white rounded-2xl sm:rounded-[2rem] p-3.5 sm:p-6 shadow-sm border border-slate-100 space-y-6">
         <!-- Header & Action Bar -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div>
@@ -1473,7 +1474,7 @@
       </div>
 
       <!-- SUB-TAB 4: SINKRONISASI NILAI & EKSPOR -->
-      <div v-if="activeTab === 'integration'" class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 space-y-6">
+      <div v-if="activeTab === 'integration'" class="bg-white rounded-2xl sm:rounded-[2rem] p-3.5 sm:p-6 shadow-sm border border-slate-100 space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <!-- 1-Click Sync to Grades -->
           <div class="p-6 rounded-3xl bg-indigo-50/60 border border-indigo-100 space-y-4 flex flex-col justify-between">
