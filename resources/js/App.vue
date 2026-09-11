@@ -55,7 +55,7 @@
 
           <!-- Main Scrollable Content (Full-Width Workspace) -->
           <main class="flex-1 overflow-y-auto bg-slate-50/60">
-            <div class="w-full px-6 py-5">
+            <div class="w-full px-3.5 sm:px-5 md:px-6 py-3 sm:py-5">
               <router-view v-slot="{ Component }">
                 <transition name="fade" mode="out-in">
                   <component :is="Component" />
@@ -702,7 +702,7 @@ async function loadSettings() {
 
 function toggleSidebar() {
   if (window.innerWidth < 640) {
-    isMobileSidebarOpen.value = true;
+    isMobileSidebarOpen.value = !isMobileSidebarOpen.value;
   } else {
     isCollapsed.value = !isCollapsed.value;
   }

@@ -7,14 +7,14 @@
           <Layers class="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 class="text-2xl font-bold tracking-tight text-slate-900 font-lexend">{{ title }}</h1>
+          <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 font-lexend">{{ title }}</h1>
           <p class="text-xs text-slate-500 font-normal mt-0.5">Kelola data {{ title.toLowerCase() }} sekolah di sini.</p>
         </div>
       </div>
       
       <button 
         @click="openCreateModal" 
-        class="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
+        class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-600/20 cursor-pointer active:scale-95"
       >
         <Plus class="w-4 h-4" />
         <span>Tambah Data</span>

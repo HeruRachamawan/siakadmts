@@ -10,13 +10,13 @@
     <!-- Sidebar -->
     <aside
       :class="[
-        isCollapsed ? 'w-[68px]' : 'w-[240px]',
+        isCollapsed ? 'w-[68px]' : 'w-[260px] max-w-[85vw] sm:w-[240px]',
         isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0',
         'bg-[#0f172a] border-r border-slate-800 text-slate-300 flex flex-col transition-all duration-150 z-40 flex-shrink-0 fixed sm:relative h-full shadow-lg no-print'
       ]"
     >
       <!-- Logo Area -->
-      <div class="h-16 flex items-center border-b border-slate-800 flex-shrink-0 bg-slate-950/80"
+      <div class="h-16 flex items-center justify-between border-b border-slate-800 flex-shrink-0 bg-slate-950/80"
            :class="isCollapsed ? 'justify-center px-0' : 'px-4'">
         <div class="flex items-center gap-3 min-w-0">
           <div class="w-8 h-8 bg-emerald-700 rounded-md flex items-center justify-center shadow-xs border border-emerald-600/50 flex-shrink-0 overflow-hidden p-1">
@@ -31,13 +31,23 @@
           </div>
           <Transition name="label-fade">
             <div v-if="!isCollapsed" class="flex flex-col overflow-hidden">
-              <span class="font-bold text-sm text-white tracking-tight leading-none truncate max-w-[145px] uppercase font-sans">{{ appSettings?.app_name || 'PORTAL' }}</span>
+              <span class="font-bold text-sm text-white tracking-tight leading-none truncate max-w-[130px] uppercase font-sans">{{ appSettings?.app_name || 'PORTAL' }}</span>
               <span class="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider mt-1 whitespace-nowrap">
                 {{ currentRole }} &bull; T.A. 2026/2027
               </span>
             </div>
           </Transition>
         </div>
+
+        <!-- Mobile Close Button (X) -->
+        <button
+          v-if="!isCollapsed"
+          @click="$emit('close-mobile-sidebar')"
+          class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors sm:hidden cursor-pointer flex-shrink-0"
+          title="Tutup Menu"
+        >
+          <X class="w-5 h-5" />
+        </button>
       </div>
 
       <!-- DUAL-ROLE QUICK SWITCH CARD IN SIDEBAR -->
@@ -769,7 +779,8 @@ import {
   Send,
   Users,
   CheckSquare,
-  ArrowRightLeft
+  ArrowRightLeft,
+  X
 } from 'lucide-vue-next';
 
 const props = defineProps({

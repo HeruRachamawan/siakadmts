@@ -160,7 +160,7 @@
           <select
             v-model="filters.status"
             @change="fetchLetters"
-            class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
+            class="flex-1 sm:flex-initial px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
           >
             <option value="all">Semua Status Disposisi</option>
             <option value="pending">Belum Disposisi</option>
@@ -861,6 +861,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import {
   FileText,
   Plus,
@@ -882,10 +883,12 @@ import { api } from '../api';
 import { useToast } from '../composables/useToast';
 import { useConfirm } from '../composables/useConfirm';
 
+const route = useRoute();
 const toast = useToast();
 const { confirm } = useConfirm();
 
-const activeTab = ref('incoming');
+const validTabs = ['incoming', 'outgoing', 'student_cert', 'agenda_print'];
+const activeTab = ref(validTabs.includes(route.query.tab) ? String(route.query.tab) : 'incoming');
 const loading = ref(false);
 const submitting = ref(false);
 const generatingCert = ref(false);
@@ -900,9 +903,16 @@ const studentList = ref([]);
 const appSettings = ref({});
 
 const filters = reactive({
-  search: '',
+  search: route.query.search ? String(route.query.search) : '',
   status: 'all',
   category: 'all'
+});
+
+// Watch route tab parameter in case user navigates between dashboard shortcuts
+watch(() => route.query.tab, (newTab) => {
+  if (newTab && validTabs.includes(newTab) && activeTab.value !== newTab) {
+    activeTab.value = newTab;
+  }
 });
 
 // Watch tab switch to auto-refresh table data for the selected tab
