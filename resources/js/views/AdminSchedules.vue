@@ -879,10 +879,19 @@
                   @change="toggleLokalClassId(cls.id)"
                   class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 cursor-pointer"
                 />
-                <span class="text-xs">{{ cls.name }}</span>
+                <span class="text-xs font-bold">{{ cls.name }}</span>
+                <span v-if="cls.name === '7' || cls.name === '8'" class="text-[10px] px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 font-semibold">
+                  Kelas Jadwal Lokal
+                </span>
+                <span v-else-if="cls.name === '9A' || cls.name === '9B'" class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-semibold">
+                  Kelas Utama & Lokal
+                </span>
+                <span v-else class="text-[10px] px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 font-normal">
+                  Kelas Jadwal Utama
+                </span>
               </div>
-              <span v-if="customLokalClassIds.includes(cls.id)" class="text-[10px] px-2 py-0.5 rounded-md bg-teal-200/70 text-teal-900 font-bold">
-                Aktif di Jadwal Lokal
+              <span v-if="customLokalClassIds.includes(cls.id)" class="text-[10px] px-2.5 py-0.5 rounded-md bg-teal-200/80 text-teal-900 font-bold">
+                ✓ Aktif di Jadwal Lokal
               </span>
             </label>
           </div>
@@ -978,24 +987,46 @@ const isLokalClass = (cls) => {
   if (customLokalClassIds.value && customLokalClassIds.value.length > 0) {
     return customLokalClassIds.value.includes(cls.id);
   }
-  const name = (cls.name || '').trim().toLowerCase();
-  const isClass7 = /(^(kelas\s*)?7$|\bvii\b)/i.test(name) || (name.includes('7') && !name.includes('7a') && !name.includes('7b') && !name.includes('7c') && !name.includes('7d'));
-  const isClass8 = /(^(kelas\s*)?8$|\bviii\b)/i.test(name) || (name.includes('8') && !name.includes('8a') && !name.includes('8b') && !name.includes('8c') && !name.includes('8d'));
-  const isClass9A = /(9\s*a|ix[\s-]*a)/i.test(name);
-  const isClass9B = /(9\s*b|ix[\s-]*b)/i.test(name);
+  const name = (cls.name || '').trim();
+  const lower = name.toLowerCase();
+
+  // Standalone 7: "7" or "Kelas 7" (exact, without letter suffix A, B, C, D)
+  const isClass7 = (name === '7' || lower === 'kelas 7');
+
+  // Standalone 8: "8" or "Kelas 8" (exact, without letter suffix A, B, C, D)
+  const isClass8 = (name === '8' || lower === 'kelas 8');
+
+  // Class 9A
+  const isClass9A = (name === '9A' || name === '9a' || lower === 'kelas 9a' || lower === 'ix-a' || lower === 'ix a');
+
+  // Class 9B
+  const isClass9B = (name === '9B' || name === '9b' || lower === 'kelas 9b' || lower === 'ix-b' || lower === 'ix b');
 
   return isClass7 || isClass8 || isClass9A || isClass9B;
+};
+
+const isUtamaClass = (cls) => {
+  if (!cls) return false;
+  const name = (cls.name || '').trim();
+  const lower = name.toLowerCase();
+
+  // Standalone 7 and 8 are specifically for Jadwal Lokal, keep regular classes in Jadwal Utama
+  if (name === '7' || lower === 'kelas 7') return false;
+  if (name === '8' || lower === 'kelas 8') return false;
+
+  return true;
 };
 
 const scheduleActiveClasses = computed(() => {
   if (activeScheduleType.value === 'lokal') {
     const lokal = classes.value.filter(isLokalClass);
-    return lokal.length > 0 ? lokal : classes.value.slice(0, 4);
+    return lokal.sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }));
   }
-  return classes.value;
+  const utama = classes.value.filter(isUtamaClass);
+  return utama.sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }));
 });
 
-const mainClassesCount = computed(() => classes.value.length);
+const mainClassesCount = computed(() => classes.value.filter(isUtamaClass).length);
 const lokalClassesCount = computed(() => scheduleActiveClasses.value.length);
 
 const setScheduleType = (type) => {
@@ -1007,9 +1038,6 @@ const setScheduleType = (type) => {
 const openLokalClassPicker = () => {
   if (!customLokalClassIds.value || customLokalClassIds.value.length === 0) {
     customLokalClassIds.value = classes.value.filter(isLokalClass).map(c => c.id);
-    if (customLokalClassIds.value.length === 0 && classes.value.length > 0) {
-      customLokalClassIds.value = classes.value.slice(0, 4).map(c => c.id);
-    }
   }
   showLokalClassPicker.value = true;
 };
@@ -1025,9 +1053,18 @@ const toggleLokalClassId = (classId) => {
 };
 
 const resetLokalClassIds = () => {
-  customLokalClassIds.value = [];
   localStorage.removeItem('siakad_lokal_class_ids');
-  toast.success('Pilihan kelas Jadwal Lokal dikembalikan ke deteksi otomatis (7, 8, 9A, 9B)');
+  const matched = classes.value.filter(c => {
+    const name = (c.name || '').trim();
+    const lower = name.toLowerCase();
+    return name === '7' || lower === 'kelas 7' ||
+           name === '8' || lower === 'kelas 8' ||
+           name === '9A' || name === '9a' || lower === 'kelas 9a' ||
+           name === '9B' || name === '9b' || lower === 'kelas 9b';
+  }).map(c => c.id);
+  customLokalClassIds.value = matched;
+  localStorage.setItem('siakad_lokal_class_ids', JSON.stringify(matched));
+  toast.success('Pilihan kelas Jadwal Lokal diset ke: Kelas 7, 8, 9A, dan 9B');
   showLokalClassPicker.value = false;
 };
 
@@ -1527,6 +1564,9 @@ const fetchSchedules = async () => {
 
 const fetchDropdownData = async () => {
   try {
+    // Ensure classes 7 & 8 exist in DB for Jadwal Lokal
+    await api.post('admin/schedules/ensure-lokal-classes').catch(() => null);
+
     const [cRes, sRes, tRes, setRes] = await Promise.all([
       api.get('admin/classes', { all: true, per_page: 500 }).catch(() => null),
       api.get('admin/subjects', { all: true, per_page: 500 }).catch(() => null),
@@ -1546,6 +1586,18 @@ const fetchDropdownData = async () => {
     subjects.value = extractItems(sRes).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'id'));
     teachers.value = extractItems(tRes).sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'id'));
     settings.value = setRes?.data || {};
+
+    // Auto-align customLokalClassIds to exactly 7, 8, 9A, 9B if not properly set to 4 classes
+    if (!customLokalClassIds.value || customLokalClassIds.value.length !== 4) {
+      const autoLokal = classes.value.filter(c => {
+        const n = (c.name || '').trim().toLowerCase();
+        return n === '7' || n === 'kelas 7' || n === '8' || n === 'kelas 8' || n === '9a' || n === 'kelas 9a' || n === '9b' || n === 'kelas 9b';
+      });
+      if (autoLokal.length >= 4) {
+        customLokalClassIds.value = autoLokal.map(c => c.id);
+        localStorage.setItem('siakad_lokal_class_ids', JSON.stringify(customLokalClassIds.value));
+      }
+    }
   } catch (err) {
     console.error('Failed to load dropdown options:', err);
   }

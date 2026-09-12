@@ -68,6 +68,7 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::get('schedules/time-slots', [\App\Http\Controllers\Admin\ScheduleController::class, 'getTimeSlots']);
     Route::post('schedules/time-slots', [\App\Http\Controllers\Admin\ScheduleController::class, 'saveTimeSlots']);
     Route::post('schedules/reset-time-slots', [\App\Http\Controllers\Admin\ScheduleController::class, 'resetTimeSlots']);
+    Route::post('schedules/ensure-lokal-classes', [\App\Http\Controllers\Admin\ScheduleController::class, 'ensureLokalClasses']);
     Route::post('schedules/generate-general-activities', [\App\Http\Controllers\Admin\ScheduleController::class, 'generateGeneralActivities']);
     Route::apiResource('schedules', \App\Http\Controllers\Admin\ScheduleController::class);
     Route::apiResource('posts', PostController::class);

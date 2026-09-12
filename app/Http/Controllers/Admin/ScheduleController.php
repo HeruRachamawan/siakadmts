@@ -404,9 +404,46 @@ class ScheduleController extends Controller
         ];
     }
 
+    public static function ensureLokalClassesExist(): void
+    {
+        $academicYear = \App\Models\AcademicYear::where('is_active', true)->first()
+            ?? \App\Models\AcademicYear::orderBy('id', 'desc')->first();
+
+        if (!$academicYear) {
+            return;
+        }
+
+        // Standalone class '7' for Jadwal Lokal
+        \App\Models\ClassRoom::firstOrCreate(
+            ['name' => '7', 'academic_year_id' => $academicYear->id],
+            ['grade_level' => '7']
+        );
+
+        // Standalone class '8' for Jadwal Lokal
+        \App\Models\ClassRoom::firstOrCreate(
+            ['name' => '8', 'academic_year_id' => $academicYear->id],
+            ['grade_level' => '8']
+        );
+    }
+
+    public function ensureLokalClasses(Request $request)
+    {
+        self::ensureLokalClassesExist();
+        $classes = \App\Models\ClassRoom::orderBy('grade_level')->orderBy('name')->get();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Kelas 7 dan 8 untuk Jadwal Lokal berhasil dipastikan ada',
+            'data' => $classes
+        ]);
+    }
+
     public function getTimeSlots(Request $request)
     {
         $group = $request->input('group', 'utama');
+        if ($group === 'lokal') {
+            self::ensureLokalClassesExist();
+        }
+
         $settingKey = ($group === 'lokal') ? 'schedule_time_slots_lokal' : 'schedule_time_slots';
         $defaults = ($group === 'lokal') ? self::getDefaultTimeSlotsLokal() : self::getDefaultTimeSlots();
 
