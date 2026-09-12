@@ -16,11 +16,17 @@ class ClassController extends BaseController
 
         if ($request->filled('academic_year_id')) {
             $query->where('academic_year_id', $request->input('academic_year_id'));
+        } else {
+            $activeYearId = \App\Models\AcademicYear::where('is_active', true)->value('id');
+            if ($activeYearId) {
+                $query->where('academic_year_id', $activeYearId);
+            }
         }
 
         if ($request->boolean('all') || $request->input('all') === 'true' || $request->input('all') === '1' || $request->input('per_page') == -1) {
             $allClasses = $query->orderBy('grade_level')->orderBy('name')->get();
-            return $this->success($allClasses);
+            $uniqueClasses = $allClasses->unique('name')->values();
+            return $this->success($uniqueClasses);
         }
 
         $perPage = (int) $request->get('per_page', 15);

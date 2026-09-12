@@ -413,17 +413,41 @@ class ScheduleController extends Controller
             return;
         }
 
-        // Standalone class '7' for Jadwal Lokal
-        \App\Models\ClassRoom::firstOrCreate(
-            ['name' => '7', 'academic_year_id' => $academicYear->id],
-            ['grade_level' => '7']
-        );
+        // 1. Deduplicate class '7': Ensure strictly ONE class named '7' exists
+        $class7s = \App\Models\ClassRoom::where('name', '7')->orderBy('id')->get();
+        if ($class7s->count() > 1) {
+            $primary7 = $class7s->first();
+            // Re-assign references and delete duplicates
+            foreach ($class7s->slice(1) as $dup) {
+                \App\Models\Schedule::where('class_id', $dup->id)->update(['class_id' => $primary7->id]);
+                \App\Models\Student::where('class_id', $dup->id)->update(['class_id' => $primary7->id]);
+                $dup->delete();
+            }
+        } elseif ($class7s->isEmpty()) {
+            \App\Models\ClassRoom::create([
+                'name' => '7',
+                'academic_year_id' => $academicYear->id,
+                'grade_level' => '7'
+            ]);
+        }
 
-        // Standalone class '8' for Jadwal Lokal
-        \App\Models\ClassRoom::firstOrCreate(
-            ['name' => '8', 'academic_year_id' => $academicYear->id],
-            ['grade_level' => '8']
-        );
+        // 2. Deduplicate class '8': Ensure strictly ONE class named '8' exists
+        $class8s = \App\Models\ClassRoom::where('name', '8')->orderBy('id')->get();
+        if ($class8s->count() > 1) {
+            $primary8 = $class8s->first();
+            // Re-assign references and delete duplicates
+            foreach ($class8s->slice(1) as $dup) {
+                \App\Models\Schedule::where('class_id', $dup->id)->update(['class_id' => $primary8->id]);
+                \App\Models\Student::where('class_id', $dup->id)->update(['class_id' => $primary8->id]);
+                $dup->delete();
+            }
+        } elseif ($class8s->isEmpty()) {
+            \App\Models\ClassRoom::create([
+                'name' => '8',
+                'academic_year_id' => $academicYear->id,
+                'grade_level' => '8'
+            ]);
+        }
     }
 
     public function ensureLokalClasses(Request $request)
@@ -432,7 +456,7 @@ class ScheduleController extends Controller
         $classes = \App\Models\ClassRoom::orderBy('grade_level')->orderBy('name')->get();
         return response()->json([
             'status' => 'success',
-            'message' => 'Kelas 7 dan 8 untuk Jadwal Lokal berhasil dipastikan ada',
+            'message' => 'Kelas 7 dan 8 untuk Jadwal Lokal berhasil dipastikan dan dibersihkan dari duplikasi',
             'data' => $classes
         ]);
     }

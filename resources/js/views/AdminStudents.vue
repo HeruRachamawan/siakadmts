@@ -40,7 +40,7 @@
           @change="load"
         >
           <option value="">Semua Kelas</option>
-          <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+          <option v-for="cls in studentClasses" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
         </select>
         <svg class="w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </div>
@@ -414,7 +414,7 @@
                   class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-500 cursor-pointer shadow-xs"
                 >
                   <option value="" disabled>-- Pilih Kelas Tujuan --</option>
-                  <option v-for="cls in classes" :key="cls.id" :value="cls.id">
+                  <option v-for="cls in studentClasses" :key="cls.id" :value="cls.id">
                     {{ cls.name }} (Tingkat: {{ cls.grade_level || '-' }} - Wali: {{ cls.homeroom_teacher?.full_name || cls.homeroomTeacher?.full_name || 'Belum ada' }})
                   </option>
                 </select>
@@ -535,6 +535,21 @@ const editing = ref(null);
 const detailStudent = ref(null);
 const students = ref([]);
 const classes = ref([]);
+const studentClasses = computed(() => {
+  const seen = new Set();
+  return classes.value.filter(c => {
+    if (!c || !c.name) return false;
+    const trimmed = (c.name || '').trim();
+    const lower = trimmed.toLowerCase();
+    // Exclude standalone '7' and '8' which are solely for Jadwal Lokal
+    if (trimmed === '7' || lower === 'kelas 7' || trimmed === '8' || lower === 'kelas 8') {
+      return false;
+    }
+    if (seen.has(trimmed)) return false;
+    seen.add(trimmed);
+    return true;
+  });
+});
 const fileInput = ref(null);
 const importing = ref(false);
 
@@ -637,7 +652,7 @@ onMounted(() => {
 
 async function loadClasses() {
   try {
-    const res = await api.get('admin/classes');
+    const res = await api.get('admin/classes', { all: true, per_page: 500 });
     const data = res.data?.data || res.data || [];
     classes.value = Array.isArray(data) ? data : data.data || [];
   } catch {
