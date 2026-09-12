@@ -262,7 +262,7 @@
                   <span>Siswa</span>
                 </span>
                 <span class="text-base font-black text-slate-800 font-lexend mt-0.5">
-                  {{ cls.students_count ?? cls.students?.length ?? 0 }}
+                  {{ isLokalOnly(cls) ? (cls.lokal_students_count ?? 0) : (cls.students_count ?? cls.students?.length ?? 0) }}
                 </span>
                 <span class="text-[10px] text-slate-400 font-medium">Terdaftar</span>
               </div>
@@ -282,14 +282,24 @@
             </div>
           </div>
 
-          <!-- Card Footer: Lihat Siswa Button -->
-          <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span class="text-[11px] text-slate-400 font-medium">
+          <!-- Card Footer: Lihat Siswa & Atur Siswa -->
+          <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
+            <button
+              v-if="activeTab === 'lokal' || isLokalClass(cls)"
+              type="button"
+              @click="openManageStudents(cls)"
+              class="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-[11px] transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+              title="Pilih siswa dari rombel utama untuk dimasukkan ke kelas lokal ini"
+            >
+              <Users class="w-3.5 h-3.5" />
+              <span>Atur Siswa ({{ cls.lokal_students_count ?? 0 }})</span>
+            </button>
+            <span v-else class="text-[11px] text-slate-400 font-medium">
               ID Kelas: <span class="font-mono font-bold text-slate-600">#{{ cls.id }}</span>
             </span>
 
             <router-link
-              :to="{ path: '/admin/students', query: { class_id: cls.id } }"
+              :to="{ path: '/admin/students', query: (isLokalOnly(cls) ? { lokal_class_id: cls.id } : { class_id: cls.id }) }"
               class="font-bold text-slate-700 hover:text-emerald-700 flex items-center gap-1 group/link transition-colors cursor-pointer"
             >
               <span>Lihat Siswa</span>
@@ -373,7 +383,9 @@
                 <td class="px-6 py-4 text-center">
                   <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold font-mono">
                     <Users class="w-3 h-3 text-slate-400" />
-                    <span>{{ row.students_count ?? row.students?.length ?? 0 }} Siswa</span>
+                    <span>
+                      {{ (activeTab === 'lokal' || isLokalOnly(row)) ? (row.lokal_students_count ?? 0) : (row.students_count ?? row.students?.length ?? 0) }} Siswa
+                    </span>
                   </span>
                 </td>
                 <td class="px-6 py-4">
@@ -383,6 +395,15 @@
                 </td>
                 <td class="px-6 py-4 text-center">
                   <div class="flex items-center justify-center gap-2">
+                    <button
+                      v-if="activeTab === 'lokal' || isLokalClass(row)"
+                      @click="openManageStudents(row)"
+                      title="Atur Anggota Siswa Kelas Lokal"
+                      class="px-2.5 py-1.5 rounded-xl flex items-center gap-1 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:border-teal-300 border border-teal-200 transition-all shadow-2xs cursor-pointer text-xs font-bold"
+                    >
+                      <Users class="w-3.5 h-3.5" />
+                      <span>Atur Siswa</span>
+                    </button>
                     <button
                       @click="edit(row)"
                       title="Edit Kelas"
@@ -414,6 +435,14 @@
       @close="showForm = false"
       @save="save"
     />
+
+    <!-- Modal Kelola Anggota Siswa Kelas Lokal -->
+    <LokalClassStudentModal
+      :show="showLokalStudentModal"
+      :class-room="targetLokalClass || {}"
+      @close="showLokalStudentModal = false"
+      @saved="onLokalStudentsSaved"
+    />
   </div>
 </template>
 
@@ -421,6 +450,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { api } from '../api';
 import ClassForm from '../components/ClassForm.vue';
+import LokalClassStudentModal from '../components/LokalClassStudentModal.vue';
 import { useToast } from '../composables/useToast';
 import { useConfirm } from '../composables/useConfirm';
 import {
@@ -446,6 +476,21 @@ const searchQuery = ref('');
 const activeTab = ref('utama'); // 'utama' | 'lokal'
 const viewMode = ref('grid'); // 'grid' | 'table'
 const activeYear = ref(null);
+const showLokalStudentModal = ref(false);
+const targetLokalClass = ref(null);
+
+function openManageStudents(cls) {
+  targetLokalClass.value = cls;
+  showLokalStudentModal.value = true;
+}
+
+function onLokalStudentsSaved({ classId, count }) {
+  const found = classes.value.find(c => c.id === classId);
+  if (found) {
+    found.lokal_students_count = count;
+  }
+  load();
+}
 
 // Kelas Khusus Jadwal Lokal: 7, 8, 9A, 9B
 const isLokalClass = (cls) => {

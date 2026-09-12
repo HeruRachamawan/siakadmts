@@ -47,6 +47,10 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::apiResource('classes', ClassController::class);
     Route::post('classes/{class}/assign-students', [ClassController::class, 'assignStudents'])
         ->name('classes.assign-students');
+    Route::get('classes/{class}/candidate-students', [ClassController::class, 'getCandidateStudents'])
+        ->name('classes.candidate-students');
+    Route::post('classes/{class}/assign-lokal-students', [ClassController::class, 'assignLokalStudents'])
+        ->name('classes.assign-lokal-students');
     Route::apiResource('subjects', SubjectController::class);
     Route::apiResource('facilities', \App\Http\Controllers\Admin\FacilityController::class);
     Route::apiResource('achievements', AchievementController::class);

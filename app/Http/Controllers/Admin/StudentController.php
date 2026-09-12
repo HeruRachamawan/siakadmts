@@ -17,8 +17,19 @@ class StudentController extends BaseController
     {
         $query = Student::with(['user', 'classRoom.academicYear']);
 
-        if ($request->filled('class_id')) {
-            $query->where('class_id', $request->input('class_id'));
+        if ($request->filled('lokal_class_id')) {
+            $query->where('lokal_class_id', $request->input('lokal_class_id'));
+        } elseif ($request->filled('class_id')) {
+            $classId = $request->input('class_id');
+            $targetClass = ClassRoom::find($classId);
+            if ($targetClass && in_array($targetClass->name, ['7', '8'])) {
+                $query->where(function ($q) use ($classId) {
+                    $q->where('lokal_class_id', $classId)
+                      ->orWhere('class_id', $classId);
+                });
+            } else {
+                $query->where('class_id', $classId);
+            }
         }
 
         if ($request->filled('search')) {

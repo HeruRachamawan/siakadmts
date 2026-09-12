@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Student extends Model
 {
     protected $fillable = [
-        'user_id', 'class_id', 'nisn', 'nis', 'nik', 'no_kk', 'full_name', 'gender',
+        'user_id', 'class_id', 'lokal_class_id', 'nisn', 'nis', 'nik', 'no_kk', 'full_name', 'gender',
         'birth_place', 'birth_date', 'religion', 'child_number', 'siblings_count',
         'hobby', 'aspiration', 'address', 'parent_phone',
         'mother_name', 'mother_status', 'mother_nik', 'mother_job', 'mother_income',
@@ -51,6 +51,11 @@ class Student extends Model
     public function classRoom(): BelongsTo
     {
         return $this->belongsTo(ClassRoom::class, 'class_id');
+    }
+
+    public function lokalClassRoom(): BelongsTo
+    {
+        return $this->belongsTo(ClassRoom::class, 'lokal_class_id');
     }
 
     public function grades(): HasMany

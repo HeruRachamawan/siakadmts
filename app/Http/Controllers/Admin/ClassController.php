@@ -12,7 +12,7 @@ class ClassController extends BaseController
 {
     public function index(Request $request)
     {
-        $query = ClassRoom::with(['academicYear', 'homeroomTeacher'])->withCount('students');
+        $query = ClassRoom::with(['academicYear', 'homeroomTeacher'])->withCount(['students', 'lokalStudents']);
 
         if ($request->filled('academic_year_id')) {
             $query->where('academic_year_id', $request->input('academic_year_id'));
@@ -92,5 +92,88 @@ class ClassController extends BaseController
         Student::whereIn('id', $request->input('student_ids'))->update(['class_id' => $class->id]);
 
         return $this->success($class->load('students'), 'Siswa berhasil di-plotting ke kelas');
+    }
+
+    public function getCandidateStudents(ClassRoom $class)
+    {
+        $academicYearId = $class->academic_year_id ?? \App\Models\AcademicYear::where('is_active', true)->value('id');
+        
+        // Find origin classes on the same grade level (e.g. 7A, 7B for level 7)
+        $originClassesQuery = ClassRoom::where('grade_level', $class->grade_level)
+            ->whereNotIn('name', ['7', '8'])
+            ->when($academicYearId, fn($q) => $q->where('academic_year_id', $academicYearId));
+
+        if ($class->name !== '7' && $class->name !== '8') {
+            $originClasses = $originClassesQuery->withCount('students')->orderBy('name')->get();
+        } else {
+            $originClasses = $originClassesQuery->where('id', '!=', $class->id)->withCount('students')->orderBy('name')->get();
+        }
+
+        // If no regular classes found, fallback without academic_year_id filter
+        if ($originClasses->isEmpty()) {
+            $originClasses = ClassRoom::where('grade_level', $class->grade_level)
+                ->where('id', '!=', $class->id)
+                ->withCount('students')
+                ->orderBy('name')
+                ->get();
+        }
+
+        $originClassIds = $originClasses->pluck('id')->toArray();
+
+        // Fetch students from these origin classes OR students already assigned to this lokal class
+        $students = Student::where(function ($q) use ($originClassIds, $class) {
+                if (!empty($originClassIds)) {
+                    $q->whereIn('class_id', $originClassIds);
+                }
+                $q->orWhere('lokal_class_id', $class->id);
+            })
+            ->with('classRoom')
+            ->orderBy('full_name')
+            ->get()
+            ->map(function ($s) use ($class) {
+                return [
+                    'id' => $s->id,
+                    'full_name' => $s->full_name,
+                    'nis' => $s->nis,
+                    'nisn' => $s->nisn,
+                    'gender' => $s->gender,
+                    'origin_class_id' => $s->class_id,
+                    'origin_class_name' => $s->classRoom?->name ?? 'Tanpa Rombel',
+                    'lokal_class_id' => $s->lokal_class_id,
+                    'is_selected' => ($s->lokal_class_id == $class->id),
+                ];
+            });
+
+        return $this->success([
+            'target_class' => $class,
+            'origin_classes' => $originClasses,
+            'students' => $students,
+            'total_selected' => $students->where('is_selected', true)->count(),
+        ]);
+    }
+
+    public function assignLokalStudents(Request $request, ClassRoom $class)
+    {
+        $request->validate([
+            'student_ids' => ['present', 'array'],
+            'student_ids.*' => ['integer', 'exists:students,id'],
+        ]);
+
+        $studentIds = $request->input('student_ids', []);
+
+        // Clear existing assignments for this lokal class
+        Student::where('lokal_class_id', $class->id)->update(['lokal_class_id' => null]);
+
+        // Assign selected students
+        if (!empty($studentIds)) {
+            Student::whereIn('id', $studentIds)->update(['lokal_class_id' => $class->id]);
+        }
+
+        $count = Student::where('lokal_class_id', $class->id)->count();
+
+        return $this->success([
+            'count' => $count,
+            'class_id' => $class->id,
+        ], "Berhasil memperbarui anggota siswa {$class->name} ({$count} siswa)");
     }
 }

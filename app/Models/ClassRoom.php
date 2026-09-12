@@ -27,6 +27,11 @@ class ClassRoom extends Model
         return $this->hasMany(Student::class, 'class_id');
     }
 
+    public function lokalStudents(): HasMany
+    {
+        return $this->hasMany(Student::class, 'lokal_class_id');
+    }
+
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class, 'class_id');
