@@ -12,7 +12,7 @@ class ClassController extends BaseController
 {
     public function index(Request $request)
     {
-        $query = ClassRoom::with(['academicYear', 'homeroomTeacher', 'students']);
+        $query = ClassRoom::with(['academicYear', 'homeroomTeacher'])->withCount('students');
 
         if ($request->filled('academic_year_id')) {
             $query->where('academic_year_id', $request->input('academic_year_id'));
