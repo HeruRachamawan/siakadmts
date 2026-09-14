@@ -203,23 +203,27 @@
               <!-- Hobi -->
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Hobi Siswa</label>
-                <input
+                <select
                   v-model="form.hobby"
-                  type="text"
-                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all"
-                  placeholder="Contoh: Membaca, Sepakbola"
-                />
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium cursor-pointer"
+                >
+                  <option value="">-- Pilih Hobi --</option>
+                  <option v-for="item in hobbyOptions" :key="item" :value="item">{{ item }}</option>
+                  <option v-if="form.hobby && !hobbyOptions.includes(form.hobby)" :value="form.hobby">{{ form.hobby }}</option>
+                </select>
               </div>
 
               <!-- Cita-cita -->
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Cita - cita</label>
-                <input
+                <select
                   v-model="form.aspiration"
-                  type="text"
-                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all"
-                  placeholder="Contoh: Guru, Dokter, Da'i"
-                />
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium cursor-pointer"
+                >
+                  <option value="">-- Pilih Cita - cita --</option>
+                  <option v-for="item in aspirationOptions" :key="item" :value="item">{{ item }}</option>
+                  <option v-if="form.aspiration && !aspirationOptions.includes(form.aspiration)" :value="form.aspiration">{{ form.aspiration }}</option>
+                </select>
               </div>
 
               <!-- No. HP / WhatsApp Orang Tua -->
@@ -433,6 +437,27 @@ const loading = ref(true);
 const saving = ref(false);
 const user = ref(null);
 const studentData = ref(null);
+const hobbyOptions = [
+  'Olahraga',
+  'Kesenian',
+  'Membaca',
+  'Menulis',
+  'Jalan-jalan',
+  'Lainnya',
+];
+
+const aspirationOptions = [
+  'PNS',
+  'TNI/Polri',
+  'Guru/Dosen',
+  'Dokter',
+  'Politikus',
+  'Wiraswasta',
+  'Seniman/Artis',
+  'Ilmuwan',
+  'Agamawan',
+  'Lainnya',
+];
 
 const form = reactive({
   full_name: '',

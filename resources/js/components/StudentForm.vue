@@ -339,31 +339,27 @@
               <!-- Hobi Siswa -->
               <div class="space-y-1.5 sm:col-span-2 md:col-span-1">
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide">Hobi</label>
-                <input
+                <select
                   v-model="form.hobby"
-                  type="text"
-                  list="hobby-suggestions-list"
-                  class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium"
-                  placeholder="Pilih / ketik hobi..."
-                />
-                <datalist id="hobby-suggestions-list">
-                  <option v-for="item in hobbySuggestions" :key="item" :value="item" />
-                </datalist>
+                  class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium cursor-pointer"
+                >
+                  <option value="">-- Pilih Hobi --</option>
+                  <option v-for="item in hobbyOptions" :key="item" :value="item">{{ item }}</option>
+                  <option v-if="form.hobby && !hobbyOptions.includes(form.hobby)" :value="form.hobby">{{ form.hobby }}</option>
+                </select>
               </div>
 
               <!-- Cita-cita Siswa -->
               <div class="space-y-1.5 sm:col-span-2 md:col-span-1">
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide">Cita - cita</label>
-                <input
+                <select
                   v-model="form.aspiration"
-                  type="text"
-                  list="aspiration-suggestions-list"
-                  class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium"
-                  placeholder="Pilih / ketik cita-cita..."
-                />
-                <datalist id="aspiration-suggestions-list">
-                  <option v-for="item in aspirationSuggestions" :key="item" :value="item" />
-                </datalist>
+                  class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium cursor-pointer"
+                >
+                  <option value="">-- Pilih Cita - cita --</option>
+                  <option v-for="item in aspirationOptions" :key="item" :value="item">{{ item }}</option>
+                  <option v-if="form.aspiration && !aspirationOptions.includes(form.aspiration)" :value="form.aspiration">{{ form.aspiration }}</option>
+                </select>
               </div>
             </div>
           </div>
@@ -763,31 +759,26 @@ const religionOptions = ref([
   'Khonghucu',
 ]);
 
-const hobbySuggestions = ref([
-  'Membaca Buku / Novel',
-  'Olahraga / Futsal / Sepakbola',
-  'Menggambar / Melukis',
-  'Coding / Komputer',
-  'Kaligrafi Islam',
-  'Bermain Musik / Hadrah',
-  'Menulis / Jurnalistik',
-  'Memasak / Tata Boga',
-  'Fotografi / Videografi',
-  'Pramuka / Menjelajah Alam',
+const hobbyOptions = ref([
+  'Olahraga',
+  'Kesenian',
+  'Membaca',
+  'Menulis',
+  'Jalan-jalan',
+  'Lainnya',
 ]);
 
-const aspirationSuggestions = ref([
-  'Guru / Dosen / Pendidik',
-  'Dokter / Tenaga Medis',
-  'Polisi / TNI',
-  'Programmer / Software Engineer',
-  'Pengusaha / Wirausahawan',
-  'Da\'i / Ustadz / Tokoh Agama',
-  'Arsitek / Insinyur Teknik',
-  'Pilot / Penerbang',
-  'Atlet Nasional',
-  'Seniman / Desainer Grafis',
-  'Akuntan / Bankir',
+const aspirationOptions = ref([
+  'PNS',
+  'TNI/Polri',
+  'Guru/Dosen',
+  'Dokter',
+  'Politikus',
+  'Wiraswasta',
+  'Seniman/Artis',
+  'Ilmuwan',
+  'Agamawan',
+  'Lainnya',
 ]);
 
 const form = reactive({
