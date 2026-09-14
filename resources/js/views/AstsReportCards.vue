@@ -1659,12 +1659,14 @@ function triggerPrint() {
   });
 
   const contentHtml = printElem.innerHTML;
+  const originUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
   printWindow.document.open();
   printWindow.document.write(`<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="utf-8">
+  <base href="${originUrl}/">
   <title>Cetak Rapor ASTS - ${ledgerData.value?.class?.name || 'Siswa'}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1680,7 +1682,10 @@ function triggerPrint() {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
-    body, html {
+    html {
+      font-size: 16px !important;
+    }
+    body {
       background: #ffffff !important;
       color: #0f172a !important;
       padding: 0 !important;
@@ -1688,6 +1693,23 @@ function triggerPrint() {
       font-family: 'Inter', system-ui, sans-serif !important;
       font-size: 10px !important;
       line-height: 1.25 !important;
+    }
+    .kop-logo-box {
+      display: flex !important;
+      width: 72px !important;
+      height: 72px !important;
+      min-width: 72px !important;
+      min-height: 72px !important;
+      max-width: 72px !important;
+      max-height: 72px !important;
+    }
+    .kop-logo-img {
+      display: block !important;
+      width: 72px !important;
+      height: 72px !important;
+      max-width: 72px !important;
+      max-height: 72px !important;
+      object-fit: contain !important;
     }
     .print-sheet {
       border: none !important;
@@ -1727,13 +1749,43 @@ function triggerPrint() {
 </html>`);
 
   printWindow.document.close();
-  printWindow.focus();
 
-  // Wait for images and fonts to load before triggering print
-  setTimeout(() => {
+  // Wait for images to load cleanly before triggering print dialog
+  const triggerActualPrint = () => {
+    printWindow.focus();
     printWindow.print();
     printWindow.close();
-  }, 400);
+  };
+
+  const imgs = printWindow.document.images;
+  if (imgs && imgs.length > 0) {
+    let loadedCount = 0;
+    let printed = false;
+    const checkDone = () => {
+      loadedCount++;
+      if (loadedCount >= imgs.length && !printed) {
+        printed = true;
+        setTimeout(triggerActualPrint, 250);
+      }
+    };
+    for (let i = 0; i < imgs.length; i++) {
+      if (imgs[i].complete) {
+        checkDone();
+      } else {
+        imgs[i].addEventListener('load', checkDone);
+        imgs[i].addEventListener('error', checkDone);
+      }
+    }
+    // Fallback safety timeout
+    setTimeout(() => {
+      if (!printed) {
+        printed = true;
+        triggerActualPrint();
+      }
+    }, 1200);
+  } else {
+    setTimeout(triggerActualPrint, 350);
+  }
 }
 
 function exportLedgerExcel() {

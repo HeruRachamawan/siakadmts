@@ -1,33 +1,39 @@
 <template>
   <div class="space-y-2 text-slate-900 font-inter text-[10px] leading-tight max-w-full">
-    <!-- 1. KOP SURAT RESMI MADRASAH -->
-    <div class="border-b-2 border-double border-slate-900 pb-1.5 flex items-center gap-2 sm:gap-3">
-      <div class="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 flex items-center justify-center p-0.5">
+    <!-- 1. KOP SURAT RESMI MADRASAH (PROPORTIONAL & PERFECTLY CENTERED) -->
+    <div class="border-b-[3px] border-double border-slate-900 pb-2 flex items-center justify-between gap-3">
+      <!-- Left: Official Logo Box with fixed exact dimensions -->
+      <div class="kop-logo-box flex-shrink-0 flex items-center justify-center" style="width: 72px; height: 72px; min-width: 72px; min-height: 72px;">
         <img
           v-if="report?.school_setting?.logo_url"
           :src="getImageUrl(report.school_setting.logo_url)"
-          class="w-full h-full object-contain"
-          alt="Logo Sekolah"
+          class="kop-logo-img object-contain"
+          style="width: 72px; height: 72px; max-width: 72px; max-height: 72px;"
+          alt="Logo Madrasah"
         />
-        <div v-else class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-black text-base sm:text-lg font-serif">
+        <div v-else class="w-16 h-16 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-black text-xl font-serif">
           MTS
         </div>
       </div>
 
-      <div class="flex-1 text-center pr-0 sm:pr-8">
-        <h3 class="text-[10px] sm:text-[11px] font-bold text-slate-700 uppercase tracking-wider leading-tight">
+      <!-- Center: School Details (Dead Center because of symmetrical right spacer) -->
+      <div class="flex-1 text-center px-1">
+        <h3 class="text-[11px] sm:text-[12px] font-bold text-slate-800 uppercase tracking-wider leading-tight">
           {{ report?.school_setting?.foundation_name || 'YAYASAN PENDIDIKAN ISLAM AL - HASANAH' }}
         </h3>
-        <h1 class="text-xs sm:text-base font-black text-slate-950 uppercase font-lexend tracking-wide mt-0.5 leading-tight">
+        <h1 class="text-sm sm:text-[17px] font-black text-slate-950 uppercase font-lexend tracking-wide mt-0.5 leading-tight">
           {{ report?.school_setting?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH' }}
         </h1>
-        <p class="text-[8.5px] sm:text-[9.5px] text-slate-600 font-medium mt-0.5">
+        <p class="text-[9.5px] sm:text-[10px] text-slate-700 font-medium mt-0.5 leading-tight">
           {{ report?.school_setting?.address || 'Jl. Ciapus Sukamakmur No.05, Kec. Ciomas, Kab. Bogor' }}
         </p>
-        <p class="text-[8px] sm:text-[8.5px] text-slate-500 font-mono">
+        <p class="text-[8.5px] sm:text-[9px] text-slate-600 font-mono mt-0.5">
           Telp: {{ report?.school_setting?.phone || '081617666017' }} &bull; Email: {{ report?.school_setting?.email || 'mtsalhasanah.ciomas@gmail.com' }}
         </p>
       </div>
+
+      <!-- Right: Symmetrical Spacer to keep the center text perfectly balanced on the page -->
+      <div class="kop-logo-box flex-shrink-0 hidden sm:flex items-center justify-center print:flex" style="width: 72px; height: 72px; min-width: 72px; min-height: 72px;"></div>
     </div>
 
     <!-- 2. JUDUL LEMBAR RAPOR ASTS -->
@@ -344,6 +350,9 @@ function getImageUrl(path) {
   if (!path) return '';
   if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
   const clean = path.replace(/^\/?storage\//, '').replace(/^\//, '');
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}/storage/${clean}`;
+  }
   return `/storage/${clean}`;
 }
 </script>
@@ -351,4 +360,34 @@ function getImageUrl(path) {
 <style scoped>
 .font-inter { font-family: 'Inter', system-ui, sans-serif; }
 .font-lexend { font-family: 'Lexend', system-ui, sans-serif; }
+
+.kop-logo-box {
+  width: 72px;
+  height: 72px;
+}
+
+.kop-logo-img {
+  width: 72px;
+  height: 72px;
+  max-width: 72px;
+  max-height: 72px;
+  object-fit: contain;
+}
+
+@media print {
+  .kop-logo-box {
+    display: flex !important;
+    width: 72px !important;
+    height: 72px !important;
+    min-width: 72px !important;
+    min-height: 72px !important;
+  }
+  .kop-logo-img {
+    width: 72px !important;
+    height: 72px !important;
+    max-width: 72px !important;
+    max-height: 72px !important;
+    object-fit: contain !important;
+  }
+}
 </style>
