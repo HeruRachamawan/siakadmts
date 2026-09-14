@@ -520,26 +520,67 @@
       <div class="lg:col-span-5 bg-white p-5 sm:p-6 rounded-lg border border-slate-200 shadow-2xs space-y-5">
         <div class="border-b border-slate-100 pb-3">
           <h3 class="text-base font-bold text-slate-900">Formulir Surat Keterangan Siswa</h3>
-          <p class="text-xs text-slate-500 mt-0.5">Cari siswa aktif dan terbitkan surat keterangan resmi dengan nomor agenda otomatis.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Pilih kelas dan siswa aktif untuk menerbitkan surat keterangan resmi dengan nomor agenda otomatis.</p>
         </div>
 
         <div class="space-y-4">
+          <!-- 1. Filter Kelas -->
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pilih Siswa Aktif <span class="text-rose-500">*</span></label>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+              1. Pilih Kelas Siswa <span class="text-xs font-normal text-slate-400">(Saring berdasarkan kelas)</span>
+            </label>
             <select
-              v-model="certForm.student_id"
-              @change="onSelectCertStudent"
-              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              v-model="selectedCertClassId"
+              @change="onCertClassChange"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
             >
-              <option value="">-- Pilih Siswa --</option>
-              <option v-for="s in studentList" :key="s.id" :value="s.id">
-                {{ s.full_name }} (NISN: {{ s.nisn || '-' }} | Kelas: {{ s.class_room?.name || s.classRoom?.name || '-' }})
+              <option value="">-- Semua Kelas (Tampilkan Semua Siswa) --</option>
+              <option v-for="c in classList" :key="c.id" :value="c.id">
+                Kelas {{ c.name }} (Tingkat {{ c.grade_level }})
               </option>
             </select>
           </div>
 
+          <!-- 2. Pilih / Cari Siswa -->
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Keperluan Surat <span class="text-rose-500">*</span></label>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-xs font-semibold text-slate-700">
+                2. Pilih Siswa Aktif <span class="text-rose-500">*</span>
+              </label>
+              <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                {{ filteredCertStudents.length }} Siswa
+              </span>
+            </div>
+
+            <!-- Quick Search Box -->
+            <div class="relative mb-2">
+              <Search class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                v-model="certStudentSearch"
+                type="text"
+                placeholder="Ketik nama atau NIS / NISN siswa..."
+                class="w-full pl-8.5 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <select
+              v-model="certForm.student_id"
+              @change="onSelectCertStudent"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+            >
+              <option value="">-- Klik untuk Memilih Siswa --</option>
+              <option v-for="s in filteredCertStudents" :key="s.id" :value="s.id">
+                {{ s.full_name }} (NIS: {{ s.nis || '-' }} | NISN: {{ s.nisn || '-' }} | Kls: {{ s.class_room?.name || s.classRoom?.name || '-' }})
+              </option>
+            </select>
+            <p v-if="filteredCertStudents.length === 0" class="text-[11px] text-amber-600 font-semibold mt-1">
+              ⚠️ Tidak ada siswa yang cocok dengan kelas / pencarian di atas.
+            </p>
+          </div>
+
+          <!-- 3. Keperluan Surat -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">3. Keperluan Surat <span class="text-rose-500">*</span></label>
             <input
               v-model="certForm.purpose"
               type="text"
@@ -548,8 +589,9 @@
             />
           </div>
 
+          <!-- 4. Tanggal Surat -->
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Tanggal Surat</label>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">4. Tanggal Surat</label>
             <input
               v-model="certForm.letter_date"
               type="date"
@@ -604,7 +646,7 @@
             <tr>
               <td class="py-1 font-semibold">Tempat, Tgl Lahir</td>
               <td class="py-1">:</td>
-              <td class="py-1">{{ selectedStudentPreview?.pob || '-' }}, {{ formatDate(selectedStudentPreview?.dob) }}</td>
+              <td class="py-1">{{ selectedStudentPreview?.birth_place || selectedStudentPreview?.pob || '-' }}, {{ formatDate(selectedStudentPreview?.birth_date || selectedStudentPreview?.dob) }}</td>
             </tr>
             <tr>
               <td class="py-1 font-semibold">Kelas</td>
@@ -614,7 +656,7 @@
             <tr>
               <td class="py-1 font-semibold">Nama Orang Tua / Wali</td>
               <td class="py-1">:</td>
-              <td class="py-1">{{ selectedStudentPreview?.parent_name || selectedStudentPreview?.father_name || '-' }}</td>
+              <td class="py-1">{{ selectedStudentPreview?.father_name || selectedStudentPreview?.mother_name || selectedStudentPreview?.guardian_name || selectedStudentPreview?.parent_name || '-' }}</td>
             </tr>
           </table>
 
@@ -1063,6 +1105,35 @@ const dispositionForm = reactive({
   disposition_notes: ''
 });
 
+const classList = ref([]);
+const selectedCertClassId = ref('');
+const certStudentSearch = ref('');
+
+const filteredCertStudents = computed(() => {
+  let list = studentList.value;
+  if (selectedCertClassId.value) {
+    list = list.filter(s => s.class_id == selectedCertClassId.value || s.lokal_class_id == selectedCertClassId.value);
+  }
+  if (certStudentSearch.value.trim()) {
+    const q = certStudentSearch.value.trim().toLowerCase();
+    list = list.filter(s => 
+      (s.full_name && s.full_name.toLowerCase().includes(q)) ||
+      (s.nisn && s.nisn.includes(q)) ||
+      (s.nis && s.nis.includes(q))
+    );
+  }
+  return list;
+});
+
+function onCertClassChange() {
+  if (certForm.student_id) {
+    const exists = filteredCertStudents.value.some(s => s.id == certForm.student_id);
+    if (!exists) {
+      certForm.student_id = '';
+    }
+  }
+}
+
 const certForm = reactive({
   student_id: '',
   purpose: 'Persyaratan Beasiswa PIP / Tunjangan Pendidikan',
@@ -1125,14 +1196,29 @@ async function fetchLetters(page = 1) {
 
 async function loadInitialData() {
   try {
-    const [publicRes, studentsRes] = await Promise.all([
+    const [publicRes, studentsRes, classesRes] = await Promise.all([
       api.get('/public'),
-      api.get('admin/students', { params: { per_page: 500 } })
+      api.get('admin/students', { params: { per_page: 500 } }),
+      api.get('admin/classes', { params: { all: true, per_page: 500 } }).catch(() => null)
     ]);
     appSettings.value = publicRes?.settings || publicRes || {};
-    studentList.value = studentsRes?.data?.students?.data || studentsRes?.data || studentsRes || [];
+
+    // Safely parse paginated student data array
+    const rawStudents = studentsRes?.data?.data?.data 
+      || studentsRes?.data?.data 
+      || studentsRes?.data?.students?.data 
+      || studentsRes?.data?.students 
+      || [];
+    studentList.value = Array.isArray(rawStudents) ? rawStudents : [];
+
+    // Safely parse classes
+    const rawClasses = classesRes?.data?.data 
+      || classesRes?.data?.classes 
+      || classesRes?.data 
+      || [];
+    classList.value = Array.isArray(rawClasses) ? rawClasses : [];
   } catch (err) {
-    console.error('Failed loading initial settings or students', err);
+    console.error('Failed loading initial settings, classes, or students', err);
   }
 }
 
@@ -1237,6 +1323,7 @@ async function generateCertificate() {
     previewCertData.value = data?.letter || {};
     toast.success('Surat Keterangan Aktif Siswa berhasil diterbitkan!');
     printDocument('printable-student-cert', 'Surat Keterangan Aktif Siswa');
+    fetchLetters(1);
   } catch (error) {
     console.error('Error generating cert:', error);
     toast.error('Gagal menerbitkan surat keterangan siswa.');
