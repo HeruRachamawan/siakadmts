@@ -46,6 +46,9 @@ class AstsReportController extends Controller
             }
         }
 
+        $defaultCity = $rawSettings['asts_issued_city'] ?? 'Bogor';
+        $defaultDate = $rawSettings['asts_issued_date'] ?? now()->format('Y-m-d');
+
         return response()->json([
             'status' => 'success',
             'data' => [
@@ -55,6 +58,10 @@ class AstsReportController extends Controller
                 'school_setting' => $schoolSetting,
                 'settings' => $rawSettings,
                 'homeroom_class_id' => $homeroomClassId,
+                'default_titimangsa' => [
+                    'city' => $defaultCity,
+                    'issued_date' => $defaultDate,
+                ],
             ]
         ]);
     }
@@ -428,6 +435,46 @@ class AstsReportController extends Controller
     }
 
     /**
+     * Save titimangsa (issuing place & date) for report cards.
+     */
+    public function saveTitimangsa(Request $request)
+    {
+        $request->validate([
+            'class_id' => 'nullable|exists:classes,id',
+            'semester' => 'required|string|in:ganjil,genap',
+            'city' => 'required|string|max:100',
+            'issued_date' => 'required|date',
+        ]);
+
+        $classId = $request->input('class_id');
+        $semester = $request->input('semester');
+        $city = trim($request->input('city'));
+        $issuedDate = $request->input('issued_date'); // Y-m-d
+
+        // Save class+semester specific keys
+        if ($classId) {
+            \App\Models\Setting::updateOrCreate(['key' => "asts_issued_city_{$classId}_{$semester}"], ['value' => $city]);
+            \App\Models\Setting::updateOrCreate(['key' => "asts_issued_date_{$classId}_{$semester}"], ['value' => $issuedDate]);
+        }
+
+        // Also update default fallback keys
+        \App\Models\Setting::updateOrCreate(['key' => 'asts_issued_city'], ['value' => $city]);
+        \App\Models\Setting::updateOrCreate(['key' => 'asts_issued_date'], ['value' => $issuedDate]);
+
+        $formatted = \Carbon\Carbon::parse($issuedDate)->locale('id')->translatedFormat('d F Y');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Titimangsa berhasil disimpan: {$city}, {$formatted}",
+            'data' => [
+                'city' => $city,
+                'issued_date' => $formatted,
+                'raw_issued_date' => $issuedDate,
+            ]
+        ]);
+    }
+
+    /**
      * Adjust student rankings with optional smart score adjustment.
      */
     public function adjustRanks(Request $request)
@@ -791,6 +838,22 @@ class AstsReportController extends Controller
 
         $avg = $countScore > 0 ? round($totalScore / $countScore, 2) : 0;
 
+        // Titimangsa (Tempat & Tanggal Terbit Rapor)
+        $cityKey = $student->class_id ? "asts_issued_city_{$student->class_id}_{$semester}" : null;
+        $dateKey = $student->class_id ? "asts_issued_date_{$student->class_id}_{$semester}" : null;
+
+        $cityVal = ($cityKey && !empty($rawSettings[$cityKey])) 
+            ? $rawSettings[$cityKey] 
+            : ($rawSettings['asts_issued_city'] ?? 'Bogor');
+
+        $dateVal = ($dateKey && !empty($rawSettings[$dateKey])) 
+            ? $rawSettings[$dateKey] 
+            : ($rawSettings['asts_issued_date'] ?? null);
+
+        $formattedDate = $dateVal 
+            ? \Carbon\Carbon::parse($dateVal)->locale('id')->translatedFormat('d F Y') 
+            : now()->locale('id')->translatedFormat('d F Y');
+
         return [
             'student' => [
                 'id' => $student->id,
@@ -832,8 +895,9 @@ class AstsReportController extends Controller
                 'principal_nip' => $principalTeacher?->nip ?? '-',
                 'logo_url' => $rawSettings['app_logo'] ?? ($schoolSetting?->logo_url ?? null),
             ],
-            'issued_date' => now()->translatedFormat('d F Y'),
-            'city' => 'Bogor',
+            'issued_date' => $formattedDate,
+            'raw_issued_date' => $dateVal ?: now()->format('Y-m-d'),
+            'city' => $cityVal,
         ];
     }
 }

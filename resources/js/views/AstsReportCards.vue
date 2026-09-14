@@ -371,6 +371,17 @@
               <span>Atur Peringkat</span>
             </button>
 
+            <!-- Atur Titimangsa Rapor -->
+            <button
+              type="button"
+              @click="openTitimangsaModal"
+              class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              title="Atur Tempat dan Tanggal Resmi Penerbitan Rapor ASTS"
+            >
+              <Calendar class="w-3.5 h-3.5 text-amber-600" />
+              <span>Titimangsa Rapor</span>
+            </button>
+
             <!-- Trigger Print Button -->
             <button
               @click="triggerPrint"
@@ -478,6 +489,7 @@
                 :report="singleReportData" 
                 :allow-edit="true" 
                 @edit-notes="openNotesModalForCurrentStudent" 
+                @edit-titimangsa="openTitimangsaModal"
               />
               <div v-else class="text-center py-24 text-slate-400 text-xs font-medium">
                 Pilih salah satu siswa di panel sebelah kiri untuk menampilkan rapor.
@@ -810,6 +822,90 @@
         </div>
       </div>
     </div>
+
+    <!-- MODAL ATUR TITIMANGSA RAPOR (TEMPAT & TANGGAL CETAK) -->
+    <div v-if="showTitimangsaModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 no-print">
+      <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 transform transition-all">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-amber-500/10 via-amber-50 to-transparent">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+              <Calendar class="w-5 h-5" />
+            </div>
+            <div>
+              <h2 class="text-base font-black text-slate-800 font-lexend uppercase tracking-wider">Atur Titimangsa Rapor</h2>
+              <p class="text-xs text-slate-500 font-medium">Kelas {{ ledgerData?.class?.name }} • Semester {{ activeSemester === 'genap' ? 'Genap' : 'Ganjil' }}</p>
+            </div>
+          </div>
+          <button @click="showTitimangsaModal = false" class="w-8 h-8 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 cursor-pointer">
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
+        <form @submit.prevent="saveTitimangsaSubmit" class="p-6 space-y-4">
+          <!-- Input Tempat / Kota -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Tempat Penerbitan (Kota / Kecamatan)</label>
+            <input
+              v-model="titimangsaForm.city"
+              type="text"
+              required
+              placeholder="Contoh: Bogor, Ciomas, Kab. Bogor"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-amber-400 focus:bg-white transition-all"
+            />
+          </div>
+
+          <!-- Input Tanggal Cetak -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Tanggal Resmi Rapor</label>
+              <button
+                type="button"
+                @click="setTitimangsaToday"
+                class="text-[10px] font-bold text-amber-700 hover:underline cursor-pointer"
+              >
+                Gunakan Hari Ini
+              </button>
+            </div>
+            <input
+              v-model="titimangsaForm.issued_date"
+              type="date"
+              required
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-amber-400 focus:bg-white transition-all font-mono"
+            />
+          </div>
+
+          <!-- Preview Box -->
+          <div class="p-3.5 bg-amber-50/80 border border-amber-200 rounded-2xl text-xs space-y-1 text-amber-950">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-800">Format di Lembar Rapor:</div>
+            <div class="text-sm font-black font-lexend text-slate-900 bg-white p-2 rounded-xl border border-amber-200 text-right">
+              {{ formattedPreviewTitimangsa }}
+            </div>
+            <p class="text-[10px] text-amber-700 leading-normal">
+              *Titimangsa ini akan tercetak seragam pada seluruh lembar rapor siswa kelas ini (baik pratinjau maupun cetak 1 kelas).
+            </p>
+          </div>
+
+          <div class="pt-3 flex justify-end gap-2 border-t border-slate-100">
+            <button
+              type="button"
+              @click="showTitimangsaModal = false"
+              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              :disabled="savingTitimangsa"
+              class="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
+            >
+              <Check class="w-4 h-4" />
+              <span>{{ savingTitimangsa ? 'Menyimpan...' : 'Simpan Titimangsa' }}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -835,6 +931,7 @@ import {
   RotateCcw,
   Check,
   Pencil,
+  Calendar,
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -881,6 +978,36 @@ const notesForm = reactive({
 // Modal Pull Scores
 const showPullModal = ref(false);
 const selectedScoreSource = ref('final'); // 'final' (Nilai Jadi) | 'raw' (Nilai Asli)
+
+// Modal Titimangsa
+const showTitimangsaModal = ref(false);
+const savingTitimangsa = ref(false);
+const titimangsaForm = reactive({
+  city: 'Bogor',
+  issued_date: '',
+});
+
+const formattedPreviewTitimangsa = computed(() => {
+  if (!titimangsaForm.issued_date) return `${titimangsaForm.city || 'Bogor'}, (Tanggal belum dipilih)`;
+  try {
+    const parts = titimangsaForm.issued_date.split('-');
+    if (parts.length === 3) {
+      const year = parts[0];
+      const monthIdx = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+      return `${titimangsaForm.city || 'Bogor'}, ${day} ${months[monthIdx] || ''} ${year}`;
+    }
+  } catch (e) {}
+  return `${titimangsaForm.city || 'Bogor'}, ${titimangsaForm.issued_date}`;
+});
+
+const currentTitimangsaSummary = computed(() => {
+  if (singleReportData.value?.city && singleReportData.value?.issued_date) {
+    return `${singleReportData.value.city}, ${singleReportData.value.issued_date}`;
+  }
+  return formattedPreviewTitimangsa.value || 'Otomatis';
+});
 
 // Modal Rank Adjuster
 const showRankModal = ref(false);
@@ -1132,6 +1259,47 @@ async function saveNotesSubmit() {
     toast.error('Gagal menyimpan catatan wali kelas.');
   } finally {
     savingNotes.value = false;
+  }
+}
+
+function openTitimangsaModal() {
+  if (singleReportData.value?.city) {
+    titimangsaForm.city = singleReportData.value.city;
+  }
+  if (singleReportData.value?.raw_issued_date) {
+    titimangsaForm.issued_date = singleReportData.value.raw_issued_date;
+  } else if (!titimangsaForm.issued_date) {
+    titimangsaForm.issued_date = new Date().toISOString().split('T')[0];
+  }
+  showTitimangsaModal.value = true;
+}
+
+function setTitimangsaToday() {
+  titimangsaForm.issued_date = new Date().toISOString().split('T')[0];
+}
+
+async function saveTitimangsaSubmit() {
+  if (!selectedClassId.value) {
+    toast.error('Silakan pilih kelas terlebih dahulu.');
+    return;
+  }
+  savingTitimangsa.value = true;
+  try {
+    const res = await api.post('/teacher/asts-reports/save-titimangsa', {
+      class_id: selectedClassId.value,
+      semester: activeSemester.value,
+      city: titimangsaForm.city,
+      issued_date: titimangsaForm.issued_date,
+    });
+    toast.success(res?.message || 'Titimangsa rapor berhasil disimpan!');
+    showTitimangsaModal.value = false;
+    if (activeSubTab.value === 'print' || selectedStudentId.value) {
+      await fetchPrintData();
+    }
+  } catch (err) {
+    toast.error('Gagal menyimpan titimangsa rapor.');
+  } finally {
+    savingTitimangsa.value = false;
   }
 }
 

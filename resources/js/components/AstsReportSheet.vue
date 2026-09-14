@@ -273,8 +273,17 @@
 
     <!-- 6. TITIMANGSA & BLOK TANDA TANGAN RESMI -->
     <div class="pt-2 space-y-1 break-inside-avoid">
-      <div class="text-right text-[10.5px] font-bold text-slate-800 pr-2">
-        {{ report?.city || 'Bogor' }}, {{ report?.issued_date || '........................' }}
+      <div class="text-right text-[10.5px] font-bold text-slate-800 pr-2 flex items-center justify-end gap-1.5">
+        <span>{{ report?.city || 'Bogor' }}, {{ report?.issued_date || '........................' }}</span>
+        <button
+          v-if="allowEdit"
+          type="button"
+          @click="$emit('edit-titimangsa')"
+          class="no-print text-amber-700 hover:text-amber-950 font-bold text-[8.5px] cursor-pointer"
+          title="Ubah Tempat dan Tanggal Titimangsa Rapor"
+        >
+          ✏️ Edit Titimangsa
+        </button>
       </div>
 
       <div class="grid grid-cols-3 text-center text-[10px] gap-2 pt-1">
@@ -327,7 +336,7 @@ defineProps({
   },
 });
 
-defineEmits(['edit-notes']);
+defineEmits(['edit-notes', 'edit-titimangsa']);
 
 function getImageUrl(path) {
   if (!path) return '';
