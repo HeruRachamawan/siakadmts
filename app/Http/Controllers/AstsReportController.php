@@ -727,6 +727,9 @@ class AstsReportController extends Controller
 
         $schoolSetting = SchoolSetting::first();
         $rawSettings = \App\Models\Setting::all()->pluck('value', 'key')->toArray();
+        $principalTeacher = !empty($rawSettings['principal_teacher_id']) 
+            ? \App\Models\Teacher::find($rawSettings['principal_teacher_id']) 
+            : \App\Models\Teacher::where('position', 'like', '%Kepala%')->first();
 
         $avg = $countScore > 0 ? round($totalScore / $countScore, 2) : 0;
 
@@ -760,14 +763,14 @@ class AstsReportController extends Controller
             ],
             'homeroom_notes' => $astsReport?->homeroom_notes ?? 'Tingkatkan terus semangat belajar, ketekunan ibadah, dan keaktifan dalam kegiatan madrasah.',
             'school_setting' => [
-                'school_name' => $schoolSetting?->school_name ?? ($rawSettings['school_name'] ?? 'MADRASAH TSANAWIYAH AL-HASANAH'),
-                'foundation_name' => $rawSettings['school_foundation'] ?? 'YAYASAN PENDIDIKAN ISLAM',
-                'address' => $schoolSetting?->address ?? ($rawSettings['school_address'] ?? 'Jl. Raya Ciomas No. 123, Kab. Bogor'),
-                'phone' => $schoolSetting?->phone ?? ($rawSettings['school_phone'] ?? '(0251) 8631234'),
-                'email' => $schoolSetting?->email ?? ($rawSettings['school_email'] ?? 'info@mtsalhasanah.sch.id'),
-                'principal_name' => $schoolSetting?->principal_name ?? ($rawSettings['principal_name'] ?? 'H. Ahmad Fauzi, M.Pd.I'),
-                'principal_nip' => $schoolSetting?->principal_nip ?? ($rawSettings['principal_nip'] ?? '197508152005011004'),
-                'logo_url' => $schoolSetting?->logo_url ?? ($rawSettings['app_logo'] ?? null),
+                'school_name' => $rawSettings['app_name'] ?? ($schoolSetting?->school_name ?? 'MTs AL - HASANAH'),
+                'foundation_name' => $rawSettings['school_foundation'] ?? 'YAYASAN PENDIDIKAN ISLAM AL - HASANAH',
+                'address' => $rawSettings['school_address'] ?? ($schoolSetting?->address ?? 'Jl. Ciapus Sukamakmur No.05, Kec. Ciomas, Kab. Bogor'),
+                'phone' => $rawSettings['school_phone'] ?? '081617666017',
+                'email' => $rawSettings['school_email'] ?? 'mtsalhasanah.ciomas@gmail.com',
+                'principal_name' => $principalTeacher?->full_name ?? 'H. Umar Usman Ali, S.Pd, S.Pd.I',
+                'principal_nip' => $principalTeacher?->nip ?? '-',
+                'logo_url' => $rawSettings['app_logo'] ?? ($schoolSetting?->logo_url ?? null),
             ],
             'issued_date' => now()->translatedFormat('d F Y'),
             'city' => 'Bogor',
