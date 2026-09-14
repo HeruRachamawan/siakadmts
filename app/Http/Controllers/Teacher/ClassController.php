@@ -9,6 +9,14 @@ class ClassController extends TeacherController
 {
     public function index(Request $request)
     {
+        $user = $request->user();
+        $isStaff = $user && in_array($user->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah']);
+
+        if ($isStaff) {
+            $classes = ClassRoom::with(['academicYear', 'homeroomTeacher'])->get();
+            return response()->json($classes);
+        }
+
         $teacher = $this->resolveTeacher($request);
 
         if (!$teacher) {

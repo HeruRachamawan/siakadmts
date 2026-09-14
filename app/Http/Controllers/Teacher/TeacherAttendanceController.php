@@ -14,7 +14,12 @@ class TeacherAttendanceController extends Controller
     private function getTeacher(Request $request)
     {
         $user = $request->user();
-        return $user->teacher ?: Teacher::where('user_id', $user->id)->first();
+        if (!$user) return null;
+        $teacher = $user->teacher ?: Teacher::where('user_id', $user->id)->first();
+        if (!$teacher && in_array($user->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah'])) {
+            return Teacher::first();
+        }
+        return $teacher;
     }
 
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
@@ -221,7 +226,7 @@ class TeacherAttendanceController extends Controller
     {
         $teacher = $this->getTeacher($request);
         if (!$teacher) {
-            return response()->json(['message' => 'Data guru tidak ditemukan.'], 404);
+            return response()->json(['requests' => []]);
         }
 
         $requests = \App\Models\TeacherAttendanceRequest::where('teacher_id', $teacher->id)

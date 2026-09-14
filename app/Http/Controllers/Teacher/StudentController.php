@@ -10,11 +10,16 @@ class StudentController extends TeacherController
 {
     public function index(Request $request)
     {
-        $teacher = $this->resolveTeacher($request);
+        $user = $request->user();
+        $isStaff = $user && in_array($user->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah']);
 
-        $ids = ClassRoom::where('homeroom_teacher_id', $teacher->id)->pluck('id')->toArray();
-
-        $query = Student::whereIn('class_id', $ids)->with(['classRoom.academicYear']);
+        if ($isStaff) {
+            $query = Student::with(['classRoom.academicYear']);
+        } else {
+            $teacher = $this->resolveTeacher($request);
+            $ids = ClassRoom::where('homeroom_teacher_id', $teacher->id)->pluck('id')->toArray();
+            $query = Student::whereIn('class_id', $ids)->with(['classRoom.academicYear']);
+        }
 
         if ($request->filled('class_id')) {
             $query->where('class_id', $request->input('class_id'));
@@ -36,12 +41,16 @@ class StudentController extends TeacherController
 
     public function show(Request $request, Student $student)
     {
-        $teacher = $this->resolveTeacher($request);
+        $user = $request->user();
+        $isStaff = $user && in_array($user->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah']);
 
-        $ids = ClassRoom::where('homeroom_teacher_id', $teacher->id)->pluck('id')->toArray();
+        if (! $isStaff) {
+            $teacher = $this->resolveTeacher($request);
+            $ids = ClassRoom::where('homeroom_teacher_id', $teacher->id)->pluck('id')->toArray();
 
-        if (! in_array($student->class_id, $ids)) {
-            abort(403, 'Siswa ini tidak berada di kelas yang Anda ampu.');
+            if (! in_array($student->class_id, $ids)) {
+                abort(403, 'Siswa ini tidak berada di kelas yang Anda ampu.');
+            }
         }
 
         return $this->success($student->load([
