@@ -154,19 +154,19 @@
                   <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">
                     NIS <span class="text-red-500 font-bold">*</span>
                   </span>
-                  <span class="text-[10px] font-semibold text-slate-400">1-16 digit angka</span>
+                  <span class="text-[10px] font-semibold text-slate-400">1-18 digit angka</span>
                 </label>
                 <input
                   v-model="form.nis"
                   type="text"
                   inputmode="numeric"
-                  maxlength="16"
+                  maxlength="18"
                   @input="form.nis=form.nis.replace(/[^0-9]/g,''); clearError('nis')"
                   :class="[
                     errors.nis ? 'border-red-500 bg-red-50/40 focus:ring-red-300' : 'border-slate-200 bg-slate-50 focus:ring-emerald-400/30 focus:border-emerald-400',
                     'w-full border rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 transition-all font-medium font-mono'
                   ]"
-                  placeholder="Contoh: 2026001"
+                  placeholder="Contoh: 121232010188260001"
                 />
                 <p v-if="errors.nis" class="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1">
                   <span>🔴</span> {{ errors.nis }}
@@ -1005,8 +1005,8 @@ function validateForm() {
 
   if (!form.nis?.trim()) {
     errors.nis = 'NIS wajib diisi';
-  } else if (!/^\d{1,16}$/.test(form.nis.trim())) {
-    errors.nis = 'NIS harus berupa 1-16 digit angka';
+  } else if (!/^\d{1,18}$/.test(form.nis.trim())) {
+    errors.nis = 'NIS harus berupa 1-18 digit angka';
   }
 
   if (!form.nisn?.trim()) {
