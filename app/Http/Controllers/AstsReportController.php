@@ -76,8 +76,13 @@ class AstsReportController extends Controller
     {
         $lower = strtolower($name);
 
+        // 3. Muatan Lokal (Mulok) - Prioritaskan cek BTQ / Baca Tulis Al-Qur'an lebih dulu
+        // agar tidak tertangkap oleh kata 'qur' pada Al-Qur'an Hadis PAI
+        if (str_contains($lower, 'baca tulis') || str_contains($lower, 'btq') || str_contains($lower, 'bta') || str_contains($lower, 'tahfidz')) return 220;
+        if (str_contains($lower, 'sunda') || str_contains($lower, 'jawa') || str_contains($lower, 'daerah') || str_contains($lower, 'mulok')) return 210;
+
         // 1. Kelompok Wajib A - Pendidikan Agama Islam (PAI)
-        if (str_contains($lower, 'qur') || str_contains($lower, 'hadis') || str_contains($lower, 'hadits')) return 10;
+        if (str_contains($lower, 'hadis') || str_contains($lower, 'hadits') || (str_contains($lower, 'qur') && !str_contains($lower, 'baca'))) return 10;
         if (str_contains($lower, 'akidah') || str_contains($lower, 'akhlak')) return 11;
         if (str_contains($lower, 'fikih') || str_contains($lower, 'fiqih')) return 12;
         if (str_contains($lower, 'sejarah kebudayaan') || str_contains($lower, 'ski')) return 13;
@@ -95,10 +100,6 @@ class AstsReportController extends Controller
         if (str_contains($lower, 'seni') || str_contains($lower, 'prakarya') || str_contains($lower, 'sbdp')) return 110;
         if (str_contains($lower, 'jasmani') || str_contains($lower, 'olahraga') || str_contains($lower, 'pjok') || str_contains($lower, 'penjas')) return 120;
         if (str_contains($lower, 'informatika') || str_contains($lower, 'komputer') || str_contains($lower, 'tik')) return 130;
-
-        // 3. Pilihan Muatan Lokal (Mulok)
-        if (str_contains($lower, 'sunda') || str_contains($lower, 'jawa') || str_contains($lower, 'daerah')) return 210;
-        if (str_contains($lower, 'btq') || str_contains($lower, 'tahfidz') || str_contains($lower, 'baca tulis')) return 220;
 
         return 300;
     }

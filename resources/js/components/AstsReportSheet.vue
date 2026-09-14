@@ -161,10 +161,10 @@
             <td class="border border-slate-400 p-1 text-[9px] leading-tight text-slate-700">{{ sbj.description || '-' }}</td>
           </tr>
 
-          <!-- 3. PILIHAN MUATAN LOKAL (MULOK) -->
+          <!-- 3. MUATAN LOKAL (MULOK) -->
           <tr v-if="report?.subjects_mulok && report.subjects_mulok.length" class="bg-slate-100/90 font-black text-slate-950 text-[10px]">
             <td colspan="6" class="border border-slate-900 px-2 py-0.5 uppercase tracking-wide">
-              Pilihan Muatan Lokal
+              Muatan Lokal
             </td>
           </tr>
           <tr
