@@ -270,7 +270,11 @@ class LetterController extends BaseController
     {
         $request->validate([
             'student_id' => ['required', 'exists:students,id'],
-            'purpose' => ['nullable', 'string', 'max:255'], // Keperluan surat
+            'cert_type' => ['nullable', 'string', 'in:active,mutation'],
+            'purpose' => ['nullable', 'string', 'max:255'],
+            'target_school' => ['nullable', 'string', 'max:255'],
+            'mutation_reason' => ['nullable', 'string', 'max:255'],
+            'parent_request_date' => ['nullable', 'date'],
             'letter_date' => ['nullable', 'date'],
         ]);
 
@@ -286,8 +290,20 @@ class LetterController extends BaseController
         $refNumber = sprintf('%03d/MTs.AH/PP.00.5/%s/%s', $count, $monthRoman, $year);
         $agendaNumber = sprintf('AG-SK-%s-%04d', $year, $count);
 
+        $certType = $request->input('cert_type', 'active');
+        $targetSchool = $request->input('target_school', '');
+        $mutationReason = $request->input('mutation_reason', 'Mengikuti Tempat Tinggal Orang Tua');
         $purpose = $request->purpose ?: 'Persyaratan Beasiswa / Tunjangan Pendidikan';
-        $subject = "Surat Keterangan Siswa Aktif - {$student->full_name}";
+
+        if ($certType === 'mutation') {
+            $subject = "Surat Keterangan Pindah/Mutasi Siswa - {$student->full_name}" . ($targetSchool ? " ke {$targetSchool}" : '');
+            $recipient = $targetSchool ? "Kepala {$targetSchool}" : "Orang Tua / Wali dari {$student->full_name}";
+            $notes = "Diterbitkan untuk mutasi siswa ke: " . ($targetSchool ?: '-') . ". Alasan: {$mutationReason}";
+        } else {
+            $subject = "Surat Keterangan Siswa Aktif - {$student->full_name}";
+            $recipient = "Orang Tua / Wali dari {$student->full_name}";
+            $notes = "Diterbitkan untuk keperluan: {$purpose}";
+        }
 
         // Record in outgoing letters
         $letter = Letter::create([
@@ -295,22 +311,26 @@ class LetterController extends BaseController
             'agenda_number' => $agendaNumber,
             'reference_number' => $refNumber,
             'sender' => $settings['app_name'] ?? 'MTs Al-Hasanah',
-            'recipient' => "Orang Tua / Wali dari {$student->full_name}",
+            'recipient' => $recipient,
             'subject' => $subject,
             'letter_date' => $date,
             'category' => 'Keterangan',
             'status' => 'processed',
             'created_by' => auth()->id(),
             'student_id' => $student->id,
-            'disposition_notes' => "Diterbitkan untuk keperluan: {$purpose}",
+            'disposition_notes' => $notes,
         ]);
 
         return $this->success([
             'letter' => $letter,
             'student' => $student,
             'settings' => $settings,
+            'cert_type' => $certType,
             'purpose' => $purpose,
-        ], 'Surat Keterangan Aktif Siswa berhasil diterbitkan dan dicatat dalam agenda surat keluar!');
+            'target_school' => $targetSchool,
+            'mutation_reason' => $mutationReason,
+            'parent_request_date' => $request->parent_request_date,
+        ], 'Surat berhasil diterbitkan dan dicatat dalam agenda surat keluar!');
     }
 
     /**

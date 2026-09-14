@@ -128,7 +128,7 @@
         class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs rounded-md border transition-all whitespace-nowrap cursor-pointer"
       >
         <FileCheck class="w-4 h-4 text-emerald-700" />
-        <span>Generator Surat Siswa Aktif</span>
+        <span>Layanan Surat Siswa & Mutasi</span>
       </button>
 
       <button
@@ -519,11 +519,36 @@
     <div v-if="activeTab === 'student_cert'" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div class="lg:col-span-5 bg-white p-5 sm:p-6 rounded-lg border border-slate-200 shadow-2xs space-y-5">
         <div class="border-b border-slate-100 pb-3">
-          <h3 class="text-base font-bold text-slate-900">Formulir Surat Keterangan Siswa</h3>
-          <p class="text-xs text-slate-500 mt-0.5">Pilih kelas dan siswa aktif untuk menerbitkan surat keterangan resmi dengan nomor agenda otomatis.</p>
+          <h3 class="text-base font-bold text-slate-900">Layanan Persuratan Siswa</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Pusat penerbitan Surat Keterangan Aktif dan Surat Pindah (Mutasi) resmi dengan nomor agenda otomatis.</p>
         </div>
 
         <div class="space-y-4">
+          <!-- Pilihan Jenis Surat (Segmented Button) -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pilih Format Layanan Surat</label>
+            <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100/90 rounded-lg border border-slate-200">
+              <button
+                type="button"
+                @click="certForm.cert_type = 'active'"
+                :class="certForm.cert_type === 'active' ? 'bg-white text-emerald-800 font-bold shadow-2xs border border-slate-200' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                class="flex items-center justify-center gap-1.5 py-2 px-3 text-xs rounded-md transition-all cursor-pointer"
+              >
+                <FileCheck class="w-3.5 h-3.5 text-emerald-600" />
+                <span>Surat Siswa Aktif</span>
+              </button>
+              <button
+                type="button"
+                @click="certForm.cert_type = 'mutation'"
+                :class="certForm.cert_type === 'mutation' ? 'bg-white text-emerald-800 font-bold shadow-2xs border border-slate-200' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                class="flex items-center justify-center gap-1.5 py-2 px-3 text-xs rounded-md transition-all cursor-pointer"
+              >
+                <ArrowRightLeft class="w-3.5 h-3.5 text-emerald-600" />
+                <span>Surat Pindah (Mutasi)</span>
+              </button>
+            </div>
+          </div>
+
           <!-- 1. Filter Kelas -->
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1.5">
@@ -545,7 +570,7 @@
           <div>
             <div class="flex items-center justify-between mb-1.5">
               <label class="text-xs font-semibold text-slate-700">
-                2. Pilih Siswa Aktif <span class="text-rose-500">*</span>
+                2. Pilih Siswa <span class="text-rose-500">*</span>
               </label>
               <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
                 {{ filteredCertStudents.length }} Siswa
@@ -578,20 +603,78 @@
             </p>
           </div>
 
-          <!-- 3. Keperluan Surat -->
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1.5">3. Keperluan Surat <span class="text-rose-500">*</span></label>
+          <!-- 3. Form Khusus Berdasarkan Jenis Surat -->
+          <!-- A. Jika Surat Siswa Aktif -->
+          <div v-if="certForm.cert_type === 'active'" class="space-y-2">
+            <label class="block text-xs font-semibold text-slate-700">3. Keperluan Surat <span class="text-rose-500">*</span></label>
             <input
               v-model="certForm.purpose"
               type="text"
-              placeholder="Contoh: Persyaratan Beasiswa PIP / Tunjangan Orang Tua"
+              placeholder="Contoh: Persyaratan Beasiswa PIP / Tunjangan Pendidikan"
               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
+            <div class="flex flex-wrap gap-1.5 mt-1">
+              <button
+                v-for="p in quickPurposes"
+                :key="p"
+                type="button"
+                @click="certForm.purpose = p"
+                class="text-[10px] px-2 py-0.5 rounded bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 transition-colors border border-slate-200/60 cursor-pointer"
+              >
+                + {{ p }}
+              </button>
+            </div>
           </div>
 
-          <!-- 4. Tanggal Surat -->
+          <!-- B. Jika Surat Pindah / Mutasi -->
+          <div v-else class="space-y-3.5 bg-emerald-50/40 p-3 rounded-lg border border-emerald-100">
+            <div>
+              <label class="block text-xs font-semibold text-slate-800 mb-1">
+                3. Madrasah / Sekolah Tujuan Pindah <span class="text-rose-500">*</span>
+              </label>
+              <input
+                v-model="certForm.target_school"
+                type="text"
+                required
+                placeholder="Contoh: MTs Negeri 2 Kab. Bogor / SMPN 1 Ciomas"
+                class="w-full px-3 py-2 bg-white border border-emerald-200 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-800 mb-1">
+                Alasan Kepindahan Siswa
+              </label>
+              <select
+                v-model="certForm.mutation_reason"
+                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+              >
+                <option v-for="r in mutationReasonOptions" :key="r" :value="r">{{ r }}</option>
+              </select>
+              <input
+                v-if="certForm.mutation_reason === 'Lainnya'"
+                v-model="certForm.custom_reason"
+                type="text"
+                placeholder="Ketik alasan kepindahan di sini..."
+                class="w-full mt-2 px-3 py-1.5 bg-white border border-slate-200 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-800 mb-1">
+                Tanggal Surat Permohonan Orang Tua
+              </label>
+              <input
+                v-model="certForm.parent_request_date"
+                type="date"
+                class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+          </div>
+
+          <!-- 4. Tanggal Surat Resmi -->
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1.5">4. Tanggal Surat</label>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">4. Tanggal Surat Resmi</label>
             <input
               v-model="certForm.letter_date"
               type="date"
@@ -601,11 +684,11 @@
 
           <button
             @click="generateCertificate"
-            :disabled="!certForm.student_id || generatingCert"
+            :disabled="!certForm.student_id || (certForm.cert_type === 'mutation' && !certForm.target_school?.trim()) || generatingCert"
             class="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
           >
             <Printer class="w-4 h-4" />
-            <span>{{ generatingCert ? 'Menerbitkan...' : 'Terbitkan & Cetak Surat' }}</span>
+            <span>{{ generatingCert ? 'Menerbitkan...' : (certForm.cert_type === 'mutation' ? 'Terbitkan & Cetak Surat Mutasi' : 'Terbitkan & Cetak Surat Keterangan') }}</span>
           </button>
         </div>
       </div>
@@ -621,20 +704,28 @@
             <p class="text-xs text-slate-600">{{ appSettings.school_address || 'Jl. Raya Ciomas No. 123, Kab. Bogor, Jawa Barat' }} &bull; Telp: {{ appSettings.school_phone || '0812-3456-7890' }}</p>
           </div>
 
-          <!-- Judul Surat -->
+          <!-- Judul Surat Dinamis -->
           <div class="text-center space-y-1 my-6">
-            <h3 class="text-base font-bold uppercase tracking-wide underline underline-offset-4">SURAT KETERANGAN AKTIF SISWA</h3>
-            <p class="text-xs font-sans text-slate-600 font-semibold">Nomor: {{ previewCertData?.reference_number || '... / MTs.AH / PP.00.5 / VIII / 2026' }}</p>
+            <h3 class="text-base font-bold uppercase tracking-wide underline underline-offset-4">
+              {{ certForm.cert_type === 'mutation' ? 'SURAT KETERANGAN PINDAH SEKOLAH / MADRASAH' : 'SURAT KETERANGAN AKTIF SISWA' }}
+            </h3>
+            <p class="text-xs font-sans text-slate-600 font-semibold">
+              Nomor: {{ previewCertData?.reference_number || '... / MTs.AH / PP.00.5 / VIII / 2026' }}
+            </p>
           </div>
 
-          <p class="text-xs sm:text-sm text-justify mb-4">
+          <!-- Narasi Pembuka Dinamis -->
+          <p v-if="certForm.cert_type === 'mutation'" class="text-xs sm:text-sm text-justify mb-4">
+            Yang bertanda tangan di bawah ini, Kepala Madrasah Tsanawiyah Al - Hasanah Ciomas Kabupaten Bogor, berdasarkan Surat Permohonan Pindah Belajar dari Orang Tua/Wali Siswa tertanggal <b>{{ formatDate(certForm.parent_request_date || certForm.letter_date) }}</b>, menerangkan bahwa:
+          </p>
+          <p v-else class="text-xs sm:text-sm text-justify mb-4">
             Yang bertanda tangan di bawah ini, Kepala Madrasah Tsanawiyah Al - Hasanah Ciomas Kabupaten Bogor, menerangkan dengan sesungguhnya bahwa:
           </p>
 
           <!-- Biodata Siswa -->
           <table class="w-full text-xs sm:text-sm my-4 border-collapse font-sans">
             <tr>
-              <td class="w-36 py-1 font-semibold">Nama Lengkap</td>
+              <td class="w-40 py-1 font-semibold">Nama Lengkap</td>
               <td class="w-4 py-1">:</td>
               <td class="py-1 font-bold text-slate-900 uppercase">{{ selectedStudentPreview?.full_name || '................................' }}</td>
             </tr>
@@ -649,7 +740,12 @@
               <td class="py-1">{{ selectedStudentPreview?.birth_place || selectedStudentPreview?.pob || '-' }}, {{ formatDate(selectedStudentPreview?.birth_date || selectedStudentPreview?.dob) }}</td>
             </tr>
             <tr>
-              <td class="py-1 font-semibold">Kelas</td>
+              <td class="py-1 font-semibold">Jenis Kelamin</td>
+              <td class="py-1">:</td>
+              <td class="py-1">{{ selectedStudentPreview?.gender === 'L' ? 'Laki-laki' : (selectedStudentPreview?.gender === 'P' ? 'Perempuan' : '-') }}</td>
+            </tr>
+            <tr>
+              <td class="py-1 font-semibold">{{ certForm.cert_type === 'mutation' ? 'Kelas Asal' : 'Kelas' }}</td>
               <td class="py-1">:</td>
               <td class="py-1 font-semibold">{{ selectedStudentPreview?.class_room?.name || selectedStudentPreview?.classRoom?.name || 'VII' }}</td>
             </tr>
@@ -660,9 +756,41 @@
             </tr>
           </table>
 
-          <p class="text-xs sm:text-sm text-justify my-4">
-            Adalah benar yang bersangkutan adalah <b>Peserta Didik Aktif</b> pada MTs Al - Hasanah Tahun Ajaran 2026/2027. Surat keterangan ini dibuat dan diberikan untuk keperluan: <b>{{ certForm.purpose || 'Persyaratan Beasiswa / Tunjangan Pendidikan' }}</b>.
-          </p>
+          <!-- Narasi Isi Dinamis -->
+          <!-- A. Jika Surat Pindah / Mutasi -->
+          <div v-if="certForm.cert_type === 'mutation'" class="my-4 space-y-3">
+            <p class="text-xs sm:text-sm text-justify">
+              Telah mengajukan permohonan pindah belajar ke:
+            </p>
+            <div class="bg-slate-50 border border-slate-200 rounded p-3 text-xs sm:text-sm font-sans space-y-1.5">
+              <div class="flex">
+                <span class="w-48 font-semibold text-slate-700">Madrasah / Sekolah Tujuan</span>
+                <span class="w-4 font-semibold">:</span>
+                <span class="font-bold text-slate-900 uppercase flex-1">{{ certForm.target_school || '........................................................' }}</span>
+              </div>
+              <div class="flex">
+                <span class="w-48 font-semibold text-slate-700">Alasan Kepindahan</span>
+                <span class="w-4 font-semibold">:</span>
+                <span class="font-medium text-slate-800 flex-1">{{ actualMutationReason }}</span>
+              </div>
+            </div>
+            <p class="text-xs sm:text-sm text-justify">
+              Sesuai dengan ketentuan yang berlaku, bersama surat ini disertakan Buku Laporan Hasil Belajar (Rapor) siswa yang bersangkutan.
+            </p>
+            <p class="text-xs sm:text-sm text-justify">
+              Demikian surat keterangan pindah sekolah ini kami buat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.
+            </p>
+          </div>
+
+          <!-- B. Jika Surat Siswa Aktif -->
+          <div v-else class="my-4 space-y-3">
+            <p class="text-xs sm:text-sm text-justify">
+              Adalah benar yang bersangkutan adalah <b>Peserta Didik Aktif</b> pada MTs Al - Hasanah Tahun Ajaran 2026/2027. Surat keterangan ini dibuat dan diberikan untuk keperluan: <b>{{ certForm.purpose || 'Persyaratan Beasiswa / Tunjangan Pendidikan' }}</b>.
+            </p>
+            <p class="text-xs sm:text-sm text-justify">
+              Demikian surat keterangan ini kami buat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.
+            </p>
+          </div>
 
           <!-- Tanda Tangan -->
           <div class="flex justify-end mt-12 font-sans">
@@ -996,7 +1124,8 @@ import {
   UserCheck,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  ArrowRightLeft
 } from 'lucide-vue-next';
 import { api } from '../api';
 import { useToast } from '../composables/useToast';
@@ -1135,9 +1264,36 @@ function onCertClassChange() {
 }
 
 const certForm = reactive({
+  cert_type: 'active', // 'active' | 'mutation'
   student_id: '',
   purpose: 'Persyaratan Beasiswa PIP / Tunjangan Pendidikan',
+  target_school: '',
+  mutation_reason: 'Mengikuti Tempat Tinggal Orang Tua',
+  custom_reason: '',
+  parent_request_date: new Date().toISOString().split('T')[0],
   letter_date: new Date().toISOString().split('T')[0]
+});
+
+const mutationReasonOptions = [
+  'Mengikuti Tempat Tinggal Orang Tua',
+  'Pindah Domisili Keluarga',
+  'Keinginan Orang Tua / Siswa Sendiri',
+  'Jarak Rumah dengan Sekolah Terlalu Jauh',
+  'Lainnya'
+];
+
+const quickPurposes = [
+  'Persyaratan Beasiswa PIP / BSM',
+  'Tunjangan Gaji Orang Tua',
+  'Persyaratan Pembuatan Paspor / Visa',
+  'Pendaftaran Perlombaan / Kegiatan'
+];
+
+const actualMutationReason = computed(() => {
+  if (certForm.mutation_reason === 'Lainnya') {
+    return certForm.custom_reason?.trim() || 'Alasan Pribadi / Keluarga';
+  }
+  return certForm.mutation_reason || 'Mengikuti Tempat Tinggal Orang Tua';
 });
 
 const previewCertData = ref(null);
@@ -1315,18 +1471,35 @@ async function submitDisposition() {
 }
 
 async function generateCertificate() {
-  if (!certForm.student_id) return;
+  if (!certForm.student_id) {
+    toast.error('Mohon pilih siswa aktif terlebih dahulu.');
+    return;
+  }
+  if (certForm.cert_type === 'mutation' && !certForm.target_school?.trim()) {
+    toast.error('Mohon isi nama madrasah / sekolah tujuan pindah.');
+    return;
+  }
   generatingCert.value = true;
   try {
-    const res = await api.post('admin/letters/generate-certificate', certForm);
+    const payload = {
+      student_id: certForm.student_id,
+      cert_type: certForm.cert_type,
+      purpose: certForm.purpose,
+      target_school: certForm.target_school,
+      mutation_reason: actualMutationReason.value,
+      parent_request_date: certForm.parent_request_date,
+      letter_date: certForm.letter_date,
+    };
+    const res = await api.post('admin/letters/generate-certificate', payload);
     const data = res?.data || res;
     previewCertData.value = data?.letter || {};
-    toast.success('Surat Keterangan Aktif Siswa berhasil diterbitkan!');
-    printDocument('printable-student-cert', 'Surat Keterangan Aktif Siswa');
+    const docTitle = certForm.cert_type === 'mutation' ? 'Surat Keterangan Pindah Siswa' : 'Surat Keterangan Aktif Siswa';
+    toast.success(`${docTitle} berhasil diterbitkan dan dicatat dalam agenda surat keluar!`);
+    printDocument('printable-student-cert', docTitle);
     fetchLetters(1);
   } catch (error) {
     console.error('Error generating cert:', error);
-    toast.error('Gagal menerbitkan surat keterangan siswa.');
+    toast.error('Gagal menerbitkan surat.');
   } finally {
     generatingCert.value = false;
   }
