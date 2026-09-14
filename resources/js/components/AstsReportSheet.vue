@@ -87,25 +87,17 @@
       </tbody>
     </table>
 
-    <!-- 4. TABEL CAPAIAN HASIL BELAJAR ASTS (FIXED COLGROUP LAYOUT) -->
-    <div class="overflow-x-auto" style="margin-bottom: 4px;">
-      <table style="width: 100%; table-layout: fixed; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 9.5px; line-height: 1.2;">
-        <colgroup>
-          <col style="width: 28px;" />
-          <col style="width: 210px;" />
-          <col style="width: 44px;" />
-          <col style="width: 54px;" />
-          <col style="width: 48px;" />
-          <col style="width: auto;" />
-        </colgroup>
+    <!-- 4. TABEL CAPAIAN HASIL BELAJAR ASTS (SYNCHRONIZED 100% WITH LIVE REVIEW) -->
+    <div style="margin-bottom: 4px; overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 9.5px; line-height: 1.2;">
         <thead>
           <tr style="background-color: #f1f5f9; color: #020617; font-weight: 900; text-transform: uppercase; text-align: center; border-bottom: 1.5px solid #0f172a; font-size: 9px;">
-            <th style="border: 1px solid #0f172a; padding: 3px 2px;">No</th>
-            <th style="border: 1px solid #0f172a; padding: 3px 6px; text-align: left;">Mata Pelajaran</th>
-            <th style="border: 1px solid #0f172a; padding: 3px 2px;">KKTP</th>
-            <th style="border: 1px solid #0f172a; padding: 3px 2px;">Nilai ASTS</th>
-            <th style="border: 1px solid #0f172a; padding: 3px 2px;">Predikat</th>
-            <th style="border: 1px solid #0f172a; padding: 3px 6px; text-align: left;">Capaian Kompetensi / Keterangan</th>
+            <th style="border: 1px solid #0f172a; padding: 3px 2px; width: 4%;">No</th>
+            <th style="border: 1px solid #0f172a; padding: 3px 6px; text-align: left; width: 28%;">Mata Pelajaran</th>
+            <th style="border: 1px solid #0f172a; padding: 3px 2px; width: 7%; text-align: center;">KKTP</th>
+            <th style="border: 1px solid #0f172a; padding: 3px 2px; width: 10%; text-align: center; white-space: nowrap;">Nilai ASTS</th>
+            <th style="border: 1px solid #0f172a; padding: 3px 2px; width: 8%; text-align: center;">Predikat</th>
+            <th style="border: 1px solid #0f172a; padding: 3px 6px; text-align: left; width: 43%;">Capaian Kompetensi / Keterangan</th>
           </tr>
         </thead>
         <tbody>
@@ -131,7 +123,7 @@
             style="border-bottom: 1px solid #cbd5e1;"
           >
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; color: #475569;"></td>
-            <td style="border: 1px solid #94a3b8; padding: 2px 6px 2px 14px; font-weight: 500; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px 2px 14px; font-weight: 500; color: #0f172a;">
               <span style="font-weight: bold;">{{ ['a', 'b', 'c', 'd', 'e', 'f'][i] || '-' }}.</span>
               <span style="margin-left: 4px;">{{ sbj.name }}</span>
             </td>
@@ -150,7 +142,7 @@
             style="border-bottom: 1px solid #cbd5e1;"
           >
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: bold; color: #334155;">{{ i + 2 }}</td>
-            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-weight: bold; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ sbj.name }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-weight: bold; color: #0f172a;">{{ sbj.name }}</td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: bold; color: #334155;">{{ sbj.kkm }}</td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: 900;" :style="{ color: sbj.score !== null && sbj.score >= sbj.kkm ? '#020617' : '#be123c' }">
               {{ sbj.score !== null ? sbj.score : '-' }}
@@ -171,7 +163,7 @@
             style="border-bottom: 1px solid #cbd5e1;"
           >
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: bold; color: #334155;">{{ ['i', 'ii', 'iii', 'iv', 'v'][i] || (i + 1) }}.</td>
-            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-weight: bold; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ sbj.name }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-weight: bold; color: #0f172a;">{{ sbj.name }}</td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: bold; color: #334155;">{{ sbj.kkm }}</td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: 900;" :style="{ color: sbj.score !== null && sbj.score >= sbj.kkm ? '#020617' : '#be123c' }">
               {{ sbj.score !== null ? sbj.score : '-' }}
@@ -192,7 +184,7 @@
             style="border-bottom: 1px solid #cbd5e1;"
           >
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: bold; color: #334155;">{{ i + 1 }}</td>
-            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-weight: bold; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ sbj.name }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-weight: bold; color: #0f172a;">{{ sbj.name }}</td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: bold; color: #334155;">{{ sbj.kkm }}</td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: 900;" :style="{ color: sbj.score !== null && sbj.score >= sbj.kkm ? '#020617' : '#be123c' }">
               {{ sbj.score !== null ? sbj.score : '-' }}

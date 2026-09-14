@@ -1636,152 +1636,26 @@ async function fetchPrintData() {
 function triggerPrint() {
   const isA4 = selectedPaperSize.value === 'a4';
   const paperSize = isA4 ? 'A4 portrait' : '215mm 330mm';
-  const targetId = printMode.value === 'batch' ? 'asts-report-batch-area' : 'asts-report-single-area';
-  const printElem = document.getElementById(targetId);
 
-  if (!printElem) {
-    window.print();
-    return;
+  // Inject or update dynamic @page size into document head
+  let styleEl = document.getElementById('asts-print-page-style');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'asts-print-page-style';
+    document.head.appendChild(styleEl);
   }
-
-  const printWindow = window.open('', '_blank', 'width=900,height=900');
-  if (!printWindow) {
-    toast.error('Izinkan pop-up browser untuk mencetak rapor.');
-    window.print();
-    return;
-  }
-
-  // Gather stylesheet links from current document (Vite bundle CSS)
-  const styleElements = document.querySelectorAll('link[rel="stylesheet"], style');
-  let stylesHtml = '';
-  styleElements.forEach(el => {
-    stylesHtml += el.outerHTML;
-  });
-
-  const contentHtml = printElem.innerHTML;
-  const originUrl = typeof window !== 'undefined' ? window.location.origin : '';
-
-  printWindow.document.open();
-  printWindow.document.write(`<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="utf-8">
-  <base href="${originUrl}/">
-  <title>Cetak Rapor ASTS - ${ledgerData.value?.class?.name || 'Siswa'}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Lexend:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  ${stylesHtml}
-  <style>
-    @page { 
-      size: ${paperSize}; 
-      margin: 5mm 8mm 5mm 8mm; 
-    }
-    * {
-      box-sizing: border-box;
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-    html, body {
-      background: #ffffff !important;
-      color: #0f172a !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      font-family: 'Inter', system-ui, sans-serif !important;
-      font-size: 10px !important;
-      line-height: 1.25 !important;
-    }
-    .no-print {
-      display: none !important;
-    }
-    .text-center { text-align: center !important; }
-    .text-left { text-align: left !important; }
-    .text-right { text-align: right !important; }
-    .font-bold { font-weight: 700 !important; }
-    .font-extrabold { font-weight: 800 !important; }
-    .font-black { font-weight: 900 !important; }
-    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; }
-    .font-inter { font-family: 'Inter', system-ui, sans-serif !important; }
-    .font-lexend { font-family: 'Lexend', system-ui, sans-serif !important; }
-    .uppercase { text-transform: uppercase !important; }
-    .underline { text-decoration: underline !important; }
-    .italic { font-style: italic !important; }
-
-    .print-sheet {
-      border: none !important;
-      box-shadow: none !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      width: 100% !important;
-      max-width: 100% !important;
-    }
-    .print-page {
-      page-break-after: always !important;
-      break-after: page !important;
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-      margin-bottom: 0 !important;
-      padding-bottom: 0 !important;
-    }
-    .print-page:last-child {
-      page-break-after: auto !important;
-      break-after: auto !important;
-    }
-    table {
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-    }
-    tr {
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-    }
-  </style>
-</head>
-<body>
-  <div style="width: 100%; max-width: 100%;">
-    ${contentHtml}
-  </div>
-</body>
-</html>`);
-
-  printWindow.document.close();
-
-  // Wait for images to load cleanly before triggering print dialog
-  const triggerActualPrint = () => {
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
-  };
-
-  const imgs = printWindow.document.images;
-  if (imgs && imgs.length > 0) {
-    let loadedCount = 0;
-    let printed = false;
-    const checkDone = () => {
-      loadedCount++;
-      if (loadedCount >= imgs.length && !printed) {
-        printed = true;
-        setTimeout(triggerActualPrint, 250);
-      }
-    };
-    for (let i = 0; i < imgs.length; i++) {
-      if (imgs[i].complete) {
-        checkDone();
-      } else {
-        imgs[i].addEventListener('load', checkDone);
-        imgs[i].addEventListener('error', checkDone);
+  styleEl.innerHTML = `
+    @media print {
+      @page {
+        size: ${paperSize};
+        margin: 5mm 8mm 5mm 8mm;
       }
     }
-    // Fallback safety timeout
-    setTimeout(() => {
-      if (!printed) {
-        printed = true;
-        triggerActualPrint();
-      }
-    }, 1200);
-  } else {
-    setTimeout(triggerActualPrint, 350);
-  }
+  `;
+
+  // Native window.print() guarantees 100% exact WYSIWYG match with Live Review,
+  // completely avoiding popup style-loss and layout deformation.
+  window.print();
 }
 
 function exportLedgerExcel() {
@@ -1823,31 +1697,102 @@ onMounted(() => {
 <style scoped>
 .font-inter { font-family: 'Inter', system-ui, sans-serif; }
 .font-lexend { font-family: 'Lexend', system-ui, sans-serif; }
+</style>
 
+<style>
 @media print {
-  .no-print {
+  /* 1. Sembunyikan semua elemen navigasi, sidebar, kontrol, modal, tombol, toast */
+  nav,
+  aside,
+  header,
+  footer,
+  .no-print,
+  button,
+  input,
+  select,
+  .toast-container {
     display: none !important;
-  }
-  body, html {
-    background: white !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
   }
+
+  /* 2. Reset struktur body & app agar 100% full-width tanpa offset */
+  html,
+  body,
+  #app {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 3. Reset flex & grid wrapper di halaman ASTS agar area cetak tidak terjepit di col-span-8 */
+  .grid,
+  .lg\:grid-cols-12,
+  .lg\:col-span-8,
+  .lg\:col-span-4,
+  .flex,
+  .overflow-x-auto,
+  main {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+
+  /* 4. Area rapor (single & batch) memenuhi kertas secara murni */
+  #asts-report-single-area,
+  #asts-report-batch-area,
+  .print-sheet {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+
+  /* 5. Pagination per halaman */
   .print-page {
     page-break-after: always !important;
     break-after: page !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
     margin: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
+    padding: 0 !important;
   }
-  .print-sheet {
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
+
+  .print-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Pastikan border tabel rapor terlihat tajam */
+  table {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }
 </style>

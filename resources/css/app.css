@@ -218,6 +218,9 @@
     #print-teachers-area,
     #print-card-area,
     #print-calendar-area,
+    #asts-report-single-area,
+    #asts-report-batch-area,
+    .print-sheet,
     .print-area {
         width: 100% !important;
         margin: 0 !important;
