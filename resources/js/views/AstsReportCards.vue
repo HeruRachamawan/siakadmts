@@ -338,6 +338,18 @@
           </div>
 
           <div class="flex items-center gap-2">
+            <!-- Edit Notes Quick Trigger -->
+            <button
+              type="button"
+              @click="openNotesModalForCurrentStudent"
+              :disabled="loadingSingleReport || !singleReportData"
+              class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-900 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+              title="Edit jumlah kehadiran (Sakit, Izin, Alpa) dan Catatan Motivasi Siswa Ini"
+            >
+              <Pencil class="w-3.5 h-3.5 text-indigo-600" />
+              <span>Edit Kehadiran & Catatan</span>
+            </button>
+
             <!-- Adjust Rank Quick Trigger -->
             <button
               type="button"
@@ -450,7 +462,12 @@
                 <div class="animate-spin h-8 w-8 border-3 border-emerald-500 border-t-transparent rounded-full mx-auto"></div>
                 <p class="text-xs font-medium">Memuat pratinjau lembar rapor siswa...</p>
               </div>
-              <AstsReportSheet v-else-if="singleReportData" :report="singleReportData" />
+              <AstsReportSheet 
+                v-else-if="singleReportData" 
+                :report="singleReportData" 
+                :allow-edit="true" 
+                @edit-notes="openNotesModalForCurrentStudent" 
+              />
               <div v-else class="text-center py-24 text-slate-400 text-xs font-medium">
                 Pilih salah satu siswa di panel sebelah kiri untuk menampilkan rapor.
               </div>
@@ -631,13 +648,33 @@
 
           <!-- Homeroom Note / Motivation -->
           <div class="space-y-1.5 pt-2">
-            <label class="block text-[11px] font-black text-slate-700 uppercase tracking-wider">Catatan Perkembangan & Motivasi Siswa</label>
+            <div class="flex items-center justify-between">
+              <label class="block text-[11px] font-black text-slate-700 uppercase tracking-wider">Catatan Perkembangan & Motivasi Siswa</label>
+              <span class="text-[10px] text-slate-400 font-medium">Tampil di lembar rapor</span>
+            </div>
             <textarea
               v-model="notesForm.homeroom_notes"
               rows="3"
               placeholder="Contoh: Tingkatkan terus ketekunan belajar dan keaktifan dalam ibadah berjamaah."
-              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:ring-2 focus:ring-emerald-400"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:ring-2 focus:ring-emerald-400 focus:bg-white transition-all"
             ></textarea>
+            
+            <!-- Quick Motivation Suggestions -->
+            <div class="space-y-1 pt-1">
+              <span class="text-[10px] font-bold text-slate-500 block">Pilihan Kalimat Motivasi Cepat (Klik untuk memilih):</span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  v-for="(tip, tIdx) in motivationTemplates"
+                  :key="'tip-'+tIdx"
+                  @click="notesForm.homeroom_notes = tip"
+                  class="px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:text-emerald-900 hover:border-emerald-300 border border-slate-200 text-[10.5px] font-medium transition-all text-left cursor-pointer flex items-start gap-1.5"
+                >
+                  <span class="text-emerald-600 font-bold text-xs mt-0.5">💬</span>
+                  <span class="leading-tight">{{ tip }}</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="pt-3 flex justify-end gap-2 border-t border-slate-100">
@@ -683,6 +720,7 @@ import {
   Users,
   RotateCcw,
   Check,
+  Pencil,
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -710,6 +748,12 @@ const studentSearchQuery = ref('');
 // Modal Notes
 const showNotesModal = ref(false);
 const editingStudent = ref(null);
+const motivationTemplates = [
+  'Pertahankan prestasimu dan terus tingkatkan ketekunan belajar di madrasah.',
+  'Tingkatkan terus ketekunan belajar, kedisiplinan beribadah, dan keaktifan di kelas.',
+  'Perbanyak latihan soal mandiri dan lebih aktif bertanya saat pembelajaran.',
+  'Semangat belajar terus ditingkatkan, kurangi waktu bermain, dan jaga kesehatan.',
+];
 const notesForm = reactive({
   student_id: null,
   semester: 'ganjil',
@@ -912,26 +956,46 @@ async function resetRanksToDefault() {
 }
 
 function openNotesModal(student) {
+  if (!student) return;
   editingStudent.value = student;
-  notesForm.student_id = student.student_id;
+  notesForm.student_id = student.student_id || student.id;
   notesForm.semester = activeSemester.value;
   notesForm.academic_year_id = activeYear.value?.id;
-  notesForm.sick_count = student.sick_count || 0;
-  notesForm.permission_count = student.permission_count || 0;
-  notesForm.unexcused_count = student.unexcused_count || 0;
+  notesForm.sick_count = student.sick_count !== undefined ? student.sick_count : (student.attendance?.sick || 0);
+  notesForm.permission_count = student.permission_count !== undefined ? student.permission_count : (student.attendance?.permission || 0);
+  notesForm.unexcused_count = student.unexcused_count !== undefined ? student.unexcused_count : (student.attendance?.unexcused || 0);
   notesForm.homeroom_notes = student.homeroom_notes || '';
   showNotesModal.value = true;
+}
+
+function openNotesModalForCurrentStudent() {
+  if (!selectedStudentId.value && !singleReportData.value) return;
+  const sId = selectedStudentId.value || singleReportData.value?.student?.id;
+  const found = ledgerStudents.value.find(s => s.student_id == sId);
+  if (found) {
+    openNotesModal(found);
+  } else if (singleReportData.value) {
+    const rep = singleReportData.value;
+    openNotesModal({
+      student_id: rep.student?.id || sId,
+      full_name: rep.student?.full_name || 'Siswa',
+      sick_count: rep.attendance?.sick || 0,
+      permission_count: rep.attendance?.permission || 0,
+      unexcused_count: rep.attendance?.unexcused || 0,
+      homeroom_notes: rep.homeroom_notes || '',
+    });
+  }
 }
 
 async function saveNotesSubmit() {
   savingNotes.value = true;
   try {
     await api.post('/teacher/asts-reports/save-notes', notesForm);
-    toast.success('Catatan wali kelas berhasil disimpan!');
+    toast.success('Catatan wali kelas dan presensi berhasil disimpan!');
     showNotesModal.value = false;
     await fetchLedger();
-    if (activeSubTab.value === 'print') {
-      await fetchPrintData();
+    if (activeSubTab.value === 'print' || selectedStudentId.value) {
+      await fetchSingleReport();
     }
   } catch (err) {
     toast.error('Gagal menyimpan catatan wali kelas.');

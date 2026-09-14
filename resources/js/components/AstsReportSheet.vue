@@ -212,11 +212,24 @@
     <!-- 5. KETIDAKHADIRAN & CATATAN WALI KELAS -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-0.5">
       <!-- Tabel Ketidakhadiran -->
-      <div class="sm:col-span-1">
+      <div class="sm:col-span-1 relative group">
         <table class="w-full text-[10px] border-collapse border border-slate-900">
           <thead>
             <tr class="bg-slate-100 text-center font-black uppercase text-[9px] border-b border-slate-900">
-              <th colspan="2" class="p-1 border border-slate-900">Rekapitulasi Kehadiran</th>
+              <th colspan="2" class="p-1 border border-slate-900">
+                <div class="flex items-center justify-between px-1">
+                  <span>Rekapitulasi Kehadiran</span>
+                  <button
+                    v-if="allowEdit"
+                    type="button"
+                    @click="$emit('edit-notes')"
+                    class="no-print text-indigo-700 hover:text-indigo-950 font-bold text-[8.5px] cursor-pointer"
+                    title="Ubah angka kehadiran"
+                  >
+                    ✏️ Edit
+                  </button>
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -238,9 +251,20 @@
 
       <!-- Catatan Wali Kelas -->
       <div class="sm:col-span-2 p-2 border border-slate-900 rounded flex flex-col justify-between space-y-0.5">
-        <span class="block font-bold uppercase text-[9px] text-slate-800 tracking-wider">
-          Catatan & Motivasi Perkembangan Belajar Wali Kelas:
-        </span>
+        <div class="flex items-center justify-between">
+          <span class="block font-bold uppercase text-[9px] text-slate-800 tracking-wider">
+            Catatan & Motivasi Perkembangan Belajar Wali Kelas:
+          </span>
+          <button
+            v-if="allowEdit"
+            type="button"
+            @click="$emit('edit-notes')"
+            class="no-print px-2 py-0.5 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[9px] font-bold flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
+            title="Edit kehadiran dan catatan motivasi wali kelas untuk siswa ini"
+          >
+            <span>✏️ Edit Catatan & Absensi</span>
+          </button>
+        </div>
         <p class="text-[10px] text-slate-800 italic leading-snug flex-1">
           "{{ report?.homeroom_notes || 'Tingkatkan terus ketekunan belajar, kedisiplinan beribadah, dan keaktifan di madrasah.' }}"
         </p>
@@ -297,7 +321,13 @@ defineProps({
     type: Object,
     required: true,
   },
+  allowEdit: {
+    type: Boolean,
+    default: false,
+  },
 });
+
+defineEmits(['edit-notes']);
 
 function getImageUrl(path) {
   if (!path) return '';
