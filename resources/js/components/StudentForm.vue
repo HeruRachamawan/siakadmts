@@ -424,12 +424,13 @@
                 <div class="space-y-1.5">
                   <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">Nama Ayah</label>
                   <input v-model="form.father_name" type="text" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium" placeholder="Nama lengkap ayah" />
+                  <p v-if="isParentUnavailable(form.father_status)" class="text-[10px] text-amber-600 font-semibold mt-0.5">💡 Cukup isi nama saja (Status: {{ form.father_status === 'meninggal' ? 'Meninggal Dunia' : 'Tidak Diketahui' }})</p>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-4">
                   <div class="space-y-1.5">
                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">Status Keberadaan</label>
-                    <select v-model="form.father_status" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium" @change="onParentStatusChange('father')">
+                    <select v-model="form.father_status" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium cursor-pointer" @change="onParentStatusChange('father')">
                       <option value="hidup">Hidup</option>
                       <option value="meninggal">Meninggal</option>
                       <option value="tidak_diketahui">Tidak Diketahui</option>
@@ -439,22 +440,22 @@
                   </div>
                   <div class="space-y-1.5">
                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">NIK Ayah (16 Digit)</label>
-                    <input v-model="form.father_nik" type="text" inputmode="numeric" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium disabled:opacity-50 disabled:bg-slate-100 font-mono" maxlength="16" @input="form.father_nik=form.father_nik.replace(/[^0-9]/g,'')" :disabled="isParentUnavailable(form.father_status)" placeholder="16 digit NIK" />
+                    <input v-model="form.father_nik" type="text" inputmode="numeric" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium disabled:opacity-60 disabled:bg-slate-100/90 disabled:cursor-not-allowed font-mono" maxlength="16" @input="form.father_nik=form.father_nik.replace(/[^0-9]/g,'')" :disabled="isParentUnavailable(form.father_status)" :placeholder="isParentUnavailable(form.father_status) ? 'Tidak perlu diisi' : '16 digit NIK'" />
                   </div>
                 </div>
                 
                 <div class="space-y-1.5">
                   <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">Pekerjaan Ayah</label>
-                  <select v-model="form.father_job" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium disabled:opacity-50 disabled:bg-slate-100" :disabled="isParentUnavailable(form.father_status)">
-                    <option value="">Pilih Pekerjaan...</option>
+                  <select v-model="form.father_job" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium disabled:opacity-60 disabled:bg-slate-100/90 disabled:cursor-not-allowed cursor-pointer" :disabled="isParentUnavailable(form.father_status)">
+                    <option value="">{{ isParentUnavailable(form.father_status) ? 'Tidak Perlu Diisi' : 'Pilih Pekerjaan...' }}</option>
                     <option v-for="job in jobOptions" :key="job" :value="job">{{ job }}</option>
                   </select>
                 </div>
                 
                 <div class="space-y-1.5">
                   <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">Penghasilan / Bulan</label>
-                  <select v-model="form.father_income" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium disabled:opacity-50 disabled:bg-slate-100" :disabled="isParentUnavailable(form.father_status)">
-                    <option value="">Pilih Rentang Penghasilan...</option>
+                  <select v-model="form.father_income" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium disabled:opacity-60 disabled:bg-slate-100/90 disabled:cursor-not-allowed cursor-pointer" :disabled="isParentUnavailable(form.father_status)">
+                    <option value="">{{ isParentUnavailable(form.father_status) ? 'Tidak Perlu Diisi' : 'Pilih Rentang Penghasilan...' }}</option>
                     <option v-for="income in incomeOptions" :key="income" :value="income">{{ income }}</option>
                   </select>
                 </div>
@@ -473,12 +474,13 @@
                 <div class="space-y-1.5">
                   <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">Nama Ibu</label>
                   <input v-model="form.mother_name" type="text" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium" placeholder="Nama lengkap ibu" />
+                  <p v-if="isParentUnavailable(form.mother_status)" class="text-[10px] text-amber-600 font-semibold mt-0.5">💡 Cukup isi nama saja (Status: {{ form.mother_status === 'meninggal' ? 'Meninggal Dunia' : 'Tidak Diketahui' }})</p>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-4">
                   <div class="space-y-1.5">
                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">Status Keberadaan</label>
-                    <select v-model="form.mother_status" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium" @change="onParentStatusChange('mother')">
+                    <select v-model="form.mother_status" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium cursor-pointer" @change="onParentStatusChange('mother')">
                       <option value="hidup">Hidup</option>
                       <option value="meninggal">Meninggal</option>
                       <option value="tidak_diketahui">Tidak Diketahui</option>
@@ -488,22 +490,22 @@
                   </div>
                   <div class="space-y-1.5">
                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">NIK Ibu (16 Digit)</label>
-                    <input v-model="form.mother_nik" type="text" inputmode="numeric" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium disabled:opacity-50 disabled:bg-slate-100 font-mono" maxlength="16" @input="form.mother_nik=form.mother_nik.replace(/[^0-9]/g,'')" :disabled="isParentUnavailable(form.mother_status)" placeholder="16 digit NIK" />
+                    <input v-model="form.mother_nik" type="text" inputmode="numeric" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium disabled:opacity-60 disabled:bg-slate-100/90 disabled:cursor-not-allowed font-mono" maxlength="16" @input="form.mother_nik=form.mother_nik.replace(/[^0-9]/g,'')" :disabled="isParentUnavailable(form.mother_status)" :placeholder="isParentUnavailable(form.mother_status) ? 'Tidak perlu diisi' : '16 digit NIK'" />
                   </div>
                 </div>
                 
                 <div class="space-y-1.5">
                   <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">Pekerjaan Ibu</label>
-                  <select v-model="form.mother_job" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium disabled:opacity-50 disabled:bg-slate-100" :disabled="isParentUnavailable(form.mother_status)">
-                    <option value="">Pilih Pekerjaan...</option>
+                  <select v-model="form.mother_job" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium disabled:opacity-60 disabled:bg-slate-100/90 disabled:cursor-not-allowed cursor-pointer" :disabled="isParentUnavailable(form.mother_status)">
+                    <option value="">{{ isParentUnavailable(form.mother_status) ? 'Tidak Perlu Diisi' : 'Pilih Pekerjaan...' }}</option>
                     <option v-for="job in jobOptions" :key="job" :value="job">{{ job }}</option>
                   </select>
                 </div>
                 
                 <div class="space-y-1.5">
                   <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">Penghasilan / Bulan</label>
-                  <select v-model="form.mother_income" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium disabled:opacity-50 disabled:bg-slate-100" :disabled="isParentUnavailable(form.mother_status)">
-                    <option value="">Pilih Rentang Penghasilan...</option>
+                  <select v-model="form.mother_income" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium disabled:opacity-60 disabled:bg-slate-100/90 disabled:cursor-not-allowed cursor-pointer" :disabled="isParentUnavailable(form.mother_status)">
+                    <option value="">{{ isParentUnavailable(form.mother_status) ? 'Tidak Perlu Diisi' : 'Pilih Rentang Penghasilan...' }}</option>
                     <option v-for="income in incomeOptions" :key="income" :value="income">{{ income }}</option>
                   </select>
                 </div>
@@ -534,6 +536,7 @@
                     guardianMode === 'father' ? 'bg-emerald-600 text-white shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium',
                     'px-3 py-1.5 rounded-lg text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer'
                   ]"
+                  :title="isParentUnavailable(form.father_status) ? 'Ayah Meninggal / Tidak Diketahui' : 'Gunakan data ayah sebagai wali'"
                 >
                   Sama dg Ayah
                 </button>
@@ -545,6 +548,7 @@
                     guardianMode === 'mother' ? 'bg-emerald-600 text-white shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium',
                     'px-3 py-1.5 rounded-lg text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer'
                   ]"
+                  :title="isParentUnavailable(form.mother_status) ? 'Ibu Meninggal / Tidak Diketahui' : 'Gunakan data ibu sebagai wali'"
                 >
                   Sama dg Ibu
                 </button>
@@ -573,14 +577,18 @@
                 <div class="space-y-1.5">
                   <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
                     Nama Lengkap Wali <span class="text-red-500 font-bold">*</span>
+                    <span v-if="guardianMode !== 'other'" class="text-[10px] text-emerald-600 font-semibold normal-case ml-1.5">
+                      (Otomatis Data {{ guardianMode === 'father' ? 'Ayah' : 'Ibu' }})
+                    </span>
                   </label>
                   <input
                     v-model="form.guardian_name"
                     type="text"
+                    :readonly="guardianMode !== 'other'"
                     @input="clearError('guardian_name')"
                     :class="[
-                      errors.guardian_name ? 'border-red-500 bg-red-50/40 focus:ring-red-300' : 'border-slate-200 bg-white focus:ring-emerald-400/30 focus:border-emerald-400',
-                      'w-full border rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 transition-all font-medium'
+                      errors.guardian_name ? 'border-red-500 bg-red-50/40 focus:ring-red-300' : (guardianMode !== 'other' ? 'border-slate-200 bg-slate-100/90 text-slate-700 cursor-not-allowed' : 'border-slate-200 bg-white focus:ring-emerald-400/30 focus:border-emerald-400'),
+                      'w-full border rounded-xl px-4 py-2.5 text-sm transition-all font-medium'
                     ]"
                     placeholder="Nama lengkap wali siswa"
                   />
@@ -596,22 +604,25 @@
                   </label>
                   <select
                     v-model="form.guardian_relation"
+                    :disabled="guardianMode !== 'other'"
                     @change="clearError('guardian_relation')"
                     :class="[
-                      errors.guardian_relation ? 'border-red-500 bg-red-50/40 focus:ring-red-300' : 'border-slate-200 bg-white focus:ring-emerald-400/30 focus:border-emerald-400',
-                      'w-full border rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 transition-all font-medium'
+                      errors.guardian_relation ? 'border-red-500 bg-red-50/40 focus:ring-red-300' : (guardianMode !== 'other' ? 'border-slate-200 bg-slate-100/90 text-slate-700 cursor-not-allowed' : 'border-slate-200 bg-white focus:ring-emerald-400/30 focus:border-emerald-400 cursor-pointer'),
+                      'w-full border rounded-xl px-4 py-2.5 text-sm transition-all font-medium'
                     ]"
                   >
                     <option value="">Pilih Hubungan...</option>
-                    <option value="Ayah Kandung">Ayah Kandung</option>
-                    <option value="Ibu Kandung">Ibu Kandung</option>
+                    <option v-if="guardianMode === 'father'" value="Ayah Kandung">Ayah Kandung</option>
+                    <option v-if="guardianMode === 'mother'" value="Ibu Kandung">Ibu Kandung</option>
                     <option value="Kakek">Kakek</option>
                     <option value="Nenek">Nenek</option>
                     <option value="Paman">Paman</option>
                     <option value="Bibi">Bibi</option>
                     <option value="Kakak Kandung">Kakak Kandung</option>
+                    <option value="Saudara / Kerabat">Saudara / Kerabat</option>
                     <option value="Wali Panti / Pengasuh">Wali Panti / Pengasuh</option>
                     <option value="Lainnya">Lainnya</option>
+                    <option v-if="form.guardian_relation && !['Kakek', 'Nenek', 'Paman', 'Bibi', 'Kakak Kandung', 'Saudara / Kerabat', 'Wali Panti / Pengasuh', 'Lainnya', 'Ayah Kandung', 'Ibu Kandung'].includes(form.guardian_relation)" :value="form.guardian_relation">{{ form.guardian_relation }}</option>
                   </select>
                   <p v-if="errors.guardian_relation" class="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1">
                     <span>🔴</span> {{ errors.guardian_relation }}
@@ -629,8 +640,12 @@
                     type="text"
                     inputmode="numeric"
                     maxlength="16"
+                    :readonly="guardianMode !== 'other'"
                     @input="form.guardian_nik=form.guardian_nik.replace(/[^0-9]/g,'')"
-                    class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium font-mono"
+                    :class="[
+                      guardianMode !== 'other' ? 'border-slate-200 bg-slate-100/90 text-slate-700 cursor-not-allowed' : 'border-slate-200 bg-white focus:ring-emerald-400/30 focus:border-emerald-400',
+                      'w-full border rounded-xl px-4 py-2.5 text-sm transition-all font-medium font-mono'
+                    ]"
                     placeholder="Contoh: 3201012304750002"
                   />
                 </div>
@@ -640,7 +655,11 @@
                   <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Pekerjaan Wali</label>
                   <select
                     v-model="form.guardian_job"
-                    class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium"
+                    :disabled="guardianMode !== 'other'"
+                    :class="[
+                      guardianMode !== 'other' ? 'border-slate-200 bg-slate-100/90 text-slate-700 cursor-not-allowed' : 'border-slate-200 bg-white focus:ring-emerald-400/30 focus:border-emerald-400 cursor-pointer',
+                      'w-full border rounded-xl px-4 py-2.5 text-sm transition-all font-medium'
+                    ]"
                   >
                     <option value="">Pilih Pekerjaan...</option>
                     <option v-for="job in jobOptions" :key="job" :value="job">{{ job }}</option>
@@ -653,7 +672,11 @@
                   <input
                     v-model="form.guardian_phone"
                     type="text"
-                    class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium"
+                    :readonly="guardianMode !== 'other'"
+                    :class="[
+                      guardianMode !== 'other' ? 'border-slate-200 bg-slate-100/90 text-slate-700 cursor-not-allowed' : 'border-slate-200 bg-white focus:ring-emerald-400/30 focus:border-emerald-400',
+                      'w-full border rounded-xl px-4 py-2.5 text-sm transition-all font-medium'
+                    ]"
                     placeholder="Contoh: 081234567890"
                   />
                 </div>
@@ -663,7 +686,11 @@
                   <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Penghasilan Wali / Bulan</label>
                   <select
                     v-model="form.guardian_income"
-                    class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 transition-all font-medium"
+                    :disabled="guardianMode !== 'other'"
+                    :class="[
+                      guardianMode !== 'other' ? 'border-slate-200 bg-slate-100/90 text-slate-700 cursor-not-allowed' : 'border-slate-200 bg-white focus:ring-emerald-400/30 focus:border-emerald-400 cursor-pointer',
+                      'w-full border rounded-xl px-4 py-2.5 text-sm transition-all font-medium'
+                    ]"
                   >
                     <option value="">Pilih Rentang Penghasilan...</option>
                     <option v-for="income in incomeOptions" :key="income" :value="income">{{ income }}</option>
@@ -859,16 +886,22 @@ const guardianFeedbackNote = computed(() => {
   const mUn = isParentUnavailable(form.mother_status);
 
   if (fUn && mUn) {
-    return 'Kedua orang tua berstatus Meninggal / Tidak Diketahui (Yatim Piatu). Data wali dibuka dalam mode manual.';
+    return 'Kedua orang tua berstatus Meninggal / Tidak Diketahui. Data kedua orang tua hanya mengisi nama saja, dan data wali wajib diisi secara manual (Wali Lainnya / Kerabat).';
   }
   if (fUn && !mUn) {
-    return 'Ayah berstatus Meninggal / Tidak Diketahui. Data wali otomatis disinkronkan dengan Data Ibu.';
+    if (guardianMode.value === 'mother') {
+      return 'Ayah berstatus Meninggal / Tidak Diketahui. Data wali otomatis disinkronkan dari Data Ibu.';
+    }
+    return 'Ayah berstatus Meninggal / Tidak Diketahui. Data wali diisi secara manual (Wali Lainnya / Kerabat).';
   }
   if (!fUn && mUn) {
-    return 'Ibu berstatus Meninggal / Tidak Diketahui. Data wali otomatis disinkronkan dengan Data Ayah.';
+    if (guardianMode.value === 'father') {
+      return 'Ibu berstatus Meninggal / Tidak Diketahui. Data wali otomatis disinkronkan dari Data Ayah.';
+    }
+    return 'Ibu berstatus Meninggal / Tidak Diketahui. Data wali diisi secara manual (Wali Lainnya / Kerabat).';
   }
   if (guardianMode.value === 'father') {
-    return 'Data wali tersinkronisasi otomatis dengan Data Ayah.';
+    return 'Kedua orang tua lengkap. Data wali tersinkronisasi otomatis dengan Data Ayah.';
   }
   if (guardianMode.value === 'mother') {
     return 'Data wali tersinkronisasi otomatis dengan Data Ibu.';
@@ -895,6 +928,12 @@ function syncGuardianData() {
 }
 
 function setGuardianMode(mode) {
+  const fUn = isParentUnavailable(form.father_status);
+  const mUn = isParentUnavailable(form.mother_status);
+
+  if (mode === 'father' && fUn) return;
+  if (mode === 'mother' && mUn) return;
+
   guardianMode.value = mode;
   if (mode === 'other') {
     if (['Ayah Kandung', 'Ibu Kandung'].includes(form.guardian_relation)) {
@@ -931,9 +970,10 @@ function onParentStatusChange(type) {
     guardianMode.value = 'father';
     syncGuardianData();
   } else {
-    if (guardianMode.value === 'father' || guardianMode.value === 'mother') {
-      syncGuardianData();
+    if (guardianMode.value !== 'other' && guardianMode.value !== 'mother') {
+      guardianMode.value = 'father';
     }
+    syncGuardianData();
   }
 }
 
@@ -1031,14 +1071,44 @@ watch(
     });
 
     // Detect existing guardian mode
-    if (form.guardian_relation === 'Ibu Kandung') {
-      guardianMode.value = 'mother';
+    const fUn = isParentUnavailable(form.father_status);
+    const mUn = isParentUnavailable(form.mother_status);
+
+    if (fUn && mUn) {
+      // Both parents dead / unavailable -> MUST be other (manual)
+      guardianMode.value = 'other';
+      if (['Ayah Kandung', 'Ibu Kandung'].includes(form.guardian_relation)) {
+        form.guardian_relation = '';
+      }
+    } else if (form.guardian_relation === 'Ibu Kandung') {
+      if (!mUn) {
+        guardianMode.value = 'mother';
+        syncGuardianData();
+      } else {
+        guardianMode.value = fUn ? 'other' : 'father';
+        syncGuardianData();
+      }
     } else if (form.guardian_relation === 'Ayah Kandung') {
-      guardianMode.value = 'father';
-    } else if (val.id && form.guardian_name) {
+      if (!fUn) {
+        guardianMode.value = 'father';
+        syncGuardianData();
+      } else {
+        guardianMode.value = mUn ? 'other' : 'mother';
+        syncGuardianData();
+      }
+    } else if (val.id && form.guardian_name && form.guardian_relation) {
+      // Specific custom guardian already recorded
       guardianMode.value = 'other';
     } else {
-      onParentStatusChange('father');
+      // Default: if father is alive, use father; else if mother is alive, use mother; else other
+      if (!fUn) {
+        guardianMode.value = 'father';
+      } else if (!mUn) {
+        guardianMode.value = 'mother';
+      } else {
+        guardianMode.value = 'other';
+      }
+      syncGuardianData();
     }
 
     if (val.photo_url) {
