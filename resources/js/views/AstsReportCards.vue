@@ -1675,17 +1675,14 @@ function triggerPrint() {
   <style>
     @page { 
       size: ${paperSize}; 
-      margin: 5mm 7mm 5mm 7mm; 
+      margin: 8mm 10mm 6mm 10mm; 
     }
     * {
       box-sizing: border-box;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
-    html {
-      font-size: 16px !important;
-    }
-    body {
+    html, body {
       background: #ffffff !important;
       color: #0f172a !important;
       padding: 0 !important;
@@ -1694,23 +1691,22 @@ function triggerPrint() {
       font-size: 10px !important;
       line-height: 1.25 !important;
     }
-    .kop-logo-box {
-      display: flex !important;
-      width: 72px !important;
-      height: 72px !important;
-      min-width: 72px !important;
-      min-height: 72px !important;
-      max-width: 72px !important;
-      max-height: 72px !important;
+    .no-print {
+      display: none !important;
     }
-    .kop-logo-img {
-      display: block !important;
-      width: 72px !important;
-      height: 72px !important;
-      max-width: 72px !important;
-      max-height: 72px !important;
-      object-fit: contain !important;
-    }
+    .text-center { text-align: center !important; }
+    .text-left { text-align: left !important; }
+    .text-right { text-align: right !important; }
+    .font-bold { font-weight: 700 !important; }
+    .font-extrabold { font-weight: 800 !important; }
+    .font-black { font-weight: 900 !important; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; }
+    .font-inter { font-family: 'Inter', system-ui, sans-serif !important; }
+    .font-lexend { font-family: 'Lexend', system-ui, sans-serif !important; }
+    .uppercase { text-transform: uppercase !important; }
+    .underline { text-decoration: underline !important; }
+    .italic { font-style: italic !important; }
+
     .print-sheet {
       border: none !important;
       box-shadow: none !important;

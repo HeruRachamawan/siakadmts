@@ -1,92 +1,95 @@
 <template>
-  <div class="space-y-2 text-slate-900 font-inter text-[10px] leading-tight max-w-full">
-    <!-- 1. KOP SURAT RESMI MADRASAH (PROPORTIONAL & PERFECTLY CENTERED) -->
-    <div class="border-b-[3px] border-double border-slate-900 pb-2 flex items-center justify-between gap-3">
-      <!-- Left: Official Logo Box with fixed exact dimensions -->
-      <div class="kop-logo-box flex-shrink-0 flex items-center justify-center" style="width: 72px; height: 72px; min-width: 72px; min-height: 72px;">
-        <img
-          v-if="report?.school_setting?.logo_url"
-          :src="getImageUrl(report.school_setting.logo_url)"
-          class="kop-logo-img object-contain"
-          style="width: 72px; height: 72px; max-width: 72px; max-height: 72px;"
-          alt="Logo Madrasah"
-        />
-        <div v-else class="w-16 h-16 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-black text-xl font-serif">
-          MTS
-        </div>
-      </div>
+  <div class="text-slate-900 font-inter text-[10px] leading-tight max-w-full print:leading-tight">
+    <!-- 1. KOP SURAT RESMI MADRASAH (TABLE-BASED: 100% BULLETPROOF & DEAD-CENTERED) -->
+    <table class="w-full border-collapse" style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">
+      <tbody>
+        <tr>
+          <!-- Left: Official Logo Box -->
+          <td style="width: 72px; min-width: 72px; max-width: 72px; vertical-align: middle; text-align: left; padding: 0 4px 4px 0;">
+            <img
+              v-if="report?.school_setting?.logo_url"
+              :src="getImageUrl(report.school_setting.logo_url)"
+              style="width: 68px; height: 68px; max-width: 68px; max-height: 68px; object-fit: contain; display: block;"
+              alt="Logo Madrasah"
+            />
+            <div v-else style="width: 60px; height: 60px; border-radius: 8px; background-color: #065f46; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; font-family: serif;">
+              MTS
+            </div>
+          </td>
 
-      <!-- Center: School Details (Dead Center because of symmetrical right spacer) -->
-      <div class="flex-1 text-center px-1">
-        <h3 class="text-[11px] sm:text-[12px] font-bold text-slate-800 uppercase tracking-wider leading-tight">
-          {{ report?.school_setting?.foundation_name || 'YAYASAN PENDIDIKAN ISLAM AL - HASANAH' }}
-        </h3>
-        <h1 class="text-sm sm:text-[17px] font-black text-slate-950 uppercase font-lexend tracking-wide mt-0.5 leading-tight">
-          {{ report?.school_setting?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH' }}
-        </h1>
-        <p class="text-[9.5px] sm:text-[10px] text-slate-700 font-medium mt-0.5 leading-tight">
-          {{ report?.school_setting?.address || 'Jl. Ciapus Sukamakmur No.05, Kec. Ciomas, Kab. Bogor' }}
-        </p>
-        <p class="text-[8.5px] sm:text-[9px] text-slate-600 font-mono mt-0.5">
-          Telp: {{ report?.school_setting?.phone || '081617666017' }} &bull; Email: {{ report?.school_setting?.email || 'mtsalhasanah.ciomas@gmail.com' }}
-        </p>
-      </div>
+          <!-- Center: School Information -->
+          <td style="text-align: center; vertical-align: middle; padding: 0 8px 4px 8px;">
+            <div style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #1e293b; line-height: 1.2;">
+              {{ report?.school_setting?.foundation_name || 'YAYASAN PENDIDIKAN ISLAM AL - HASANAH' }}
+            </div>
+            <div style="font-size: 15.5px; font-weight: 900; text-transform: uppercase; color: #020617; font-family: 'Lexend', system-ui, sans-serif; letter-spacing: 0.02em; margin-top: 2px; line-height: 1.2;">
+              {{ report?.school_setting?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH' }}
+            </div>
+            <div style="font-size: 9.5px; color: #334155; font-weight: 500; margin-top: 2px; line-height: 1.2;">
+              {{ report?.school_setting?.address || 'Jl. Ciapus Sukamakmur No.05, Kec. Ciomas, Kab. Bogor' }}
+            </div>
+            <div style="font-size: 8.5px; color: #475569; font-family: monospace; margin-top: 2px; line-height: 1.2;">
+              Telp: {{ report?.school_setting?.phone || '081617666017' }} &bull; Email: {{ report?.school_setting?.email || 'mtsalhasanah.ciomas@gmail.com' }}
+            </div>
+          </td>
 
-      <!-- Right: Symmetrical Spacer to keep the center text perfectly balanced on the page -->
-      <div class="kop-logo-box flex-shrink-0 hidden sm:flex items-center justify-center print:flex" style="width: 72px; height: 72px; min-width: 72px; min-height: 72px;"></div>
-    </div>
+          <!-- Right: Exact Symmetrical Spacer (keeps center td dead-center) -->
+          <td style="width: 72px; min-width: 72px; max-width: 72px; vertical-align: middle; padding: 0;"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Garis Ganda Resmi Kop Surat (Double Border Kop) -->
+    <div style="border-top: 2.5px solid #0f172a; border-bottom: 1px solid #0f172a; height: 3.5px; margin-bottom: 6px; width: 100%;"></div>
 
     <!-- 2. JUDUL LEMBAR RAPOR ASTS -->
-    <div class="text-center space-y-0.5 pt-0.5">
-      <h2 class="text-xs sm:text-sm font-black uppercase text-slate-950 font-lexend tracking-wide underline">
+    <div style="text-align: center; margin-bottom: 6px;">
+      <h2 style="font-size: 12px; font-weight: 900; text-transform: uppercase; color: #020617; font-family: 'Lexend', system-ui, sans-serif; letter-spacing: 0.03em; text-decoration: underline; margin: 0;">
         LAPORAN HASIL BELAJAR ASESMEN SUMATIF TENGAH SEMESTER (ASTS)
       </h2>
-      <p class="text-[9.5px] sm:text-[10px] font-bold text-slate-700 uppercase tracking-wide">
+      <p style="font-size: 9.5px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.03em; margin: 2px 0 0 0;">
         SEMESTER {{ report?.semester_label?.toUpperCase() || 'GANJIL' }} &bull; TAHUN PELAJARAN {{ report?.academic_year || '2026/2027' }}
       </p>
     </div>
 
-    <!-- 3. IDENTITAS PESERTA DIDIK -->
-    <div class="relative flex flex-col sm:grid sm:grid-cols-2 gap-x-6 gap-y-1 bg-slate-50/80 p-2 sm:p-2.5 rounded-lg border border-slate-300 text-[10px] sm:text-[10.5px] font-medium print:bg-transparent print:grid print:grid-cols-2">
-      <!-- Left Info -->
-      <div class="space-y-0.5">
-        <div class="flex">
-          <span class="w-28 font-bold text-slate-600">Nama Peserta Didik</span>
-          <span class="font-extrabold text-slate-900 font-lexend truncate">: {{ report?.student?.full_name || '-' }}</span>
-        </div>
-        <div class="flex">
-          <span class="w-28 font-bold text-slate-600">NISN / NIS</span>
-          <span class="font-bold text-slate-800 font-mono">: {{ report?.student?.nisn || '-' }} / {{ report?.student?.nis || '-' }}</span>
-        </div>
-      </div>
+    <!-- 3. IDENTITAS PESERTA DIDIK (2-COLUMN TABLE FORMAT) -->
+    <table class="identity-box" style="width: 100%; border: 1px solid #94a3b8; border-radius: 6px; background-color: #f8fafc; margin-bottom: 6px; border-collapse: collapse; font-size: 10px; font-weight: 500;">
+      <tbody>
+        <tr>
+          <!-- Left Column -->
+          <td style="width: 50%; vertical-align: top; padding: 5px 8px;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 110px; font-weight: 700; color: #475569; padding: 1px 0;">Nama Peserta Didik</td>
+                <td style="font-weight: 900; color: #020617; font-family: 'Lexend', system-ui, sans-serif; padding: 1px 0;">: {{ report?.student?.full_name || '-' }}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 700; color: #475569; padding: 1px 0;">NISN / NIS</td>
+                <td style="font-weight: 700; color: #1e293b; font-family: monospace; padding: 1px 0;">: {{ report?.student?.nisn || '-' }} / {{ report?.student?.nis || '-' }}</td>
+              </tr>
+            </table>
+          </td>
 
-      <!-- Right Info -->
-      <div class="space-y-0.5">
-        <div class="flex">
-          <span class="w-24 font-bold text-slate-600">Kelas / Rombel</span>
-          <span class="font-extrabold text-slate-900">: Kelas {{ report?.student?.class_name || '-' }}</span>
-        </div>
-        <div class="flex">
-          <span class="w-24 font-bold text-slate-600">Fase / Semester</span>
-          <span class="font-bold text-slate-800">: Fase D / {{ report?.semester === 'genap' ? 'Genap (Dua)' : 'Ganjil (Satu)' }}</span>
-        </div>
-      </div>
-
-      <!-- Rank Badge (adaptive on mobile and print) -->
-      <div v-if="report?.rank && report?.rank !== '-'" class="sm:absolute right-2 top-1.5 self-start flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-300 rounded text-amber-900 shadow-2xs print:border-slate-400 print:bg-transparent mt-1 sm:mt-0">
-        <span class="text-[10px]">🏆</span>
-        <span class="text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider font-lexend">
-          Peringkat {{ report.rank }}
-        </span>
-        <span v-if="report?.total_students" class="text-[9px] font-bold text-amber-800 print:text-slate-700">
-          / {{ report.total_students }}
-        </span>
-      </div>
-    </div>
+          <!-- Right Column -->
+          <td style="width: 50%; vertical-align: top; padding: 5px 8px; position: relative;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 100px; font-weight: 700; color: #475569; padding: 1px 0;">Kelas / Rombel</td>
+                <td style="font-weight: 900; color: #020617; padding: 1px 0;">: Kelas {{ report?.student?.class_name || '-' }}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 700; color: #475569; padding: 1px 0;">Fase / Semester</td>
+                <td style="font-weight: 700; color: #1e293b; padding: 1px 0;">: Fase D / {{ report?.semester === 'genap' ? 'Genap (Dua)' : 'Ganjil (Satu)' }}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
     <!-- 4. TABEL CAPAIAN HASIL BELAJAR ASTS -->
-    <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse border border-slate-900 text-[10px]">
+    <div class="overflow-x-auto" style="margin-bottom: 6px;">
+      <table class="w-full text-left border-collapse border border-slate-900 text-[10px]" style="width: 100%; border-collapse: collapse; border: 1px solid #0f172a;">
         <thead>
           <tr class="bg-slate-100 text-slate-950 font-black uppercase text-center border-b border-slate-900 text-[9.5px]">
             <th class="border border-slate-900 p-1 w-7">No</th>
@@ -99,14 +102,14 @@
         </thead>
         <tbody>
           <!-- 1. KELOMPOK WAJIB A -->
-          <tr class="bg-slate-100/90 font-black text-slate-950 text-[10px]">
+          <tr class="bg-slate-100 font-black text-slate-950 text-[10px]">
             <td colspan="6" class="border border-slate-900 px-2 py-0.5 uppercase tracking-wide">
               Kelompok Wajib A
             </td>
           </tr>
 
           <!-- PAI Header Item 1 -->
-          <tr v-if="report?.subjects_pai && report.subjects_pai.length" class="bg-slate-50/70 font-bold text-slate-900 text-[10px]">
+          <tr v-if="report?.subjects_pai && report.subjects_pai.length" class="bg-slate-50 font-bold text-slate-900 text-[10px]">
             <td class="border border-slate-400 p-1 text-center font-bold text-slate-700">1</td>
             <td colspan="5" class="border border-slate-400 p-1 font-black text-slate-900">
               Pendidikan Agama Islam
@@ -149,7 +152,7 @@
           </tr>
 
           <!-- 2. KELOMPOK WAJIB B -->
-          <tr v-if="report?.subjects_group_b && report.subjects_group_b.length" class="bg-slate-100/90 font-black text-slate-950 text-[10px]">
+          <tr v-if="report?.subjects_group_b && report.subjects_group_b.length" class="bg-slate-100 font-black text-slate-950 text-[10px]">
             <td colspan="6" class="border border-slate-900 px-2 py-0.5 uppercase tracking-wide">
               Kelompok Wajib B
             </td>
@@ -170,7 +173,7 @@
           </tr>
 
           <!-- 3. MUATAN LOKAL (MULOK) -->
-          <tr v-if="report?.subjects_mulok && report.subjects_mulok.length" class="bg-slate-100/90 font-black text-slate-950 text-[10px]">
+          <tr v-if="report?.subjects_mulok && report.subjects_mulok.length" class="bg-slate-100 font-black text-slate-950 text-[10px]">
             <td colspan="6" class="border border-slate-900 px-2 py-0.5 uppercase tracking-wide">
               Muatan Lokal
             </td>
@@ -217,117 +220,133 @@
       </table>
     </div>
 
-    <!-- 5. KETIDAKHADIRAN & CATATAN WALI KELAS -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-0.5">
-      <!-- Tabel Ketidakhadiran -->
-      <div class="sm:col-span-1 relative group">
-        <table class="w-full text-[10px] border-collapse border border-slate-900">
-          <thead>
-            <tr class="bg-slate-100 text-center font-black uppercase text-[9px] border-b border-slate-900">
-              <th colspan="2" class="p-1 border border-slate-900">
-                <div class="flex items-center justify-between px-1">
-                  <span>Rekapitulasi Kehadiran</span>
-                  <button
-                    v-if="allowEdit"
-                    type="button"
-                    @click="$emit('edit-notes')"
-                    class="no-print text-indigo-700 hover:text-indigo-950 font-bold text-[8.5px] cursor-pointer"
-                    title="Ubah angka kehadiran"
-                  >
-                    ✏️ Edit
-                  </button>
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="p-1 border border-slate-400 font-medium">1. Sakit (S)</td>
-              <td class="p-1 border border-slate-400 text-center font-mono font-bold">{{ report?.attendance?.sick || 0 }} hari</td>
-            </tr>
-            <tr>
-              <td class="p-1 border border-slate-400 font-medium">2. Izin (I)</td>
-              <td class="p-1 border border-slate-400 text-center font-mono font-bold">{{ report?.attendance?.permission || 0 }} hari</td>
-            </tr>
-            <tr>
-              <td class="p-1 border border-slate-400 font-medium">3. Tanpa Keterangan (A)</td>
-              <td class="p-1 border border-slate-400 text-center font-mono font-bold">{{ report?.attendance?.unexcused || 0 }} hari</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- 5. KETIDAKHADIRAN & CATATAN WALI KELAS (TABLE FORMAT) -->
+    <table style="width: 100%; border-collapse: collapse; margin-top: 4px; margin-bottom: 6px;">
+      <tbody>
+        <tr>
+          <!-- Left: Kehadiran (32%) -->
+          <td style="width: 32%; vertical-align: top; padding-right: 6px;">
+            <table style="width: 100%; font-size: 10px; border-collapse: collapse; border: 1px solid #0f172a;">
+              <thead>
+                <tr style="background-color: #f1f5f9; text-align: center; font-weight: 900; text-transform: uppercase; font-size: 9px; border-bottom: 1px solid #0f172a;">
+                  <th colspan="2" style="padding: 3px; border: 1px solid #0f172a;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px;">
+                      <span>Rekapitulasi Kehadiran</span>
+                      <button
+                        v-if="allowEdit"
+                        type="button"
+                        @click="$emit('edit-notes')"
+                        class="no-print"
+                        style="color: #4338ca; font-weight: bold; font-size: 8.5px; cursor: pointer; border: none; background: transparent;"
+                        title="Ubah angka kehadiran"
+                      >
+                        ✏️ Edit
+                      </button>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding: 2.5px 4px; border: 1px solid #94a3b8; font-weight: 500;">1. Sakit (S)</td>
+                  <td style="padding: 2.5px 4px; border: 1px solid #94a3b8; text-align: center; font-family: monospace; font-weight: bold;">{{ report?.attendance?.sick || 0 }} hari</td>
+                </tr>
+                <tr>
+                  <td style="padding: 2.5px 4px; border: 1px solid #94a3b8; font-weight: 500;">2. Izin (I)</td>
+                  <td style="padding: 2.5px 4px; border: 1px solid #94a3b8; text-align: center; font-family: monospace; font-weight: bold;">{{ report?.attendance?.permission || 0 }} hari</td>
+                </tr>
+                <tr>
+                  <td style="padding: 2.5px 4px; border: 1px solid #94a3b8; font-weight: 500;">3. Tanpa Keterangan (A)</td>
+                  <td style="padding: 2.5px 4px; border: 1px solid #94a3b8; text-align: center; font-family: monospace; font-weight: bold;">{{ report?.attendance?.unexcused || 0 }} hari</td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
 
-      <!-- Catatan Wali Kelas -->
-      <div class="sm:col-span-2 p-2 border border-slate-900 rounded flex flex-col justify-between space-y-0.5">
-        <div class="flex items-center justify-between">
-          <span class="block font-bold uppercase text-[9px] text-slate-800 tracking-wider">
-            Catatan & Motivasi Perkembangan Belajar Wali Kelas:
-          </span>
-          <button
-            v-if="allowEdit"
-            type="button"
-            @click="$emit('edit-notes')"
-            class="no-print px-2 py-0.5 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[9px] font-bold flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
-            title="Edit kehadiran dan catatan motivasi wali kelas untuk siswa ini"
-          >
-            <span>✏️ Edit Catatan & Absensi</span>
-          </button>
-        </div>
-        <p class="text-[10px] text-slate-800 italic leading-snug flex-1">
-          "{{ report?.homeroom_notes || 'Tingkatkan terus ketekunan belajar, kedisiplinan beribadah, dan keaktifan di madrasah.' }}"
-        </p>
-      </div>
-    </div>
+          <!-- Right: Catatan Wali Kelas (68%) -->
+          <td style="width: 68%; vertical-align: top; padding-left: 6px;">
+            <div style="border: 1px solid #0f172a; border-radius: 4px; padding: 5px 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: space-between;">
+              <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 3px; margin-bottom: 3px;">
+                <span style="font-weight: 800; text-transform: uppercase; font-size: 9px; color: #1e293b; letter-spacing: 0.03em;">
+                  Catatan & Motivasi Perkembangan Belajar Wali Kelas:
+                </span>
+                <button
+                  v-if="allowEdit"
+                  type="button"
+                  @click="$emit('edit-notes')"
+                  class="no-print"
+                  style="padding: 2px 6px; border-radius: 4px; background-color: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; font-size: 8.5px; font-weight: bold; cursor: pointer;"
+                  title="Edit kehadiran dan catatan motivasi wali kelas untuk siswa ini"
+                >
+                  ✏️ Edit Catatan & Absensi
+                </button>
+              </div>
+              <p style="font-size: 9.5px; color: #1e293b; font-style: italic; line-height: 1.35; margin: 0; flex: 1;">
+                "{{ report?.homeroom_notes || 'Tingkatkan terus ketekunan belajar, kedisiplinan beribadah, dan keaktifan di madrasah.' }}"
+              </p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
     <!-- 6. TITIMANGSA & BLOK TANDA TANGAN RESMI -->
-    <div class="pt-2 space-y-1 break-inside-avoid">
-      <div class="text-right text-[10.5px] font-bold text-slate-800 pr-2 flex items-center justify-end gap-1.5">
+    <div style="padding-top: 4px; page-break-inside: avoid; break-inside: avoid;">
+      <div style="text-align: right; font-size: 10px; font-weight: 700; color: #1e293b; padding-right: 8px; margin-bottom: 4px;">
         <span>{{ report?.city || 'Bogor' }}, {{ report?.issued_date || '........................' }}</span>
         <button
           v-if="allowEdit"
           type="button"
           @click="$emit('edit-titimangsa')"
-          class="no-print text-amber-700 hover:text-amber-950 font-bold text-[8.5px] cursor-pointer"
+          class="no-print"
+          style="color: #b45309; font-weight: bold; font-size: 8.5px; cursor: pointer; border: none; background: transparent; margin-left: 6px;"
           title="Ubah Tempat dan Tanggal Titimangsa Rapor"
         >
           ✏️ Edit Titimangsa
         </button>
       </div>
 
-      <div class="grid grid-cols-3 text-center text-[10px] gap-2 pt-1">
-        <!-- Orang Tua -->
-        <div class="space-y-9">
-          <div>
-            <p class="font-bold text-slate-700">Mengetahui,</p>
-            <p class="font-bold text-slate-900">Orang Tua / Wali Siswa</p>
-          </div>
-          <div class="border-b border-slate-900 mx-4"></div>
-        </div>
+      <table style="width: 100%; text-align: center; font-size: 10px; border-collapse: collapse;">
+        <tbody>
+          <tr>
+            <!-- Orang Tua -->
+            <td style="width: 33.33%; vertical-align: top; padding: 0 8px;">
+              <div>
+                <p style="font-weight: 700; color: #334155; margin: 0;">Mengetahui,</p>
+                <p style="font-weight: 700; color: #0f172a; margin: 0;">Orang Tua / Wali Siswa</p>
+              </div>
+              <div style="height: 48px;"></div>
+              <div style="border-bottom: 1px solid #0f172a; width: 80%; margin: 0 auto;"></div>
+            </td>
 
-        <!-- Wali Kelas -->
-        <div class="space-y-9">
-          <div>
-            <p class="font-bold text-slate-700">Wali Kelas,</p>
-            <p class="font-bold text-slate-900">Kelas {{ report?.student?.class_name || '' }}</p>
-          </div>
-          <div>
-            <p class="font-black text-slate-950 underline">{{ report?.student?.homeroom_teacher_name || '............................................' }}</p>
-            <p class="text-[9px] text-slate-600 font-mono">NIP. {{ report?.student?.homeroom_teacher_nip || '-' }}</p>
-          </div>
-        </div>
+            <!-- Wali Kelas -->
+            <td style="width: 33.33%; vertical-align: top; padding: 0 8px;">
+              <div>
+                <p style="font-weight: 700; color: #334155; margin: 0;">Wali Kelas,</p>
+                <p style="font-weight: 700; color: #0f172a; margin: 0;">Kelas {{ report?.student?.class_name || '' }}</p>
+              </div>
+              <div style="height: 48px;"></div>
+              <div>
+                <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0;">{{ report?.student?.homeroom_teacher_name || '............................................' }}</p>
+                <p style="font-size: 9px; color: #475569; font-family: monospace; margin: 2px 0 0 0;">NIP. {{ report?.student?.homeroom_teacher_nip || '-' }}</p>
+              </div>
+            </td>
 
-        <!-- Kepala Madrasah -->
-        <div class="space-y-9">
-          <div>
-            <p class="font-bold text-slate-700">Mengetahui,</p>
-            <p class="font-bold text-slate-900">Kepala Madrasah</p>
-          </div>
-          <div>
-            <p class="font-black text-slate-950 underline">{{ report?.school_setting?.principal_name || '............................................' }}</p>
-            <p class="text-[9px] text-slate-600 font-mono">NIP. {{ report?.school_setting?.principal_nip || '-' }}</p>
-          </div>
-        </div>
-      </div>
+            <!-- Kepala Madrasah -->
+            <td style="width: 33.33%; vertical-align: top; padding: 0 8px;">
+              <div>
+                <p style="font-weight: 700; color: #334155; margin: 0;">Mengetahui,</p>
+                <p style="font-weight: 700; color: #0f172a; margin: 0;">Kepala Madrasah</p>
+              </div>
+              <div style="height: 48px;"></div>
+              <div>
+                <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0;">{{ report?.school_setting?.principal_name || '............................................' }}</p>
+                <p style="font-size: 9px; color: #475569; font-family: monospace; margin: 2px 0 0 0;">NIP. {{ report?.school_setting?.principal_nip || '-' }}</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
@@ -361,33 +380,9 @@ function getImageUrl(path) {
 .font-inter { font-family: 'Inter', system-ui, sans-serif; }
 .font-lexend { font-family: 'Lexend', system-ui, sans-serif; }
 
-.kop-logo-box {
-  width: 72px;
-  height: 72px;
-}
-
-.kop-logo-img {
-  width: 72px;
-  height: 72px;
-  max-width: 72px;
-  max-height: 72px;
-  object-fit: contain;
-}
-
 @media print {
-  .kop-logo-box {
-    display: flex !important;
-    width: 72px !important;
-    height: 72px !important;
-    min-width: 72px !important;
-    min-height: 72px !important;
-  }
-  .kop-logo-img {
-    width: 72px !important;
-    height: 72px !important;
-    max-width: 72px !important;
-    max-height: 72px !important;
-    object-fit: contain !important;
+  .no-print {
+    display: none !important;
   }
 }
 </style>
