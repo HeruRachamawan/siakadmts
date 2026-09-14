@@ -18,14 +18,69 @@
       <!-- Quick Summary Stats -->
       <div class="flex items-center gap-4 z-10">
         <div class="bg-slate-900 text-white rounded-2xl p-4 min-w-[130px] text-center shadow-lg shadow-slate-900/10">
-          <span class="text-2xl font-black font-lexend block text-emerald-400">{{ totalTeachingSlots }}</span>
+          <span class="text-2xl font-black font-lexend block" :class="activeScheduleType === 'lokal' ? 'text-teal-400' : 'text-emerald-400'">
+            {{ totalTeachingSlots }}
+          </span>
           <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Sesi / Mgg</span>
         </div>
 
-        <div class="bg-emerald-600 text-white rounded-2xl p-4 min-w-[130px] text-center shadow-lg shadow-emerald-600/20">
+        <div
+          :class="activeScheduleType === 'lokal' ? 'bg-teal-600 shadow-teal-600/20' : 'bg-emerald-600 shadow-emerald-600/20'"
+          class="text-white rounded-2xl p-4 min-w-[130px] text-center shadow-lg transition-colors"
+        >
           <span class="text-2xl font-black font-lexend block text-white">{{ todaySlotsCount }}</span>
-          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-100">Sesi Hari Ini</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider" :class="activeScheduleType === 'lokal' ? 'text-teal-100' : 'text-emerald-100'">
+            Sesi Hari Ini
+          </span>
         </div>
+      </div>
+    </div>
+
+    <!-- Tab Switcher: Jadwal Utama vs Jadwal Lokal -->
+    <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-2 p-1 bg-slate-100/90 rounded-xl">
+        <button
+          type="button"
+          @click="setScheduleType('utama')"
+          :class="activeScheduleType === 'utama' ? 'bg-white text-emerald-800 font-extrabold shadow-sm ring-1 ring-slate-200/50' : 'text-slate-500 hover:text-slate-800 font-bold'"
+          class="px-5 py-2 rounded-lg text-xs transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <span class="text-sm">🏫</span>
+          <span>Jadwal Utama</span>
+          <span
+            class="text-[10px] px-2 py-0.5 rounded-md font-bold transition-colors"
+            :class="activeScheduleType === 'utama' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'"
+          >
+            {{ totalUtamaSlots }} Sesi
+          </span>
+        </button>
+
+        <button
+          type="button"
+          @click="setScheduleType('lokal')"
+          :class="activeScheduleType === 'lokal' ? 'bg-white text-teal-800 font-extrabold shadow-sm ring-1 ring-slate-200/50' : 'text-slate-500 hover:text-slate-800 font-bold'"
+          class="px-5 py-2 rounded-lg text-xs transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <span class="text-sm">📍</span>
+          <span>Jadwal Lokal</span>
+          <span
+            class="text-[10px] px-2 py-0.5 rounded-md font-bold transition-colors"
+            :class="activeScheduleType === 'lokal' ? 'bg-teal-100 text-teal-800' : 'bg-slate-200 text-slate-600'"
+          >
+            {{ totalLokalSlots }} Sesi
+          </span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 text-xs text-slate-500 font-medium px-2">
+        <span v-if="activeScheduleType === 'utama'" class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>Menampilkan jadwal mengajar KBM <b>Gedung Utama</b></span>
+        </span>
+        <span v-else class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+          <span>Menampilkan jadwal mengajar KBM <b>Ruang Lokal</b></span>
+        </span>
       </div>
     </div>
 
@@ -42,7 +97,9 @@
         :key="day.key"
         :class="[
           isToday(day.key)
-            ? 'bg-white border-2 border-emerald-500 shadow-xl shadow-emerald-500/10 ring-4 ring-emerald-500/10'
+            ? (activeScheduleType === 'lokal'
+                ? 'bg-white border-2 border-teal-500 shadow-xl shadow-teal-500/10 ring-4 ring-teal-500/10'
+                : 'bg-white border-2 border-emerald-500 shadow-xl shadow-emerald-500/10 ring-4 ring-emerald-500/10')
             : 'bg-white border border-slate-100/90 shadow-sm',
           'rounded-[2.5rem] overflow-hidden flex flex-col transition-all duration-300'
         ]"
@@ -51,13 +108,16 @@
         <div
           :class="[
             isToday(day.key)
-              ? 'bg-emerald-600 text-white'
+              ? (activeScheduleType === 'lokal' ? 'bg-teal-600 text-white' : 'bg-emerald-600 text-white')
               : 'bg-[#111827] text-white',
             'px-6 py-4 flex items-center justify-between gap-3'
           ]"
         >
           <div class="flex items-center gap-2.5">
-            <span class="w-2.5 h-2.5 rounded-full" :class="isToday(day.key) ? 'bg-amber-300 animate-pulse' : 'bg-emerald-400'"></span>
+            <span
+              class="w-2.5 h-2.5 rounded-full"
+              :class="isToday(day.key) ? 'bg-amber-300 animate-pulse' : (activeScheduleType === 'lokal' ? 'bg-teal-400' : 'bg-emerald-400')"
+            ></span>
             <h3 class="font-lexend font-black uppercase text-sm tracking-wider">{{ day.name }}</h3>
             <span
               v-if="isToday(day.key)"
@@ -81,7 +141,9 @@
           >
             <Clock class="w-7 h-7 text-slate-300" />
             <span class="font-bold text-slate-500">Tidak Ada Jam Mengajar</span>
-            <span class="text-[10px] text-slate-400">Jam Bebas / Persiapan Materi</span>
+            <span class="text-[10px] text-slate-400">
+              {{ activeScheduleType === 'lokal' ? 'Tidak ada sesi KBM di Ruang Lokal' : 'Jam Bebas / Persiapan Materi' }}
+            </span>
           </div>
 
           <!-- Schedule Item Cards -->
@@ -97,8 +159,11 @@
                 <span>{{ item.start_time }} - {{ item.end_time }}</span>
               </span>
 
-              <span class="px-2.5 py-1 bg-emerald-50 text-emerald-800 font-lexend text-xs font-black rounded-lg border border-emerald-200 flex items-center gap-1.5">
-                <Building2 class="w-3 h-3 text-emerald-600" />
+              <span
+                :class="isItemLokal(item) ? 'bg-teal-50 text-teal-800 border-teal-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'"
+                class="px-2.5 py-1 font-lexend text-xs font-black rounded-lg border flex items-center gap-1.5"
+              >
+                <Building2 class="w-3 h-3" :class="isItemLokal(item) ? 'text-teal-600' : 'text-emerald-600'" />
                 <span>{{ getClassName(item) }}</span>
               </span>
             </div>
@@ -109,12 +174,15 @@
                 {{ item.subject?.name || item.activity_name }}
               </h4>
               
-              <div class="mt-1 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-                <span v-if="item.room" class="flex items-center gap-1 text-slate-600 font-semibold">
-                  <MapPin class="w-3 h-3 text-slate-400" />
-                  <span>Ruang: {{ item.room }}</span>
+              <div class="mt-1.5 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                <span v-if="isItemLokal(item)" class="inline-flex items-center gap-1 text-teal-700 font-bold bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/70">
+                  <MapPin class="w-3 h-3 text-teal-500" />
+                  <span>Ruang: Lokal</span>
                 </span>
-                <span v-else class="text-slate-400">Gedung Utama</span>
+                <span v-else class="inline-flex items-center gap-1 text-slate-600 font-semibold">
+                  <MapPin class="w-3 h-3 text-slate-400" />
+                  <span>Gedung Utama</span>
+                </span>
 
                 <span v-if="getDurationBadge(item)" class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-black border border-amber-200">
                   {{ getDurationBadge(item) }}
@@ -143,6 +211,7 @@ const toast = useToast();
 const loading = ref(true);
 const teacherName = ref('');
 const schedules = ref([]);
+const activeScheduleType = ref(localStorage.getItem('teacher_schedule_type') || 'utama'); // 'utama' | 'lokal'
 
 const daysList = [
   { key: 'senin', name: 'Senin' },
@@ -153,14 +222,51 @@ const daysList = [
   { key: 'sabtu', name: 'Sabtu' },
 ];
 
+function isItemLokal(item) {
+  if (!item) return false;
+  const room = (item.room || '').toLowerCase().trim();
+  return room === 'lokal' || room.includes('lokal');
+}
+
+function isItemUtama(item) {
+  return !isItemLokal(item);
+}
+
+const setScheduleType = (type) => {
+  activeScheduleType.value = type;
+  try {
+    localStorage.setItem('teacher_schedule_type', type);
+  } catch (e) {
+    // Ignore storage errors if private browsing
+  }
+};
+
+const totalUtamaSlots = computed(() => {
+  return schedules.value.filter(s => !s.is_activity && isItemUtama(s)).length;
+});
+
+const totalLokalSlots = computed(() => {
+  return schedules.value.filter(s => !s.is_activity && isItemLokal(s)).length;
+});
+
+const filteredSchedules = computed(() => {
+  return schedules.value.filter(s => {
+    if (s.is_activity) return false;
+    if (activeScheduleType.value === 'lokal') {
+      return isItemLokal(s);
+    }
+    return isItemUtama(s);
+  });
+});
+
 const totalTeachingSlots = computed(() => {
-  return schedules.value.filter(s => !s.is_activity).length;
+  return filteredSchedules.value.length;
 });
 
 const todaySlotsCount = computed(() => {
   const dayNames = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
   const todayKey = dayNames[new Date().getDay()];
-  return schedules.value.filter(s => s.day?.toLowerCase() === todayKey && !s.is_activity).length;
+  return filteredSchedules.value.filter(s => s.day?.toLowerCase() === todayKey).length;
 });
 
 function isToday(dayKey) {
@@ -170,8 +276,8 @@ function isToday(dayKey) {
 }
 
 function getTeacherDaySchedules(dayKey) {
-  return schedules.value.filter(s => {
-    return s.day?.toLowerCase() === dayKey && !s.is_activity;
+  return filteredSchedules.value.filter(s => {
+    return s.day?.toLowerCase() === dayKey;
   });
 }
 
