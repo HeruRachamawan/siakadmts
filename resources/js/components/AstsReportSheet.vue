@@ -1,7 +1,7 @@
 <template>
-  <div class="space-y-2.5 text-slate-900 font-inter text-[10.5px] leading-tight max-w-full">
+  <div class="space-y-2 text-slate-900 font-inter text-[10px] leading-tight max-w-full">
     <!-- 1. KOP SURAT RESMI MADRASAH -->
-    <div class="border-b-2 border-double border-slate-900 pb-2 flex items-center gap-3">
+    <div class="border-b-2 border-double border-slate-900 pb-1.5 flex items-center gap-3">
       <div class="w-14 h-14 flex-shrink-0 flex items-center justify-center p-0.5">
         <img
           v-if="report?.school_setting?.logo_url"
@@ -255,7 +255,7 @@
 
       <div class="grid grid-cols-3 text-center text-[10px] gap-2 pt-1">
         <!-- Orang Tua -->
-        <div class="space-y-12">
+        <div class="space-y-9">
           <div>
             <p class="font-bold text-slate-700">Mengetahui,</p>
             <p class="font-bold text-slate-900">Orang Tua / Wali Siswa</p>
@@ -264,7 +264,7 @@
         </div>
 
         <!-- Wali Kelas -->
-        <div class="space-y-12">
+        <div class="space-y-9">
           <div>
             <p class="font-bold text-slate-700">Wali Kelas,</p>
             <p class="font-bold text-slate-900">Kelas {{ report?.student?.class_name || '' }}</p>
@@ -276,7 +276,7 @@
         </div>
 
         <!-- Kepala Madrasah -->
-        <div class="space-y-12">
+        <div class="space-y-9">
           <div>
             <p class="font-bold text-slate-700">Mengetahui,</p>
             <p class="font-bold text-slate-900">Kepala Madrasah</p>

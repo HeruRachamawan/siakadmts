@@ -1057,6 +1057,10 @@ function triggerPrint() {
       margin-bottom: 0 !important;
       padding-bottom: 0 !important;
     }
+    .print-page:last-child {
+      page-break-after: auto !important;
+      break-after: auto !important;
+    }
     table {
       page-break-inside: avoid !important;
       break-inside: avoid !important;
