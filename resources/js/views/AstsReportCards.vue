@@ -361,11 +361,11 @@
         </div>
 
         <!-- BATCH MODE (Full Class Print) -->
-        <div v-if="printMode === 'batch'" id="asts-report-printable-area" class="space-y-6">
+        <div v-if="printMode === 'batch'" id="asts-report-batch-area" class="space-y-6">
           <div
             v-for="(rep, rIdx) in batchReportsList"
             :key="'batch-rep-'+rIdx"
-            class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 text-slate-900 space-y-4 print-page print-sheet"
+            class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-slate-200 text-slate-900 space-y-4 print-page print-sheet"
           >
             <AstsReportSheet :report="rep" />
           </div>
@@ -443,7 +443,7 @@
           <!-- RIGHT PREVIEW PANEL: RENDERED RAPOR SHEET -->
           <div class="lg:col-span-8 flex justify-center">
             <div
-              id="asts-report-printable-area"
+              id="asts-report-single-area"
               class="bg-white p-5 sm:p-7 rounded-2xl shadow-md border border-slate-300 text-slate-900 print-page print-sheet w-full max-w-[210mm] transition-all"
             >
               <div v-if="loadingSingleReport" class="py-24 text-center text-slate-400 space-y-2">
@@ -988,23 +988,100 @@ async function fetchPrintData() {
 function triggerPrint() {
   const isA4 = selectedPaperSize.value === 'a4';
   const paperSize = isA4 ? 'A4 portrait' : '215mm 330mm';
+  const targetId = printMode.value === 'batch' ? 'asts-report-batch-area' : 'asts-report-single-area';
+  const printElem = document.getElementById(targetId);
 
-  const style = document.createElement('style');
-  style.id = 'dynamic-asts-page-style';
-  style.innerHTML = `
+  if (!printElem) {
+    window.print();
+    return;
+  }
+
+  const printWindow = window.open('', '_blank', 'width=900,height=900');
+  if (!printWindow) {
+    toast.error('Izinkan pop-up browser untuk mencetak rapor.');
+    window.print();
+    return;
+  }
+
+  // Gather stylesheet links from current document (Vite bundle CSS)
+  const styleElements = document.querySelectorAll('link[rel="stylesheet"], style');
+  let stylesHtml = '';
+  styleElements.forEach(el => {
+    stylesHtml += el.outerHTML;
+  });
+
+  const contentHtml = printElem.innerHTML;
+
+  printWindow.document.open();
+  printWindow.document.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Cetak Rapor ASTS - ${ledgerData.value?.class?.name || 'Siswa'}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Lexend:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  ${stylesHtml}
+  <style>
     @page { 
       size: ${paperSize}; 
-      margin: 6mm 8mm 6mm 8mm; 
+      margin: 5mm 7mm 5mm 7mm; 
     }
-  `;
-  document.head.appendChild(style);
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    body, html {
+      background: #ffffff !important;
+      color: #0f172a !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      font-family: 'Inter', system-ui, sans-serif !important;
+      font-size: 10px !important;
+      line-height: 1.25 !important;
+    }
+    .print-sheet {
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    .print-page {
+      page-break-after: always !important;
+      break-after: page !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      margin-bottom: 0 !important;
+      padding-bottom: 0 !important;
+    }
+    table {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+    tr {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+  </style>
+</head>
+<body>
+  <div style="width: 100%; max-width: 100%;">
+    ${contentHtml}
+  </div>
+</body>
+</html>`);
 
-  window.print();
+  printWindow.document.close();
+  printWindow.focus();
 
+  // Wait for images and fonts to load before triggering print
   setTimeout(() => {
-    const el = document.getElementById('dynamic-asts-page-style');
-    if (el) el.remove();
-  }, 1000);
+    printWindow.print();
+    printWindow.close();
+  }, 400);
 }
 
 function exportLedgerExcel() {
