@@ -123,6 +123,15 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::post('exam-corrections/settings', [\App\Http\Controllers\Admin\AdminExamCorrectionController::class, 'updateSettings']);
     Route::get('exam-corrections/export-all', [\App\Http\Controllers\Admin\AdminExamCorrectionController::class, 'exportAll']);
     Route::delete('exam-corrections/{id}', [\App\Http\Controllers\Admin\AdminExamCorrectionController::class, 'destroy']);
+
+    // Rapor Tengah Semester (ASTS Ganjil & Genap)
+    Route::get('asts-reports/options', [\App\Http\Controllers\AstsReportController::class, 'options']);
+    Route::get('asts-reports/ledger', [\App\Http\Controllers\AstsReportController::class, 'ledger']);
+    Route::post('asts-reports/auto-pull', [\App\Http\Controllers\AstsReportController::class, 'autoPullClassScores']);
+    Route::post('asts-reports/save-notes', [\App\Http\Controllers\AstsReportController::class, 'saveNotes']);
+    Route::get('asts-reports/student/{studentId}', [\App\Http\Controllers\AstsReportController::class, 'studentReport']);
+    Route::get('asts-reports/batch-class/{classId}', [\App\Http\Controllers\AstsReportController::class, 'batchClassReport']);
 });
+
 
 

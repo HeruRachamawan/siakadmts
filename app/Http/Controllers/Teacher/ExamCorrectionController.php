@@ -1140,4 +1140,79 @@ class ExamCorrectionController extends Controller
             ]);
         }
     }
+
+    /**
+     * Sync final exam correction scores directly to ASTS Report Card.
+     */
+    public function syncToAsts(Request $request, $id)
+    {
+        $exam = ExamPackage::with(['classRoom', 'subject'])->findOrFail($id);
+        $semester = $request->input('semester', $exam->semester ?? 'ganjil');
+        $academicYearId = $request->input('academic_year_id', $exam->academic_year_id);
+
+        if (!$academicYearId) {
+            $activeYear = AcademicYear::where('is_active', true)->first();
+            $academicYearId = $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id');
+        }
+
+        $submissions = ExamSubmission::where('exam_package_id', $exam->id)->get();
+
+        if ($submissions->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Belum ada data nilai koreksi pada paket ujian ini untuk disetorkan.'
+            ], 422);
+        }
+
+        $syncedCount = 0;
+        foreach ($submissions as $sub) {
+            $finalScore = $sub->remedial_score !== null ? floatval($sub->remedial_score) : floatval($sub->total_score);
+
+            $kkm = floatval($exam->kkm ?? 75);
+            $predicate = 'D';
+            if ($finalScore >= 90) {
+                $predicate = 'A';
+            } elseif ($finalScore >= 80) {
+                $predicate = 'B';
+            } elseif ($finalScore >= $kkm) {
+                $predicate = 'C';
+            }
+
+            $description = $finalScore >= $kkm
+                ? 'Menunjukkan penguasaan kompetensi yang tuntas pada asesmen tengah semester.'
+                : 'Perlu peningkatan dan pendampingan materi lebih lanjut.';
+
+            \App\Models\AstsSubjectScore::updateOrCreate(
+                [
+                    'student_id' => $sub->student_id,
+                    'subject_id' => $exam->subject_id,
+                    'academic_year_id' => $academicYearId,
+                    'semester' => $semester,
+                ],
+                [
+                    'score' => $finalScore,
+                    'kkm' => $kkm,
+                    'predicate' => $predicate,
+                    'description' => $description,
+                    'exam_package_id' => $exam->id,
+                    'synced_at' => now(),
+                ]
+            );
+
+            $syncedCount++;
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Berhasil menyetorkan nilai koreksi jadi ({$syncedCount} siswa) ke Rapor ASTS Semester " . ucfirst($semester) . "!",
+            'data' => [
+                'synced_count' => $syncedCount,
+                'semester' => $semester,
+                'subject_name' => $exam->subject?->name,
+                'class_name' => $exam->classRoom?->name,
+                'synced_at' => now()->toIso8601String(),
+            ]
+        ]);
+    }
 }
+

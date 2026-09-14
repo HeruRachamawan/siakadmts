@@ -77,6 +77,7 @@ const routes = [
     { path: '/admin/settings', component: () => import('../views/AdminSettings.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Pengaturan Sekolah' } },
     { path: '/admin/academic-years', component: () => import('../views/AdminAcademicYears.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Tahun Ajaran' } },
     { path: '/admin/grades', component: () => import('../views/AdminGrades.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Rekap Nilai Siswa' } },
+    { path: '/admin/asts-reports', component: () => import('../views/AstsReportCards.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Rapor Tengah Semester (ASTS)' } },
     { path: '/admin/exam-corrections', component: () => import('../views/AdminExamCorrection.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Monitoring Koreksi Ujian' } },
     { path: '/admin/attendances', component: () => import('../views/AdminAttendances.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Presensi Siswa' } },
     { path: '/admin/attendance', component: () => import('../views/TeacherAttendance.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Presensi Harian' } },
@@ -84,6 +85,9 @@ const routes = [
     { path: '/kurikulum/profile', redirect: '/admin/profile' },
     { path: '/operator/profile', redirect: '/admin/profile' },
     { path: '/kepala-sekolah/profile', redirect: '/admin/profile' },
+    { path: '/kurikulum/asts-reports', redirect: '/admin/asts-reports' },
+    { path: '/operator/asts-reports', redirect: '/admin/asts-reports' },
+    { path: '/kepala-sekolah/asts-reports', redirect: '/admin/asts-reports' },
 
     { path: '/admin/posts', component: () => import('../components/CrudPage.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Berita & Informasi' }, props: { endpoint: 'admin/posts', resource: 'admin/posts', title: 'Berita & Artikel', formFields: postFields(), fields: postFields(), columns: [
         { label: 'Gambar', field: 'image' },
@@ -164,6 +168,7 @@ const routes = [
     { path: '/teacher/attendance', component: () => import('../views/TeacherAttendance.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Presensi Mata Pelajaran' } },
     { path: '/teacher/attendance-reports', component: () => import('../views/AdminAttendanceReports.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Laporan Rekap Presensi' } },
     { path: '/teacher/grades', component: () => import('../views/TeacherGrades.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Input Nilai Siswa' } },
+    { path: '/teacher/asts-reports', component: () => import('../views/AstsReportCards.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Rapor Tengah Semester (ASTS)' } },
     { path: '/teacher/exam-corrections', component: () => import('../views/TeacherExamCorrection.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Koreksi Soal & Analisis' } },
     { path: '/teacher/schedules', component: () => import('../views/TeacherSchedules.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Jadwal Mengajar' } },
     { path: '/teacher/calendar', component: () => import('../views/TeacherCalendar.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Kalender Akademik' } },

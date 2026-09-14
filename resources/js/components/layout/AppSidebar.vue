@@ -183,6 +183,20 @@
             </Transition>
           </RouterLink>
 
+          <!-- Rapor ASTS (Sumatif Tengah Semester) -->
+          <RouterLink
+            to="/admin/asts-reports"
+            :title="isCollapsed ? 'Rapor ASTS (PTS)' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <BookOpenCheck class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rapor ASTS</span>
+            </Transition>
+          </RouterLink>
+
 
           <RouterLink
             to="/admin/calendar-events"
@@ -388,6 +402,20 @@
             </Transition>
           </RouterLink>
 
+          <!-- Rapor ASTS (Sumatif Tengah Semester) -->
+          <RouterLink
+            to="/teacher/asts-reports"
+            :title="isCollapsed ? 'Rapor ASTS (PTS)' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <BookOpenCheck class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rapor ASTS</span>
+            </Transition>
+          </RouterLink>
+
 
           <!-- Jadwal Mengajar Saya -->
           <RouterLink
@@ -477,6 +505,20 @@
             <CheckSquare class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Koreksi</span>
+            </Transition>
+          </RouterLink>
+
+          <!-- Rapor ASTS (Sumatif Tengah Semester) -->
+          <RouterLink
+            to="/admin/asts-reports"
+            :title="isCollapsed ? 'Rapor ASTS (PTS)' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <BookOpenCheck class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rapor ASTS</span>
             </Transition>
           </RouterLink>
 
@@ -779,6 +821,7 @@ import {
   Send,
   Users,
   CheckSquare,
+  BookOpenCheck,
   ArrowRightLeft,
   X
 } from 'lucide-vue-next';

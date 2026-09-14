@@ -910,6 +910,18 @@
               <span>{{ syncingGrades ? 'Menyinkronkan...' : 'Kirim ke Buku Nilai' }}</span>
             </button>
 
+            <!-- TOMBOL BARU: SETOR KE RAPOT ASTS -->
+            <button
+              @click="syncToAstsReport"
+              :disabled="syncingAsts"
+              type="button"
+              class="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              :title="`Setorkan Nilai Jadi ini ke Lembar Rapor Tengah Semester (ASTS ${activeExam?.semester === 'genap' ? 'Genap' : 'Ganjil'})`"
+            >
+              <Send class="w-4 h-4 text-emerald-200" />
+              <span>{{ syncingAsts ? 'Menyetorkan...' : `📥 Setor ke Rapot ASTS (${activeExam?.semester === 'genap' ? 'Genap' : 'Ganjil'})` }}</span>
+            </button>
+
             <button
               @click="saveAdjustedScores"
               :disabled="gradingProcessing"
@@ -4348,6 +4360,25 @@ async function syncToGrades() {
     syncingGrades.value = false;
   }
 }
+
+const syncingAsts = ref(false);
+
+async function syncToAstsReport() {
+  if (!activeExam.value) return;
+  syncingAsts.value = true;
+  try {
+    const res = await api.post(`/teacher/exam-corrections/${activeExam.value.id}/sync-to-asts`, {
+      semester: activeExam.value.semester || 'ganjil',
+      academic_year_id: activeExam.value.academic_year_id,
+    });
+    toast.success(res?.message || res?.data?.message || 'Nilai koreksi jadi berhasil disetorkan ke Rapor ASTS!');
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal menyetorkan nilai ke Rapor ASTS.');
+  } finally {
+    syncingAsts.value = false;
+  }
+}
+
 
 function applyBoostToKKM() {
   if (!activeExam.value) return;
