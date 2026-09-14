@@ -1675,7 +1675,7 @@ function triggerPrint() {
   <style>
     @page { 
       size: ${paperSize}; 
-      margin: 8mm 10mm 6mm 10mm; 
+      margin: 5mm 8mm 5mm 8mm; 
     }
     * {
       box-sizing: border-box;

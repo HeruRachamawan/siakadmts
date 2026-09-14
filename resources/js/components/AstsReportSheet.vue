@@ -87,31 +87,39 @@
       </tbody>
     </table>
 
-    <!-- 4. TABEL CAPAIAN HASIL BELAJAR ASTS -->
-    <div class="overflow-x-auto" style="margin-bottom: 6px;">
-      <table class="w-full text-left border-collapse border border-slate-900 text-[10px]" style="width: 100%; border-collapse: collapse; border: 1px solid #0f172a;">
+    <!-- 4. TABEL CAPAIAN HASIL BELAJAR ASTS (FIXED COLGROUP LAYOUT) -->
+    <div class="overflow-x-auto" style="margin-bottom: 4px;">
+      <table style="width: 100%; table-layout: fixed; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 9.5px; line-height: 1.2;">
+        <colgroup>
+          <col style="width: 28px;" />
+          <col style="width: 210px;" />
+          <col style="width: 44px;" />
+          <col style="width: 54px;" />
+          <col style="width: 48px;" />
+          <col style="width: auto;" />
+        </colgroup>
         <thead>
-          <tr class="bg-slate-100 text-slate-950 font-black uppercase text-center border-b border-slate-900 text-[9.5px]">
-            <th class="border border-slate-900 p-1 w-7">No</th>
-            <th class="border border-slate-900 p-1 text-left">Mata Pelajaran</th>
-            <th class="border border-slate-900 p-1 w-14 text-center">KKTP</th>
-            <th class="border border-slate-900 p-1 w-16 text-center">Nilai ASTS</th>
-            <th class="border border-slate-900 p-1 w-12 text-center">Predikat</th>
-            <th class="border border-slate-900 p-1 min-w-[190px] text-left">Capaian Kompetensi / Keterangan</th>
+          <tr style="background-color: #f1f5f9; color: #020617; font-weight: 900; text-transform: uppercase; text-align: center; border-bottom: 1.5px solid #0f172a; font-size: 9px;">
+            <th style="border: 1px solid #0f172a; padding: 3px 2px;">No</th>
+            <th style="border: 1px solid #0f172a; padding: 3px 6px; text-align: left;">Mata Pelajaran</th>
+            <th style="border: 1px solid #0f172a; padding: 3px 2px;">KKTP</th>
+            <th style="border: 1px solid #0f172a; padding: 3px 2px;">Nilai ASTS</th>
+            <th style="border: 1px solid #0f172a; padding: 3px 2px;">Predikat</th>
+            <th style="border: 1px solid #0f172a; padding: 3px 6px; text-align: left;">Capaian Kompetensi / Keterangan</th>
           </tr>
         </thead>
         <tbody>
           <!-- 1. KELOMPOK WAJIB A -->
-          <tr class="bg-slate-100 font-black text-slate-950 text-[10px]">
-            <td colspan="6" class="border border-slate-900 px-2 py-0.5 uppercase tracking-wide">
+          <tr style="background-color: #f1f5f9; font-weight: 900; color: #020617; font-size: 9.5px;">
+            <td colspan="6" style="border: 1px solid #0f172a; padding: 2px 6px; text-transform: uppercase; letter-spacing: 0.05em;">
               Kelompok Wajib A
             </td>
           </tr>
 
           <!-- PAI Header Item 1 -->
-          <tr v-if="report?.subjects_pai && report.subjects_pai.length" class="bg-slate-50 font-bold text-slate-900 text-[10px]">
-            <td class="border border-slate-400 p-1 text-center font-bold text-slate-700">1</td>
-            <td colspan="5" class="border border-slate-400 p-1 font-black text-slate-900">
+          <tr v-if="report?.subjects_pai && report.subjects_pai.length" style="background-color: #f8fafc; font-weight: bold; color: #0f172a;">
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: bold; color: #334155;">1</td>
+            <td colspan="5" style="border: 1px solid #94a3b8; padding: 2px 6px; font-weight: 900; color: #020617;">
               Pendidikan Agama Islam
             </td>
           </tr>
@@ -120,116 +128,116 @@
           <tr
             v-for="(sbj, i) in report?.subjects_pai || []"
             :key="'pai-'+sbj.subject_id"
-            class="border-b border-slate-300"
+            style="border-bottom: 1px solid #cbd5e1;"
           >
-            <td class="border border-slate-400 p-1 text-center font-bold text-slate-600"></td>
-            <td class="border border-slate-400 p-1 text-slate-900 pl-4 font-medium">
-              <span class="font-bold">{{ ['a', 'b', 'c', 'd', 'e', 'f'][i] || '-' }}.</span>
-              <span class="ml-1.5">{{ sbj.name }}</span>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; color: #475569;"></td>
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px 2px 14px; font-weight: 500; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              <span style="font-weight: bold;">{{ ['a', 'b', 'c', 'd', 'e', 'f'][i] || '-' }}.</span>
+              <span style="margin-left: 4px;">{{ sbj.name }}</span>
             </td>
-            <td class="border border-slate-400 p-1 text-center font-mono font-bold text-slate-600">{{ sbj.kkm }}</td>
-            <td class="border border-slate-400 p-1 text-center font-mono font-black" :class="sbj.score !== null && sbj.score >= sbj.kkm ? 'text-slate-950' : 'text-rose-700'">
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: bold; color: #334155;">{{ sbj.kkm }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: 900;" :style="{ color: sbj.score !== null && sbj.score >= sbj.kkm ? '#020617' : '#be123c' }">
               {{ sbj.score !== null ? sbj.score : '-' }}
             </td>
-            <td class="border border-slate-400 p-1 text-center font-black text-slate-800">{{ sbj.predicate || '-' }}</td>
-            <td class="border border-slate-400 p-1 text-[9px] leading-tight text-slate-700">{{ sbj.description || '-' }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: 900; color: #1e293b;">{{ sbj.predicate || '-' }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; line-height: 1.2; color: #334155;">{{ sbj.description || '-' }}</td>
           </tr>
 
           <!-- Kelompok Wajib A: General Subjects (2, 3, 4, 5, 6, 7, 8) -->
           <tr
             v-for="(sbj, i) in report?.subjects_group_a || []"
             :key="'ga-'+sbj.subject_id"
-            class="border-b border-slate-300"
+            style="border-bottom: 1px solid #cbd5e1;"
           >
-            <td class="border border-slate-400 p-1 text-center font-bold text-slate-700">{{ i + 2 }}</td>
-            <td class="border border-slate-400 p-1 font-bold text-slate-900">{{ sbj.name }}</td>
-            <td class="border border-slate-400 p-1 text-center font-mono font-bold text-slate-600">{{ sbj.kkm }}</td>
-            <td class="border border-slate-400 p-1 text-center font-mono font-black" :class="sbj.score !== null && sbj.score >= sbj.kkm ? 'text-slate-950' : 'text-rose-700'">
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: bold; color: #334155;">{{ i + 2 }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-weight: bold; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ sbj.name }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: bold; color: #334155;">{{ sbj.kkm }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: 900;" :style="{ color: sbj.score !== null && sbj.score >= sbj.kkm ? '#020617' : '#be123c' }">
               {{ sbj.score !== null ? sbj.score : '-' }}
             </td>
-            <td class="border border-slate-400 p-1 text-center font-black text-slate-800">{{ sbj.predicate || '-' }}</td>
-            <td class="border border-slate-400 p-1 text-[9px] leading-tight text-slate-700">{{ sbj.description || '-' }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: 900; color: #1e293b;">{{ sbj.predicate || '-' }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; line-height: 1.2; color: #334155;">{{ sbj.description || '-' }}</td>
           </tr>
 
           <!-- 2. KELOMPOK WAJIB B -->
-          <tr v-if="report?.subjects_group_b && report.subjects_group_b.length" class="bg-slate-100 font-black text-slate-950 text-[10px]">
-            <td colspan="6" class="border border-slate-900 px-2 py-0.5 uppercase tracking-wide">
+          <tr v-if="report?.subjects_group_b && report.subjects_group_b.length" style="background-color: #f1f5f9; font-weight: 900; color: #020617; font-size: 9.5px;">
+            <td colspan="6" style="border: 1px solid #0f172a; padding: 2px 6px; text-transform: uppercase; letter-spacing: 0.05em;">
               Kelompok Wajib B
             </td>
           </tr>
           <tr
             v-for="(sbj, i) in report?.subjects_group_b || []"
             :key="'gb-'+sbj.subject_id"
-            class="border-b border-slate-300"
+            style="border-bottom: 1px solid #cbd5e1;"
           >
-            <td class="border border-slate-400 p-1 text-center font-bold text-slate-700">{{ ['i', 'ii', 'iii', 'iv', 'v'][i] || (i + 1) }}.</td>
-            <td class="border border-slate-400 p-1 font-bold text-slate-900">{{ sbj.name }}</td>
-            <td class="border border-slate-400 p-1 text-center font-mono font-bold text-slate-600">{{ sbj.kkm }}</td>
-            <td class="border border-slate-400 p-1 text-center font-mono font-black" :class="sbj.score !== null && sbj.score >= sbj.kkm ? 'text-slate-950' : 'text-rose-700'">
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: bold; color: #334155;">{{ ['i', 'ii', 'iii', 'iv', 'v'][i] || (i + 1) }}.</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-weight: bold; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ sbj.name }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: bold; color: #334155;">{{ sbj.kkm }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: 900;" :style="{ color: sbj.score !== null && sbj.score >= sbj.kkm ? '#020617' : '#be123c' }">
               {{ sbj.score !== null ? sbj.score : '-' }}
             </td>
-            <td class="border border-slate-400 p-1 text-center font-black text-slate-800">{{ sbj.predicate || '-' }}</td>
-            <td class="border border-slate-400 p-1 text-[9px] leading-tight text-slate-700">{{ sbj.description || '-' }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: 900; color: #1e293b;">{{ sbj.predicate || '-' }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; line-height: 1.2; color: #334155;">{{ sbj.description || '-' }}</td>
           </tr>
 
           <!-- 3. MUATAN LOKAL (MULOK) -->
-          <tr v-if="report?.subjects_mulok && report.subjects_mulok.length" class="bg-slate-100 font-black text-slate-950 text-[10px]">
-            <td colspan="6" class="border border-slate-900 px-2 py-0.5 uppercase tracking-wide">
+          <tr v-if="report?.subjects_mulok && report.subjects_mulok.length" style="background-color: #f1f5f9; font-weight: 900; color: #020617; font-size: 9.5px;">
+            <td colspan="6" style="border: 1px solid #0f172a; padding: 2px 6px; text-transform: uppercase; letter-spacing: 0.05em;">
               Muatan Lokal
             </td>
           </tr>
           <tr
             v-for="(sbj, i) in report?.subjects_mulok || []"
             :key="'mulok-'+sbj.subject_id"
-            class="border-b border-slate-300"
+            style="border-bottom: 1px solid #cbd5e1;"
           >
-            <td class="border border-slate-400 p-1 text-center font-bold text-slate-700">{{ i + 1 }}</td>
-            <td class="border border-slate-400 p-1 font-bold text-slate-900">{{ sbj.name }}</td>
-            <td class="border border-slate-400 p-1 text-center font-mono font-bold text-slate-600">{{ sbj.kkm }}</td>
-            <td class="border border-slate-400 p-1 text-center font-mono font-black" :class="sbj.score !== null && sbj.score >= sbj.kkm ? 'text-slate-950' : 'text-rose-700'">
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: bold; color: #334155;">{{ i + 1 }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-weight: bold; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ sbj.name }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: bold; color: #334155;">{{ sbj.kkm }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: 900;" :style="{ color: sbj.score !== null && sbj.score >= sbj.kkm ? '#020617' : '#be123c' }">
               {{ sbj.score !== null ? sbj.score : '-' }}
             </td>
-            <td class="border border-slate-400 p-1 text-center font-black text-slate-800">{{ sbj.predicate || '-' }}</td>
-            <td class="border border-slate-400 p-1 text-[9px] leading-tight text-slate-700">{{ sbj.description || '-' }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: 900; color: #1e293b;">{{ sbj.predicate || '-' }}</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; line-height: 1.2; color: #334155;">{{ sbj.description || '-' }}</td>
           </tr>
 
           <!-- REKAP TOTAL & RATA-RATA & PERINGKAT -->
-          <tr class="bg-slate-100 font-bold border-t-2 border-slate-900 text-[10px]">
-            <td colspan="3" class="border border-slate-900 p-1 text-right uppercase tracking-wider">Jumlah Nilai Keseluruhan</td>
-            <td class="border border-slate-900 p-1 text-center font-mono font-black text-slate-950 text-[11px]">{{ report?.total_score || 0 }}</td>
-            <td colspan="2" class="border border-slate-900 p-1 text-slate-500 text-[9px] italic">Total perolehan nilai ASTS</td>
+          <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 1.5px solid #0f172a; font-size: 9.5px;">
+            <td colspan="3" style="border: 1px solid #0f172a; padding: 2px 6px; text-align: right; text-transform: uppercase; letter-spacing: 0.05em;">Jumlah Nilai Keseluruhan</td>
+            <td style="border: 1px solid #0f172a; padding: 2px; text-align: center; font-family: monospace; font-weight: 900; color: #020617; font-size: 10.5px;">{{ report?.total_score || 0 }}</td>
+            <td colspan="2" style="border: 1px solid #0f172a; padding: 2px 6px; color: #64748b; font-size: 8.5px; font-style: italic;">Total perolehan nilai ASTS</td>
           </tr>
-          <tr class="bg-slate-100 font-bold border-t border-slate-400 text-[10px]">
-            <td colspan="3" class="border border-slate-900 p-1 text-right uppercase tracking-wider">Rata-Rata Nilai Siswa</td>
-            <td class="border border-slate-900 p-1 text-center font-mono font-black text-emerald-800 text-[11px]">{{ report?.average_score || 0 }}</td>
-            <td colspan="2" class="border border-slate-900 p-1 text-slate-500 text-[9px] italic">Rata-rata capaian tengah semester</td>
+          <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 1px solid #94a3b8; font-size: 9.5px;">
+            <td colspan="3" style="border: 1px solid #0f172a; padding: 2px 6px; text-align: right; text-transform: uppercase; letter-spacing: 0.05em;">Rata-Rata Nilai Siswa</td>
+            <td style="border: 1px solid #0f172a; padding: 2px; text-align: center; font-family: monospace; font-weight: 900; color: #065f46; font-size: 10.5px;">{{ report?.average_score || 0 }}</td>
+            <td colspan="2" style="border: 1px solid #0f172a; padding: 2px 6px; color: #64748b; font-size: 8.5px; font-style: italic;">Rata-rata capaian tengah semester</td>
           </tr>
-          <tr class="bg-amber-50/40 print:bg-transparent font-bold border-t border-slate-400 text-[10px]">
-            <td colspan="3" class="border border-slate-900 p-1 text-right uppercase tracking-wider text-amber-950 print:text-slate-950">
+          <tr style="background-color: #fffbeb; font-weight: bold; border-top: 1px solid #94a3b8; font-size: 9.5px;" class="print:bg-transparent">
+            <td colspan="3" style="border: 1px solid #0f172a; padding: 2px 6px; text-align: right; text-transform: uppercase; letter-spacing: 0.05em; color: #451a03;" class="print:text-slate-950">
               Peringkat di Kelas
             </td>
-            <td class="border border-slate-900 p-1 text-center font-mono font-black text-amber-900 print:text-slate-950 text-[11px]">
+            <td style="border: 1px solid #0f172a; padding: 2px; text-align: center; font-family: monospace; font-weight: 900; color: #78350f; font-size: 10.5px;" class="print:text-slate-950">
               {{ report?.rank || '-' }}
             </td>
-            <td colspan="2" class="border border-slate-900 p-1 text-slate-700 text-[9.5px]">
-              <span class="font-bold">Peringkat ke-{{ report?.rank || '-' }}</span> dari <span class="font-bold">{{ report?.total_students || '-' }}</span> siswa
-              <span v-if="report?.class_average_score" class="text-slate-500"> (Rata-rata Kelas: <strong class="text-slate-800">{{ report.class_average_score }}</strong>)</span>
+            <td colspan="2" style="border: 1px solid #0f172a; padding: 2px 6px; color: #1e293b; font-size: 9px;">
+              <span style="font-weight: bold;">Peringkat ke-{{ report?.rank || '-' }}</span> dari <span style="font-weight: bold;">{{ report?.total_students || '-' }}</span> siswa
+              <span v-if="report?.class_average_score" style="color: #64748b;"> (Rata-rata Kelas: <strong style="color: #1e293b;">{{ report.class_average_score }}</strong>)</span>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- 5. KETIDAKHADIRAN & CATATAN WALI KELAS (TABLE FORMAT) -->
-    <table style="width: 100%; border-collapse: collapse; margin-top: 4px; margin-bottom: 6px;">
+    <!-- 5. KETIDAKHADIRAN & CATATAN WALI KELAS (COMPACT TABLE FORMAT) -->
+    <table style="width: 100%; border-collapse: collapse; margin-top: 3px; margin-bottom: 4px;">
       <tbody>
         <tr>
           <!-- Left: Kehadiran (32%) -->
-          <td style="width: 32%; vertical-align: top; padding-right: 6px;">
-            <table style="width: 100%; font-size: 10px; border-collapse: collapse; border: 1px solid #0f172a;">
+          <td style="width: 30%; vertical-align: top; padding-right: 6px;">
+            <table style="width: 100%; font-size: 9px; border-collapse: collapse; border: 1px solid #0f172a;">
               <thead>
-                <tr style="background-color: #f1f5f9; text-align: center; font-weight: 900; text-transform: uppercase; font-size: 9px; border-bottom: 1px solid #0f172a;">
-                  <th colspan="2" style="padding: 3px; border: 1px solid #0f172a;">
+                <tr style="background-color: #f1f5f9; text-align: center; font-weight: 900; text-transform: uppercase; font-size: 8.5px; border-bottom: 1px solid #0f172a;">
+                  <th colspan="2" style="padding: 2.5px; border: 1px solid #0f172a;">
                     <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px;">
                       <span>Rekapitulasi Kehadiran</span>
                       <button
@@ -237,7 +245,7 @@
                         type="button"
                         @click="$emit('edit-notes')"
                         class="no-print"
-                        style="color: #4338ca; font-weight: bold; font-size: 8.5px; cursor: pointer; border: none; background: transparent;"
+                        style="color: #4338ca; font-weight: bold; font-size: 8px; cursor: pointer; border: none; background: transparent;"
                         title="Ubah angka kehadiran"
                       >
                         ✏️ Edit
@@ -248,26 +256,26 @@
               </thead>
               <tbody>
                 <tr>
-                  <td style="padding: 2.5px 4px; border: 1px solid #94a3b8; font-weight: 500;">1. Sakit (S)</td>
-                  <td style="padding: 2.5px 4px; border: 1px solid #94a3b8; text-align: center; font-family: monospace; font-weight: bold;">{{ report?.attendance?.sick || 0 }} hari</td>
+                  <td style="padding: 2px 4px; border: 1px solid #94a3b8; font-weight: 500;">1. Sakit (S)</td>
+                  <td style="padding: 2px 4px; border: 1px solid #94a3b8; text-align: center; font-family: monospace; font-weight: bold;">{{ report?.attendance?.sick || 0 }} hari</td>
                 </tr>
                 <tr>
-                  <td style="padding: 2.5px 4px; border: 1px solid #94a3b8; font-weight: 500;">2. Izin (I)</td>
-                  <td style="padding: 2.5px 4px; border: 1px solid #94a3b8; text-align: center; font-family: monospace; font-weight: bold;">{{ report?.attendance?.permission || 0 }} hari</td>
+                  <td style="padding: 2px 4px; border: 1px solid #94a3b8; font-weight: 500;">2. Izin (I)</td>
+                  <td style="padding: 2px 4px; border: 1px solid #94a3b8; text-align: center; font-family: monospace; font-weight: bold;">{{ report?.attendance?.permission || 0 }} hari</td>
                 </tr>
                 <tr>
-                  <td style="padding: 2.5px 4px; border: 1px solid #94a3b8; font-weight: 500;">3. Tanpa Keterangan (A)</td>
-                  <td style="padding: 2.5px 4px; border: 1px solid #94a3b8; text-align: center; font-family: monospace; font-weight: bold;">{{ report?.attendance?.unexcused || 0 }} hari</td>
+                  <td style="padding: 2px 4px; border: 1px solid #94a3b8; font-weight: 500;">3. Tanpa Keterangan (A)</td>
+                  <td style="padding: 2px 4px; border: 1px solid #94a3b8; text-align: center; font-family: monospace; font-weight: bold;">{{ report?.attendance?.unexcused || 0 }} hari</td>
                 </tr>
               </tbody>
             </table>
           </td>
 
-          <!-- Right: Catatan Wali Kelas (68%) -->
-          <td style="width: 68%; vertical-align: top; padding-left: 6px;">
-            <div style="border: 1px solid #0f172a; border-radius: 4px; padding: 5px 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: space-between;">
-              <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 3px; margin-bottom: 3px;">
-                <span style="font-weight: 800; text-transform: uppercase; font-size: 9px; color: #1e293b; letter-spacing: 0.03em;">
+          <!-- Right: Catatan Wali Kelas (70%) -->
+          <td style="width: 70%; vertical-align: top; padding-left: 6px;">
+            <div style="border: 1px solid #0f172a; border-radius: 4px; padding: 4px 6px; min-height: 60px; display: flex; flex-direction: column; justify-content: space-between;">
+              <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 2px; margin-bottom: 2px;">
+                <span style="font-weight: 800; text-transform: uppercase; font-size: 8.5px; color: #1e293b; letter-spacing: 0.03em;">
                   Catatan & Motivasi Perkembangan Belajar Wali Kelas:
                 </span>
                 <button
@@ -275,14 +283,14 @@
                   type="button"
                   @click="$emit('edit-notes')"
                   class="no-print"
-                  style="padding: 2px 6px; border-radius: 4px; background-color: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; font-size: 8.5px; font-weight: bold; cursor: pointer;"
+                  style="padding: 1px 5px; border-radius: 4px; background-color: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; font-size: 8px; font-weight: bold; cursor: pointer;"
                   title="Edit kehadiran dan catatan motivasi wali kelas untuk siswa ini"
                 >
                   ✏️ Edit Catatan & Absensi
                 </button>
               </div>
-              <p style="font-size: 9.5px; color: #1e293b; font-style: italic; line-height: 1.35; margin: 0; flex: 1;">
-                "{{ report?.homeroom_notes || 'Tingkatkan terus ketekunan belajar, kedisiplinan beribadah, dan keaktifan di madrasah.' }}"
+              <p style="font-size: 9px; color: #1e293b; font-style: italic; line-height: 1.3; margin: 0; flex: 1;">
+                "{{ report?.homeroom_notes || 'Tingkatkan terus ketekunan belajar, kedisiplinan beribadah, dan keaktifan dalam kegiatan madrasah.' }}"
               </p>
             </div>
           </td>
@@ -290,58 +298,58 @@
       </tbody>
     </table>
 
-    <!-- 6. TITIMANGSA & BLOK TANDA TANGAN RESMI -->
-    <div style="padding-top: 4px; page-break-inside: avoid; break-inside: avoid;">
-      <div style="text-align: right; font-size: 10px; font-weight: 700; color: #1e293b; padding-right: 8px; margin-bottom: 4px;">
+    <!-- 6. TITIMANGSA & BLOK TANDA TANGAN RESMI (COMPACT BREAK-INSIDE-AVOID) -->
+    <div style="padding-top: 2px; page-break-inside: avoid; break-inside: avoid;">
+      <div style="text-align: right; font-size: 9.5px; font-weight: 700; color: #1e293b; padding-right: 8px; margin-bottom: 2px;">
         <span>{{ report?.city || 'Bogor' }}, {{ report?.issued_date || '........................' }}</span>
         <button
           v-if="allowEdit"
           type="button"
           @click="$emit('edit-titimangsa')"
           class="no-print"
-          style="color: #b45309; font-weight: bold; font-size: 8.5px; cursor: pointer; border: none; background: transparent; margin-left: 6px;"
+          style="color: #b45309; font-weight: bold; font-size: 8px; cursor: pointer; border: none; background: transparent; margin-left: 6px;"
           title="Ubah Tempat dan Tanggal Titimangsa Rapor"
         >
           ✏️ Edit Titimangsa
         </button>
       </div>
 
-      <table style="width: 100%; text-align: center; font-size: 10px; border-collapse: collapse;">
+      <table style="width: 100%; text-align: center; font-size: 9.5px; border-collapse: collapse;">
         <tbody>
           <tr>
             <!-- Orang Tua -->
-            <td style="width: 33.33%; vertical-align: top; padding: 0 8px;">
+            <td style="width: 33.33%; vertical-align: top; padding: 0 6px;">
               <div>
                 <p style="font-weight: 700; color: #334155; margin: 0;">Mengetahui,</p>
                 <p style="font-weight: 700; color: #0f172a; margin: 0;">Orang Tua / Wali Siswa</p>
               </div>
-              <div style="height: 48px;"></div>
+              <div style="height: 38px;"></div>
               <div style="border-bottom: 1px solid #0f172a; width: 80%; margin: 0 auto;"></div>
             </td>
 
             <!-- Wali Kelas -->
-            <td style="width: 33.33%; vertical-align: top; padding: 0 8px;">
+            <td style="width: 33.33%; vertical-align: top; padding: 0 6px;">
               <div>
                 <p style="font-weight: 700; color: #334155; margin: 0;">Wali Kelas,</p>
                 <p style="font-weight: 700; color: #0f172a; margin: 0;">Kelas {{ report?.student?.class_name || '' }}</p>
               </div>
-              <div style="height: 48px;"></div>
+              <div style="height: 38px;"></div>
               <div>
                 <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0;">{{ report?.student?.homeroom_teacher_name || '............................................' }}</p>
-                <p style="font-size: 9px; color: #475569; font-family: monospace; margin: 2px 0 0 0;">NIP. {{ report?.student?.homeroom_teacher_nip || '-' }}</p>
+                <p style="font-size: 8.5px; color: #475569; font-family: monospace; margin: 1px 0 0 0;">NIP. {{ report?.student?.homeroom_teacher_nip || '-' }}</p>
               </div>
             </td>
 
             <!-- Kepala Madrasah -->
-            <td style="width: 33.33%; vertical-align: top; padding: 0 8px;">
+            <td style="width: 33.33%; vertical-align: top; padding: 0 6px;">
               <div>
                 <p style="font-weight: 700; color: #334155; margin: 0;">Mengetahui,</p>
                 <p style="font-weight: 700; color: #0f172a; margin: 0;">Kepala Madrasah</p>
               </div>
-              <div style="height: 48px;"></div>
+              <div style="height: 38px;"></div>
               <div>
                 <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0;">{{ report?.school_setting?.principal_name || '............................................' }}</p>
-                <p style="font-size: 9px; color: #475569; font-family: monospace; margin: 2px 0 0 0;">NIP. {{ report?.school_setting?.principal_nip || '-' }}</p>
+                <p style="font-size: 8.5px; color: #475569; font-family: monospace; margin: 1px 0 0 0;">NIP. {{ report?.school_setting?.principal_nip || '-' }}</p>
               </div>
             </td>
           </tr>
