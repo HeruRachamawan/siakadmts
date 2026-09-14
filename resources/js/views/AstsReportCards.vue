@@ -331,8 +331,8 @@
             <div>
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Format Ukuran Kertas</label>
               <select v-model="selectedPaperSize" class="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-900 focus:outline-none cursor-pointer">
-                <option value="f4">📜 F4 / Folio (215 x 330 mm) - Standar Kemenag</option>
-                <option value="a4">📄 A4 (210 x 297 mm)</option>
+                <option value="a4">📄 A4 (210 x 297 mm) - Standar Cetak</option>
+                <option value="f4">📜 F4 / Folio (215 x 330 mm)</option>
               </select>
             </div>
           </div>
@@ -361,11 +361,11 @@
         </div>
 
         <!-- BATCH MODE (Full Class Print) -->
-        <div v-if="printMode === 'batch'" id="asts-report-printable-area" class="space-y-8">
+        <div v-if="printMode === 'batch'" id="asts-report-printable-area" class="space-y-6">
           <div
             v-for="(rep, rIdx) in batchReportsList"
             :key="'batch-rep-'+rIdx"
-            class="bg-white p-8 sm:p-10 rounded-3xl shadow-sm border border-slate-200 text-slate-900 space-y-5 print-page"
+            class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 text-slate-900 space-y-4 print-page print-sheet"
           >
             <AstsReportSheet :report="rep" />
           </div>
@@ -441,8 +441,11 @@
           </div>
 
           <!-- RIGHT PREVIEW PANEL: RENDERED RAPOR SHEET -->
-          <div class="lg:col-span-8 space-y-4">
-            <div id="asts-report-printable-area" class="bg-white p-6 sm:p-10 rounded-[2rem] shadow-sm border border-slate-200 text-slate-900 print-page">
+          <div class="lg:col-span-8 flex justify-center">
+            <div
+              id="asts-report-printable-area"
+              class="bg-white p-5 sm:p-7 rounded-2xl shadow-md border border-slate-300 text-slate-900 print-page print-sheet w-full max-w-[210mm] transition-all"
+            >
               <div v-if="loadingSingleReport" class="py-24 text-center text-slate-400 space-y-2">
                 <div class="animate-spin h-8 w-8 border-3 border-emerald-500 border-t-transparent rounded-full mx-auto"></div>
                 <p class="text-xs font-medium">Memuat pratinjau lembar rapor siswa...</p>
@@ -983,12 +986,17 @@ async function fetchPrintData() {
 }
 
 function triggerPrint() {
-  const isF4 = selectedPaperSize.value === 'f4';
-  const paperCss = isF4 ? '215mm 330mm' : '210mm 297mm';
+  const isA4 = selectedPaperSize.value === 'a4';
+  const paperSize = isA4 ? 'A4 portrait' : '215mm 330mm';
 
   const style = document.createElement('style');
   style.id = 'dynamic-asts-page-style';
-  style.innerHTML = `@page { size: ${paperCss}; margin: 8mm 10mm 8mm 10mm; }`;
+  style.innerHTML = `
+    @page { 
+      size: ${paperSize}; 
+      margin: 6mm 8mm 6mm 8mm; 
+    }
+  `;
   document.head.appendChild(style);
 
   window.print();
@@ -1043,13 +1051,26 @@ onMounted(() => {
   .no-print {
     display: none !important;
   }
+  body, html {
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
   .print-page {
     page-break-after: always !important;
     break-after: page !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
-    margin: 0 0 20mm 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .print-sheet {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 }
 </style>
