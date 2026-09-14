@@ -347,9 +347,15 @@
                   {{ cls.academicYear ? (cls.academicYear.year + ' - ' + (cls.academicYear.semester === 'odd' ? 'Ganjil' : 'Genap')) : '-' }}
                 </td>
                 <td class="py-4 text-right">
-                  <RouterLink :to="`/teacher/students?class_id=${cls.id}`" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[10px] font-bold rounded-lg transition-colors">
-                    Lihat Data Siswa
-                  </RouterLink>
+                  <div class="inline-flex items-center gap-2">
+                    <RouterLink :to="`/teacher/students?class_id=${cls.id}`" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[10px] font-bold rounded-lg transition-colors">
+                      Lihat Siswa
+                    </RouterLink>
+                    <RouterLink to="/teacher/asts-reports" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs">
+                      <BookOpenCheck class="w-3.5 h-3.5" />
+                      <span>Rapor ASTS</span>
+                    </RouterLink>
+                  </div>
                 </td>
               </tr>
               <tr v-if="classesList.length === 0">
@@ -383,7 +389,8 @@ import {
   AlertCircle,
   XCircle,
   Camera,
-  Navigation
+  Navigation,
+  BookOpenCheck
 } from 'lucide-vue-next';
 
 const toast = useToast();

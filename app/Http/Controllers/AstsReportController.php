@@ -35,6 +35,16 @@ class AstsReportController extends Controller
         $schoolSetting = SchoolSetting::first();
         $rawSettings = \App\Models\Setting::all()->pluck('value', 'key')->toArray();
 
+        $user = $request->user();
+        $teacher = $user ? ($user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first()) : null;
+        $homeroomClassId = null;
+        if ($teacher) {
+            $homeroomClass = ClassRoom::where('homeroom_teacher_id', $teacher->id)->first();
+            if ($homeroomClass) {
+                $homeroomClassId = $homeroomClass->id;
+            }
+        }
+
         return response()->json([
             'status' => 'success',
             'data' => [
@@ -43,6 +53,7 @@ class AstsReportController extends Controller
                 'active_academic_year' => $activeYear,
                 'school_setting' => $schoolSetting,
                 'settings' => $rawSettings,
+                'homeroom_class_id' => $homeroomClassId,
             ]
         ]);
     }

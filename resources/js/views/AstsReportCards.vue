@@ -510,7 +510,10 @@ async function fetchOptions() {
     classes.value = d.classes || [];
     activeYear.value = d.active_academic_year || null;
 
-    if (classes.value.length > 0 && !selectedClassId.value) {
+    if (d.homeroom_class_id) {
+      selectedClassId.value = d.homeroom_class_id;
+      await fetchLedger();
+    } else if (classes.value.length > 0 && !selectedClassId.value) {
       selectedClassId.value = classes.value[0].id;
       await fetchLedger();
     }
