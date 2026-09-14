@@ -48,7 +48,7 @@
         LAPORAN HASIL BELAJAR ASESMEN SUMATIF TENGAH SEMESTER (ASTS)
       </h2>
       <p style="font-size: 9.5px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.03em; margin: 2px 0 0 0;">
-        SEMESTER {{ report?.semester_label?.toUpperCase() || 'GANJIL' }} &bull; TAHUN PELAJARAN {{ report?.academic_year || '2026/2027' }}
+        SEMESTER {{ (report?.semester === 'genap' ? 'GENAP' : 'GANJIL') }} &bull; TAHUN PELAJARAN {{ report?.academic_year || '2026/2027' }}
       </p>
     </div>
 
@@ -79,7 +79,7 @@
               </tr>
               <tr>
                 <td style="font-weight: 700; color: #475569; padding: 1px 0;">Fase / Semester</td>
-                <td style="font-weight: 700; color: #1e293b; padding: 1px 0;">: Fase D / {{ report?.semester === 'genap' ? 'Genap (Dua)' : 'Ganjil (Satu)' }}</td>
+                <td style="font-weight: 700; color: #1e293b; padding: 1px 0;">: Fase D / {{ report?.semester === 'genap' ? 'Genap' : 'Ganjil' }}</td>
               </tr>
             </table>
           </td>

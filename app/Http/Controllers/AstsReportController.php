@@ -867,7 +867,7 @@ class AstsReportController extends Controller
             ],
             'academic_year' => $academicYear?->year ?? '2026/2027',
             'semester' => $semester,
-            'semester_label' => $semester === 'genap' ? 'Genap (Dua)' : 'Ganjil (Satu)',
+            'semester_label' => $semester === 'genap' ? 'Genap' : 'Ganjil',
             'subjects_pai' => $paiSubjects,
             'subjects_group_a' => $generalSubjectsA,
             'subjects_group_b' => $groupB,
