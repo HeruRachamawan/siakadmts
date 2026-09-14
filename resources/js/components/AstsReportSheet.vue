@@ -1,30 +1,30 @@
 <template>
   <div class="space-y-2 text-slate-900 font-inter text-[10px] leading-tight max-w-full">
     <!-- 1. KOP SURAT RESMI MADRASAH -->
-    <div class="border-b-2 border-double border-slate-900 pb-1.5 flex items-center gap-3">
-      <div class="w-14 h-14 flex-shrink-0 flex items-center justify-center p-0.5">
+    <div class="border-b-2 border-double border-slate-900 pb-1.5 flex items-center gap-2 sm:gap-3">
+      <div class="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 flex items-center justify-center p-0.5">
         <img
           v-if="report?.school_setting?.logo_url"
           :src="getImageUrl(report.school_setting.logo_url)"
           class="w-full h-full object-contain"
           alt="Logo Sekolah"
         />
-        <div v-else class="w-12 h-12 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-black text-lg font-serif">
+        <div v-else class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-black text-base sm:text-lg font-serif">
           MTS
         </div>
       </div>
 
-      <div class="flex-1 text-center pr-10">
-        <h3 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider leading-tight">
+      <div class="flex-1 text-center pr-0 sm:pr-8">
+        <h3 class="text-[10px] sm:text-[11px] font-bold text-slate-700 uppercase tracking-wider leading-tight">
           {{ report?.school_setting?.foundation_name || 'YAYASAN PENDIDIKAN ISLAM AL - HASANAH' }}
         </h3>
-        <h1 class="text-sm sm:text-base font-black text-slate-950 uppercase font-lexend tracking-wide mt-0.5 leading-tight">
+        <h1 class="text-xs sm:text-base font-black text-slate-950 uppercase font-lexend tracking-wide mt-0.5 leading-tight">
           {{ report?.school_setting?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH' }}
         </h1>
-        <p class="text-[9.5px] text-slate-600 font-medium mt-0.5">
+        <p class="text-[8.5px] sm:text-[9.5px] text-slate-600 font-medium mt-0.5">
           {{ report?.school_setting?.address || 'Jl. Ciapus Sukamakmur No.05, Kec. Ciomas, Kab. Bogor' }}
         </p>
-        <p class="text-[8.5px] text-slate-500 font-mono">
+        <p class="text-[8px] sm:text-[8.5px] text-slate-500 font-mono">
           Telp: {{ report?.school_setting?.phone || '081617666017' }} &bull; Email: {{ report?.school_setting?.email || 'mtsalhasanah.ciomas@gmail.com' }}
         </p>
       </div>
@@ -35,17 +35,18 @@
       <h2 class="text-xs sm:text-sm font-black uppercase text-slate-950 font-lexend tracking-wide underline">
         LAPORAN HASIL BELAJAR ASESMEN SUMATIF TENGAH SEMESTER (ASTS)
       </h2>
-      <p class="text-[10px] font-bold text-slate-700 uppercase tracking-wide">
+      <p class="text-[9.5px] sm:text-[10px] font-bold text-slate-700 uppercase tracking-wide">
         SEMESTER {{ report?.semester_label?.toUpperCase() || 'GANJIL' }} &bull; TAHUN PELAJARAN {{ report?.academic_year || '2026/2027' }}
       </p>
     </div>
 
     <!-- 3. IDENTITAS PESERTA DIDIK -->
-    <div class="relative grid grid-cols-2 gap-x-6 gap-y-1 bg-slate-50/80 p-2 rounded-lg border border-slate-300 text-[10.5px] font-medium print:bg-transparent">
+    <div class="relative flex flex-col sm:grid sm:grid-cols-2 gap-x-6 gap-y-1 bg-slate-50/80 p-2 sm:p-2.5 rounded-lg border border-slate-300 text-[10px] sm:text-[10.5px] font-medium print:bg-transparent print:grid print:grid-cols-2">
+      <!-- Left Info -->
       <div class="space-y-0.5">
         <div class="flex">
           <span class="w-28 font-bold text-slate-600">Nama Peserta Didik</span>
-          <span class="font-extrabold text-slate-900 font-lexend">: {{ report?.student?.full_name || '-' }}</span>
+          <span class="font-extrabold text-slate-900 font-lexend truncate">: {{ report?.student?.full_name || '-' }}</span>
         </div>
         <div class="flex">
           <span class="w-28 font-bold text-slate-600">NISN / NIS</span>
@@ -53,6 +54,7 @@
         </div>
       </div>
 
+      <!-- Right Info -->
       <div class="space-y-0.5">
         <div class="flex">
           <span class="w-24 font-bold text-slate-600">Kelas / Rombel</span>
@@ -64,10 +66,10 @@
         </div>
       </div>
 
-      <!-- Rank Badge (top-right corner of identity card) -->
-      <div v-if="report?.rank && report?.rank !== '-'" class="absolute right-2 top-1.5 flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-300 rounded text-amber-900 shadow-2xs print:border-slate-400 print:bg-transparent">
+      <!-- Rank Badge (adaptive on mobile and print) -->
+      <div v-if="report?.rank && report?.rank !== '-'" class="sm:absolute right-2 top-1.5 self-start flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-300 rounded text-amber-900 shadow-2xs print:border-slate-400 print:bg-transparent mt-1 sm:mt-0">
         <span class="text-[10px]">🏆</span>
-        <span class="text-[10px] font-black uppercase tracking-wider font-lexend">
+        <span class="text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider font-lexend">
           Peringkat {{ report.rank }}
         </span>
         <span v-if="report?.total_students" class="text-[9px] font-bold text-amber-800 print:text-slate-700">
