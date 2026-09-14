@@ -53,8 +53,35 @@ class LetterController extends BaseController
             });
         }
 
-        $sortDirection = $request->input('direction', 'asc');
-        $letters = $query->orderBy('agenda_number', $sortDirection)->orderBy('id', $sortDirection)->paginate($request->input('per_page', 15));
+        $sortBy = $request->input('sort_by', 'agenda_number');
+        $sortDirection = strtolower($request->input('direction', 'desc'));
+        if (!in_array($sortDirection, ['asc', 'desc'])) {
+            $sortDirection = 'desc';
+        }
+
+        $allowedSorts = [
+            'agenda_number'    => 'agenda_number',
+            'letter_date'      => 'letter_date',
+            'created_at'       => 'created_at',
+            'reference_number' => 'reference_number',
+            'recipient'        => 'recipient',
+            'sender'           => 'sender',
+            'subject'          => 'subject',
+        ];
+        $sortColumn = $allowedSorts[$sortBy] ?? 'agenda_number';
+
+        if ($sortColumn === 'letter_date') {
+            $query->orderBy('letter_date', $sortDirection)
+                  ->orderBy('agenda_number', $sortDirection)
+                  ->orderBy('id', $sortDirection);
+        } else {
+            $query->orderBy($sortColumn, $sortDirection)
+                  ->orderBy('id', $sortDirection);
+        }
+
+        $perPage = (int) $request->input('per_page', 15);
+        if ($perPage > 500) $perPage = 500;
+        $letters = $query->paginate($perPage);
 
         // Latest letters recorded for hint references
         $lastOutgoing = Letter::where('type', 'outgoing')->whereNotNull('reference_number')->where('reference_number', '!=', '')->orderByDesc('id')->first();

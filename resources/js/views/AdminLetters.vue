@@ -156,11 +156,26 @@
           />
         </div>
 
-        <div class="flex items-center gap-2 w-full sm:w-auto">
+        <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+          <!-- Sort Dropdown -->
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs text-slate-500 font-medium hidden sm:inline">Urutan:</span>
+            <select
+              v-model="sortPreset"
+              @change="onSortPresetChange"
+              class="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 cursor-pointer"
+            >
+              <option value="agenda_desc">No. Agenda (Terbaru)</option>
+              <option value="agenda_asc">No. Agenda (Terlama)</option>
+              <option value="date_desc">Tanggal Surat (Terbaru)</option>
+              <option value="date_asc">Tanggal Surat (Terlama)</option>
+            </select>
+          </div>
+
           <select
             v-model="filters.status"
-            @change="fetchLetters"
-            class="flex-1 sm:flex-initial px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
+            @change="fetchLetters(1)"
+            class="flex-1 sm:flex-initial px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 cursor-pointer"
           >
             <option value="all">Semua Status Disposisi</option>
             <option value="pending">Belum Disposisi</option>
@@ -169,7 +184,7 @@
           </select>
 
           <button
-            @click="fetchLetters"
+            @click="fetchLetters(pagination.current_page)"
             class="btn btn-outline p-2"
             title="Muat Ulang"
           >
@@ -184,8 +199,30 @@
           <table class="w-full text-left border-collapse text-xs min-w-[850px]">
             <thead>
               <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">
-                <th class="py-3 px-4 w-28">No. Agenda</th>
-                <th class="py-3 px-4 w-48">Nomor & Tanggal Surat</th>
+                <th
+                  @click="toggleSort('agenda_number')"
+                  class="py-3 px-4 w-32 cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                  title="Klik untuk mengurutkan berdasarkan No. Agenda"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <span>No. Agenda</span>
+                    <ArrowUp v-if="sortBy === 'agenda_number' && sortDirection === 'asc'" class="w-3.5 h-3.5 text-emerald-700" />
+                    <ArrowDown v-else-if="sortBy === 'agenda_number' && sortDirection === 'desc'" class="w-3.5 h-3.5 text-emerald-700" />
+                    <ArrowUpDown v-else class="w-3.5 h-3.5 text-slate-400 opacity-60" />
+                  </div>
+                </th>
+                <th
+                  @click="toggleSort('letter_date')"
+                  class="py-3 px-4 w-48 cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                  title="Klik untuk mengurutkan berdasarkan Tanggal Surat"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <span>Nomor & Tanggal</span>
+                    <ArrowUp v-if="sortBy === 'letter_date' && sortDirection === 'asc'" class="w-3.5 h-3.5 text-emerald-700" />
+                    <ArrowDown v-else-if="sortBy === 'letter_date' && sortDirection === 'desc'" class="w-3.5 h-3.5 text-emerald-700" />
+                    <ArrowUpDown v-else class="w-3.5 h-3.5 text-slate-400 opacity-60" />
+                  </div>
+                </th>
                 <th class="py-3 px-4 w-44">Asal Pengirim</th>
                 <th class="py-3 px-4">Perihal</th>
                 <th class="py-3 px-4 w-44">Disposisi</th>
@@ -324,9 +361,24 @@
           />
         </div>
 
-        <div class="flex items-center gap-2 w-full sm:w-auto">
+        <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+          <!-- Sort Dropdown -->
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs text-slate-500 font-medium hidden sm:inline">Urutan:</span>
+            <select
+              v-model="sortPreset"
+              @change="onSortPresetChange"
+              class="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 cursor-pointer"
+            >
+              <option value="agenda_desc">No. Agenda (Terbaru)</option>
+              <option value="agenda_asc">No. Agenda (Terlama)</option>
+              <option value="date_desc">Tanggal Surat (Terbaru)</option>
+              <option value="date_asc">Tanggal Surat (Terlama)</option>
+            </select>
+          </div>
+
           <button
-            @click="fetchLetters"
+            @click="fetchLetters(pagination.current_page)"
             class="btn btn-outline p-2"
             title="Muat Ulang"
           >
@@ -341,9 +393,31 @@
           <table class="w-full text-left border-collapse text-xs min-w-[850px]">
             <thead>
               <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">
-                <th class="py-3 px-4 w-28">No. Agenda</th>
+                <th
+                  @click="toggleSort('agenda_number')"
+                  class="py-3 px-4 w-32 cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                  title="Klik untuk mengurutkan berdasarkan No. Agenda"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <span>No. Agenda</span>
+                    <ArrowUp v-if="sortBy === 'agenda_number' && sortDirection === 'asc'" class="w-3.5 h-3.5 text-emerald-700" />
+                    <ArrowDown v-else-if="sortBy === 'agenda_number' && sortDirection === 'desc'" class="w-3.5 h-3.5 text-emerald-700" />
+                    <ArrowUpDown v-else class="w-3.5 h-3.5 text-slate-400 opacity-60" />
+                  </div>
+                </th>
                 <th class="py-3 px-4 w-52">Nomor Surat Resmi</th>
-                <th class="py-3 px-4 w-32">Tanggal Surat</th>
+                <th
+                  @click="toggleSort('letter_date')"
+                  class="py-3 px-4 w-36 cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                  title="Klik untuk mengurutkan berdasarkan Tanggal Surat"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <span>Tanggal Surat</span>
+                    <ArrowUp v-if="sortBy === 'letter_date' && sortDirection === 'asc'" class="w-3.5 h-3.5 text-emerald-700" />
+                    <ArrowDown v-else-if="sortBy === 'letter_date' && sortDirection === 'desc'" class="w-3.5 h-3.5 text-emerald-700" />
+                    <ArrowUpDown v-else class="w-3.5 h-3.5 text-slate-400 opacity-60" />
+                  </div>
+                </th>
                 <th class="py-3 px-4 w-44">Tujuan / Penerima</th>
                 <th class="py-3 px-4">Perihal</th>
                 <th class="py-3 px-4 w-20 text-center">Berkas</th>
@@ -877,7 +951,10 @@ import {
   FileCheck,
   Printer,
   X,
-  UserCheck
+  UserCheck,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-vue-next';
 import { api } from '../api';
 import { useToast } from '../composables/useToast';
@@ -902,6 +979,43 @@ const stats = ref({});
 const studentList = ref([]);
 const appSettings = ref({});
 
+const sortBy = ref('agenda_number');
+const sortDirection = ref('desc');
+const sortPreset = ref('agenda_desc');
+
+function onSortPresetChange() {
+  if (sortPreset.value === 'agenda_desc') {
+    sortBy.value = 'agenda_number';
+    sortDirection.value = 'desc';
+  } else if (sortPreset.value === 'agenda_asc') {
+    sortBy.value = 'agenda_number';
+    sortDirection.value = 'asc';
+  } else if (sortPreset.value === 'date_desc') {
+    sortBy.value = 'letter_date';
+    sortDirection.value = 'desc';
+  } else if (sortPreset.value === 'date_asc') {
+    sortBy.value = 'letter_date';
+    sortDirection.value = 'asc';
+  }
+  fetchLetters(1);
+}
+
+function toggleSort(col) {
+  if (sortBy.value === col) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortBy.value = col;
+    sortDirection.value = 'desc';
+  }
+  if (sortBy.value === 'agenda_number' && sortDirection.value === 'desc') sortPreset.value = 'agenda_desc';
+  else if (sortBy.value === 'agenda_number' && sortDirection.value === 'asc') sortPreset.value = 'agenda_asc';
+  else if (sortBy.value === 'letter_date' && sortDirection.value === 'desc') sortPreset.value = 'date_desc';
+  else if (sortBy.value === 'letter_date' && sortDirection.value === 'asc') sortPreset.value = 'date_asc';
+  else sortPreset.value = '';
+
+  fetchLetters(1);
+}
+
 const filters = reactive({
   search: route.query.search ? String(route.query.search) : '',
   status: 'all',
@@ -918,6 +1032,12 @@ watch(() => route.query.tab, (newTab) => {
 // Watch tab switch to auto-refresh table data for the selected tab
 watch(activeTab, (newTab) => {
   if (newTab === 'incoming' || newTab === 'outgoing' || newTab === 'agenda_print') {
+    fetchLetters(1);
+  }
+});
+
+watch(agendaPrintType, () => {
+  if (activeTab.value === 'agenda_print') {
     fetchLetters(1);
   }
 });
@@ -974,11 +1094,16 @@ function debouncedFetch() {
 async function fetchLetters(page = 1) {
   loading.value = true;
   try {
+    const isAgendaPrint = activeTab.value === 'agenda_print';
     const params = {
-      type: activeTab.value === 'outgoing' ? 'outgoing' : 'incoming',
+      type: activeTab.value === 'outgoing' ? 'outgoing' : (isAgendaPrint ? agendaPrintType.value : 'incoming'),
       search: filters.search || undefined,
       status: filters.status !== 'all' ? filters.status : undefined,
-      page: page,
+      category: filters.category !== 'all' ? filters.category : undefined,
+      sort_by: isAgendaPrint ? 'agenda_number' : sortBy.value,
+      direction: isAgendaPrint ? 'asc' : sortDirection.value,
+      page: isAgendaPrint ? 1 : page,
+      per_page: isAgendaPrint ? 500 : 15,
     };
     const res = await api.get('admin/letters', { params });
     const data = res?.data || res;
