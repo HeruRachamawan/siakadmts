@@ -148,10 +148,16 @@
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-emerald-500"></span>
           </span>
-          <h3 class="text-xs sm:text-sm md:text-base font-black tracking-wide uppercase font-lexend flex items-center gap-1.5 sm:gap-2">
+          <h3 class="text-xs sm:text-sm md:text-base font-black tracking-wide uppercase font-lexend flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <span>KBM SEDANG BERLANGSUNG</span>
             <span class="px-2 py-0.5 rounded-lg text-[10px] sm:text-xs font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
               {{ currentLiveSlot.timeSlot }} WIB
+            </span>
+            <span
+              class="px-2 py-0.5 rounded-lg text-[10px] font-bold border"
+              :class="activeScheduleType === 'lokal' ? 'bg-purple-500/20 text-purple-300 border-purple-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'"
+            >
+              {{ activeScheduleType === 'lokal' ? '📍 KBM Lokal' : '🏫 Jadwal Utama' }}
             </span>
           </h3>
         </div>
@@ -172,8 +178,14 @@
         >
           <div class="space-y-1 min-w-0 flex-1">
             <div class="flex items-center gap-1.5 sm:gap-2">
-              <span class="px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex-shrink-0">
+              <span
+                class="px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider border flex-shrink-0"
+                :class="activeScheduleType === 'lokal' || item.room === 'lokal' ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'"
+              >
                 {{ item.class_room?.name || item.classRoom?.name || 'Semua Kelas' }}
+              </span>
+              <span v-if="activeScheduleType === 'lokal' || item.room === 'lokal'" class="text-[9px] px-1 py-0.2 bg-purple-900/80 text-purple-200 rounded font-bold border border-purple-500/40">
+                Lokal
               </span>
               <span v-if="item.is_activity" class="text-xs font-bold text-amber-300 truncate">
                 ⭐ {{ item.activity_name }}
@@ -208,25 +220,67 @@
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 border-b border-slate-100 pb-4 sm:pb-5">
         <div class="space-y-1">
           <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold border border-emerald-100 shadow-2xs flex-shrink-0">
+            <div 
+              class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center font-bold border shadow-2xs flex-shrink-0 transition-colors"
+              :class="activeScheduleType === 'lokal' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-emerald-50 text-emerald-700 border-emerald-100'"
+            >
               <CalendarDays class="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h2 class="text-base sm:text-lg md:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2 font-lexend">
+              <h2 class="text-base sm:text-lg md:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2 font-lexend flex-wrap">
                 <span>Jadwal KBM & Mengajar Harian</span>
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                   {{ selectedDayLabel }}
                 </span>
+                <span 
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                  :class="activeScheduleType === 'lokal' ? 'bg-purple-100 text-purple-800 border-purple-200' : 'bg-slate-100 text-slate-700 border-slate-200'"
+                >
+                  {{ activeScheduleType === 'lokal' ? '📍 KBM Lokal' : '🏫 Jadwal Utama' }}
+                </span>
               </h2>
               <p class="text-[11px] sm:text-xs text-slate-500 font-normal">
-                Alur waktu jam mengajar guru, istirahat, dan kegiatan resmi madrasah.
+                {{ activeScheduleType === 'lokal' ? 'Monitoring jadwal alur waktu KBM khusus 4 rombel lokal (Kelas 7, 8, 9A, dan 9B).' : 'Alur waktu jam mengajar guru, istirahat, dan kegiatan resmi madrasah.' }}
               </p>
             </div>
           </div>
         </div>
 
-        <!-- View Switcher & Master Jadwal Link -->
+        <!-- Actions & Switchers -->
         <div class="flex items-center gap-2 flex-wrap">
+          <!-- Category Switcher: Jadwal Utama vs Jadwal Lokal -->
+          <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200/70 shadow-2xs">
+            <button
+              type="button"
+              @click="switchScheduleType('utama')"
+              :class="[
+                activeScheduleType === 'utama'
+                  ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 font-medium',
+                'px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer'
+              ]"
+              title="Jadwal Pelajaran Kelas Reguler"
+            >
+              <span>🏫 Jadwal Utama</span>
+            </button>
+            <button
+              type="button"
+              @click="switchScheduleType('lokal')"
+              :class="[
+                activeScheduleType === 'lokal'
+                  ? 'bg-purple-600 text-white font-bold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 font-medium',
+                'px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer'
+              ]"
+              title="Jadwal KBM Khusus 4 Rombel Lokal (Kelas 7, 8, 9A, 9B)"
+            >
+              <span>📍 Jadwal Lokal</span>
+              <span class="text-[9px] font-bold px-1.5 py-0.2 rounded-full" :class="activeScheduleType === 'lokal' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'">
+                4 Kelas
+              </span>
+            </button>
+          </div>
+
           <!-- View Switcher: Timeline vs Matriks Rombel (Desktop & Tablet) -->
           <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200/70">
             <button
@@ -277,7 +331,7 @@
           @click="selectedDay = day.id"
           :class="[
             selectedDay === day.id
-              ? 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/20 ring-2 ring-emerald-600/30'
+              ? (activeScheduleType === 'lokal' ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-600/20 ring-2 ring-purple-600/30' : 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/20 ring-2 ring-emerald-600/30')
               : 'bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200/80',
             'px-3.5 sm:px-4 py-2 rounded-xl text-xs whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 sm:gap-2 flex-shrink-0 snap-start active:scale-95'
           ]"
@@ -304,14 +358,14 @@
             />
           </div>
 
-          <div class="relative w-full sm:w-48">
+          <div class="relative w-full sm:w-56">
             <select
               v-model="selectedClassFilter"
               class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
-              <option value="">Semua Rombel Kelas</option>
-              <option v-for="cls in classList" :key="cls.id" :value="cls.id">
-                {{ cls.name }}
+              <option value="">Semua Rombel ({{ activeScheduleType === 'lokal' ? 'Jadwal Lokal' : 'Jadwal Utama' }})</option>
+              <option v-for="cls in displayClassList" :key="cls.id" :value="cls.id">
+                Kelas {{ cls.name }}
               </option>
             </select>
           </div>
@@ -453,9 +507,17 @@
                     </div>
                   </div>
 
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xl text-[11px] sm:text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-100 whitespace-nowrap shadow-2xs flex-shrink-0">
-                    <Building2 class="w-3 h-3 text-indigo-500" />
+                  <span 
+                    :class="[
+                      activeScheduleType === 'lokal' || sch.room === 'lokal' 
+                        ? 'bg-purple-50 text-purple-700 border-purple-200' 
+                        : 'bg-indigo-50 text-indigo-700 border-indigo-100',
+                      'inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xl text-[11px] sm:text-xs font-black whitespace-nowrap shadow-2xs flex-shrink-0 border'
+                    ]"
+                  >
+                    <Building2 class="w-3 h-3" :class="activeScheduleType === 'lokal' || sch.room === 'lokal' ? 'text-purple-500' : 'text-indigo-500'" />
                     <span>{{ sch.class_room?.name || sch.classRoom?.name || 'Kelas' }}</span>
+                    <span v-if="activeScheduleType === 'lokal' || sch.room === 'lokal'" class="text-[9px] px-1 py-0.2 bg-purple-200 text-purple-800 rounded font-extrabold ml-0.5">Lokal</span>
                   </span>
                 </div>
 
@@ -499,8 +561,8 @@
                 <!-- Footer: Room & Time Info -->
                 <div class="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-500 pt-0.5">
                   <span class="flex items-center gap-1 text-slate-600 truncate">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
-                    <span>Ruang: <strong>{{ sch.room || 'Ruang Kelas' }}</strong></span>
+                    <span class="w-1.5 h-1.5 rounded-full" :class="activeScheduleType === 'lokal' || sch.room === 'lokal' ? 'bg-purple-500' : 'bg-emerald-500'"></span>
+                    <span>Ruang: <strong>{{ sch.room || (activeScheduleType === 'lokal' ? 'Jadwal Lokal' : 'Ruang Kelas') }}</strong></span>
                   </span>
                   <span class="font-mono text-slate-400 flex-shrink-0">
                     {{ sch.start_time?.substring(0, 5) }} - {{ sch.end_time?.substring(0, 5) }}
@@ -522,10 +584,14 @@
           <!-- Class Column Header -->
           <div class="flex items-center justify-between pb-2.5 sm:pb-3 border-b border-slate-200">
             <div class="flex items-center gap-2">
-              <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center shadow-xs flex-shrink-0">
+              <div 
+                class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-white font-black text-xs flex items-center justify-center shadow-xs flex-shrink-0 transition-colors"
+                :class="activeScheduleType === 'lokal' ? 'bg-purple-600' : 'bg-emerald-600'"
+              >
                 {{ cls.name.charAt(0) }}
               </div>
               <h3 class="text-xs sm:text-sm font-black text-slate-900 font-lexend truncate">Kelas {{ cls.name }}</h3>
+              <span v-if="activeScheduleType === 'lokal'" class="text-[9px] font-bold px-1.5 py-0.2 bg-purple-100 text-purple-800 rounded">Lokal</span>
             </div>
             <span class="text-[10px] font-bold px-2 py-0.5 bg-white border border-slate-200 rounded-md text-slate-500 flex-shrink-0">
               {{ getClassSchedules(cls.id).length }} Sesi
@@ -648,6 +714,62 @@ const loadingSchedules = ref(false);
 const scheduleSearch = ref('');
 const selectedClassFilter = ref('');
 
+// Category State: Jadwal Utama vs Jadwal Lokal
+const activeScheduleType = ref('utama'); // 'utama' | 'lokal'
+
+const customLokalClassIds = ref(
+  JSON.parse(localStorage.getItem('siakad_lokal_class_ids') || '[]')
+);
+
+const isLokalClass = (cls) => {
+  if (!cls) return false;
+  if (customLokalClassIds.value && customLokalClassIds.value.length > 0) {
+    return customLokalClassIds.value.includes(cls.id);
+  }
+  const name = (cls.name || '').trim();
+  const lower = name.toLowerCase();
+
+  // Standalone 7: "7" or "Kelas 7"
+  const isClass7 = (name === '7' || lower === 'kelas 7');
+
+  // Standalone 8: "8" or "Kelas 8"
+  const isClass8 = (name === '8' || lower === 'kelas 8');
+
+  // Class 9A
+  const isClass9A = (name === '9A' || name === '9a' || lower === 'kelas 9a' || lower === 'ix-a' || lower === 'ix a');
+
+  // Class 9B
+  const isClass9B = (name === '9B' || name === '9b' || lower === 'kelas 9b' || lower === 'ix-b' || lower === 'ix b');
+
+  return isClass7 || isClass8 || isClass9A || isClass9B;
+};
+
+const isUtamaClass = (cls) => {
+  if (!cls) return false;
+  const name = (cls.name || '').trim();
+  const lower = name.toLowerCase();
+
+  // Standalone 7 and 8 are specifically for Jadwal Lokal, keep regular classes in Jadwal Utama
+  if (name === '7' || lower === 'kelas 7') return false;
+  if (name === '8' || lower === 'kelas 8') return false;
+
+  return true;
+};
+
+const displayClassList = computed(() => {
+  if (activeScheduleType.value === 'lokal') {
+    return classList.value.filter(isLokalClass).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }));
+  }
+  return classList.value.filter(isUtamaClass).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }));
+});
+
+function switchScheduleType(type) {
+  if (activeScheduleType.value === type) return;
+  activeScheduleType.value = type;
+  selectedClassFilter.value = '';
+  loadSchedules();
+}
+
 // Clock state
 const now = ref(new Date());
 let timer = null;
@@ -716,11 +838,12 @@ const filteredGroupedSchedules = computed(() => {
   const query = scheduleSearch.value.trim().toLowerCase();
   const classFilter = selectedClassFilter.value;
 
-  // Flatten general activities into per-class items if classList exists and no class_id
+  // Flatten general activities into per-class items if displayClassList exists and no class_id
   const expandedSchedules = [];
+  const activeClasses = displayClassList.value;
   schedules.value.forEach(s => {
-    if (s.is_activity && !s.class_id && classList.value && classList.value.length > 0) {
-      classList.value.forEach(cls => {
+    if (s.is_activity && !s.class_id && activeClasses && activeClasses.length > 0) {
+      activeClasses.forEach(cls => {
         expandedSchedules.push({
           ...s,
           id: `${s.id}-cls-${cls.id}`,
@@ -833,10 +956,11 @@ function getSlotBannerStyle(group) {
 
 // Matrix View Helper
 const filteredClassList = computed(() => {
+  const base = displayClassList.value;
   if (selectedClassFilter.value) {
-    return classList.value.filter(c => c.id == selectedClassFilter.value);
+    return base.filter(c => c.id == selectedClassFilter.value);
   }
-  return classList.value;
+  return base;
 });
 
 function getClassSchedules(classId) {
@@ -873,7 +997,7 @@ const dailyMetrics = computed(() => {
 
   return {
     teachersCount: uniqueTeachers.size,
-    classesCount: uniqueClasses.size || classList.value.length || 0,
+    classesCount: uniqueClasses.size || displayClassList.value.length || 0,
     sessionsCount
   };
 });
@@ -881,7 +1005,10 @@ const dailyMetrics = computed(() => {
 async function loadSchedules() {
   loadingSchedules.value = true;
   try {
-    const res = await api.get('admin/schedules', { day: selectedDay.value });
+    const res = await api.get('admin/schedules', {
+      day: selectedDay.value,
+      room: activeScheduleType.value,
+    });
     schedules.value = res?.data || res || [];
   } catch (err) {
     console.error('Failed to load schedules for day', selectedDay.value, err);
