@@ -140,8 +140,8 @@
       </RouterLink>
     </div>
 
-    <!-- 3. LIVE KBM SESSION MONITOR (Sedang Berlangsung Sekarang) -->
-    <div v-if="selectedDay === currentTodayDay && currentLiveSlot" class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg border border-slate-700/50 space-y-3.5">
+    <!-- 3. LIVE KBM SESSION MONITOR (Sedang Berlangsung Sekarang - Seluruh Kelas) -->
+    <div v-if="selectedDay === currentTodayDay && (hasLiveSessions || isSchoolHours)" class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg border border-slate-700/50 space-y-3.5">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 border-b border-slate-700/60 pb-3">
         <div class="flex items-center gap-2 sm:gap-2.5">
           <span class="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
@@ -151,63 +151,83 @@
           <h3 class="text-xs sm:text-sm md:text-base font-black tracking-wide uppercase font-lexend flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <span>KBM SEDANG BERLANGSUNG</span>
             <span class="px-2 py-0.5 rounded-lg text-[10px] sm:text-xs font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              {{ currentLiveSlot.timeSlot }} WIB
+              Pukul {{ currentHourMin }} WIB
             </span>
             <span
               class="px-2 py-0.5 rounded-lg text-[10px] font-bold border"
               :class="activeScheduleType === 'lokal' ? 'bg-purple-500/20 text-purple-300 border-purple-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'"
             >
-              {{ activeScheduleType === 'lokal' ? '📍 KBM Lokal' : '🏫 Jadwal Utama' }}
+              {{ activeScheduleType === 'lokal' ? '📍 KBM Lokal (' + liveClassSessions.length + ' Kelas)' : '🏫 Jadwal Utama (' + liveClassSessions.length + ' Kelas)' }}
             </span>
           </h3>
         </div>
-        <p class="text-[11px] sm:text-xs text-slate-400 font-medium">Status Real-Time Jam KBM Saat Ini</p>
+        <p class="text-[11px] sm:text-xs text-slate-400 font-medium">Monitoring Real-Time Seluruh Rombel Saat Ini</p>
       </div>
 
-      <!-- Live Cards Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
+      <!-- Live Cards Grid (Menampilkan SEMUA Kelas) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         <div
-          v-for="item in currentLiveSlot.items"
-          :key="'live-'+item.id"
+          v-for="item in liveClassSessions"
+          :key="'live-cls-'+item.classId"
           :class="[
-            item.is_activity
-              ? 'bg-amber-900/30 border-amber-500/40 text-amber-200'
-              : 'bg-slate-800/80 border-slate-700/80 text-white',
-            'p-3 sm:p-3.5 rounded-2xl border flex items-center justify-between gap-3 shadow-inner'
+            item.activeSession
+              ? (item.isActivity
+                  ? 'bg-amber-950/40 border-amber-500/40 text-amber-200'
+                  : 'bg-slate-800/90 border-slate-700/80 text-white shadow-inner')
+              : 'bg-slate-800/40 border-slate-700/40 text-slate-400',
+            'p-3 sm:p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition-all'
           ]"
         >
-          <div class="space-y-1 min-w-0 flex-1">
-            <div class="flex items-center gap-1.5 sm:gap-2">
+          <div class="space-y-1.5 min-w-0 flex-1">
+            <!-- Header Baris Kartu: Badge Kelas & Waktu Sesi -->
+            <div class="flex items-center gap-1.5 flex-wrap">
               <span
-                class="px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider border flex-shrink-0"
-                :class="activeScheduleType === 'lokal' || item.room === 'lokal' ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'"
+                class="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-black uppercase tracking-wider border flex-shrink-0"
+                :class="activeScheduleType === 'lokal' ? 'bg-purple-500/25 text-purple-200 border-purple-500/40' : 'bg-emerald-500/25 text-emerald-200 border-emerald-500/40'"
               >
-                {{ item.class_room?.name || item.classRoom?.name || 'Semua Kelas' }}
+                Kelas {{ item.className }}
               </span>
-              <span v-if="activeScheduleType === 'lokal' || item.room === 'lokal'" class="text-[9px] px-1 py-0.2 bg-purple-900/80 text-purple-200 rounded font-bold border border-purple-500/40">
+              <span v-if="activeScheduleType === 'lokal'" class="text-[9px] px-1 py-0.2 bg-purple-900/80 text-purple-200 rounded font-bold border border-purple-500/40">
                 Lokal
               </span>
-              <span v-if="item.is_activity" class="text-xs font-bold text-amber-300 truncate">
-                ⭐ {{ item.activity_name }}
-              </span>
-              <span v-else class="text-xs font-bold truncate">
-                {{ item.subject?.name || 'Pelajaran' }}
+              <span v-if="item.startTime && item.endTime" class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-700/60 text-slate-300">
+                {{ item.startTime }} - {{ item.endTime }}
               </span>
             </div>
-            <p v-if="!item.is_activity && item.teacher" class="text-[11px] sm:text-xs text-slate-300 truncate flex items-center gap-1.5">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
-              <span class="truncate">Guru: <strong>{{ item.teacher?.full_name }}</strong></span>
-            </p>
+
+            <!-- Konten Sesi: KBM Aktif vs Kegiatan vs Jam Kosong -->
+            <template v-if="item.activeSession">
+              <div v-if="item.isActivity" class="text-xs font-bold text-amber-300 truncate flex items-center gap-1">
+                <span>⭐</span>
+                <span class="truncate">{{ item.subjectName }}</span>
+              </div>
+              <div v-else>
+                <p class="text-xs font-bold text-white truncate">
+                  {{ item.subjectName || 'Pelajaran' }}
+                </p>
+                <p v-if="item.teacherName" class="text-[11px] text-slate-300 truncate flex items-center gap-1.5 mt-0.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
+                  <span class="truncate">Guru: <strong class="text-white">{{ item.teacherName }}</strong></span>
+                </p>
+              </div>
+            </template>
+            <template v-else>
+              <p class="text-xs font-medium text-slate-400 flex items-center gap-1.5 italic">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-500 flex-shrink-0"></span>
+                <span>Jam Kosong / Bebas</span>
+              </p>
+            </template>
           </div>
 
+          <!-- Aksi WhatsApp Guru (jika ada guru pengampu yang sedang mengajar) -->
           <a
-            v-if="!item.is_activity && item.teacher?.phone"
-            :href="`https://wa.me/${formatWaNumber(item.teacher.phone)}?text=Assalamu'alaikum%20Bapak/Ibu%20${encodeURIComponent(item.teacher.full_name)},%20mohon%20konfirmasi%20KBM%20mapel%20${encodeURIComponent(item.subject?.name || '')}%20di%20kelas%20${encodeURIComponent(item.class_room?.name || item.classRoom?.name || '')}`"
+            v-if="item.activeSession && !item.isActivity && item.teacherPhone"
+            :href="`https://wa.me/${formatWaNumber(item.teacherPhone)}?text=Assalamu'alaikum%20Bapak/Ibu%20${encodeURIComponent(item.teacherName)},%20mohon%20konfirmasi%20KBM%20mapel%20${encodeURIComponent(item.subjectName || '')}%20di%20kelas%20${encodeURIComponent(item.className)}`"
             target="_blank"
-            class="min-w-[40px] min-h-[40px] p-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl transition-all shadow-md flex items-center justify-center flex-shrink-0 cursor-pointer active:scale-95"
-            title="Hubungi Guru via WhatsApp"
+            class="min-w-[38px] min-h-[38px] p-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl transition-all shadow-md flex items-center justify-center flex-shrink-0 cursor-pointer active:scale-95"
+            :title="`Hubungi ${item.teacherName} via WhatsApp`"
           >
-            <Phone class="w-4 h-4" />
+            <Phone class="w-3.5 h-3.5" />
           </a>
         </div>
       </div>
@@ -895,7 +915,58 @@ const filteredGroupedSchedules = computed(() => {
   return Object.values(groupsMap).sort((a, b) => a.startTime.localeCompare(b.startTime));
 });
 
-// Live Slot detection
+// Live Real-Time Monitor per Semua Kelas Aktif
+const isSchoolHours = computed(() => {
+  const time = currentHourMin.value;
+  return time >= '06:30' && time <= '15:30';
+});
+
+const liveClassSessions = computed(() => {
+  const time = currentHourMin.value;
+  const classes = displayClassList.value;
+  if (!classes || classes.length === 0) return [];
+
+  return classes.map(cls => {
+    // 1. Cari jadwal spesifik untuk kelas ini pada jam sekarang
+    let active = schedules.value.find(s => {
+      const matchClass = (s.class_id == cls.id || s.class_room?.id == cls.id || s.classRoom?.id == cls.id);
+      if (!matchClass) return false;
+      const start = (s.start_time || '00:00').substring(0, 5);
+      const end = (s.end_time || '00:00').substring(0, 5);
+      return start <= time && time < end;
+    });
+
+    // 2. Jika tidak ada jadwal spesifik, cek apakah ada kegiatan bersama/istirahat untuk semua kelas
+    if (!active) {
+      active = schedules.value.find(s => {
+        if (!s.is_activity || s.class_id) return false;
+        const start = (s.start_time || '00:00').substring(0, 5);
+        const end = (s.end_time || '00:00').substring(0, 5);
+        return start <= time && time < end;
+      });
+    }
+
+    return {
+      classId: cls.id,
+      className: cls.name,
+      cls,
+      activeSession: active || null,
+      isActivity: active?.is_activity || false,
+      subjectName: active?.subject?.name || active?.activity_name || null,
+      subjectCode: active?.subject?.code || null,
+      teacher: active?.teacher || null,
+      teacherName: active?.teacher?.full_name || null,
+      teacherPhone: active?.teacher?.phone || null,
+      startTime: active ? (active.start_time || '').substring(0, 5) : null,
+      endTime: active ? (active.end_time || '').substring(0, 5) : null,
+      room: active?.room || (activeScheduleType.value === 'lokal' ? 'lokal' : 'utama'),
+    };
+  });
+});
+
+const hasLiveSessions = computed(() => liveClassSessions.value.some(c => c.activeSession));
+
+// Live Slot detection (untuk highlight timeline)
 const currentLiveSlot = computed(() => {
   const time = currentHourMin.value;
   return filteredGroupedSchedules.value.find(g => g.startTime <= time && time < g.endTime);
