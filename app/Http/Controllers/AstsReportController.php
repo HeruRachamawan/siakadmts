@@ -27,7 +27,8 @@ class AstsReportController extends Controller
             ->orderBy('name')
             ->get();
 
-        $subjects = Subject::orderBy('name')->get();
+        $rawSubjects = Subject::all();
+        $subjects = $this->sortSubjectsAccordingToStructure($rawSubjects);
 
         $activeYear = AcademicYear::where('is_active', true)->first()
             ?? AcademicYear::orderBy('id', 'desc')->first();
@@ -59,21 +60,66 @@ class AstsReportController extends Controller
     }
 
     /**
-     * Ledger matrix for entire class.
+     * Helper to classify and sort subjects according to official Madrasah Tsanawiyah curriculum structure.
+     */
+    private function sortSubjectsAccordingToStructure($subjects)
+    {
+        return $subjects->sort(function ($a, $b) {
+            return $this->getSubjectWeight($a->name) <=> $this->getSubjectWeight($b->name);
+        })->values();
+    }
+
+    /**
+     * Helper to compute order weight for subjects.
+     */
+    private function getSubjectWeight(string $name): int
+    {
+        $lower = strtolower($name);
+
+        // 1. Kelompok Wajib A - Pendidikan Agama Islam (PAI)
+        if (str_contains($lower, 'qur') || str_contains($lower, 'hadis') || str_contains($lower, 'hadits')) return 10;
+        if (str_contains($lower, 'akidah') || str_contains($lower, 'akhlak')) return 11;
+        if (str_contains($lower, 'fikih') || str_contains($lower, 'fiqih')) return 12;
+        if (str_contains($lower, 'sejarah kebudayaan') || str_contains($lower, 'ski')) return 13;
+
+        // Kelompok Wajib A - Mata Pelajaran Umum
+        if (str_contains($lower, 'pancasila') || str_contains($lower, 'pkn') || str_contains($lower, 'kewarganegaraan')) return 20;
+        if (str_contains($lower, 'bahasa indonesia') || $lower === 'indonesia') return 30;
+        if (str_contains($lower, 'bahasa arab') || $lower === 'arab') return 40;
+        if (str_contains($lower, 'matematika') || str_contains($lower, 'mtk')) return 50;
+        if (str_contains($lower, 'alam') || str_contains($lower, 'ipa')) return 60;
+        if (str_contains($lower, 'sosial') || str_contains($lower, 'ips')) return 70;
+        if (str_contains($lower, 'inggris') || str_contains($lower, 'english')) return 80;
+
+        // 2. Kelompok Wajib B
+        if (str_contains($lower, 'seni') || str_contains($lower, 'prakarya') || str_contains($lower, 'sbdp')) return 110;
+        if (str_contains($lower, 'jasmani') || str_contains($lower, 'olahraga') || str_contains($lower, 'pjok') || str_contains($lower, 'penjas')) return 120;
+        if (str_contains($lower, 'informatika') || str_contains($lower, 'komputer') || str_contains($lower, 'tik')) return 130;
+
+        // 3. Pilihan Muatan Lokal (Mulok)
+        if (str_contains($lower, 'sunda') || str_contains($lower, 'jawa') || str_contains($lower, 'daerah')) return 210;
+        if (str_contains($lower, 'btq') || str_contains($lower, 'tahfidz') || str_contains($lower, 'baca tulis')) return 220;
+
+        return 300;
+    }
+
+    /**
+     * Ledger matrix for a class: all students x all subjects with their ASTS scores.
      */
     public function ledger(Request $request)
     {
-        $request->validate([
-            'class_id' => 'required|exists:classes,id',
-            'semester' => 'nullable|string|in:ganjil,genap',
-            'academic_year_id' => 'nullable|exists:academic_years,id',
-        ]);
-
-        $classId = $request->class_id;
+        $classId = $request->input('class_id');
         $semester = $request->input('semester', 'ganjil');
 
         $activeYear = AcademicYear::where('is_active', true)->first();
         $yearId = $request->input('academic_year_id', $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));
+
+        if (!$classId) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Silakan pilih kelas terlebih dahulu.'
+            ], 400);
+        }
 
         $class = ClassRoom::with('homeroomTeacher')->findOrFail($classId);
 
@@ -84,8 +130,9 @@ class AstsReportController extends Controller
 
         $studentIds = $students->pluck('id');
 
-        // All subjects taught in madrasah
-        $subjects = Subject::orderBy('name')->get();
+        // All subjects taught in madrasah, ordered by official structure
+        $rawSubjects = Subject::all();
+        $subjects = $this->sortSubjectsAccordingToStructure($rawSubjects);
 
         // Existing ASTS Scores
         $scores = AstsSubjectScore::whereIn('student_id', $studentIds)
@@ -655,19 +702,19 @@ class AstsReportController extends Controller
             ->with('subject')
             ->get();
 
-        // Fetch subjects
-        $allSubjects = Subject::orderBy('name')->get();
-
-        // PAI / Keagamaan keywords
-        $paiKeywords = ['qur', 'hadis', 'akidah', 'akhlak', 'fikih', 'fiqih', 'ski', 'sejarah kebudayaan', 'arab'];
-
-        $groupA = []; // Kelompok A: Agama / PAI & Wajib
-        $groupB = []; // Kelompok B: Umum & Muatan Lokal
+        // Fetch subjects sorted by official structure
+        $rawSubjects = Subject::all();
+        $allSubjects = $this->sortSubjectsAccordingToStructure($rawSubjects);
 
         $scoreMap = $scores->keyBy('subject_id');
 
         $totalScore = 0;
         $countScore = 0;
+
+        $paiSubjects = [];
+        $generalSubjectsA = [];
+        $groupB = [];
+        $mulokSubjects = [];
 
         foreach ($allSubjects as $sbj) {
             $sc = $scoreMap->get($sbj->id);
@@ -692,19 +739,20 @@ class AstsReportController extends Controller
                 'is_passed' => $scoreVal !== null && $scoreVal >= $kkmVal,
             ];
 
-            $lower = strtolower($sbj->name);
-            $isPai = false;
-            foreach ($paiKeywords as $kw) {
-                if (str_contains($lower, $kw)) {
-                    $isPai = true;
-                    break;
-                }
-            }
+            $weight = $this->getSubjectWeight($sbj->name);
 
-            if ($isPai) {
-                $groupA[] = $sbjItem;
-            } else {
+            if ($weight >= 10 && $weight <= 19) {
+                // 1. PAI Sub-items: Al-Qur'an Hadis, Akidah Akhlak, Fikih, SKI
+                $paiSubjects[] = $sbjItem;
+            } elseif ($weight >= 20 && $weight <= 100) {
+                // 2. Kelompok Wajib A Umum: PPKn, B.Indo, B.Arab, MTK, IPA, IPS, B.Inggris
+                $generalSubjectsA[] = $sbjItem;
+            } elseif ($weight >= 110 && $weight <= 200) {
+                // 3. Kelompok Wajib B: Seni Budaya, PJOK, Informatika
                 $groupB[] = $sbjItem;
+            } else {
+                // 4. Pilihan Mulok: Bahasa Sunda, BTQ, dll.
+                $mulokSubjects[] = $sbjItem;
             }
         }
 
@@ -747,8 +795,10 @@ class AstsReportController extends Controller
             'academic_year' => $academicYear?->year ?? '2026/2027',
             'semester' => $semester,
             'semester_label' => $semester === 'genap' ? 'Genap (Dua)' : 'Ganjil (Satu)',
-            'subjects_group_a' => $groupA,
+            'subjects_pai' => $paiSubjects,
+            'subjects_group_a' => $generalSubjectsA,
             'subjects_group_b' => $groupB,
+            'subjects_mulok' => $mulokSubjects,
             'total_score' => $totalScore,
             'average_score' => $avg,
             'rank' => $sRankInfo['rank'],

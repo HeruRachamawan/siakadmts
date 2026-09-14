@@ -90,46 +90,96 @@
           </tr>
         </thead>
         <tbody>
-          <!-- KELOMPOK A -->
-          <tr class="bg-slate-50 font-black text-slate-900 text-[11px]">
+          <!-- 1. KELOMPOK WAJIB A -->
+          <tr class="bg-slate-100 font-black text-slate-950 text-[11px]">
             <td colspan="6" class="border border-slate-900 px-3 py-1.5 uppercase tracking-wide">
-              Kelompok A (Pendidikan Agama Islam & Wajib Madrasah)
+              Kelompok Wajib A
             </td>
           </tr>
+
+          <!-- PAI Header Item 1 -->
+          <tr v-if="report?.subjects_pai && report.subjects_pai.length" class="bg-slate-50 font-bold text-slate-900 text-[10.5px]">
+            <td class="border border-slate-400 p-1.5 text-center font-bold text-slate-700">1</td>
+            <td colspan="5" class="border border-slate-400 p-1.5 font-black text-slate-900">
+              Pendidikan Agama Islam
+            </td>
+          </tr>
+
+          <!-- PAI Sub-items: a, b, c, d -->
           <tr
-            v-for="(sbj, i) in report?.subjects_group_a || []"
-            :key="'a-'+sbj.subject_id"
+            v-for="(sbj, i) in report?.subjects_pai || []"
+            :key="'pai-'+sbj.subject_id"
             class="border-b border-slate-300"
           >
-            <td class="border border-slate-400 p-1.5 text-center font-bold text-slate-600">{{ i + 1 }}</td>
+            <td class="border border-slate-400 p-1.5 text-center font-bold text-slate-600"></td>
+            <td class="border border-slate-400 p-1.5 text-slate-900 pl-6">
+              <span class="font-bold">{{ ['a', 'b', 'c', 'd', 'e', 'f'][i] || '-' }}.</span>
+              <span class="ml-2 font-medium">{{ sbj.name }}</span>
+            </td>
+            <td class="border border-slate-400 p-1.5 text-center font-mono font-bold text-slate-600">{{ sbj.kkm }}</td>
+            <td class="border border-slate-400 p-1.5 text-center font-mono font-black" :class="sbj.score !== null && sbj.score >= sbj.kkm ? 'text-slate-950' : 'text-rose-700'">
+              {{ sbj.score !== null ? sbj.score : '-' }}
+            </td>
+            <td class="border border-slate-400 p-1.5 text-center font-black text-slate-800">{{ sbj.predicate || '-' }}</td>
+            <td class="border border-slate-400 p-1.5 text-[10px] leading-tight text-slate-700">{{ sbj.description || '-' }}</td>
+          </tr>
+
+          <!-- Kelompok Wajib A: General Subjects (2, 3, 4, 5, 6, 7, 8) -->
+          <tr
+            v-for="(sbj, i) in report?.subjects_group_a || []"
+            :key="'ga-'+sbj.subject_id"
+            class="border-b border-slate-300"
+          >
+            <td class="border border-slate-400 p-1.5 text-center font-bold text-slate-700">{{ i + 2 }}</td>
             <td class="border border-slate-400 p-1.5 font-bold text-slate-900">{{ sbj.name }}</td>
             <td class="border border-slate-400 p-1.5 text-center font-mono font-bold text-slate-600">{{ sbj.kkm }}</td>
             <td class="border border-slate-400 p-1.5 text-center font-mono font-black" :class="sbj.score !== null && sbj.score >= sbj.kkm ? 'text-slate-950' : 'text-rose-700'">
               {{ sbj.score !== null ? sbj.score : '-' }}
             </td>
             <td class="border border-slate-400 p-1.5 text-center font-black text-slate-800">{{ sbj.predicate || '-' }}</td>
-            <td class="border border-slate-400 p-1.5 text-[10.5px] leading-tight text-slate-700">{{ sbj.description || '-' }}</td>
+            <td class="border border-slate-400 p-1.5 text-[10px] leading-tight text-slate-700">{{ sbj.description || '-' }}</td>
           </tr>
 
-          <!-- KELOMPOK B -->
-          <tr class="bg-slate-50 font-black text-slate-900 text-[11px]">
+          <!-- 2. KELOMPOK WAJIB B -->
+          <tr v-if="report?.subjects_group_b && report.subjects_group_b.length" class="bg-slate-100 font-black text-slate-950 text-[11px]">
             <td colspan="6" class="border border-slate-900 px-3 py-1.5 uppercase tracking-wide">
-              Kelompok B (Mata Pelajaran Umum & Muatan Lokal)
+              Kelompok Wajib B
             </td>
           </tr>
           <tr
             v-for="(sbj, i) in report?.subjects_group_b || []"
-            :key="'b-'+sbj.subject_id"
+            :key="'gb-'+sbj.subject_id"
             class="border-b border-slate-300"
           >
-            <td class="border border-slate-400 p-1.5 text-center font-bold text-slate-600">{{ i + 1 }}</td>
+            <td class="border border-slate-400 p-1.5 text-center font-bold text-slate-700">{{ ['i', 'ii', 'iii', 'iv', 'v'][i] || (i + 1) }}.</td>
             <td class="border border-slate-400 p-1.5 font-bold text-slate-900">{{ sbj.name }}</td>
             <td class="border border-slate-400 p-1.5 text-center font-mono font-bold text-slate-600">{{ sbj.kkm }}</td>
             <td class="border border-slate-400 p-1.5 text-center font-mono font-black" :class="sbj.score !== null && sbj.score >= sbj.kkm ? 'text-slate-950' : 'text-rose-700'">
               {{ sbj.score !== null ? sbj.score : '-' }}
             </td>
             <td class="border border-slate-400 p-1.5 text-center font-black text-slate-800">{{ sbj.predicate || '-' }}</td>
-            <td class="border border-slate-400 p-1.5 text-[10.5px] leading-tight text-slate-700">{{ sbj.description || '-' }}</td>
+            <td class="border border-slate-400 p-1.5 text-[10px] leading-tight text-slate-700">{{ sbj.description || '-' }}</td>
+          </tr>
+
+          <!-- 3. PILIHAN MUATAN LOKAL (MULOK) -->
+          <tr v-if="report?.subjects_mulok && report.subjects_mulok.length" class="bg-slate-100 font-black text-slate-950 text-[11px]">
+            <td colspan="6" class="border border-slate-900 px-3 py-1.5 uppercase tracking-wide">
+              Pilihan Muatan Lokal
+            </td>
+          </tr>
+          <tr
+            v-for="(sbj, i) in report?.subjects_mulok || []"
+            :key="'mulok-'+sbj.subject_id"
+            class="border-b border-slate-300"
+          >
+            <td class="border border-slate-400 p-1.5 text-center font-bold text-slate-700">{{ i + 1 }}</td>
+            <td class="border border-slate-400 p-1.5 font-bold text-slate-900">{{ sbj.name }}</td>
+            <td class="border border-slate-400 p-1.5 text-center font-mono font-bold text-slate-600">{{ sbj.kkm }}</td>
+            <td class="border border-slate-400 p-1.5 text-center font-mono font-black" :class="sbj.score !== null && sbj.score >= sbj.kkm ? 'text-slate-950' : 'text-rose-700'">
+              {{ sbj.score !== null ? sbj.score : '-' }}
+            </td>
+            <td class="border border-slate-400 p-1.5 text-center font-black text-slate-800">{{ sbj.predicate || '-' }}</td>
+            <td class="border border-slate-400 p-1.5 text-[10px] leading-tight text-slate-700">{{ sbj.description || '-' }}</td>
           </tr>
 
           <!-- REKAP TOTAL & RATA-RATA & PERINGKAT -->
