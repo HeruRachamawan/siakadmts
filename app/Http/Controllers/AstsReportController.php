@@ -189,11 +189,27 @@ class AstsReportController extends Controller
         });
 
         foreach ($ledgerStudents as $rank => &$sData) {
-            $sData['rank'] = $sData['average_score'] > 0 ? ($rank + 1) : '-';
+            $calcRank = $sData['average_score'] > 0 ? ($rank + 1) : '-';
+            $sData['calculated_rank'] = $calcRank;
+
+            $report = $reports->get($sData['student_id']);
+            $manualRank = $report?->manual_rank;
+
+            if (!empty($manualRank)) {
+                $sData['rank'] = (int) $manualRank;
+                $sData['is_manual_rank'] = true;
+            } else {
+                $sData['rank'] = $calcRank;
+                $sData['is_manual_rank'] = false;
+            }
         }
         unset($sData);
 
-        // Sort back by full_name for clean alphabetical presentation
+        // Compute class average
+        $totalAverages = array_sum(array_column($ledgerStudents, 'average_score'));
+        $classAverageScore = count($ledgerStudents) > 0 ? round($totalAverages / count($ledgerStudents), 2) : 0;
+
+        // Sort back by full_name for clean presentation
         usort($ledgerStudents, function ($a, $b) {
             return strcasecmp($a['full_name'], $b['full_name']);
         });
@@ -208,6 +224,7 @@ class AstsReportController extends Controller
                 'subject_statuses' => array_values($subjectStatusMap),
                 'students' => $ledgerStudents,
                 'total_students' => count($ledgerStudents),
+                'class_average_score' => $classAverageScore,
             ]
         ]);
     }
@@ -354,6 +371,137 @@ class AstsReportController extends Controller
     }
 
     /**
+     * Adjust student rankings with optional smart score adjustment.
+     */
+    public function adjustRanks(Request $request)
+    {
+        $request->validate([
+            'class_id' => 'required|exists:classes,id',
+            'semester' => 'required|string|in:ganjil,genap',
+            'academic_year_id' => 'required|exists:academic_years,id',
+            'ranks' => 'required|array|min:1',
+            'ranks.*.student_id' => 'required|exists:students,id',
+            'ranks.*.rank' => 'required|integer|min:1',
+            'adjust_scores' => 'nullable|boolean',
+        ]);
+
+        $classId = $request->input('class_id');
+        $semester = $request->input('semester');
+        $academicYearId = $request->input('academic_year_id');
+        $rankList = $request->input('ranks');
+        $shouldAdjustScores = (bool) $request->input('adjust_scores', false);
+
+        DB::beginTransaction();
+        try {
+            // 1. Update manual_rank on asts_reports
+            foreach ($rankList as $item) {
+                AstsReport::updateOrCreate(
+                    [
+                        'student_id' => $item['student_id'],
+                        'academic_year_id' => $academicYearId,
+                        'semester' => $semester,
+                    ],
+                    [
+                        'manual_rank' => (int) $item['rank'],
+                    ]
+                );
+            }
+
+            // 2. If smart score adjustment is requested:
+            // Adjust subject scores proportionally so that higher ranked students maintain higher or equal averages
+            if ($shouldAdjustScores) {
+                // Fetch all scores for this class, year, and semester
+                $studentIds = array_column($rankList, 'student_id');
+                $scores = AstsSubjectScore::whereIn('student_id', $studentIds)
+                    ->where('academic_year_id', $academicYearId)
+                    ->where('semester', $semester)
+                    ->get()
+                    ->groupBy('student_id');
+
+                // Sort rankList ascending by desired rank: 1, 2, 3...
+                usort($rankList, function ($a, $b) {
+                    return $a['rank'] <=> $b['rank'];
+                });
+
+                $totalRanks = count($rankList);
+                // Baseline target range: rank 1 gets ~93, rank last gets ~75
+                $topTarget = 93.0;
+                $bottomTarget = max(74.0, $topTarget - ($totalRanks * 1.5));
+                $step = $totalRanks > 1 ? ($topTarget - $bottomTarget) / ($totalRanks - 1) : 0;
+
+                foreach ($rankList as $idx => $rItem) {
+                    $sId = $rItem['student_id'];
+                    $sScores = $scores->get($sId, collect());
+
+                    if ($sScores->isEmpty()) {
+                        continue;
+                    }
+
+                    $currentAvg = $sScores->avg('score') ?: 75.0;
+                    $targetAvg = round($topTarget - ($idx * $step), 1);
+                    $factor = $currentAvg > 0 ? ($targetAvg / $currentAvg) : 1.0;
+
+                    foreach ($sScores as $sc) {
+                        $newScore = round(max(50, min(99, $sc->score * $factor)), 1);
+                        $kkm = $sc->kkm ?? 75;
+                        $predicate = $newScore >= 90 ? 'A' : ($newScore >= 80 ? 'B' : ($newScore >= $kkm ? 'C' : 'D'));
+                        $description = $newScore >= $kkm ? 'Tercapai dengan sangat memuaskan.' : 'Perlu bimbingan dan peningkatan ketekunan.';
+
+                        $sc->update([
+                            'score' => $newScore,
+                            'predicate' => $predicate,
+                            'description' => $description,
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => $shouldAdjustScores 
+                    ? 'Peringkat siswa dan nilai mata pelajaran berhasil diselaraskan!' 
+                    : 'Peringkat manual siswa berhasil diperbarui!',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal memperbarui peringkat: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reset student rankings back to automatic calculation.
+     */
+    public function resetRanks(Request $request)
+    {
+        $request->validate([
+            'class_id' => 'required|exists:classes,id',
+            'semester' => 'required|string|in:ganjil,genap',
+            'academic_year_id' => 'required|exists:academic_years,id',
+        ]);
+
+        $classId = $request->input('class_id');
+        $semester = $request->input('semester');
+        $academicYearId = $request->input('academic_year_id');
+
+        $studentIds = Student::where('class_id', $classId)->pluck('id');
+
+        AstsReport::whereIn('student_id', $studentIds)
+            ->where('academic_year_id', $academicYearId)
+            ->where('semester', $semester)
+            ->update(['manual_rank' => null]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Peringkat siswa telah dikembalikan ke perhitungan otomatis berdasarkan rata-rata nilai!'
+        ]);
+    }
+
+    /**
      * Single student report card for print.
      */
     public function studentReport(Request $request, $studentId)
@@ -366,7 +514,11 @@ class AstsReportController extends Controller
         $student = Student::with(['classRoom.homeroomTeacher'])->findOrFail($studentId);
         $academicYear = AcademicYear::find($yearId) ?? $activeYear;
 
-        $report = $this->buildSingleReportData($student, $semester, $academicYear);
+        // Fetch all students in the same class to accurately determine rank and class average
+        $classStudents = Student::where('class_id', $student->class_id)->get();
+        $rankData = $this->calculateClassRankings($classStudents, $student->class_id, $semester, $academicYear?->id);
+
+        $report = $this->buildSingleReportData($student, $semester, $academicYear, $rankData);
 
         return response()->json([
             'status' => 'success',
@@ -388,10 +540,12 @@ class AstsReportController extends Controller
         $students = Student::where('class_id', $classId)->orderBy('full_name')->get();
         $academicYear = AcademicYear::find($yearId) ?? $activeYear;
 
+        $rankData = $this->calculateClassRankings($students, $classId, $semester, $academicYear?->id);
+
         $reports = [];
         foreach ($students as $student) {
             $student->setRelation('classRoom', $class);
-            $reports[] = $this->buildSingleReportData($student, $semester, $academicYear);
+            $reports[] = $this->buildSingleReportData($student, $semester, $academicYear, $rankData);
         }
 
         return response()->json([
@@ -402,16 +556,97 @@ class AstsReportController extends Controller
                 'academic_year' => $academicYear,
                 'reports' => $reports,
                 'total_students' => count($reports),
+                'class_average_score' => $rankData['class_average_score'] ?? 0,
             ]
         ]);
     }
 
     /**
+     * Helper to compute rankings and class average score for a classroom.
+     */
+    private function calculateClassRankings($students, $classId, string $semester, ?int $yearId): array
+    {
+        if ($students->isEmpty()) {
+            return [
+                'ranks' => [],
+                'total_students' => 0,
+                'class_average_score' => 0,
+            ];
+        }
+
+        $studentIds = $students->pluck('id');
+
+        $scores = AstsSubjectScore::whereIn('student_id', $studentIds)
+            ->where('academic_year_id', $yearId)
+            ->where('semester', $semester)
+            ->get()
+            ->groupBy('student_id');
+
+        $reports = AstsReport::whereIn('student_id', $studentIds)
+            ->where('academic_year_id', $yearId)
+            ->where('semester', $semester)
+            ->get()
+            ->keyBy('student_id');
+
+        $studentAverages = [];
+        foreach ($students as $s) {
+            $sScores = $scores->get($s->id, collect());
+            $avg = $sScores->isNotEmpty() ? round($sScores->avg('score'), 2) : 0;
+            $studentAverages[] = [
+                'student_id' => $s->id,
+                'average_score' => $avg,
+            ];
+        }
+
+        // Sort descending by average
+        usort($studentAverages, function ($a, $b) {
+            return $b['average_score'] <=> $a['average_score'];
+        });
+
+        $ranks = [];
+        $totalAvgs = 0;
+        foreach ($studentAverages as $pos => $item) {
+            $sId = $item['student_id'];
+            $totalAvgs += $item['average_score'];
+            $calcRank = $item['average_score'] > 0 ? ($pos + 1) : '-';
+            $manualRank = $reports->get($sId)?->manual_rank;
+
+            $ranks[$sId] = [
+                'rank' => !empty($manualRank) ? (int) $manualRank : $calcRank,
+                'calculated_rank' => $calcRank,
+                'is_manual_rank' => !empty($manualRank),
+                'average_score' => $item['average_score'],
+            ];
+        }
+
+        $count = count($students);
+        $classAvg = $count > 0 ? round($totalAvgs / $count, 2) : 0;
+
+        return [
+            'ranks' => $ranks,
+            'total_students' => $count,
+            'class_average_score' => $classAvg,
+        ];
+    }
+
+    /**
      * Helper to assemble single student printable report structure.
      */
-    private function buildSingleReportData(Student $student, string $semester, ?AcademicYear $academicYear): array
+    private function buildSingleReportData(Student $student, string $semester, ?AcademicYear $academicYear, ?array $rankData = null): array
     {
         $yearId = $academicYear?->id;
+
+        // If rankData wasn't passed, calculate it for this student's class
+        if ($rankData === null && $student->class_id) {
+            $classStudents = Student::where('class_id', $student->class_id)->get();
+            $rankData = $this->calculateClassRankings($classStudents, $student->class_id, $semester, $yearId);
+        }
+
+        $sRankInfo = $rankData['ranks'][$student->id] ?? [
+            'rank' => '-',
+            'calculated_rank' => '-',
+            'is_manual_rank' => false,
+        ];
 
         // Fetch scores
         $scores = AstsSubjectScore::where('student_id', $student->id)
@@ -513,6 +748,11 @@ class AstsReportController extends Controller
             'subjects_group_b' => $groupB,
             'total_score' => $totalScore,
             'average_score' => $avg,
+            'rank' => $sRankInfo['rank'],
+            'calculated_rank' => $sRankInfo['calculated_rank'],
+            'is_manual_rank' => $sRankInfo['is_manual_rank'],
+            'total_students' => $rankData['total_students'] ?? 0,
+            'class_average_score' => $rankData['class_average_score'] ?? 0,
             'attendance' => [
                 'sick' => $sickCount,
                 'permission' => $permissionCount,

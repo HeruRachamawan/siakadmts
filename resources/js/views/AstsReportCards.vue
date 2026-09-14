@@ -130,6 +130,17 @@
           </div>
 
           <div class="flex items-center gap-2 flex-wrap">
+            <!-- Smart Rank Adjuster Button -->
+            <button
+              type="button"
+              @click="openRankModal"
+              class="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95"
+              title="Atur peringkat juara siswa atau selaraskan nilai secara otomatis"
+            >
+              <Trophy class="w-3.5 h-3.5 text-amber-200" />
+              <span>🎖️ Atur Peringkat Siswa</span>
+            </button>
+
             <!-- 1-Click Auto Pull Button -->
             <button
               type="button"
@@ -197,7 +208,7 @@
 
                   <th class="px-3 py-3 text-center w-20 bg-slate-100/60 font-black text-slate-800">Total</th>
                   <th class="px-3 py-3 text-center w-20 bg-emerald-50/70 font-black text-emerald-900">Rata-rata</th>
-                  <th class="px-2 py-3 text-center w-14 font-black text-amber-800 bg-amber-50/70">Rank</th>
+                  <th class="px-2 py-3 text-center w-20 font-black text-amber-800 bg-amber-50/70">Peringkat</th>
                   <th class="px-3 py-3 text-center w-24">Catatan Wali</th>
                   <th class="px-3 py-3 text-center w-24">Aksi</th>
                 </tr>
@@ -239,8 +250,14 @@
                   <td class="px-3 py-3 text-center font-black font-mono bg-emerald-50/40 text-emerald-700">
                     {{ st.average_score }}
                   </td>
-                  <td class="px-2 py-3 text-center font-black font-lexend bg-amber-50/40 text-amber-800">
-                    {{ st.rank }}
+                  <td class="px-2 py-3 text-center font-black font-lexend bg-amber-50/40">
+                    <div class="flex items-center justify-center gap-1">
+                      <span v-if="st.rank === 1" class="text-xs">🥇</span>
+                      <span v-else-if="st.rank === 2" class="text-xs">🥈</span>
+                      <span v-else-if="st.rank === 3" class="text-xs">🥉</span>
+                      <span class="text-amber-900 font-black">{{ st.rank }}</span>
+                      <span v-if="st.is_manual_rank" class="text-[9px] px-1 bg-amber-200/80 text-amber-950 rounded font-normal" title="Peringkat Diatur Manual">m</span>
+                    </div>
                   </td>
 
                   <!-- Notes Status -->
@@ -263,8 +280,8 @@
                       @click="previewSingleStudent(st.student_id)"
                       class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] transition-colors cursor-pointer flex items-center justify-center gap-1 mx-auto shadow-2xs"
                     >
-                      <Printer class="w-3 h-3" />
-                      <span>Rapor</span>
+                      <Eye class="w-3 h-3" />
+                      <span>Lihat Rapor</span>
                     </button>
                   </td>
                 </tr>
@@ -281,44 +298,61 @@
       </div>
 
       <!-- ==================== SUB-TAB 2: PRATINJAU & CETAK RAPOR RESMI ==================== -->
-      <div v-else-if="activeSubTab === 'print'" class="space-y-6">
+      <div v-else-if="activeSubTab === 'print'" class="space-y-4">
         <!-- Print Control Bar (No Print) -->
-        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-wrap items-center justify-between gap-4 no-print">
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-wrap items-center justify-between gap-4 no-print">
           <div class="flex flex-wrap items-center gap-4">
             <!-- Mode Cetak -->
             <div>
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Mode Pencetakan</label>
-              <select v-model="printMode" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer">
-                <option value="single">Per Siswa Terpilih</option>
-                <option value="batch">Cetak Massal 1 Kelas Sekaligus ({{ ledgerStudents.length }} Siswa)</option>
-              </select>
-            </div>
-
-            <!-- Student Picker (if single mode) -->
-            <div v-if="printMode === 'single'">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pilih Siswa</label>
-              <select v-model="selectedStudentId" @change="fetchSingleReport" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer min-w-[220px]">
-                <option v-for="s in ledgerStudents" :key="'pick-'+s.student_id" :value="s.student_id">
-                  {{ s.full_name }} ({{ s.gender }})
-                </option>
-              </select>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Mode Tampilan</label>
+              <div class="flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+                <button
+                  type="button"
+                  @click="setPrintMode('single')"
+                  :class="printMode === 'single' ? 'bg-white text-emerald-800 font-black shadow-xs' : 'text-slate-500 font-bold'"
+                  class="px-3 py-1 rounded-lg text-xs transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Eye class="w-3.5 h-3.5" />
+                  <span>Live Review Per Siswa</span>
+                </button>
+                <button
+                  type="button"
+                  @click="setPrintMode('batch')"
+                  :class="printMode === 'batch' ? 'bg-white text-emerald-800 font-black shadow-xs' : 'text-slate-500 font-bold'"
+                  class="px-3 py-1 rounded-lg text-xs transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Users class="w-3.5 h-3.5" />
+                  <span>Cetak Massal ({{ ledgerStudents.length }} Siswa)</span>
+                </button>
+              </div>
             </div>
 
             <!-- Paper Size -->
             <div>
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ukuran Kertas</label>
-              <select v-model="selectedPaperSize" class="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 focus:outline-none cursor-pointer">
-                <option value="f4">📜 F4 / Folio (215mm x 330mm) - Standar Kemenag</option>
-                <option value="a4">📄 A4 (210mm x 297mm)</option>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Format Ukuran Kertas</label>
+              <select v-model="selectedPaperSize" class="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-900 focus:outline-none cursor-pointer">
+                <option value="f4">📜 F4 / Folio (215 x 330 mm) - Standar Kemenag</option>
+                <option value="a4">📄 A4 (210 x 297 mm)</option>
               </select>
             </div>
           </div>
 
           <div class="flex items-center gap-2">
+            <!-- Adjust Rank Quick Trigger -->
+            <button
+              type="button"
+              @click="openRankModal"
+              class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Trophy class="w-3.5 h-3.5 text-amber-600" />
+              <span>Atur Peringkat</span>
+            </button>
+
+            <!-- Trigger Print Button -->
             <button
               @click="triggerPrint"
               type="button"
-              class="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-md cursor-pointer active:scale-95"
+              class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-md cursor-pointer active:scale-95"
             >
               <Printer class="w-4 h-4 text-emerald-400" />
               <span>{{ printMode === 'batch' ? `Cetak Rapor 1 Kelas (${ledgerStudents.length} Siswa)` : 'Cetak Rapor Siswa Ini' }}</span>
@@ -326,28 +360,220 @@
           </div>
         </div>
 
-        <!-- PRINT AREA CONTAINER (Rendered on screen & on print) -->
-        <div id="asts-report-printable-area" class="space-y-8">
-          <!-- BATCH MODE: LOOP THROUGH ALL STUDENTS -->
-          <template v-if="printMode === 'batch'">
-            <div
-              v-for="(rep, rIdx) in batchReportsList"
-              :key="'batch-rep-'+rIdx"
-              class="bg-white p-8 sm:p-10 rounded-3xl shadow-sm border border-slate-200 text-slate-900 space-y-5 print-page"
-            >
-              <AstsReportSheet :report="rep" />
-            </div>
-          </template>
+        <!-- BATCH MODE (Full Class Print) -->
+        <div v-if="printMode === 'batch'" id="asts-report-printable-area" class="space-y-8">
+          <div
+            v-for="(rep, rIdx) in batchReportsList"
+            :key="'batch-rep-'+rIdx"
+            class="bg-white p-8 sm:p-10 rounded-3xl shadow-sm border border-slate-200 text-slate-900 space-y-5 print-page"
+          >
+            <AstsReportSheet :report="rep" />
+          </div>
+          <div v-if="batchReportsList.length === 0" class="text-center py-12 text-slate-400 text-xs font-medium bg-white rounded-3xl border border-slate-100">
+            Memuat seluruh lembar rapor siswa kelas {{ ledgerData?.class?.name }}...
+          </div>
+        </div>
 
-          <!-- SINGLE MODE: SINGLE STUDENT REPORT -->
-          <template v-else>
-            <div v-if="singleReportData" class="bg-white p-8 sm:p-10 rounded-3xl shadow-sm border border-slate-200 text-slate-900 space-y-5 print-page">
-              <AstsReportSheet :report="singleReportData" />
+        <!-- SINGLE MODE: LIVE REVIEW INTERACTIVE LAYOUT (SIDE-BY-SIDE) -->
+        <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          <!-- LEFT SIDEBAR: STUDENT LIST SELECTOR WITH RANK BADGES (No Print) -->
+          <div class="lg:col-span-4 bg-white rounded-[2rem] p-4 shadow-sm border border-slate-100 space-y-3 no-print">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div>
+                <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider font-lexend">Pilih Peserta Didik</h3>
+                <p class="text-[10px] text-slate-400">Total {{ ledgerStudents.length }} siswa &bull; Urut Berdasarkan Nilai</p>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Live Preview
+              </span>
             </div>
-            <div v-else class="text-center py-12 text-slate-400 text-xs font-medium bg-white rounded-3xl border border-slate-100">
-              Memuat data lembar rapor siswa...
+
+            <!-- Student Search/Filter -->
+            <div class="relative">
+              <Search class="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+              <input
+                v-model="studentSearchQuery"
+                type="text"
+                placeholder="Cari nama atau NISN..."
+                class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-400 focus:outline-none"
+              />
             </div>
-          </template>
+
+            <!-- Scrollable Students List -->
+            <div class="space-y-1.5 max-h-[700px] overflow-y-auto pr-1">
+              <div
+                v-for="st in filteredLedgerStudents"
+                :key="'side-st-'+st.student_id"
+                @click="selectLiveStudent(st.student_id)"
+                class="p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-2"
+                :class="selectedStudentId == st.student_id 
+                  ? 'bg-emerald-50/80 border-emerald-300 shadow-sm ring-1 ring-emerald-400/50' 
+                  : 'bg-white hover:bg-slate-50 border-slate-100'"
+              >
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <!-- Rank Badge Icon -->
+                  <div
+                    class="w-8 h-8 rounded-xl flex items-center justify-center font-lexend font-black text-xs flex-shrink-0 shadow-2xs"
+                    :class="st.rank === 1 ? 'bg-amber-400 text-white shadow-amber-200' : (st.rank === 2 ? 'bg-slate-300 text-slate-800' : (st.rank === 3 ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600'))"
+                  >
+                    <span v-if="st.rank === 1">🥇</span>
+                    <span v-else-if="st.rank === 2">🥈</span>
+                    <span v-else-if="st.rank === 3">🥉</span>
+                    <span v-else>{{ st.rank || '-' }}</span>
+                  </div>
+
+                  <!-- Student Info -->
+                  <div class="min-w-0">
+                    <div class="text-xs font-bold text-slate-900 truncate font-lexend" :class="selectedStudentId == st.student_id ? 'text-emerald-950 font-black' : ''">
+                      {{ st.full_name }}
+                    </div>
+                    <div class="text-[10px] text-slate-400 flex items-center gap-1.5 font-mono">
+                      <span>NISN: {{ st.nisn || '-' }}</span>
+                      <span>&bull;</span>
+                      <span class="font-bold text-emerald-700">Avg: {{ st.average_score }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <ChevronRight class="w-4 h-4 text-slate-400 flex-shrink-0" :class="selectedStudentId == st.student_id ? 'text-emerald-600 translate-x-0.5' : ''" />
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT PREVIEW PANEL: RENDERED RAPOR SHEET -->
+          <div class="lg:col-span-8 space-y-4">
+            <div id="asts-report-printable-area" class="bg-white p-6 sm:p-10 rounded-[2rem] shadow-sm border border-slate-200 text-slate-900 print-page">
+              <div v-if="loadingSingleReport" class="py-24 text-center text-slate-400 space-y-2">
+                <div class="animate-spin h-8 w-8 border-3 border-emerald-500 border-t-transparent rounded-full mx-auto"></div>
+                <p class="text-xs font-medium">Memuat pratinjau lembar rapor siswa...</p>
+              </div>
+              <AstsReportSheet v-else-if="singleReportData" :report="singleReportData" />
+              <div v-else class="text-center py-24 text-slate-400 text-xs font-medium">
+                Pilih salah satu siswa di panel sebelah kiri untuk menampilkan rapor.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL ATUR PERINGKAT SISWA (SMART RANK ADJUSTER) -->
+    <div v-if="showRankModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 no-print">
+      <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 transform transition-all">
+        <!-- Modal Header -->
+        <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-amber-500/10 via-amber-50 to-transparent">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+              <Trophy class="w-5 h-5" />
+            </div>
+            <div>
+              <h2 class="text-base font-black text-slate-800 font-lexend uppercase tracking-wider">Atur Peringkat Siswa</h2>
+              <p class="text-xs text-slate-500 font-medium">Kelas {{ ledgerData?.class?.name }} • Semester {{ activeSemester === 'genap' ? 'Genap' : 'Ganjil' }}</p>
+            </div>
+          </div>
+          <button @click="showRankModal = false" class="w-8 h-8 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 cursor-pointer">
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
+        <!-- Modal Body: Rank List -->
+        <div class="p-6 overflow-y-auto space-y-4 flex-1">
+          <div class="p-3.5 bg-amber-50/80 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-2">
+            <div class="flex items-start gap-2">
+              <span class="text-base">💡</span>
+              <div class="leading-relaxed">
+                <strong>Cara Kerja Penyesuaian Peringkat:</strong> Anda dapat mengubah nomor peringkat siswa secara manual. Jika opsi centang di bawah diaktifkan, sistem akan <strong>menyelaraskan nilai rata-rata mata pelajaran secara cerdas</strong> agar peringkat siswa yang lebih tinggi memperoleh nilai proporsional yang lebih baik.
+              </div>
+            </div>
+          </div>
+
+          <!-- Rank Items Table -->
+          <div class="border border-slate-200 rounded-2xl overflow-hidden">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b border-slate-200">
+                <tr>
+                  <th class="p-3 w-16 text-center">Peringkat</th>
+                  <th class="p-3">Nama Siswa</th>
+                  <th class="p-3 w-28 text-center">Rata-Rata Saat Ini</th>
+                  <th class="p-3 w-28 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr v-for="(item, idx) in rankEditList" :key="'rank-item-'+item.student_id" class="hover:bg-slate-50/60 transition-colors">
+                  <td class="p-2 text-center">
+                    <input
+                      v-model.number="item.rank"
+                      type="number"
+                      min="1"
+                      :max="rankEditList.length"
+                      class="w-14 text-center py-1 px-1 bg-white border border-slate-300 rounded-lg font-black text-amber-900 focus:ring-2 focus:ring-amber-400 font-mono text-xs shadow-2xs"
+                    />
+                  </td>
+                  <td class="p-3">
+                    <div class="font-bold text-slate-800 font-lexend">{{ item.full_name }}</div>
+                    <div class="text-[10px] text-slate-400 font-mono">NISN: {{ item.nisn || '-' }}</div>
+                  </td>
+                  <td class="p-3 text-center font-bold font-mono text-emerald-700 bg-emerald-50/30">
+                    {{ item.average_score }}
+                  </td>
+                  <td class="p-3 text-center">
+                    <span v-if="item.rank !== item.calculated_rank" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                      Manual (Asli: {{ item.calculated_rank }})
+                    </span>
+                    <span v-else class="text-slate-400 text-[10px]">Otomatis</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Smart Adjustment Checkbox -->
+          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-start gap-3">
+            <input
+              id="adjust-scores-checkbox"
+              v-model="adjustScoresWithRank"
+              type="checkbox"
+              class="mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+            />
+            <label for="adjust-scores-checkbox" class="text-xs cursor-pointer select-none">
+              <span class="font-black text-slate-900 block">⚡ Otomatis selaraskan nilai mata pelajaran siswa dengan peringkat baru</span>
+              <span class="text-slate-500 text-[11px] block mt-0.5 leading-normal">
+                Nilai rapor siswa akan disesuaikan secara proporsional sehingga nilai rata-rata siswa selaras dengan urutan juara yang Anda tentukan di atas.
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-5 border-t border-slate-100 flex items-center justify-between gap-3 bg-slate-50/50">
+          <button
+            type="button"
+            @click="resetRanksToDefault"
+            :disabled="savingRanks"
+            class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <RotateCcw class="w-3.5 h-3.5" />
+            <span>Reset ke Otomatis</span>
+          </button>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="showRankModal = false"
+              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              @click="saveRanksSubmit"
+              :disabled="savingRanks"
+              class="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
+            >
+              <Check class="w-4 h-4" />
+              <span>{{ savingRanks ? 'Menyimpan...' : 'Simpan Peringkat' }}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -447,12 +673,21 @@ import {
   Sparkles,
   Download,
   X,
+  Trophy,
+  Search,
+  ChevronRight,
+  Eye,
+  Users,
+  RotateCcw,
+  Check,
 } from 'lucide-vue-next';
 
 const toast = useToast();
 const loading = ref(false);
 const pullingScores = ref(false);
 const savingNotes = ref(false);
+const savingRanks = ref(false);
+const loadingSingleReport = ref(false);
 
 const activeSemester = ref('ganjil'); // 'ganjil' | 'genap'
 const activeSubTab = ref('ledger'); // 'ledger' | 'print'
@@ -467,6 +702,7 @@ const ledgerData = ref(null);
 const selectedStudentId = ref('');
 const singleReportData = ref(null);
 const batchReportsList = ref([]);
+const studentSearchQuery = ref('');
 
 // Modal Notes
 const showNotesModal = ref(false);
@@ -481,9 +717,24 @@ const notesForm = reactive({
   homeroom_notes: '',
 });
 
+// Modal Rank Adjuster
+const showRankModal = ref(false);
+const adjustScoresWithRank = ref(false);
+const rankEditList = ref([]);
+
 const subjectsList = computed(() => ledgerData.value?.subjects || []);
 const subjectStatuses = computed(() => ledgerData.value?.subject_statuses || []);
 const ledgerStudents = computed(() => ledgerData.value?.students || []);
+
+const filteredLedgerStudents = computed(() => {
+  const query = studentSearchQuery.value.trim().toLowerCase();
+  if (!query) return ledgerStudents.value;
+  return ledgerStudents.value.filter(s => 
+    s.full_name?.toLowerCase().includes(query) || 
+    s.nisn?.toLowerCase().includes(query) ||
+    s.nis?.toLowerCase().includes(query)
+  );
+});
 
 const subjectsWithScoresCount = computed(() => {
   return subjectStatuses.value.filter(s => s.has_scores).length;
@@ -501,6 +752,20 @@ function setSemester(sem) {
   if (selectedClassId.value) {
     fetchLedger();
   }
+}
+
+function setPrintMode(mode) {
+  printMode.value = mode;
+  if (mode === 'batch') {
+    fetchBatchReports();
+  } else {
+    fetchSingleReport();
+  }
+}
+
+function selectLiveStudent(studentId) {
+  selectedStudentId.value = studentId;
+  fetchSingleReport();
 }
 
 async function fetchOptions() {
@@ -568,6 +833,81 @@ async function autoPullScores() {
   }
 }
 
+function openRankModal() {
+  // Populate rankEditList ordered by current rank / average
+  const sorted = [...ledgerStudents.value].sort((a, b) => {
+    const rankA = typeof a.rank === 'number' ? a.rank : 9999;
+    const rankB = typeof b.rank === 'number' ? b.rank : 9999;
+    return rankA - rankB;
+  });
+
+  rankEditList.value = sorted.map((st, idx) => ({
+    student_id: st.student_id,
+    full_name: st.full_name,
+    nisn: st.nisn,
+    average_score: st.average_score,
+    calculated_rank: st.calculated_rank || (idx + 1),
+    rank: typeof st.rank === 'number' ? st.rank : (idx + 1),
+  }));
+
+  adjustScoresWithRank.value = false;
+  showRankModal.value = true;
+}
+
+async function saveRanksSubmit() {
+  if (!selectedClassId.value) return;
+  savingRanks.value = true;
+  try {
+    const payload = {
+      class_id: selectedClassId.value,
+      semester: activeSemester.value,
+      academic_year_id: activeYear.value?.id,
+      ranks: rankEditList.value.map(item => ({
+        student_id: item.student_id,
+        rank: parseInt(item.rank) || 1,
+      })),
+      adjust_scores: adjustScoresWithRank.value,
+    };
+
+    const res = await api.post('/teacher/asts-reports/adjust-ranks', payload);
+    toast.success(res?.message || 'Peringkat siswa berhasil diperbarui!');
+    showRankModal.value = false;
+    await fetchLedger();
+    if (activeSubTab.value === 'print') {
+      await fetchPrintData();
+    }
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal menyimpan penyesuaian peringkat.');
+  } finally {
+    savingRanks.value = false;
+  }
+}
+
+async function resetRanksToDefault() {
+  if (!confirm('Apakah Anda yakin ingin mengembalikan urutan peringkat sesuai rata-rata murni tanpa penyesuaian manual?')) {
+    return;
+  }
+  savingRanks.value = true;
+  try {
+    const payload = {
+      class_id: selectedClassId.value,
+      semester: activeSemester.value,
+      academic_year_id: activeYear.value?.id,
+    };
+    const res = await api.post('/teacher/asts-reports/reset-ranks', payload);
+    toast.success(res?.message || 'Peringkat dikembalikan ke otomatis.');
+    showRankModal.value = false;
+    await fetchLedger();
+    if (activeSubTab.value === 'print') {
+      await fetchPrintData();
+    }
+  } catch (err) {
+    toast.error('Gagal mereset peringkat.');
+  } finally {
+    savingRanks.value = false;
+  }
+}
+
 function openNotesModal(student) {
   editingStudent.value = student;
   notesForm.student_id = student.student_id;
@@ -587,6 +927,9 @@ async function saveNotesSubmit() {
     toast.success('Catatan wali kelas berhasil disimpan!');
     showNotesModal.value = false;
     await fetchLedger();
+    if (activeSubTab.value === 'print') {
+      await fetchPrintData();
+    }
   } catch (err) {
     toast.error('Gagal menyimpan catatan wali kelas.');
   } finally {
@@ -603,6 +946,7 @@ function previewSingleStudent(studentId) {
 
 async function fetchSingleReport() {
   if (!selectedStudentId.value) return;
+  loadingSingleReport.value = true;
   try {
     const res = await api.get(`/teacher/asts-reports/student/${selectedStudentId.value}`, {
       semester: activeSemester.value,
@@ -611,6 +955,8 @@ async function fetchSingleReport() {
     singleReportData.value = res?.data || res || null;
   } catch (err) {
     toast.error('Gagal memuat pratinjau rapor siswa.');
+  } finally {
+    loadingSingleReport.value = false;
   }
 }
 

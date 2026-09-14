@@ -41,7 +41,7 @@
     </div>
 
     <!-- 3. IDENTITAS PESERTA DIDIK -->
-    <div class="grid grid-cols-2 gap-x-8 gap-y-1 bg-slate-50/80 p-3 rounded-xl border border-slate-200 text-xs font-medium">
+    <div class="relative grid grid-cols-2 gap-x-8 gap-y-1 bg-slate-50/80 p-3 rounded-xl border border-slate-200 text-xs font-medium">
       <div class="space-y-1">
         <div class="flex">
           <span class="w-32 font-bold text-slate-500">Nama Peserta Didik</span>
@@ -62,6 +62,17 @@
           <span class="w-28 font-bold text-slate-500">Fase / Semester</span>
           <span class="font-bold text-slate-800">: Fase D / {{ report?.semester === 'genap' ? 'Genap (Dua)' : 'Ganjil (Satu)' }}</span>
         </div>
+      </div>
+
+      <!-- Rank Badge (top-right corner of identity card) -->
+      <div v-if="report?.rank && report?.rank !== '-'" class="absolute right-3 top-2.5 flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-300 rounded-lg text-amber-900 shadow-sm print:border-slate-400 print:bg-transparent">
+        <span class="text-xs">🏆</span>
+        <span class="text-[11px] font-black uppercase tracking-wider font-lexend">
+          Peringkat {{ report.rank }}
+        </span>
+        <span v-if="report?.total_students" class="text-[10px] font-bold text-amber-700 print:text-slate-600">
+          / {{ report.total_students }}
+        </span>
       </div>
     </div>
 
@@ -121,16 +132,28 @@
             <td class="border border-slate-400 p-1.5 text-[10.5px] leading-tight text-slate-700">{{ sbj.description || '-' }}</td>
           </tr>
 
-          <!-- REKAP TOTAL & RATA-RATA -->
+          <!-- REKAP TOTAL & RATA-RATA & PERINGKAT -->
           <tr class="bg-slate-100 font-bold border-t-2 border-slate-900 text-[11px]">
             <td colspan="3" class="border border-slate-900 p-2 text-right uppercase tracking-wider">Jumlah Nilai Keseluruhan</td>
             <td class="border border-slate-900 p-2 text-center font-mono font-black text-slate-950 text-xs">{{ report?.total_score || 0 }}</td>
             <td colspan="2" class="border border-slate-900 p-2 text-slate-500 text-[10px] italic">Total perolehan nilai ASTS</td>
           </tr>
           <tr class="bg-slate-100 font-bold border-t border-slate-400 text-[11px]">
-            <td colspan="3" class="border border-slate-900 p-2 text-right uppercase tracking-wider">Rata-Rata Nilai</td>
+            <td colspan="3" class="border border-slate-900 p-2 text-right uppercase tracking-wider">Rata-Rata Nilai Siswa</td>
             <td class="border border-slate-900 p-2 text-center font-mono font-black text-emerald-800 text-xs">{{ report?.average_score || 0 }}</td>
             <td colspan="2" class="border border-slate-900 p-2 text-slate-500 text-[10px] italic">Rata-rata capaian tengah semester</td>
+          </tr>
+          <tr class="bg-amber-50/50 print:bg-transparent font-bold border-t border-slate-400 text-[11px]">
+            <td colspan="3" class="border border-slate-900 p-2 text-right uppercase tracking-wider text-amber-950 print:text-slate-950">
+              Peringkat di Kelas
+            </td>
+            <td class="border border-slate-900 p-2 text-center font-mono font-black text-amber-900 print:text-slate-950 text-xs">
+              {{ report?.rank || '-' }}
+            </td>
+            <td colspan="2" class="border border-slate-900 p-2 text-slate-700 text-[10.5px]">
+              <span class="font-bold">Peringkat ke-{{ report?.rank || '-' }}</span> dari <span class="font-bold">{{ report?.total_students || '-' }}</span> siswa
+              <span v-if="report?.class_average_score" class="text-slate-500"> (Rata-rata Kelas: <strong class="text-slate-800">{{ report.class_average_score }}</strong>)</span>
+            </td>
           </tr>
         </tbody>
       </table>

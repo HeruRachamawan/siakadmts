@@ -17,12 +17,16 @@ class AstsReport extends Model
         'sick_count',
         'permission_count',
         'unexcused_count',
+        'manual_rank',
+        'calculated_rank',
     ];
 
     protected $casts = [
         'sick_count' => 'integer',
         'permission_count' => 'integer',
         'unexcused_count' => 'integer',
+        'manual_rank' => 'integer',
+        'calculated_rank' => 'integer',
     ];
 
     public function student()
