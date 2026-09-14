@@ -141,17 +141,17 @@
               <span>🎖️ Atur Peringkat Siswa</span>
             </button>
 
-            <!-- 1-Click Auto Pull Button -->
+            <!-- 1-Click Auto Pull Button with Source Selection -->
             <button
               type="button"
-              @click="autoPullScores"
+              @click="openPullModal"
               :disabled="pullingScores"
               class="px-4 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
-              title="Tarik otomatis nilai koreksi jadi dari paket ujian STS/ASTS yang sudah dikoreksi guru"
+              title="Tarik otomatis nilai dari modul Koreksi Ujian (bisa memilih Nilai Jadi standar rapor atau Nilai Asli)"
             >
               <Sparkles v-if="!pullingScores" class="w-3.5 h-3.5 text-amber-200" />
               <div v-else class="animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full"></div>
-              <span>{{ pullingScores ? 'Menarik Nilai...' : '⚡ Tarik Otomatis Nilai Koreksi STS' }}</span>
+              <span>{{ pullingScores ? 'Menarik Nilai...' : '⚡ Tarik Nilai dari Koreksi Ujian' }}</span>
             </button>
 
             <!-- Export Excel Ledger -->
@@ -338,6 +338,17 @@
           </div>
 
           <div class="flex items-center gap-2">
+            <!-- Quick Pull Scores Button in Print Sub-tab -->
+            <button
+              type="button"
+              @click="openPullModal"
+              class="px-3 py-2 bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-900 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              title="Tarik nilai dari modul Koreksi Ujian (bisa memilih Nilai Jadi atau Nilai Asli)"
+            >
+              <Sparkles class="w-3.5 h-3.5 text-teal-600" />
+              <span>Tarik Nilai</span>
+            </button>
+
             <!-- Edit Notes Quick Trigger -->
             <button
               type="button"
@@ -537,10 +548,12 @@
                     {{ item.average_score }}
                   </td>
                   <td class="p-3 text-center">
-                    <span v-if="item.rank !== item.calculated_rank" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                      Manual (Asli: {{ item.calculated_rank }})
+                    <span v-if="item.rank !== item.calculated_rank" class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
+                      Manual (Sistem: {{ item.calculated_rank !== '-' ? '#' + item.calculated_rank : '-' }})
                     </span>
-                    <span v-else class="text-slate-400 text-[10px]">Otomatis</span>
+                    <span v-else class="text-slate-400 text-[10px] whitespace-nowrap">
+                      Otomatis {{ item.calculated_rank !== '-' ? '(#' + item.calculated_rank + ')' : '' }}
+                    </span>
                   </td>
                 </tr>
               </tbody>
@@ -696,6 +709,107 @@
         </form>
       </div>
     </div>
+
+    <!-- MODAL PILIH SUMBER TARIK NILAI (NILAI JADI VS NILAI ASLI) -->
+    <div v-if="showPullModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 no-print">
+      <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 transform transition-all">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-teal-500/10 via-emerald-50 to-transparent">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-600/20">
+              <Sparkles class="w-5 h-5 text-amber-200" />
+            </div>
+            <div>
+              <h2 class="text-base font-black text-slate-800 font-lexend uppercase tracking-wider">Tarik Nilai dari Koreksi Ujian</h2>
+              <p class="text-xs text-slate-500 font-medium">Pilih sumber nilai untuk Rapor ASTS Kelas {{ ledgerData?.class?.name }}</p>
+            </div>
+          </div>
+          <button @click="showPullModal = false" class="w-8 h-8 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 cursor-pointer">
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
+        <!-- Body: Radio Options -->
+        <div class="p-6 space-y-4">
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Sistem akan menyinkronkan nilai dari modul <strong>Koreksi Ujian</strong> yang sudah dikoreksi guru mapel. Silakan tentukan opsi nilai yang ingin dimasukkan ke dalam rapor:
+          </p>
+
+          <div class="space-y-3">
+            <!-- Option 1: Nilai Jadi (Standar Rapor) -->
+            <label
+              class="p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3.5 block"
+              :class="selectedScoreSource === 'final' ? 'border-teal-500 bg-teal-50/60 ring-2 ring-teal-500/20 shadow-sm' : 'border-slate-200 hover:bg-slate-50'"
+            >
+              <input
+                type="radio"
+                name="score_source"
+                value="final"
+                v-model="selectedScoreSource"
+                class="mt-1 w-4 h-4 text-teal-600 focus:ring-teal-500 border-slate-300 cursor-pointer"
+              />
+              <div class="space-y-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-xs font-black text-slate-900 font-lexend">🌟 Nilai Jadi / Standar Rapor</span>
+                  <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    Rekomendasi Rapor
+                  </span>
+                </div>
+                <p class="text-[11px] text-slate-600 leading-normal">
+                  Memprioritaskan <strong>Nilai Jadi / Remedial</strong> yang telah diolah guru di modul Koreksi Ujian agar memenuhi KKTP (bebas nilai merah di rapor). Jika siswa belum memiliki nilai jadi, otomatis menggunakan nilai aslinya.
+                </p>
+              </div>
+            </label>
+
+            <!-- Option 2: Nilai Asli (Skor Murni) -->
+            <label
+              class="p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3.5 block"
+              :class="selectedScoreSource === 'raw' ? 'border-teal-500 bg-teal-50/60 ring-2 ring-teal-500/20 shadow-sm' : 'border-slate-200 hover:bg-slate-50'"
+            >
+              <input
+                type="radio"
+                name="score_source"
+                value="raw"
+                v-model="selectedScoreSource"
+                class="mt-1 w-4 h-4 text-teal-600 focus:ring-teal-500 border-slate-300 cursor-pointer"
+              />
+              <div class="space-y-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-xs font-black text-slate-900 font-lexend">📝 Nilai Asli (Skor Murni Ujian)</span>
+                  <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-100 text-blue-800 border border-blue-300">
+                    Murni CBT
+                  </span>
+                </div>
+                <p class="text-[11px] text-slate-600 leading-normal">
+                  Mengambil skor murni pengerjaan CBT/ujian <strong>apa adanya tanpa nilai remedial/katrol</strong>. Cocok untuk evaluasi diagnostik kemampuan riil siswa.
+                </p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-5 border-t border-slate-100 flex items-center justify-between gap-3 bg-slate-50/50">
+          <button
+            type="button"
+            @click="showPullModal = false"
+            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            @click="executeAutoPullScores"
+            :disabled="pullingScores"
+            class="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
+          >
+            <Sparkles v-if="!pullingScores" class="w-4 h-4 text-amber-200" />
+            <div v-else class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+            <span>{{ pullingScores ? 'Sedang Menarik Nilai...' : 'Tarik Nilai Sekarang' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -763,6 +877,10 @@ const notesForm = reactive({
   unexcused_count: 0,
   homeroom_notes: '',
 });
+
+// Modal Pull Scores
+const showPullModal = ref(false);
+const selectedScoreSource = ref('final'); // 'final' (Nilai Jadi) | 'raw' (Nilai Asli)
 
 // Modal Rank Adjuster
 const showRankModal = ref(false);
@@ -861,7 +979,15 @@ async function fetchLedger() {
   }
 }
 
-async function autoPullScores() {
+function openPullModal() {
+  if (!selectedClassId.value) {
+    toast.error('Silakan pilih kelas terlebih dahulu.');
+    return;
+  }
+  showPullModal.value = true;
+}
+
+async function executeAutoPullScores() {
   if (!selectedClassId.value) return;
   pullingScores.value = true;
   try {
@@ -869,10 +995,15 @@ async function autoPullScores() {
       class_id: selectedClassId.value,
       semester: activeSemester.value,
       academic_year_id: activeYear.value?.id,
+      score_source: selectedScoreSource.value,
     });
     const msg = res?.message || 'Nilai koreksi berhasil ditarik ke Rapor ASTS!';
     toast.success(msg);
+    showPullModal.value = false;
     await fetchLedger();
+    if (activeSubTab.value === 'print' || selectedStudentId.value) {
+      await fetchPrintData();
+    }
   } catch (err) {
     toast.error(err.response?.data?.message || 'Gagal menarik nilai koreksi.');
   } finally {

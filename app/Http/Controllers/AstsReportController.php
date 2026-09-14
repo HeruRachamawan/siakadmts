@@ -290,6 +290,7 @@ class AstsReportController extends Controller
 
         $classId = $request->class_id;
         $semester = $request->input('semester', 'ganjil');
+        $scoreSource = $request->input('score_source', 'final'); // 'final' (Nilai Jadi / Rapor) | 'raw' (Nilai Asli / Murni)
 
         $activeYear = AcademicYear::where('is_active', true)->first();
         $yearId = $request->input('academic_year_id', $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));
@@ -323,7 +324,13 @@ class AstsReportController extends Controller
         try {
             foreach ($exams as $exam) {
                 foreach ($exam->submissions as $sub) {
-                    $finalScore = $sub->remedial_score !== null ? floatval($sub->remedial_score) : floatval($sub->total_score);
+                    if ($scoreSource === 'raw') {
+                        // Nilai Asli (Skor Murni pengerjaan ujian tanpa remedial)
+                        $finalScore = floatval($sub->total_score);
+                    } else {
+                        // Nilai Jadi (Standar Rapor Bebas Remedial: prioritaskan remedial_score)
+                        $finalScore = $sub->remedial_score !== null ? floatval($sub->remedial_score) : floatval($sub->total_score);
+                    }
 
                     $kkm = floatval($exam->kkm ?? 75);
                     $predicate = 'D';
@@ -365,13 +372,15 @@ class AstsReportController extends Controller
             DB::commit();
 
             $uniqueSubjects = array_unique($syncedSubjects);
+            $sourceLabel = $scoreSource === 'raw' ? 'Nilai Asli (Murni)' : 'Nilai Jadi (Standar Rapor)';
 
             return response()->json([
                 'status' => 'success',
-                'message' => "Berhasil menarik {$totalScoresSynced} nilai dari " . count($uniqueSubjects) . " mata pelajaran ke Rapor ASTS Semester " . ucfirst($semester) . "!",
+                'message' => "Berhasil menarik {$totalScoresSynced} data {$sourceLabel} dari " . count($uniqueSubjects) . " mata pelajaran ke Rapor ASTS Semester " . ucfirst($semester) . "!",
                 'synced_subjects_count' => count($uniqueSubjects),
                 'synced_scores_count' => $totalScoresSynced,
                 'subjects' => $uniqueSubjects,
+                'score_source' => $scoreSource,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
