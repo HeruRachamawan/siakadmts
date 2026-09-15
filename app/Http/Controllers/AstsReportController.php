@@ -92,7 +92,7 @@ class AstsReportController extends Controller
                 'school_setting' => $schoolSetting,
                 'settings' => $rawSettings,
                 'homeroom_class_id' => $homeroomClassId,
-                'is_homeroom_only' => (!$isStaff && $user?->role === 'teacher'),
+                'is_homeroom_only' => (bool) $isTeacherRoute,
                 'default_titimangsa' => [
                     'city' => $defaultCity,
                     'issued_date' => $defaultDate,
