@@ -75,7 +75,7 @@
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="width: 100px; font-weight: 700; color: #475569; padding: 1px 0;">Kelas / Rombel</td>
-                <td style="font-weight: 900; color: #020617; padding: 1px 0;">: Kelas {{ report?.student?.class_name || '-' }}</td>
+                <td style="font-weight: 900; color: #020617; padding: 1px 0;">: {{ (report?.student?.class_name || '-').toLowerCase().startsWith('kelas') ? report?.student?.class_name : 'Kelas ' + (report?.student?.class_name || '-') }}</td>
               </tr>
               <tr>
                 <td style="font-weight: 700; color: #475569; padding: 1px 0;">Fase / Semester</td>

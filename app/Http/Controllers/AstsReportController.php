@@ -18,8 +18,45 @@ use Illuminate\Support\Facades\DB;
 class AstsReportController extends Controller
 {
     /**
+     * Helper to determine if a class room is a local schedule/group class.
+     */
+    public static function isLokalClass(ClassRoom $class): bool
+    {
+        $name = trim($class->name);
+        $lower = strtolower($name);
+        return in_array($name, ['7', '8']) ||
+            in_array($lower, ['kelas 7', 'kelas 8', '7 lokal', '8 lokal']) ||
+            str_contains($lower, 'lokal') ||
+            str_starts_with($lower, 'l-') ||
+            str_starts_with($lower, 'lok-');
+    }
+
+    /**
+     * Helper to fetch active students for a class, respecting local class assignments.
+     */
+    private function getStudentsForClass(int $classId)
+    {
+        $class = ClassRoom::find($classId);
+        if ($class && self::isLokalClass($class)) {
+            $lokalStudents = Student::where('lokal_class_id', $classId)
+                ->with(['classRoom.homeroomTeacher', 'lokalClassRoom'])
+                ->orderBy('full_name')
+                ->get();
+            if ($lokalStudents->isNotEmpty()) {
+                return $lokalStudents;
+            }
+        }
+
+        return Student::where('class_id', $classId)
+            ->with(['classRoom.homeroomTeacher', 'lokalClassRoom'])
+            ->orderBy('full_name')
+            ->get();
+    }
+
+    /**
      * Helper to verify if the user has access to view/manage reports for the given class.
-     * When accessed through teacher routes (or by teacher role), strictly verify homeroom ownership.
+     * When accessed through teacher routes (or by teacher role), strictly verify homeroom ownership
+     * or matching grade local class ownership.
      * Staff routes (admin, operator, kurikulum, kepala_sekolah) have full access to all classes.
      */
     private function checkHomeroomAccess($user, int $classId, ?Request $request = null): bool
@@ -31,13 +68,32 @@ class AstsReportController extends Controller
             return true;
         }
 
-        // On teacher route or for teacher role: strictly restricted to assigned homeroom class
+        // On teacher route or for teacher role: restricted to assigned homeroom class OR matching grade local class
         $teacher = $user ? ($user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first()) : null;
         if (!$teacher) {
             return false;
         }
-        $homeroomClass = ClassRoom::where('homeroom_teacher_id', $teacher->id)->first();
-        return $homeroomClass && (int)$classId === (int)$homeroomClass->id;
+
+        $homeroomClasses = ClassRoom::where('homeroom_teacher_id', $teacher->id)->get();
+        if ($homeroomClasses->isEmpty()) {
+            return false;
+        }
+
+        // 1. Direct match with assigned homeroom class
+        if ($homeroomClasses->contains('id', $classId)) {
+            return true;
+        }
+
+        // 2. Or matching local class for the same grade level (e.g. homeroom 8A can access local class 8)
+        $targetClass = ClassRoom::find($classId);
+        if ($targetClass && self::isLokalClass($targetClass)) {
+            $homeroomGrades = $homeroomClasses->pluck('grade_level')->filter()->unique()->map(fn($g) => (string)$g)->toArray();
+            if (in_array((string)$targetClass->grade_level, $homeroomGrades)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -48,27 +104,62 @@ class AstsReportController extends Controller
         $user = $request->user();
         $isTeacherRoute = $request->is('api/teacher/*') || $request->is('teacher/*') || $user?->role === 'teacher';
         $teacher = $user ? ($user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first()) : null;
-        $homeroomClassId = null;
+
+        $homeroomClasses = collect();
         if ($teacher) {
-            $homeroomClass = ClassRoom::where('homeroom_teacher_id', $teacher->id)->first();
-            if ($homeroomClass) {
-                $homeroomClassId = $homeroomClass->id;
-            }
+            $homeroomClasses = ClassRoom::where('homeroom_teacher_id', $teacher->id)->get();
         }
 
+        $homeroomClassId = $homeroomClasses->first()?->id;
+
         if ($isTeacherRoute) {
-            if ($homeroomClassId) {
-                $classes = ClassRoom::withCount('students')
-                    ->where('id', $homeroomClassId)
-                    ->get();
+            if ($homeroomClasses->isNotEmpty()) {
+                $homeroomGradeLevels = $homeroomClasses->pluck('grade_level')->filter()->unique();
+
+                // Find matching local classes for these grade levels
+                $lokalClasses = ClassRoom::whereIn('grade_level', $homeroomGradeLevels)
+                    ->whereNotIn('id', $homeroomClasses->pluck('id'))
+                    ->get()
+                    ->filter(fn($c) => self::isLokalClass($c));
+
+                $assignedClasses = $homeroomClasses->concat($lokalClasses);
+
+                $classes = $assignedClasses->map(function ($c) {
+                    $isLokal = self::isLokalClass($c);
+                    $lokalCount = Student::where('lokal_class_id', $c->id)->count();
+                    $regCount = Student::where('class_id', $c->id)->count();
+
+                    return [
+                        'id' => $c->id,
+                        'name' => $c->name,
+                        'grade_level' => $c->grade_level,
+                        'homeroom_teacher_id' => $c->homeroom_teacher_id,
+                        'students_count' => ($isLokal && $lokalCount > 0) ? $lokalCount : $regCount,
+                        'lokal_students_count' => $lokalCount,
+                        'is_lokal' => $isLokal,
+                    ];
+                })->values();
             } else {
                 $classes = collect();
             }
         } else {
-            $classes = ClassRoom::withCount('students')
-                ->orderBy('grade_level')
-                ->orderBy('name')
-                ->get();
+            $classes = ClassRoom::all()->map(function ($c) {
+                $isLokal = self::isLokalClass($c);
+                $lokalCount = Student::where('lokal_class_id', $c->id)->count();
+                $regCount = Student::where('class_id', $c->id)->count();
+
+                return [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'grade_level' => $c->grade_level,
+                    'homeroom_teacher_id' => $c->homeroom_teacher_id,
+                    'students_count' => ($isLokal && $lokalCount > 0) ? $lokalCount : $regCount,
+                    'lokal_students_count' => $lokalCount,
+                    'is_lokal' => $isLokal,
+                ];
+            })
+            ->sortBy('grade_level')
+            ->values();
         }
 
         $rawSubjects = Subject::all();
@@ -172,11 +263,19 @@ class AstsReportController extends Controller
         }
 
         $class = ClassRoom::with('homeroomTeacher')->findOrFail($classId);
+        if (!$class->homeroomTeacher) {
+            $primaryClass = ClassRoom::where('grade_level', $class->grade_level)
+                ->where('id', '!=', $class->id)
+                ->whereNotNull('homeroom_teacher_id')
+                ->with('homeroomTeacher')
+                ->first();
+            if ($primaryClass && $primaryClass->homeroomTeacher) {
+                $class->setRelation('homeroomTeacher', $primaryClass->homeroomTeacher);
+            }
+        }
 
-        // All students in this class
-        $students = Student::where('class_id', $classId)
-            ->orderBy('full_name')
-            ->get();
+        // All active students in this class (supports both regular and local classes)
+        $students = $this->getStudentsForClass((int)$classId);
 
         $studentIds = $students->pluck('id');
 
@@ -351,7 +450,11 @@ class AstsReportController extends Controller
         $activeYear = AcademicYear::where('is_active', true)->first();
         $yearId = $request->input('academic_year_id', $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));
 
-        // Find all STS exam packages for this class
+        $class = ClassRoom::findOrFail($classId);
+        $classStudents = $this->getStudentsForClass((int)$classId);
+        $classStudentIds = $classStudents->pluck('id')->toArray();
+
+        // Find all STS exam packages for this class (or fallback to same grade level)
         $exams = ExamPackage::where('class_room_id', $classId)
             ->where(function ($q) use ($semester) {
                 $q->where('exam_type', 'sts')
@@ -363,6 +466,21 @@ class AstsReportController extends Controller
             ->where('academic_year_id', $yearId)
             ->with(['submissions', 'subject'])
             ->get();
+
+        if ($exams->isEmpty()) {
+            $gradeClassIds = ClassRoom::where('grade_level', $class->grade_level)->pluck('id');
+            $exams = ExamPackage::whereIn('class_room_id', $gradeClassIds)
+                ->where(function ($q) use ($semester) {
+                    $q->where('exam_type', 'sts')
+                      ->orWhere('title', 'like', '%ASTS%')
+                      ->orWhere('title', 'like', '%STS%')
+                      ->orWhere('title', 'like', '%Tengah Semester%');
+                })
+                ->where('semester', $semester)
+                ->where('academic_year_id', $yearId)
+                ->with(['submissions', 'subject'])
+                ->get();
+        }
 
         if ($exams->isEmpty()) {
             return response()->json([
@@ -380,6 +498,10 @@ class AstsReportController extends Controller
         try {
             foreach ($exams as $exam) {
                 foreach ($exam->submissions as $sub) {
+                    if (!empty($classStudentIds) && !in_array($sub->student_id, $classStudentIds)) {
+                        continue;
+                    }
+
                     if ($scoreSource === 'raw') {
                         // Nilai Asli (Skor Murni pengerjaan ujian tanpa remedial)
                         $finalScore = floatval($sub->total_score);
@@ -463,7 +585,10 @@ class AstsReportController extends Controller
         ]);
 
         $student = Student::findOrFail($request->student_id);
-        if (!$this->checkHomeroomAccess($request->user(), (int)$student->class_id, $request)) {
+        $hasAccess = $this->checkHomeroomAccess($request->user(), (int)$student->class_id, $request) ||
+            ($student->lokal_class_id && $this->checkHomeroomAccess($request->user(), (int)$student->lokal_class_id, $request));
+
+        if (!$hasAccess) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
@@ -663,7 +788,8 @@ class AstsReportController extends Controller
             ], 403);
         }
 
-        $studentIds = Student::where('class_id', $classId)->pluck('id');
+        $students = $this->getStudentsForClass((int)$classId);
+        $studentIds = $students->pluck('id');
 
         AstsReport::whereIn('student_id', $studentIds)
             ->where('academic_year_id', $academicYearId)
@@ -686,9 +812,14 @@ class AstsReportController extends Controller
         $activeYear = AcademicYear::where('is_active', true)->first();
         $yearId = $request->input('academic_year_id', $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));
 
-        $student = Student::with(['classRoom.homeroomTeacher'])->findOrFail($studentId);
+        $student = Student::with(['classRoom.homeroomTeacher', 'lokalClassRoom'])->findOrFail($studentId);
+        $selectedClassId = $request->input('class_id', $student->class_id);
 
-        if (!$this->checkHomeroomAccess($request->user(), (int)$student->class_id, $request)) {
+        $hasAccess = $this->checkHomeroomAccess($request->user(), (int)$selectedClassId, $request) ||
+            $this->checkHomeroomAccess($request->user(), (int)$student->class_id, $request) ||
+            ($student->lokal_class_id && $this->checkHomeroomAccess($request->user(), (int)$student->lokal_class_id, $request));
+
+        if (!$hasAccess) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
@@ -697,11 +828,11 @@ class AstsReportController extends Controller
 
         $academicYear = AcademicYear::find($yearId) ?? $activeYear;
 
-        // Fetch all students in the same class to accurately determine rank and class average
-        $classStudents = Student::where('class_id', $student->class_id)->get();
-        $rankData = $this->calculateClassRankings($classStudents, $student->class_id, $semester, $academicYear?->id);
+        // Fetch all students in the selected class context to accurately determine rank and class average
+        $classStudents = $this->getStudentsForClass((int)$selectedClassId);
+        $rankData = $this->calculateClassRankings($classStudents, (int)$selectedClassId, $semester, $academicYear?->id);
 
-        $report = $this->buildSingleReportData($student, $semester, $academicYear, $rankData);
+        $report = $this->buildSingleReportData($student, $semester, $academicYear, $rankData, (int)$selectedClassId);
 
         return response()->json([
             'status' => 'success',
@@ -727,15 +858,26 @@ class AstsReportController extends Controller
         $yearId = $request->input('academic_year_id', $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));
 
         $class = ClassRoom::with('homeroomTeacher')->findOrFail($classId);
-        $students = Student::where('class_id', $classId)->orderBy('full_name')->get();
+        if (!$class->homeroomTeacher) {
+            $primaryClass = ClassRoom::where('grade_level', $class->grade_level)
+                ->where('id', '!=', $class->id)
+                ->whereNotNull('homeroom_teacher_id')
+                ->with('homeroomTeacher')
+                ->first();
+            if ($primaryClass && $primaryClass->homeroomTeacher) {
+                $class->setRelation('homeroomTeacher', $primaryClass->homeroomTeacher);
+            }
+        }
+
+        $students = $this->getStudentsForClass((int)$classId);
         $academicYear = AcademicYear::find($yearId) ?? $activeYear;
 
-        $rankData = $this->calculateClassRankings($students, $classId, $semester, $academicYear?->id);
+        $rankData = $this->calculateClassRankings($students, (int)$classId, $semester, $academicYear?->id);
 
         $reports = [];
         foreach ($students as $student) {
             $student->setRelation('classRoom', $class);
-            $reports[] = $this->buildSingleReportData($student, $semester, $academicYear, $rankData);
+            $reports[] = $this->buildSingleReportData($student, $semester, $academicYear, $rankData, (int)$classId);
         }
 
         return response()->json([
@@ -822,14 +964,15 @@ class AstsReportController extends Controller
     /**
      * Helper to assemble single student printable report structure.
      */
-    private function buildSingleReportData(Student $student, string $semester, ?AcademicYear $academicYear, ?array $rankData = null): array
+    private function buildSingleReportData(Student $student, string $semester, ?AcademicYear $academicYear, ?array $rankData = null, ?int $contextClassId = null): array
     {
         $yearId = $academicYear?->id;
+        $targetClassId = $contextClassId ?: $student->class_id;
 
-        // If rankData wasn't passed, calculate it for this student's class
-        if ($rankData === null && $student->class_id) {
-            $classStudents = Student::where('class_id', $student->class_id)->get();
-            $rankData = $this->calculateClassRankings($classStudents, $student->class_id, $semester, $yearId);
+        // If rankData wasn't passed, calculate it for this target class
+        if ($rankData === null && $targetClassId) {
+            $classStudents = $this->getStudentsForClass((int)$targetClassId);
+            $rankData = $this->calculateClassRankings($classStudents, (int)$targetClassId, $semester, $yearId);
         }
 
         $sRankInfo = $rankData['ranks'][$student->id] ?? [
@@ -924,9 +1067,26 @@ class AstsReportController extends Controller
 
         $avg = $countScore > 0 ? round($totalScore / $countScore, 2) : 0;
 
+        // Display Class & Homeroom Teacher resolution
+        $displayClass = $contextClassId ? ClassRoom::with('homeroomTeacher')->find($contextClassId) : $student->classRoom;
+        $isLokal = $displayClass ? self::isLokalClass($displayClass) : false;
+        $className = $displayClass?->name ?? ($student->classRoom?->name ?? '-');
+        if ($isLokal && !str_contains(strtolower($className), 'lokal')) {
+            $className .= ' (Lokal)';
+        }
+
+        $homeroomTeacher = $displayClass?->homeroomTeacher ?: $student->classRoom?->homeroomTeacher;
+        if (!$homeroomTeacher && $displayClass) {
+            $fallbackPrimary = ClassRoom::where('grade_level', $displayClass->grade_level)
+                ->whereNotNull('homeroom_teacher_id')
+                ->with('homeroomTeacher')
+                ->first();
+            $homeroomTeacher = $fallbackPrimary?->homeroomTeacher;
+        }
+
         // Titimangsa (Tempat & Tanggal Terbit Rapor)
-        $cityKey = $student->class_id ? "asts_issued_city_{$student->class_id}_{$semester}" : null;
-        $dateKey = $student->class_id ? "asts_issued_date_{$student->class_id}_{$semester}" : null;
+        $cityKey = $targetClassId ? "asts_issued_city_{$targetClassId}_{$semester}" : null;
+        $dateKey = $targetClassId ? "asts_issued_date_{$targetClassId}_{$semester}" : null;
 
         $cityVal = ($cityKey && !empty($rawSettings[$cityKey])) 
             ? $rawSettings[$cityKey] 
@@ -947,9 +1107,11 @@ class AstsReportController extends Controller
                 'nisn' => $student->nisn,
                 'nis' => $student->nis,
                 'gender' => $student->gender,
-                'class_name' => $student->classRoom?->name ?? '-',
-                'homeroom_teacher_name' => $student->classRoom?->homeroomTeacher?->full_name ?? '-',
-                'homeroom_teacher_nip' => $student->classRoom?->homeroomTeacher?->nip ?? '-',
+                'class_name' => $className,
+                'origin_class_name' => $student->classRoom?->name ?? null,
+                'is_lokal' => $isLokal,
+                'homeroom_teacher_name' => $homeroomTeacher?->full_name ?? '-',
+                'homeroom_teacher_nip' => $homeroomTeacher?->nip ?? '-',
             ],
             'academic_year' => $academicYear?->year ?? '2026/2027',
             'semester' => $semester,
