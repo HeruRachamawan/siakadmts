@@ -15,13 +15,64 @@
       </div>
     </div>
 
+    <!-- Tab Switcher: Rombel Utama vs Kelompok Jadwal Lokal -->
+    <div class="bg-white rounded-2xl p-3 shadow-2xs border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <!-- Tabs -->
+      <div class="flex items-center gap-2 p-1 bg-slate-100/90 rounded-xl">
+        <button
+          type="button"
+          @click="setScheduleTab('utama')"
+          :class="activeScheduleTab === 'utama' ? 'bg-white text-emerald-800 font-extrabold shadow-sm' : 'text-slate-500 hover:text-slate-800 font-bold'"
+          class="px-5 py-2 rounded-lg text-xs transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <span class="text-sm">🏫</span>
+          <span>Rombel Utama (Reguler)</span>
+        </button>
+
+        <button
+          type="button"
+          @click="setScheduleTab('lokal')"
+          :class="activeScheduleTab === 'lokal' ? 'bg-white text-teal-800 font-extrabold shadow-sm' : 'text-slate-500 hover:text-slate-800 font-bold'"
+          class="px-5 py-2 rounded-lg text-xs transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <span class="text-sm">📍</span>
+          <span>Kelompok Jadwal Lokal</span>
+          <span
+            class="text-[10px] px-2 py-0.5 rounded-md font-bold"
+            :class="activeScheduleTab === 'lokal' ? 'bg-teal-100 text-teal-800' : 'bg-slate-200 text-slate-600'"
+          >
+            {{ lokalClasses.length }} Kelas
+          </span>
+        </button>
+      </div>
+
+      <!-- Tab Information Note -->
+      <div class="text-xs text-slate-500 font-medium px-1 flex items-center justify-between gap-2 flex-1 md:justify-end">
+        <span v-if="activeScheduleTab === 'utama'" class="flex items-center gap-1.5 text-slate-600">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>Menampilkan siswa berdasarkan rombel reguler (7A, 7B, 8A, 8B, 9A, 9B).</span>
+        </span>
+        <span v-else class="flex items-center gap-2 text-teal-800 font-medium flex-wrap">
+          <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+          <span>Pemetaan siswa ke Jadwal Lokal (Kelas 7, 8, 9A, 9B).</span>
+          <router-link
+            to="/admin/classes"
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-800 text-[11px] font-bold transition-colors cursor-pointer"
+            title="Kelola penetapan anggota siswa per kelas lokal di menu Data Master Kelas"
+          >
+            <span>⚙️ Atur Anggota Lokal di Kelas</span>
+          </router-link>
+        </span>
+      </div>
+    </div>
+
     <!-- Action Bar (filters + buttons) -->
     <div class="flex flex-col sm:flex-row sm:items-center gap-2.5">
       <!-- Per Page -->
-      <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 shadow-2xs">
+      <div class="relative flex items-center bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 shadow-2xs">
         <select
           v-model.number="selectedPerPage"
-          class="bg-transparent border-none p-0 text-slate-800 font-semibold focus:ring-0 cursor-pointer text-xs pr-1"
+          class="bg-transparent border-none p-0 text-slate-800 font-semibold focus:ring-0 cursor-pointer text-xs pr-6 appearance-none"
           @change="onPerPageChange"
         >
           <option :value="10">10 Baris</option>
@@ -29,20 +80,31 @@
           <option :value="50">50 Baris</option>
           <option :value="-1">Semua</option>
         </select>
-        <svg class="w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg class="w-3.5 h-3.5 text-slate-400 pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </div>
 
       <!-- Class Filter -->
-      <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 shadow-2xs">
+      <div class="relative flex items-center bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 shadow-2xs">
         <select
+          v-if="activeScheduleTab === 'utama'"
           v-model="selectedClass"
-          class="bg-transparent border-none p-0 text-slate-800 font-semibold focus:ring-0 cursor-pointer text-xs pr-1"
+          class="bg-transparent border-none p-0 text-slate-800 font-semibold focus:ring-0 cursor-pointer text-xs pr-6 appearance-none"
           @change="load"
         >
-          <option value="">Semua Kelas</option>
+          <option value="">Semua Kelas Utama</option>
           <option v-for="cls in studentClasses" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
         </select>
-        <svg class="w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <select
+          v-else
+          v-model="selectedLokalClass"
+          class="bg-transparent border-none p-0 text-slate-800 font-semibold focus:ring-0 cursor-pointer text-xs pr-6 appearance-none"
+          @change="load"
+        >
+          <option value="">Semua Siswa Terpetakan di Jadwal Lokal</option>
+          <option v-for="cls in lokalClasses" :key="cls.id" :value="cls.id">📍 Kelas {{ cls.name }}</option>
+          <option value="unassigned">⚠️ Belum Masuk Jadwal Lokal</option>
+        </select>
+        <svg class="w-3.5 h-3.5 text-slate-400 pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </div>
 
       <!-- Search -->
@@ -50,7 +112,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Cari nama, NISN, NIS, atau NIK..."
+          :placeholder="activeScheduleTab === 'utama' ? 'Cari nama, NISN, NIS, atau NIK...' : 'Cari siswa di kelompok jadwal lokal...'"
           class="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-colors"
           @input="onSearchInput"
         />
@@ -111,7 +173,9 @@
               <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">NAMA SISWA</th>
               <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">NISN / NIS / NIK / KK</th>
               <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">L/P</th>
-              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">KELAS</th>
+              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                {{ activeScheduleTab === 'lokal' ? 'KELAS JADWAL LOKAL' : 'KELAS (ROMBEL)' }}
+              </th>
               <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-center">AKSI</th>
             </tr>
           </thead>
@@ -170,9 +234,26 @@
 
               <!-- Kelas -->
               <td class="px-4 py-3">
-                <span class="px-2.5 py-1 bg-slate-100 text-slate-700 text-[11px] font-semibold rounded-md border border-slate-200/60">
-                  {{ row.class_name || row.class_room?.name || row.classRoom?.name || '-' }}
-                </span>
+                <div v-if="activeScheduleTab === 'utama'" class="flex flex-col gap-1 items-start">
+                  <span class="px-2.5 py-0.5 bg-slate-100 text-slate-700 text-[11px] font-bold rounded-md border border-slate-200/60">
+                    {{ row.class_name || row.class_room?.name || row.classRoom?.name || '-' }}
+                  </span>
+                  <span v-if="row.lokal_class_name || row.lokal_class_room?.name || row.lokalClassRoom?.name" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200/80">
+                    📍 Lokal: {{ row.lokal_class_name || row.lokal_class_room?.name || row.lokalClassRoom?.name }}
+                  </span>
+                </div>
+
+                <div v-else class="flex flex-col gap-1 items-start">
+                  <span v-if="row.lokal_class_name || row.lokal_class_room?.name || row.lokalClassRoom?.name" class="px-2.5 py-1 rounded-md text-[11px] font-extrabold bg-teal-100 text-teal-900 border border-teal-300 shadow-2xs">
+                    📍 Kelas {{ row.lokal_class_name || row.lokal_class_room?.name || row.lokalClassRoom?.name }}
+                  </span>
+                  <span v-else class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                    ⚠️ Belum Masuk Jadwal Lokal
+                  </span>
+                  <span class="text-[10px] text-slate-400 font-medium">
+                    Rombel Asal: <strong class="text-slate-600">{{ row.class_name || row.class_room?.name || '-' }}</strong>
+                  </span>
+                </div>
               </td>
 
               <!-- Actions -->
@@ -553,8 +634,34 @@ const studentClasses = computed(() => {
 const fileInput = ref(null);
 const importing = ref(false);
 
+const activeScheduleTab = ref('utama'); // 'utama' | 'lokal'
 const searchQuery = ref('');
 const selectedClass = ref('');
+const selectedLokalClass = ref('');
+
+const lokalClasses = computed(() => {
+  const seen = new Set();
+  return classes.value.filter(c => {
+    if (!c || !c.name) return false;
+    const name = (c.name || '').trim();
+    const lower = name.toLowerCase();
+    const isLokal = (name === '7' || lower === 'kelas 7' || name === '8' || lower === 'kelas 8' ||
+      name === '9A' || name === '9a' || lower === 'kelas 9a' || lower === '9-a' ||
+      name === '9B' || name === '9b' || lower === 'kelas 9b' || lower === '9-b');
+    if (!isLokal) return false;
+    if (seen.has(name)) return false;
+    seen.add(name);
+    return true;
+  }).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }));
+});
+
+function setScheduleTab(tab) {
+  activeScheduleTab.value = tab;
+  currentPage.value = 1;
+  selectedStudentIds.value = [];
+  load();
+}
+
 const currentPage = ref(1);
 const selectedPerPage = ref(10);
 const totalPages = ref(1);
@@ -672,7 +779,12 @@ async function load() {
       params.set('per_page', 9999);
     }
     if (searchQuery.value) params.append('search', searchQuery.value);
-    if (selectedClass.value) params.append('class_id', selectedClass.value);
+    params.set('schedule_mode', activeScheduleTab.value);
+    if (activeScheduleTab.value === 'utama') {
+      if (selectedClass.value) params.append('class_id', selectedClass.value);
+    } else {
+      if (selectedLokalClass.value) params.append('lokal_class_id', selectedLokalClass.value);
+    }
 
     const res = await api.get(`admin/students?${params.toString()}`);
     const rawData = res.data?.data || res.data || [];

@@ -18,7 +18,7 @@ class Student extends Model
         'previous_school', 'photo',
     ];
 
-    protected $appends = ['photo_url', 'class_name'];
+    protected $appends = ['photo_url', 'class_name', 'lokal_class_name'];
 
     protected $casts = [
         'birth_date' => 'date:Y-m-d',
@@ -41,6 +41,11 @@ class Student extends Model
     public function getClassNameAttribute(): ?string
     {
         return $this->classRoom?->name ?? '-';
+    }
+
+    public function getLokalClassNameAttribute(): ?string
+    {
+        return $this->lokalClassRoom?->name ?? null;
     }
 
     public function user(): BelongsTo

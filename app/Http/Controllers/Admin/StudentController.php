@@ -15,20 +15,31 @@ class StudentController extends BaseController
 {
     public function index(Request $request)
     {
-        $query = Student::with(['user', 'classRoom.academicYear']);
+        $query = Student::with(['user', 'classRoom.academicYear', 'lokalClassRoom']);
 
-        if ($request->filled('lokal_class_id')) {
-            $query->where('lokal_class_id', $request->input('lokal_class_id'));
-        } elseif ($request->filled('class_id')) {
-            $classId = $request->input('class_id');
-            $targetClass = ClassRoom::find($classId);
-            if ($targetClass && in_array($targetClass->name, ['7', '8'])) {
-                $query->where(function ($q) use ($classId) {
-                    $q->where('lokal_class_id', $classId)
-                      ->orWhere('class_id', $classId);
-                });
+        $scheduleMode = $request->input('schedule_mode', 'utama');
+
+        if ($scheduleMode === 'lokal') {
+            if ($request->input('lokal_class_id') === 'unassigned') {
+                $query->whereNull('lokal_class_id');
+            } elseif ($request->filled('lokal_class_id')) {
+                $query->where('lokal_class_id', $request->input('lokal_class_id'));
             } else {
-                $query->where('class_id', $classId);
+                // Tampilkan semua siswa yang telah dipetakan ke rombel jadwal lokal
+                $query->whereNotNull('lokal_class_id');
+            }
+        } else {
+            if ($request->filled('class_id')) {
+                $classId = $request->input('class_id');
+                $targetClass = ClassRoom::find($classId);
+                if ($targetClass && in_array($targetClass->name, ['7', '8'])) {
+                    $query->where(function ($q) use ($classId) {
+                        $q->where('lokal_class_id', $classId)
+                          ->orWhere('class_id', $classId);
+                    });
+                } else {
+                    $query->where('class_id', $classId);
+                }
             }
         }
 
@@ -37,7 +48,8 @@ class StudentController extends BaseController
             $query->where(function ($qq) use ($q) {
                 $qq->where('full_name', 'like', "%{$q}%")
                     ->orWhere('nisn', 'like', "%{$q}%")
-                    ->orWhere('nis', 'like', "%{$q}%");
+                    ->orWhere('nis', 'like', "%{$q}%")
+                    ->orWhere('nik', 'like', "%{$q}%");
             });
         }
 

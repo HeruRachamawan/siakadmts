@@ -724,14 +724,14 @@ class ExcelImportExportController extends Controller
             if ($type === 'students') {
                 $sheet->setTitle('Data Siswa');
                 $headers = [
-                    'NO', 'NISN', 'NIS', 'NIK SISWA', 'NAMA LENGKAP', 'GENDER', 'KELAS', 'TEMPAT LAHIR', 'TGL LAHIR', 'SEKOLAH ASAL', 'ALAMAT', 'NO HP ORTU',
+                    'NO', 'NISN', 'NIS', 'NIK SISWA', 'NAMA LENGKAP', 'GENDER', 'KELAS (ROMBEL UTAMA)', 'KELAS JADWAL LOKAL', 'TEMPAT LAHIR', 'TGL LAHIR', 'SEKOLAH ASAL', 'ALAMAT', 'NO HP ORTU',
                     'NAMA AYAH', 'STATUS AYAH', 'NIK AYAH', 'PEKERJAAN AYAH', 'PENGHASILAN AYAH',
                     'NAMA IBU', 'STATUS IBU', 'NIK IBU', 'PEKERJAAN IBU', 'PENGHASILAN IBU',
                     'NAMA WALI', 'HUBUNGAN WALI', 'NIK WALI', 'PEKERJAAN WALI', 'NO HP WALI', 'PENGHASILAN WALI'
                 ];
                 $sheet->fromArray([$headers], null, 'A1');
 
-                $students = Student::with('classRoom')->orderBy('full_name')->get();
+                $students = Student::with(['classRoom', 'lokalClassRoom'])->orderBy('full_name')->get();
                 $data = [];
                 foreach ($students as $i => $s) {
                     $birthDateStr = '-';
@@ -747,6 +747,7 @@ class ExcelImportExportController extends Controller
                         $s->full_name,
                         $s->gender === 'L' ? 'Laki-laki' : 'Perempuan',
                         $s->classRoom ? $s->classRoom->name : ($s->class_name ?: '-'),
+                        $s->lokalClassRoom ? $s->lokalClassRoom->name : ($s->lokal_class_name ?: '-'),
                         $s->birth_place,
                         $birthDateStr,
                         $s->previous_school ?: '-',
