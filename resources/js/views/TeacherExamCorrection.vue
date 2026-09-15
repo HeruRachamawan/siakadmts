@@ -3217,6 +3217,20 @@ const classes = ref([]);
 const subjects = ref([]);
 const activeAcademicYear = ref(null);
 
+function isLokalClassName(name) {
+  if (!name) return false;
+  const n = String(name).toLowerCase();
+  return n.includes('lokal') || n.startsWith('l-') || n.startsWith('lok-');
+}
+
+const utamaClasses = computed(() => {
+  return (classes.value || []).filter(c => !isLokalClassName(c.name));
+});
+
+const lokalClasses = computed(() => {
+  return (classes.value || []).filter(c => isLokalClassName(c.name));
+});
+
 function formatAcademicYear(exam) {
   return exam?.academic_year?.year ||
     exam?.academic_year?.name ||
@@ -3383,6 +3397,9 @@ function onPgWeightInput() {
 
 // Active Exam Workspace States
 const activeExam = ref(null);
+const isLokalExam = computed(() => {
+  return isLokalClassName(activeExam.value?.class_room?.name);
+});
 const activeTab = ref('keys');
 const activeQuestions = ref([]);
 const activeStudents = ref([]);
