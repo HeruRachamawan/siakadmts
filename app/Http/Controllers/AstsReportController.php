@@ -19,26 +19,25 @@ class AstsReportController extends Controller
 {
     /**
      * Helper to verify if the user has access to view/manage reports for the given class.
-     * Staff (admin, operator, kurikulum, kepala_sekolah) have full access.
-     * Teachers are restricted to their assigned homeroom class.
+     * When accessed through teacher routes (or by teacher role), strictly verify homeroom ownership.
+     * Staff routes (admin, operator, kurikulum, kepala_sekolah) have full access to all classes.
      */
-    private function checkHomeroomAccess($user, int $classId): bool
+    private function checkHomeroomAccess($user, int $classId, ?Request $request = null): bool
     {
-        $isStaff = in_array($user?->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah']);
-        if ($isStaff) {
+        $isTeacherRoute = ($request && ($request->is('api/teacher/*') || $request->is('teacher/*'))) || $user?->role === 'teacher';
+
+        // Staff route allows full access
+        if (!$isTeacherRoute && in_array($user?->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah'])) {
             return true;
         }
 
-        if ($user?->role === 'teacher') {
-            $teacher = $user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first();
-            if (!$teacher) {
-                return false;
-            }
-            $homeroomClass = ClassRoom::where('homeroom_teacher_id', $teacher->id)->first();
-            return $homeroomClass && (int)$classId === (int)$homeroomClass->id;
+        // On teacher route or for teacher role: strictly restricted to assigned homeroom class
+        $teacher = $user ? ($user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first()) : null;
+        if (!$teacher) {
+            return false;
         }
-
-        return false;
+        $homeroomClass = ClassRoom::where('homeroom_teacher_id', $teacher->id)->first();
+        return $homeroomClass && (int)$classId === (int)$homeroomClass->id;
     }
 
     /**
@@ -47,7 +46,7 @@ class AstsReportController extends Controller
     public function options(Request $request)
     {
         $user = $request->user();
-        $isStaff = in_array($user?->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah']);
+        $isTeacherRoute = $request->is('api/teacher/*') || $request->is('teacher/*') || $user?->role === 'teacher';
         $teacher = $user ? ($user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first()) : null;
         $homeroomClassId = null;
         if ($teacher) {
@@ -57,7 +56,7 @@ class AstsReportController extends Controller
             }
         }
 
-        if (!$isStaff && $user?->role === 'teacher') {
+        if ($isTeacherRoute) {
             if ($homeroomClassId) {
                 $classes = ClassRoom::withCount('students')
                     ->where('id', $homeroomClassId)
@@ -165,7 +164,7 @@ class AstsReportController extends Controller
             ], 400);
         }
 
-        if (!$this->checkHomeroomAccess($request->user(), (int)$classId)) {
+        if (!$this->checkHomeroomAccess($request->user(), (int)$classId, $request)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
@@ -342,7 +341,7 @@ class AstsReportController extends Controller
         $semester = $request->input('semester', 'ganjil');
         $scoreSource = $request->input('score_source', 'final'); // 'final' (Nilai Jadi / Rapor) | 'raw' (Nilai Asli / Murni)
 
-        if (!$this->checkHomeroomAccess($request->user(), (int)$classId)) {
+        if (!$this->checkHomeroomAccess($request->user(), (int)$classId, $request)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
@@ -464,7 +463,7 @@ class AstsReportController extends Controller
         ]);
 
         $student = Student::findOrFail($request->student_id);
-        if (!$this->checkHomeroomAccess($request->user(), (int)$student->class_id)) {
+        if (!$this->checkHomeroomAccess($request->user(), (int)$student->class_id, $request)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
@@ -553,7 +552,7 @@ class AstsReportController extends Controller
         $rankList = $request->input('ranks');
         $shouldAdjustScores = (bool) $request->input('adjust_scores', false);
 
-        if (!$this->checkHomeroomAccess($request->user(), (int)$classId)) {
+        if (!$this->checkHomeroomAccess($request->user(), (int)$classId, $request)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
@@ -657,7 +656,7 @@ class AstsReportController extends Controller
         $semester = $request->input('semester');
         $academicYearId = $request->input('academic_year_id');
 
-        if (!$this->checkHomeroomAccess($request->user(), (int)$classId)) {
+        if (!$this->checkHomeroomAccess($request->user(), (int)$classId, $request)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
@@ -689,7 +688,7 @@ class AstsReportController extends Controller
 
         $student = Student::with(['classRoom.homeroomTeacher'])->findOrFail($studentId);
 
-        if (!$this->checkHomeroomAccess($request->user(), (int)$student->class_id)) {
+        if (!$this->checkHomeroomAccess($request->user(), (int)$student->class_id, $request)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
@@ -717,7 +716,7 @@ class AstsReportController extends Controller
     {
         $semester = $request->input('semester', 'ganjil');
 
-        if (!$this->checkHomeroomAccess($request->user(), (int)$classId)) {
+        if (!$this->checkHomeroomAccess($request->user(), (int)$classId, $request)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'

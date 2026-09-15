@@ -482,26 +482,44 @@ const teacherAttendanceRequests = ref([]);
 const myPasswordResetRequests = ref([]);
 const seenTeacherNotifIds = ref(JSON.parse(localStorage.getItem('seen_teacher_notif_ids') || '[]'));
 const seenTeacherPassNotifIds = ref(JSON.parse(localStorage.getItem('seen_teacher_pass_notif_ids') || '[]'));
-const isHomeroomTeacher = ref(localStorage.getItem('is_homeroom_teacher') === 'true');
+const isHomeroomTeacher = computed(() => {
+  // Hanya berlaku jika saat ini sedang dalam mode Guru
+  if (currentRole.value !== 'teacher') return false;
+
+  const u = user.value;
+  if (!u) return false;
+
+  // 1. Cek flag boolean is_homeroom_teacher langsung dari payload login/me
+  if (u.is_homeroom_teacher !== undefined && u.is_homeroom_teacher !== null) {
+    return Boolean(u.is_homeroom_teacher);
+  }
+
+  // 2. Cek apakah ada daftar kelas binaan pada homeroom_classes
+  if (Array.isArray(u.homeroom_classes)) {
+    return u.homeroom_classes.length > 0;
+  }
+
+  return false;
+});
+
 const isPpdbCommittee = computed(() => {
   if (user.value?.role === 'admin') return true;
   return !!(user.value?.teacher?.is_ppdb_committee || user.value?.is_ppdb_committee);
 });
 
 async function checkTeacherHomeroom() {
-  if (user.value?.role === 'teacher') {
-    if (user.value?.is_homeroom_teacher !== undefined) {
-      const isHomeroom = !!user.value.is_homeroom_teacher;
-      isHomeroomTeacher.value = isHomeroom;
-      localStorage.setItem('is_homeroom_teacher', isHomeroom ? 'true' : 'false');
+  if (currentRole.value === 'teacher') {
+    const u = user.value;
+    if (u && u.is_homeroom_teacher !== undefined) {
       return;
     }
     try {
       const clsRes = await api.get('teacher/classes');
       const list = Array.isArray(clsRes) ? clsRes : (clsRes.data || []);
       const isHomeroom = list.length > 0;
-      isHomeroomTeacher.value = isHomeroom;
-      localStorage.setItem('is_homeroom_teacher', isHomeroom ? 'true' : 'false');
+      if (auth.user) {
+        auth.user.is_homeroom_teacher = isHomeroom;
+      }
     } catch (e) {
       console.error(e);
     }
@@ -575,7 +593,7 @@ async function fetchMyPasswordResetRequests() {
 }
 
 function fetchRoleNotifications() {
-  const r = (user.value?.role || '').toLowerCase();
+  const r = (currentRole.value || user.value?.role || '').toLowerCase();
   if (r === 'admin') {
     fetchAllAdminNotifications();
   } else if (r === 'teacher') {
@@ -725,6 +743,7 @@ function updateTime() {
 let timer;
 let notifTimer;
 onMounted(() => {
+  localStorage.removeItem('is_homeroom_teacher');
   updateTime();
   timer = setInterval(updateTime, 1000);
   loadSettings();
@@ -736,7 +755,7 @@ onUnmounted(() => {
   clearInterval(notifTimer);
 });
 
-watch(user, () => {
+watch([user, currentRole], () => {
   fetchRoleNotifications();
 }, { immediate: true });
 

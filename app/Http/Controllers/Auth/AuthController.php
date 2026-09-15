@@ -116,9 +116,10 @@ class AuthController extends BaseController
     {
         $payload = $user->only(['id', 'name', 'email', 'username', 'role']);
 
-        if ($user->teacher) {
-            $teacher = $user->teacher;
-            $homeroomClasses = $teacher->classes()->get(['id', 'name', 'grade_level']);
+        $teacher = $user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first();
+
+        if ($teacher) {
+            $homeroomClasses = ClassRoom::where('homeroom_teacher_id', $teacher->id)->get(['id', 'name', 'grade_level']);
 
             $payload['teacher_id'] = $teacher->id;
             $payload['nip'] = $teacher->nip;
@@ -138,6 +139,9 @@ class AuthController extends BaseController
                 'photo_url' => $teacher->photo_url,
                 'is_ppdb_committee' => (bool) $teacher->is_ppdb_committee,
             ];
+        } else {
+            $payload['is_homeroom_teacher'] = false;
+            $payload['homeroom_classes'] = [];
         } elseif ($user->student) {
             $student = $user->student;
             $payload['student_id'] = $student->id;
