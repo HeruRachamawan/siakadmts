@@ -55,15 +55,18 @@
       <!-- Class Selector -->
       <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1">
         <div class="w-full sm:w-72 space-y-1">
-          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Pilih Kelas</label>
+          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider">
+            {{ isHomeroomOnly ? 'Kelas Binaan (Wali Kelas)' : 'Pilih Kelas' }}
+          </label>
           <select
             v-model="selectedClassId"
             @change="fetchLedger"
-            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-2xs"
+            :disabled="isHomeroomOnly && classes.length === 1"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-2xs disabled:opacity-90 disabled:cursor-not-allowed"
           >
-            <option value="">-- Pilih Kelas --</option>
+            <option v-if="!isHomeroomOnly" value="">-- Pilih Kelas --</option>
             <option v-for="c in classes" :key="c.id" :value="c.id">
-              Kelas {{ c.name }} (Tingkat {{ c.grade_level }}) — {{ c.students_count || 0 }} Siswa
+              {{ isHomeroomOnly ? '⭐ ' : '' }}Kelas {{ c.name }} (Tingkat {{ c.grade_level }}) — {{ c.students_count || 0 }} Siswa
             </option>
           </select>
         </div>
@@ -102,6 +105,27 @@
     <div v-if="loading" class="bg-white rounded-[2rem] p-16 text-center text-slate-400 text-xs font-medium border border-slate-100 no-print">
       <div class="animate-spin h-8 w-8 border-3 border-emerald-500 border-t-transparent rounded-full mx-auto mb-3"></div>
       Memuat data Rapor ASTS...
+    </div>
+
+    <!-- KHUSUS JIKA BUKAN WALI KELAS ATAU BELUM MEMILIKI KELAS BINAAN -->
+    <div v-else-if="classes.length === 0" class="bg-white rounded-[2rem] p-12 text-center border border-amber-200/80 shadow-sm space-y-4 no-print max-w-xl mx-auto my-8">
+      <div class="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto shadow-sm">
+        <GraduationCap class="w-8 h-8" />
+      </div>
+      <div>
+        <h3 class="text-lg font-black text-slate-800 font-lexend uppercase tracking-wide">Menu Khusus Wali Kelas</h3>
+        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+          Akun Anda saat ini belum tercatat sebagai Wali Kelas aktif di rombel kelas manapun. Menu Rapor ASTS hanya dapat diakses dan dikelola oleh Guru yang ditugaskan sebagai Wali Kelas.
+        </p>
+      </div>
+      <div class="pt-2">
+        <RouterLink
+          to="/teacher/dashboard"
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-600/20"
+        >
+          Kembali ke Dashboard
+        </RouterLink>
+      </div>
     </div>
 
     <!-- EMPTY SELECT WARNING -->
@@ -1215,6 +1239,7 @@ const classes = ref([]);
 const activeYear = ref(null);
 const selectedClassId = ref('');
 const ledgerData = ref(null);
+const isHomeroomOnly = ref(false);
 
 const selectedStudentId = ref('');
 const singleReportData = ref(null);
@@ -1351,6 +1376,7 @@ async function fetchOptions() {
     const d = res?.data || res || {};
     classes.value = d.classes || [];
     activeYear.value = d.active_academic_year || null;
+    isHomeroomOnly.value = !!d.is_homeroom_only;
 
     if (d.homeroom_class_id) {
       selectedClassId.value = d.homeroom_class_id;

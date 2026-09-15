@@ -18,14 +18,59 @@ use Illuminate\Support\Facades\DB;
 class AstsReportController extends Controller
 {
     /**
+     * Helper to verify if the user has access to view/manage reports for the given class.
+     * Staff (admin, operator, kurikulum, kepala_sekolah) have full access.
+     * Teachers are restricted to their assigned homeroom class.
+     */
+    private function checkHomeroomAccess($user, int $classId): bool
+    {
+        $isStaff = in_array($user?->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah']);
+        if ($isStaff) {
+            return true;
+        }
+
+        if ($user?->role === 'teacher') {
+            $teacher = $user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first();
+            if (!$teacher) {
+                return false;
+            }
+            $homeroomClass = ClassRoom::where('homeroom_teacher_id', $teacher->id)->first();
+            return $homeroomClass && (int)$classId === (int)$homeroomClass->id;
+        }
+
+        return false;
+    }
+
+    /**
      * Get options: classes, subjects, active academic year, school settings.
      */
     public function options(Request $request)
     {
-        $classes = ClassRoom::withCount('students')
-            ->orderBy('grade_level')
-            ->orderBy('name')
-            ->get();
+        $user = $request->user();
+        $isStaff = in_array($user?->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah']);
+        $teacher = $user ? ($user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first()) : null;
+        $homeroomClassId = null;
+        if ($teacher) {
+            $homeroomClass = ClassRoom::where('homeroom_teacher_id', $teacher->id)->first();
+            if ($homeroomClass) {
+                $homeroomClassId = $homeroomClass->id;
+            }
+        }
+
+        if (!$isStaff && $user?->role === 'teacher') {
+            if ($homeroomClassId) {
+                $classes = ClassRoom::withCount('students')
+                    ->where('id', $homeroomClassId)
+                    ->get();
+            } else {
+                $classes = collect();
+            }
+        } else {
+            $classes = ClassRoom::withCount('students')
+                ->orderBy('grade_level')
+                ->orderBy('name')
+                ->get();
+        }
 
         $rawSubjects = Subject::all();
         $subjects = $this->sortSubjectsAccordingToStructure($rawSubjects);
@@ -35,16 +80,6 @@ class AstsReportController extends Controller
 
         $schoolSetting = SchoolSetting::first();
         $rawSettings = \App\Models\Setting::all()->pluck('value', 'key')->toArray();
-
-        $user = $request->user();
-        $teacher = $user ? ($user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first()) : null;
-        $homeroomClassId = null;
-        if ($teacher) {
-            $homeroomClass = ClassRoom::where('homeroom_teacher_id', $teacher->id)->first();
-            if ($homeroomClass) {
-                $homeroomClassId = $homeroomClass->id;
-            }
-        }
 
         $defaultCity = $rawSettings['asts_issued_city'] ?? 'Bogor';
         $defaultDate = $rawSettings['asts_issued_date'] ?? now()->format('Y-m-d');
@@ -58,6 +93,7 @@ class AstsReportController extends Controller
                 'school_setting' => $schoolSetting,
                 'settings' => $rawSettings,
                 'homeroom_class_id' => $homeroomClassId,
+                'is_homeroom_only' => (!$isStaff && $user?->role === 'teacher'),
                 'default_titimangsa' => [
                     'city' => $defaultCity,
                     'issued_date' => $defaultDate,
@@ -127,6 +163,13 @@ class AstsReportController extends Controller
                 'status' => 'error',
                 'message' => 'Silakan pilih kelas terlebih dahulu.'
             ], 400);
+        }
+
+        if (!$this->checkHomeroomAccess($request->user(), (int)$classId)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
+            ], 403);
         }
 
         $class = ClassRoom::with('homeroomTeacher')->findOrFail($classId);
@@ -299,6 +342,13 @@ class AstsReportController extends Controller
         $semester = $request->input('semester', 'ganjil');
         $scoreSource = $request->input('score_source', 'final'); // 'final' (Nilai Jadi / Rapor) | 'raw' (Nilai Asli / Murni)
 
+        if (!$this->checkHomeroomAccess($request->user(), (int)$classId)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
+            ], 403);
+        }
+
         $activeYear = AcademicYear::where('is_active', true)->first();
         $yearId = $request->input('academic_year_id', $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));
 
@@ -413,6 +463,14 @@ class AstsReportController extends Controller
             'unexcused_count' => 'nullable|integer|min:0',
         ]);
 
+        $student = Student::findOrFail($request->student_id);
+        if (!$this->checkHomeroomAccess($request->user(), (int)$student->class_id)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
+            ], 403);
+        }
+
         $report = AstsReport::updateOrCreate(
             [
                 'student_id' => $request->student_id,
@@ -494,6 +552,13 @@ class AstsReportController extends Controller
         $academicYearId = $request->input('academic_year_id');
         $rankList = $request->input('ranks');
         $shouldAdjustScores = (bool) $request->input('adjust_scores', false);
+
+        if (!$this->checkHomeroomAccess($request->user(), (int)$classId)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
+            ], 403);
+        }
 
         DB::beginTransaction();
         try {
@@ -592,6 +657,13 @@ class AstsReportController extends Controller
         $semester = $request->input('semester');
         $academicYearId = $request->input('academic_year_id');
 
+        if (!$this->checkHomeroomAccess($request->user(), (int)$classId)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
+            ], 403);
+        }
+
         $studentIds = Student::where('class_id', $classId)->pluck('id');
 
         AstsReport::whereIn('student_id', $studentIds)
@@ -616,6 +688,14 @@ class AstsReportController extends Controller
         $yearId = $request->input('academic_year_id', $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));
 
         $student = Student::with(['classRoom.homeroomTeacher'])->findOrFail($studentId);
+
+        if (!$this->checkHomeroomAccess($request->user(), (int)$student->class_id)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
+            ], 403);
+        }
+
         $academicYear = AcademicYear::find($yearId) ?? $activeYear;
 
         // Fetch all students in the same class to accurately determine rank and class average
@@ -636,6 +716,13 @@ class AstsReportController extends Controller
     public function batchClassReport(Request $request, $classId)
     {
         $semester = $request->input('semester', 'ganjil');
+
+        if (!$this->checkHomeroomAccess($request->user(), (int)$classId)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
+            ], 403);
+        }
 
         $activeYear = AcademicYear::where('is_active', true)->first();
         $yearId = $request->input('academic_year_id', $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));

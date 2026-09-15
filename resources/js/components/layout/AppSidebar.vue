@@ -362,6 +362,7 @@
 
           <!-- Rapor ASTS (Sumatif Tengah Semester - Khusus Wali Kelas) -->
           <RouterLink
+            v-if="isHomeroomTeacher"
             to="/teacher/asts-reports"
             :title="isCollapsed ? 'Rapor ASTS (Tengah Semester)' : ''"
             class="nav-link"
