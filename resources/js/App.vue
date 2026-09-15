@@ -446,6 +446,7 @@ const router = useRouter();
 const route = useRoute();
 const auth = useAuthStore();
 const { user } = storeToRefs(auth);
+const currentRole = computed(() => auth.role);
 
 function handleStopImpersonating() {
   auth.stopImpersonation();
