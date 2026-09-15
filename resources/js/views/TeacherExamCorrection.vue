@@ -74,14 +74,14 @@
         <div class="flex items-center gap-2 flex-wrap">
           <select v-model="filterClass" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-teal-400">
             <option value="">Semua Kelas</option>
-            <optgroup label="🏫 Rombel Utama (Reguler)">
+            <optgroup label="🏛️ Kelas Utama / Angkatan">
               <option v-for="c in utamaClasses" :key="'utama-' + c.id" :value="c.id">
                 Kelas {{ c.name }} ({{ c.students_count || 0 }} Siswa)
               </option>
             </optgroup>
-            <optgroup label="📍 Kelompok Jadwal Lokal">
+            <optgroup label="📍 Rombel / Kelas Lokal">
               <option v-for="c in lokalClasses" :key="'lokal-' + c.id" :value="c.id">
-                📍 Kelas {{ c.name }} Lokal ({{ c.students_count || c.lokal_students_count || 0 }} Siswa)
+                Kelas {{ c.name }} ({{ c.students_count || c.lokal_students_count || 0 }} Siswa)
               </option>
             </optgroup>
           </select>
@@ -1627,9 +1627,16 @@
               <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Kelas *</label>
               <select v-model="examForm.class_room_id" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400">
                 <option value="">-- Pilih Kelas --</option>
-                <option v-for="c in classes" :key="c.id" :value="c.id">
-                  Kelas {{ c.name }} (Tingkat {{ c.grade_level }}) — {{ c.students_count || 0 }} Siswa
-                </option>
+                <optgroup v-if="utamaClasses.length > 0" label="🏛️ Kelas Utama / Angkatan">
+                  <option v-for="c in utamaClasses" :key="'modal-u-' + c.id" :value="c.id">
+                    {{ formatClassOptionLabel(c, classes) }}
+                  </option>
+                </optgroup>
+                <optgroup v-if="lokalClasses.length > 0" label="📍 Rombel / Kelas Lokal">
+                  <option v-for="c in lokalClasses" :key="'modal-l-' + c.id" :value="c.id">
+                    {{ formatClassOptionLabel(c, classes) }}
+                  </option>
+                </optgroup>
               </select>
             </div>
 
@@ -3205,7 +3212,8 @@ import {
   Printer,
   Copy,
   RotateCcw,
-  Pencil
+  Pencil,
+  Info
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -3217,18 +3225,75 @@ const classes = ref([]);
 const subjects = ref([]);
 const activeAcademicYear = ref(null);
 
+function isLokalClass(c, all = []) {
+  if (!c) return false;
+  const raw = String(c.name || '').trim();
+  const lower = raw.toLowerCase();
+
+  // Explicit keywords
+  if (lower.includes('lokal') || lower.startsWith('l-') || lower.startsWith('lok-')) return true;
+  if (lower.includes('utama') || lower.includes('induk') || lower.includes('gabungan')) return false;
+
+  // Clean prefix 'Kelas ' or 'Kls '
+  const clean = raw.replace(/^(kelas|kls)\s*/i, '').trim();
+
+  // If it has letter suffix after number, e.g. '7A', '7-A', '8B', '9A', '9B'
+  if (/^\d+[-_\s]*[a-zA-Z]/.test(clean)) return true;
+
+  // If pure number (e.g. '7', '8')
+  if (/^\d+$/.test(clean) || clean === String(c.grade_level)) {
+    const hasRombelSiblings = (all || []).some(other => {
+      if (other.id === c.id) return false;
+      if (String(other.grade_level) !== String(c.grade_level)) return false;
+      const otherClean = String(other.name || '').replace(/^(kelas|kls)\s*/i, '').trim();
+      return /^\d+[-_\s]*[a-zA-Z]/.test(otherClean);
+    });
+    // If it has siblings like 7A/7B, this pure number class is the UTAMA (Gabungan Angkatan)
+    if (hasRombelSiblings) return false;
+  }
+
+  // If single letter (e.g. 'A', 'B')
+  if (/^[a-zA-Z]$/.test(clean)) return true;
+
+  return false;
+}
+
+function formatClassOptionLabel(c, all = []) {
+  if (!c) return '';
+  const isLokal = isLokalClass(c, all);
+  const raw = String(c.name || '').trim();
+  const clean = raw.replace(/^(kelas|kls)\s*/i, '').trim();
+  const count = c.students_count || c.lokal_students_count || 0;
+
+  if (isLokal) {
+    const match = clean.match(/[a-zA-Z]+$/);
+    const rombelTag = match ? `[Rombel ${match[0].toUpperCase()}]` : '[Rombel]';
+    return `📍 Kelas ${raw} (Tingkat ${c.grade_level}) — ${count} Siswa ${rombelTag}`;
+  } else {
+    const hasRombelSiblings = (all || []).some(other => {
+      if (other.id === c.id) return false;
+      if (String(other.grade_level) !== String(c.grade_level)) return false;
+      const otherClean = String(other.name || '').replace(/^(kelas|kls)\s*/i, '').trim();
+      return /^\d+[-_\s]*[a-zA-Z]/.test(otherClean);
+    });
+    const tag = hasRombelSiblings ? `[Gabungan Rombel Tingkat ${c.grade_level}]` : '[Kelas Utama]';
+    return `🏛️ Kelas ${raw} (Tingkat ${c.grade_level}) — ${count} Siswa ${tag}`;
+  }
+}
+
 function isLokalClassName(name) {
   if (!name) return false;
-  const n = String(name).toLowerCase();
-  return n.includes('lokal') || n.startsWith('l-') || n.startsWith('lok-');
+  const match = (classes.value || []).find(c => c.name === name);
+  if (match) return isLokalClass(match, classes.value);
+  return /^\d+[-_\s]*[a-zA-Z]/.test(String(name).trim());
 }
 
 const utamaClasses = computed(() => {
-  return (classes.value || []).filter(c => !isLokalClassName(c.name));
+  return (classes.value || []).filter(c => !isLokalClass(c, classes.value));
 });
 
 const lokalClasses = computed(() => {
-  return (classes.value || []).filter(c => isLokalClassName(c.name));
+  return (classes.value || []).filter(c => isLokalClass(c, classes.value));
 });
 
 function formatAcademicYear(exam) {
