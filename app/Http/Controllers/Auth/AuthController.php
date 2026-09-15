@@ -142,7 +142,9 @@ class AuthController extends BaseController
         } else {
             $payload['is_homeroom_teacher'] = false;
             $payload['homeroom_classes'] = [];
-        } elseif ($user->student) {
+        }
+
+        if ($user->student) {
             $student = $user->student;
             $payload['student_id'] = $student->id;
             $payload['nisn'] = $student->nisn;
