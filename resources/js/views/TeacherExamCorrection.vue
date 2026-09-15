@@ -74,9 +74,16 @@
         <div class="flex items-center gap-2 flex-wrap">
           <select v-model="filterClass" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-teal-400">
             <option value="">Semua Kelas</option>
-            <option v-for="c in classes" :key="c.id" :value="c.id">
-              Kelas {{ c.name }} ({{ c.students_count || 0 }} Siswa)
-            </option>
+            <optgroup label="🏫 Rombel Utama (Reguler)">
+              <option v-for="c in utamaClasses" :key="'utama-' + c.id" :value="c.id">
+                Kelas {{ c.name }} ({{ c.students_count || 0 }} Siswa)
+              </option>
+            </optgroup>
+            <optgroup label="📍 Kelompok Jadwal Lokal">
+              <option v-for="c in lokalClasses" :key="'lokal-' + c.id" :value="c.id">
+                📍 Kelas {{ c.name }} Lokal ({{ c.students_count || c.lokal_students_count || 0 }} Siswa)
+              </option>
+            </optgroup>
           </select>
 
           <select v-model="filterSubject" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-teal-400">
@@ -133,7 +140,14 @@
               </td>
               <td class="px-4 py-4">
                 <div class="font-bold text-slate-800">{{ exam.subject?.name || '-' }}</div>
-                <div class="text-[11px] text-slate-400 font-medium">Kelas {{ exam.class_room?.name || '-' }}</div>
+                <div class="mt-0.5">
+                  <span v-if="isLokalClassName(exam.class_room?.name)" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold bg-teal-50 text-teal-700 border border-teal-200 shadow-2xs">
+                    📍 Kelas {{ exam.class_room?.name }} (Lokal)
+                  </span>
+                  <span v-else class="text-[11px] text-slate-500 font-medium">
+                    Kelas {{ exam.class_room?.name || '-' }}
+                  </span>
+                </div>
               </td>
               <td class="px-4 py-4 text-center font-bold text-slate-700">
                 {{ exam.total_questions }} Soal
@@ -726,7 +740,12 @@
               <tr v-for="(student, idx) in activeStudents" :key="student.id" class="hover:bg-slate-50/70 transition-colors">
                 <td class="px-4 py-3 text-center font-bold text-slate-400">{{ idx + 1 }}</td>
                 <td class="px-4 py-3">
-                  <div class="font-bold text-slate-800 font-lexend">{{ student.name }}</div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-800 font-lexend">{{ student.name }}</span>
+                    <span v-if="isLokalExam && student.origin_class_name && student.origin_class_name !== '-'" class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-teal-50 text-teal-700 border border-teal-200" :title="'Rombel Asal: ' + student.origin_class_name">
+                      {{ student.origin_class_name }}
+                    </span>
+                  </div>
                   <div class="text-[10px] text-slate-400 font-mono">NISN: {{ student.nisn || '-' }} • {{ student.gender === 'L' ? 'Laki-laki' : 'Perempuan' }}</div>
                 </td>
                 <td class="px-4 py-3 min-w-[340px] sm:min-w-[420px]">
@@ -1057,7 +1076,12 @@
               <tr v-for="(student, idx) in activeStudents" :key="student.id" class="hover:bg-amber-50/20 transition-colors">
                 <td class="px-4 py-3 text-center font-bold text-slate-400">{{ idx + 1 }}</td>
                 <td class="px-4 py-3">
-                  <div class="font-bold text-slate-900 font-lexend">{{ student.name }}</div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-900 font-lexend">{{ student.name }}</span>
+                    <span v-if="isLokalExam && student.origin_class_name && student.origin_class_name !== '-'" class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-teal-50 text-teal-700 border border-teal-200" :title="'Rombel Asal: ' + student.origin_class_name">
+                      {{ student.origin_class_name }}
+                    </span>
+                  </div>
                   <div class="text-[10px] text-slate-400 font-mono">NISN: {{ student.nisn || '-' }} • {{ student.gender === 'L' ? 'Laki-laki' : 'Perempuan' }}</div>
                 </td>
                 <td class="px-4 py-3 text-center font-bold" :class="Number(student.total_score || 0) < activeExam.kkm ? 'text-rose-600' : 'text-slate-700'">
@@ -2016,12 +2040,18 @@
             <div>
               <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <h2 class="text-sm sm:text-base font-black text-slate-800 font-lexend">{{ selectedStudent.name }}</h2>
+                <span v-if="isLokalExam && selectedStudent.origin_class_name && selectedStudent.origin_class_name !== '-'" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-teal-50 text-teal-700 border border-teal-200">
+                  Rombel Asal: {{ selectedStudent.origin_class_name }}
+                </span>
                 <span class="text-[10px] sm:text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700">NISN: {{ selectedStudent.nisn || '-' }}</span>
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" :class="selectedStudent.gender === 'L' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'">
                   {{ selectedStudent.gender === 'L' ? 'Laki-laki' : 'Perempuan' }}
                 </span>
               </div>
-              <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5">Siswa ke-{{ selectedStudentIndex + 1 }} dari {{ activeStudents.length }} siswa • Kelas {{ activeExam?.class_room?.name }}</p>
+              <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5">
+                Siswa ke-{{ selectedStudentIndex + 1 }} dari {{ activeStudents.length }} siswa • Kelas {{ activeExam?.class_room?.name }}
+                <span v-if="isLokalExam && selectedStudent.origin_class_name && selectedStudent.origin_class_name !== '-'" class="text-teal-600 font-bold"> (Asal: {{ selectedStudent.origin_class_name }})</span>
+              </p>
             </div>
           </div>
 
@@ -2442,7 +2472,10 @@
                   >
                     <td class="border border-slate-300 px-2 py-1.5 text-center font-bold text-slate-500">{{ idx + 1 }}</td>
                     <td class="border border-slate-300 px-2.5 py-1.5 text-center font-mono text-slate-600">{{ student.nisn || '-' }}</td>
-                    <td class="border border-slate-300 px-3 py-1.5 font-bold text-slate-800">{{ student.name }}</td>
+                    <td class="border border-slate-300 px-3 py-1.5 font-bold text-slate-800">
+                      {{ student.name }}
+                      <span v-if="isLokalExam && student.origin_class_name && student.origin_class_name !== '-'" class="ml-1 text-[10px] text-teal-700 font-bold">({{ student.origin_class_name }})</span>
+                    </td>
                     <td class="border border-slate-300 px-1.5 py-1.5 text-center font-bold text-slate-600">{{ student.gender || '-' }}</td>
 
                     <!-- Scores per question type -->

@@ -34,11 +34,28 @@ class ExamCorrectionController extends Controller
     {
         $teacher = $this->getTeacher($request);
 
-        // Get all classes with students count
+        // Get all classes with students count (accounting for both regular and lokal classes)
         $classes = \App\Models\ClassRoom::withCount('students')
             ->orderBy('grade_level')
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->map(function ($c) {
+                $name = trim($c->name);
+                $lower = strtolower($name);
+                $isLokal = in_array($name, ['7', '8']) || in_array($lower, ['kelas 7', 'kelas 8']) ||
+                    in_array($name, ['9A', '9a', '9-A', '9-a', '9B', '9b', '9-B', '9-b']);
+
+                $lokalCount = \App\Models\Student::where('lokal_class_id', $c->id)->count();
+
+                return [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'grade_level' => $c->grade_level,
+                    'students_count' => ($lokalCount > 0 && in_array($name, ['7', '8'])) ? $lokalCount : $c->students_count,
+                    'lokal_students_count' => $lokalCount,
+                    'is_lokal' => $isLokal,
+                ];
+            });
 
         // Get subjects: teacher subjects or all subjects
         if ($teacher && $teacher->subjects()->exists()) {
@@ -269,10 +286,29 @@ class ExamCorrectionController extends Controller
             }
         }
 
-        // Fetch all active students in this classroom
-        $students = Student::where('class_id', $exam->class_room_id)
-            ->orderBy('full_name', 'asc')
-            ->get();
+        // Fetch all active students in this classroom (either regular or lokal class)
+        $targetClass = $exam->classRoom;
+        $isLokalClass = false;
+        if ($targetClass) {
+            $name = trim($targetClass->name);
+            $lower = strtolower($name);
+            $isLokalClass = in_array($name, ['7', '8']) || in_array($lower, ['kelas 7', 'kelas 8']);
+        }
+
+        if ($isLokalClass) {
+            $students = Student::with('classRoom')
+                ->where(function ($q) use ($exam) {
+                    $q->where('lokal_class_id', $exam->class_room_id)
+                      ->orWhere('class_id', $exam->class_room_id);
+                })
+                ->orderBy('full_name', 'asc')
+                ->get();
+        } else {
+            $students = Student::with('classRoom')
+                ->where('class_id', $exam->class_room_id)
+                ->orderBy('full_name', 'asc')
+                ->get();
+        }
 
         // Fetch existing submissions
         $submissions = ExamSubmission::where('exam_package_id', $exam->id)
@@ -287,6 +323,7 @@ class ExamCorrectionController extends Controller
                 'nisn' => $student->nisn,
                 'nis' => $student->nis,
                 'name' => $student->full_name ?? $student->name ?? '-',
+                'origin_class_name' => $student->classRoom?->name ?? '-',
                 'gender' => $student->gender,
                 'submission_id' => $sub ? $sub->id : null,
                 'student_answers' => $sub ? $sub->student_answers : [],
