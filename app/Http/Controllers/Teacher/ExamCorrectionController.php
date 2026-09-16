@@ -42,17 +42,21 @@ class ExamCorrectionController extends Controller
             ->map(function ($c) {
                 $name = trim($c->name);
                 $lower = strtolower($name);
+                $isClass9A = in_array($name, ['9A', '9a', '9-A', '9-a']) || in_array($lower, ['kelas 9a', 'kelas 9-a', 'ix-a', 'ix a']);
+                $isClass9B = in_array($name, ['9B', '9b', '9-B', '9-b']) || in_array($lower, ['kelas 9b', 'kelas 9-b', 'ix-b', 'ix b']);
                 $isLokal = in_array($name, ['7', '8']) || in_array($lower, ['kelas 7', 'kelas 8']) ||
+                    $isClass9A || $isClass9B ||
                     str_contains($lower, 'lokal') || str_starts_with($lower, 'l-') || str_starts_with($lower, 'lok-');
 
                 $lokalCount = \App\Models\Student::where('lokal_class_id', $c->id)->count();
+                $isLokalTingkat = in_array($name, ['7', '8']) || in_array($lower, ['kelas 7', 'kelas 8']);
 
                 return [
                     'id' => $c->id,
                     'name' => $c->name,
                     'grade_level' => $c->grade_level,
-                    'students_count' => ($lokalCount > 0 && in_array($name, ['7', '8'])) ? $lokalCount : $c->students_count,
-                    'lokal_students_count' => $lokalCount,
+                    'students_count' => ($lokalCount > 0 && $isLokalTingkat) ? $lokalCount : $c->students_count,
+                    'lokal_students_count' => $lokalCount > 0 ? $lokalCount : $c->students_count,
                     'is_lokal' => $isLokal,
                 ];
             });
@@ -291,8 +295,10 @@ class ExamCorrectionController extends Controller
         $isLokalClass = false;
         if ($targetClass) {
             $name = trim($targetClass->name);
-            $lower = strtolower($name);
+            $isClass9A = in_array($name, ['9A', '9a', '9-A', '9-a']) || in_array($lower, ['kelas 9a', 'kelas 9-a', 'ix-a', 'ix a']);
+            $isClass9B = in_array($name, ['9B', '9b', '9-B', '9-b']) || in_array($lower, ['kelas 9b', 'kelas 9-b', 'ix-b', 'ix b']);
             $isLokalClass = in_array($name, ['7', '8']) || in_array($lower, ['kelas 7', 'kelas 8']) ||
+                $isClass9A || $isClass9B ||
                 str_contains($lower, 'lokal') || str_starts_with($lower, 'l-') || str_starts_with($lower, 'lok-');
         }
 

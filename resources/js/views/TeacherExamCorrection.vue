@@ -3225,32 +3225,51 @@ const classes = ref([]);
 const subjects = ref([]);
 const activeAcademicYear = ref(null);
 
-function isLokalClass(c, all = []) {
+function isLokalClass(c) {
   if (!c) return false;
-  if (typeof c.is_lokal === 'boolean') return c.is_lokal;
-
   const raw = String(c.name || '').trim();
   const lower = raw.toLowerCase();
-
-  // Explicit keywords
-  if (lower.includes('lokal') || lower.startsWith('l-') || lower.startsWith('lok-')) return true;
-  if (lower.includes('utama') || lower.includes('induk') || lower.includes('reguler')) return false;
-
-  // Clean prefix 'Kelas ' or 'Kls '
-  const clean = raw.replace(/^(kelas|kls)\s*/i, '').trim();
+  const clean = raw.replace(/^(kelas|kls)\s*/i, '').trim().toLowerCase();
 
   // Standalone numbers 7 and 8 are specifically for Jadwal Lokal
   if (clean === '7' || clean === '8' || lower === 'kelas 7' || lower === 'kelas 8') return true;
 
-  // Specific rombel letters (e.g. '7A', '7-A', '8A', '8B', '9A', '9-A', '9B', '9-B') are Rombel Reguler Utama
-  if (/^\d+[-_\s]*[a-zA-Z]/.test(clean)) return false;
+  // Kelas 9A & 9B (or 9-A & 9-B) are also used for Jadwal Lokal
+  if (clean === '9a' || clean === '9-a' || clean === '9b' || clean === '9-b' || lower === 'kelas 9a' || lower === 'kelas 9-a' || lower === 'kelas 9b' || lower === 'kelas 9-b' || lower === 'ix-a' || lower === 'ix-b') return true;
+
+  // Custom lokal class ids from localStorage if set
+  try {
+    const customLokalIds = JSON.parse(localStorage.getItem('siakad_lokal_class_ids') || '[]');
+    if (Array.isArray(customLokalIds) && customLokalIds.includes(c.id)) return true;
+  } catch (e) {}
+
+  // Explicit keywords
+  if (lower.includes('lokal') || lower.startsWith('l-') || lower.startsWith('lok-')) return true;
+
+  // If backend marked it as is_lokal
+  if (c.is_lokal === true) return true;
 
   return false;
 }
 
-function formatClassOptionLabel(c, all = null) {
+function isUtamaClass(c) {
+  if (!c) return false;
+  const raw = String(c.name || '').trim();
+  const lower = raw.toLowerCase();
+  const clean = raw.replace(/^(kelas|kls)\s*/i, '').trim().toLowerCase();
+
+  // Standalone numbers 7 and 8 are strictly for Jadwal Lokal (NOT utama)
+  if (clean === '7' || clean === '8' || lower === 'kelas 7' || lower === 'kelas 8') return false;
+
+  // Explicit only lokal
+  if (lower.includes('lokal-only') || lower.includes('jadwal-lokal-only')) return false;
+
+  // All regular rombel classes like 9A, 9B, 7A, 7B, 8A, 8B are utama
+  return true;
+}
+
+function formatClassOptionLabel(c, isLokal = false) {
   if (!c) return '';
-  const isLokal = typeof all === 'boolean' ? all : isLokalClass(c, Array.isArray(all) ? all : classes.value);
   const raw = String(c.name || '').trim();
   const count = (isLokal ? (c.lokal_students_count || c.students_count) : c.students_count) || 0;
 
@@ -3264,25 +3283,25 @@ function formatClassOptionLabel(c, all = null) {
 function isLokalClassName(name) {
   if (!name) return false;
   const match = (classes.value || []).find(c => c.name === name);
-  if (match) return isLokalClass(match, classes.value);
+  if (match) return isLokalClass(match);
 
   const raw = String(name).trim();
   const lower = raw.toLowerCase();
-  const clean = raw.replace(/^(kelas|kls)\s*/i, '').trim();
+  const clean = raw.replace(/^(kelas|kls)\s*/i, '').trim().toLowerCase();
 
-  if (lower.includes('lokal') || lower.startsWith('l-') || lower.startsWith('lok-')) return true;
   if (clean === '7' || clean === '8' || lower === 'kelas 7' || lower === 'kelas 8') return true;
-  if (/^\d+[-_\s]*[a-zA-Z]/.test(clean)) return false;
+  if (clean === '9a' || clean === '9-a' || clean === '9b' || clean === '9-b' || lower === 'ix-a' || lower === 'ix-b') return true;
+  if (lower.includes('lokal') || lower.startsWith('l-') || lower.startsWith('lok-')) return true;
 
   return false;
 }
 
 const utamaClasses = computed(() => {
-  return (classes.value || []).filter(c => !isLokalClass(c, classes.value));
+  return (classes.value || []).filter(isUtamaClass);
 });
 
 const lokalClasses = computed(() => {
-  return (classes.value || []).filter(c => isLokalClass(c, classes.value));
+  return (classes.value || []).filter(isLokalClass);
 });
 
 function formatAcademicYear(exam) {
