@@ -13,9 +13,14 @@ class GradeController extends TeacherController
 {
     public function options(Request $request)
     {
-        $teacher = $this->resolveTeacher($request);
+        $teacher = null;
+        try {
+            $teacher = $this->resolveTeacher($request);
+        } catch (\Throwable $e) {
+            // gracefully fallback if unlinked
+        }
 
-        $teacherSubjects = $teacher->subjects;
+        $teacherSubjects = $teacher ? $teacher->subjects : collect();
         if ($teacherSubjects->isEmpty()) {
             $teacherSubjects = Subject::orderBy('name')->get();
         }
@@ -49,10 +54,13 @@ class GradeController extends TeacherController
         $class = ClassRoom::findOrFail($classId);
         $subject = Subject::findOrFail($subjectId);
 
-        $students = Student::where('class_id', $classId)
-            ->with('user')
-            ->orderBy('full_name')
-            ->get();
+        $students = Student::where(function ($q) use ($classId) {
+            $q->where('class_id', $classId)
+              ->orWhere('lokal_class_id', $classId);
+        })
+        ->with('user')
+        ->orderBy('full_name')
+        ->get();
 
         $existingGrades = Grade::whereIn('student_id', $students->pluck('id'))
             ->where('subject_id', $subjectId)

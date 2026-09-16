@@ -15,10 +15,10 @@ class RoleMiddleware
 
         $userRole = $request->user()->role;
 
-        if (! in_array($userRole, $roles, true)) {
-            return response()->json(['message' => 'Forbidden.'], 403);
+        if ($userRole === 'admin' || in_array($userRole, $roles, true)) {
+            return $next($request);
         }
 
-        return $next($request);
+        return response()->json(['message' => 'Forbidden.'], 403);
     }
 }

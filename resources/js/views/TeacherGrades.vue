@@ -457,7 +457,7 @@ const stats = computed(() => {
 
 const loadOptions = async () => {
   try {
-    const res = await api.get('teacher/grade-options');
+    const res = await api.get('/teacher/grade-options');
     const data = res?.data || res || {};
     subjects.value = data.subjects || [];
     classes.value = data.classes || [];
@@ -476,10 +476,12 @@ const fetchStudents = async () => {
 
   loading.value = true;
   try {
-    const res = await api.get('teacher/grades', {
-      subject_id: selectedSubject.value,
-      class_id: selectedClass.value,
-      academic_year_id: activeYear.value?.id,
+    const res = await api.get('/teacher/grades', {
+      params: {
+        subject_id: selectedSubject.value,
+        class_id: selectedClass.value,
+        academic_year_id: activeYear.value?.id,
+      }
     });
     const data = res?.data || res || {};
     
@@ -609,7 +611,7 @@ const submitGrades = async () => {
       }),
     };
 
-    await api.post('teacher/grades/batch', payload);
+    await api.post('/teacher/grades/batch', payload);
     toast.success('Seluruh nilai siswa & target KKTP/KKM berhasil disimpan!');
     fetchStudents();
   } catch (err) {

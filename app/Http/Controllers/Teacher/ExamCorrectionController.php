@@ -295,6 +295,7 @@ class ExamCorrectionController extends Controller
         $isLokalClass = false;
         if ($targetClass) {
             $name = trim($targetClass->name);
+            $lower = strtolower($name);
             $isClass9A = in_array($name, ['9A', '9a', '9-A', '9-a']) || in_array($lower, ['kelas 9a', 'kelas 9-a', 'ix-a', 'ix a']);
             $isClass9B = in_array($name, ['9B', '9b', '9-B', '9-b']) || in_array($lower, ['kelas 9b', 'kelas 9-b', 'ix-b', 'ix b']);
             $isLokalClass = in_array($name, ['7', '8']) || in_array($lower, ['kelas 7', 'kelas 8']) ||
