@@ -74,14 +74,14 @@
         <div class="flex items-center gap-2 flex-wrap">
           <select v-model="filterClass" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-teal-400">
             <option value="">Semua Kelas</option>
-            <optgroup label="🏛️ Kelas Utama / Angkatan">
-              <option v-for="c in utamaClasses" :key="'utama-' + c.id" :value="c.id">
+            <optgroup v-if="utamaClasses.length > 0" label="🏫 Kelas Utama (Rombel)">
+              <option v-for="c in utamaClasses" :key="'filter-u-' + c.id" :value="c.id">
                 Kelas {{ c.name }} ({{ c.students_count || 0 }} Siswa)
               </option>
             </optgroup>
-            <optgroup label="📍 Rombel / Kelas Lokal">
-              <option v-for="c in lokalClasses" :key="'lokal-' + c.id" :value="c.id">
-                Kelas {{ c.name }} ({{ c.students_count || c.lokal_students_count || 0 }} Siswa)
+            <optgroup v-if="lokalClasses.length > 0" label="📍 Kelas Lokal">
+              <option v-for="c in lokalClasses" :key="'filter-l-' + c.id" :value="c.id">
+                Kelas {{ c.name }} ({{ c.lokal_students_count || c.students_count || 0 }} Siswa)
               </option>
             </optgroup>
           </select>
@@ -1627,14 +1627,14 @@
               <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Kelas *</label>
               <select v-model="examForm.class_room_id" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400">
                 <option value="">-- Pilih Kelas --</option>
-                <optgroup v-if="utamaClasses.length > 0" label="🏛️ Kelas Utama / Angkatan">
+                <optgroup v-if="utamaClasses.length > 0" label="🏫 Kelas Utama (Rombel)">
                   <option v-for="c in utamaClasses" :key="'modal-u-' + c.id" :value="c.id">
-                    {{ formatClassOptionLabel(c, classes) }}
+                    {{ formatClassOptionLabel(c, false) }}
                   </option>
                 </optgroup>
-                <optgroup v-if="lokalClasses.length > 0" label="📍 Rombel / Kelas Lokal">
+                <optgroup v-if="lokalClasses.length > 0" label="📍 Kelas Lokal">
                   <option v-for="c in lokalClasses" :key="'modal-l-' + c.id" :value="c.id">
-                    {{ formatClassOptionLabel(c, classes) }}
+                    {{ formatClassOptionLabel(c, true) }}
                   </option>
                 </optgroup>
               </select>
@@ -3258,9 +3258,9 @@ function isLokalClass(c, all = []) {
   return false;
 }
 
-function formatClassOptionLabel(c, all = []) {
+function formatClassOptionLabel(c, all = null) {
   if (!c) return '';
-  const isLokal = isLokalClass(c, all);
+  const isLokal = typeof all === 'boolean' ? all : isLokalClass(c, Array.isArray(all) ? all : classes.value);
   const raw = String(c.name || '').trim();
   const clean = raw.replace(/^(kelas|kls)\s*/i, '').trim();
   const count = c.students_count || c.lokal_students_count || 0;
@@ -3270,14 +3270,15 @@ function formatClassOptionLabel(c, all = []) {
     const rombelTag = match ? `[Rombel ${match[0].toUpperCase()}]` : '[Rombel]';
     return `📍 Kelas ${raw} (Tingkat ${c.grade_level}) — ${count} Siswa ${rombelTag}`;
   } else {
-    const hasRombelSiblings = (all || []).some(other => {
+    const classList = Array.isArray(all) ? all : classes.value;
+    const hasRombelSiblings = (classList || []).some(other => {
       if (other.id === c.id) return false;
       if (String(other.grade_level) !== String(c.grade_level)) return false;
       const otherClean = String(other.name || '').replace(/^(kelas|kls)\s*/i, '').trim();
       return /^\d+[-_\s]*[a-zA-Z]/.test(otherClean);
     });
     const tag = hasRombelSiblings ? `[Gabungan Rombel Tingkat ${c.grade_level}]` : '[Kelas Utama]';
-    return `🏛️ Kelas ${raw} (Tingkat ${c.grade_level}) — ${count} Siswa ${tag}`;
+    return `🏫 Kelas ${raw} (Tingkat ${c.grade_level}) — ${count} Siswa ${tag}`;
   }
 }
 
