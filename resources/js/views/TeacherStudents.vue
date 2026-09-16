@@ -133,7 +133,7 @@
               <!-- Kelas -->
               <td class="px-6 py-4">
                 <span class="px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-100/60 inline-block">
-                  {{ row.classRoom?.name || row.class_name || '-' }}
+                  {{ formatStudentClass(row) }}
                 </span>
               </td>
 
@@ -237,6 +237,14 @@ const currentPage = ref(1);
 const selectedPerPage = ref(10);
 const totalPages = ref(1);
 const totalRecords = ref(0);
+
+function formatStudentClass(row) {
+  if (!row) return '-';
+  const name = row.classRoom?.name || row.class_name || row.lokalClassRoom?.name || row.lokal_class_name;
+  if (!name) return '-';
+  const trimmed = String(name).trim();
+  return trimmed.toLowerCase().startsWith('kelas') ? trimmed : 'Kelas ' + trimmed;
+}
 
 function getInitials(name) {
   if (!name) return '?';

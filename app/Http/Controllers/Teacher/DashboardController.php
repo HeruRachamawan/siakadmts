@@ -16,7 +16,10 @@ class DashboardController extends TeacherController
 
         $classIds = ClassRoom::where('homeroom_teacher_id', $teacher->id)->pluck('id')->toArray();
 
-        $studentCount = Student::whereIn('class_id', $classIds)->count();
+        $studentCount = Student::where(function ($q) use ($classIds) {
+            $q->whereIn('class_id', $classIds)
+              ->orWhereIn('lokal_class_id', $classIds);
+        })->count();
         $classCount = count($classIds);
 
         $today = now()->toDateString();

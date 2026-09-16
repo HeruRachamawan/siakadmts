@@ -360,6 +360,24 @@
             </Transition>
           </RouterLink>
 
+          <!-- Data Siswa Binaan (Khusus Wali Kelas) -->
+          <RouterLink
+            v-if="isHomeroomTeacher"
+            to="/teacher/students"
+            :title="isCollapsed ? 'Data Siswa Binaan' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Users class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
+                <span class="text-sm whitespace-nowrap overflow-hidden">Data Siswa</span>
+                <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold uppercase">Wali</span>
+              </div>
+            </Transition>
+          </RouterLink>
+
           <!-- Rapor ASTS (Sumatif Tengah Semester - Khusus Wali Kelas) -->
           <RouterLink
             v-if="isHomeroomTeacher"
