@@ -744,6 +744,11 @@ class ExamCorrectionController extends Controller
             ->where('student_id', $studentId)
             ->delete();
 
+        // Bersihkan juga nilai di tabel rapor ASTS jika sebelumnya sudah pernah ditarik/disinkron
+        \App\Models\AstsSubjectScore::where('exam_package_id', $exam->id)
+            ->where('student_id', $studentId)
+            ->delete();
+
         if ($exam->submissions()->count() === 0 && $exam->status === 'completed') {
             $exam->update(['status' => 'draft']);
         }
@@ -761,6 +766,9 @@ class ExamCorrectionController extends Controller
     {
         $exam = ExamPackage::findOrFail($id);
         ExamSubmission::where('exam_package_id', $exam->id)->delete();
+
+        // Bersihkan juga seluruh nilai di tabel rapor ASTS untuk ujian ini jika sebelumnya pernah ditarik
+        \App\Models\AstsSubjectScore::where('exam_package_id', $exam->id)->delete();
 
         if ($exam->status === 'completed') {
             $exam->update(['status' => 'draft']);

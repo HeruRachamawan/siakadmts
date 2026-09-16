@@ -154,12 +154,12 @@
             <span class="text-slate-400">&bull; {{ ledgerStudents.length }} Siswa</span>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 lg:flex lg:items-center gap-2 w-full lg:w-auto">
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:items-center gap-2 w-full lg:w-auto">
             <!-- Smart Rank Adjuster Button -->
             <button
               type="button"
               @click="openRankModal"
-              class="px-3.5 py-2.5 sm:py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+              class="px-3 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
               title="Atur peringkat juara siswa atau selaraskan nilai secara otomatis"
             >
               <Trophy class="w-3.5 h-3.5 text-amber-200 flex-shrink-0" />
@@ -171,22 +171,34 @@
               type="button"
               @click="openPullModal"
               :disabled="pullingScores"
-              class="px-3.5 py-2.5 sm:py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
+              class="px-3.5 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
               title="Tarik otomatis nilai dari modul Koreksi Ujian (bisa memilih Nilai Jadi standar rapor atau Nilai Asli)"
             >
               <Sparkles v-if="!pullingScores" class="w-3.5 h-3.5 text-amber-200 flex-shrink-0" />
               <div v-else class="animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full flex-shrink-0"></div>
-              <span>{{ pullingScores ? 'Menarik...' : '⚡ Tarik Nilai Koreksi' }}</span>
+              <span>{{ pullingScores ? 'Menarik...' : '⚡ Tarik Nilai' }}</span>
+            </button>
+
+            <!-- Reset / Kosongkan Nilai Button -->
+            <button
+              type="button"
+              @click="openResetModal()"
+              :disabled="subjectsWithScoresCount === 0"
+              class="px-3 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs active:scale-95"
+              title="Kosongkan atau reset nilai rapor (per mata pelajaran atau seluruh kelas)"
+            >
+              <RotateCcw class="w-3.5 h-3.5 text-rose-600 flex-shrink-0" />
+              <span>Reset Nilai</span>
             </button>
 
             <!-- Export Excel Ledger -->
             <button
               type="button"
               @click="exportLedgerExcel"
-              class="px-3.5 py-2.5 sm:py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              class="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
             >
               <Download class="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-              <span>Export Excel (.xlsx)</span>
+              <span>Export Excel</span>
             </button>
           </div>
         </div>
@@ -211,14 +223,24 @@
             <div
               v-for="st in subjectStatuses"
               :key="st.subject_id"
-              class="px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5"
+              class="group px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5"
               :class="st.has_scores ? 'bg-emerald-50 text-emerald-900 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'"
-              :title="st.has_scores ? `Sudah disetorkan (${st.synced_count} nilai) • Terakhir: ${st.last_synced_at || '-'}` : 'Belum ada nilai yang disetorkan untuk mapel ini'"
+              :title="st.has_scores ? `Sudah disetorkan (${st.synced_count} nilai) • Klik tombol silang untuk reset nilai mapel ini` : 'Belum ada nilai yang disetorkan untuk mapel ini'"
             >
               <span class="w-2 h-2 rounded-full" :class="st.has_scores ? 'bg-emerald-500' : 'bg-slate-300'"></span>
               <span>{{ st.subject_name }}</span>
               <span v-if="st.has_scores" class="text-[10px] text-emerald-600 font-mono">✓</span>
               <span v-else class="text-[10px] text-slate-400 font-mono">⏳</span>
+
+              <button
+                v-if="st.has_scores"
+                type="button"
+                @click.stop="openResetModal(st.subject_id)"
+                class="ml-0.5 p-0.5 rounded hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                title="Kosongkan nilai mapel ini"
+              >
+                <X class="w-3 h-3" />
+              </button>
             </div>
           </div>
         </div>
@@ -1072,6 +1094,15 @@
               </div>
             </label>
           </div>
+
+          <!-- Clean Sync Notice -->
+          <div class="p-3 bg-teal-50/70 border border-teal-200 rounded-xl flex items-start gap-2.5 text-xs text-teal-900">
+            <Sparkles class="w-4 h-4 text-teal-600 flex-shrink-0 mt-0.5" />
+            <div class="space-y-0.5">
+              <p class="font-bold">Sinkronisasi Bersih Otomatis Aktif</p>
+              <p class="text-[11px] text-teal-700 leading-normal">Jika lembar koreksi atau nilai suatu mapel telah direset/dikosongkan oleh guru mapel, sisa nilai lama di rapor otomatis ikut dibersihkan.</p>
+            </div>
+          </div>
         </div>
 
         <!-- Footer -->
@@ -1092,6 +1123,115 @@
             <Sparkles v-if="!pullingScores" class="w-4 h-4 text-amber-200" />
             <div v-else class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
             <span>{{ pullingScores ? 'Menarik...' : 'Tarik Nilai Sekarang' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL RESET / KOSONGKAN NILAI RAPOR (KHUSUS WALI KELAS & ADMIN) -->
+    <div v-if="showResetModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 no-print">
+      <div class="bg-white rounded-2xl sm:rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 transform transition-all">
+        <!-- Header -->
+        <div class="px-5 py-4 sm:px-6 sm:py-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-rose-500/10 via-rose-50 to-transparent">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-600/20">
+              <RotateCcw class="w-5 h-5" />
+            </div>
+            <div>
+              <h2 class="text-sm sm:text-base font-black text-slate-800 font-lexend uppercase tracking-wider">Kosongkan / Reset Nilai Rapor</h2>
+              <p class="text-[11px] sm:text-xs text-slate-500 font-medium">Kelas {{ ledgerData?.class?.name }} • Semester {{ activeSemester === 'ganjil' ? 'Ganjil' : 'Genap' }}</p>
+            </div>
+          </div>
+          <button @click="showResetModal = false" class="w-8 h-8 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 cursor-pointer">
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-4 sm:p-6 space-y-4">
+          <div class="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-950">
+            <AlertTriangle class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+            <p class="leading-relaxed">
+              Tindakan ini akan mengosongkan nilai yang sudah ditarik ke dalam rapor. Data nilai ujian di akun Guru Mapel tidak akan terpengaruh dan tetap aman.
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <label class="text-xs font-black text-slate-700 uppercase tracking-wider block">Pilih Lingkup Reset Nilai:</label>
+            
+            <!-- Option A: 1 Mapel Tertentu -->
+            <label
+              class="p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3.5 block"
+              :class="resetScope === 'single' ? 'border-rose-500 bg-rose-50/50 ring-2 ring-rose-500/20 shadow-sm' : 'border-slate-200 hover:bg-slate-50'"
+            >
+              <input
+                type="radio"
+                name="reset_scope"
+                value="single"
+                v-model="resetScope"
+                class="mt-1 w-4 h-4 text-rose-600 focus:ring-rose-500 border-slate-300 cursor-pointer flex-shrink-0"
+              />
+              <div class="space-y-2 flex-1 min-w-0">
+                <div>
+                  <span class="text-xs font-black text-slate-900 font-lexend block">Hanya 1 Mata Pelajaran Tertentu</span>
+                  <span class="text-[11px] text-slate-500">Pilih mata pelajaran yang nilainya ingin dikosongkan/dibersihkan dari rapor</span>
+                </div>
+
+                <select
+                  v-if="resetScope === 'single'"
+                  v-model="selectedResetSubjectId"
+                  class="w-full text-xs font-bold rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 shadow-2xs"
+                >
+                  <option value="" disabled>-- Pilih Mata Pelajaran --</option>
+                  <option
+                    v-for="st in subjectStatuses"
+                    :key="st.subject_id"
+                    :value="st.subject_id"
+                  >
+                    {{ st.subject_name }} {{ st.has_scores ? `(Sudah ada ${st.synced_count} nilai)` : '(Belum ada nilai)' }}
+                  </option>
+                </select>
+              </div>
+            </label>
+
+            <!-- Option B: Semua Mapel Kelas Ini -->
+            <label
+              class="p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3.5 block"
+              :class="resetScope === 'all' ? 'border-rose-500 bg-rose-50/50 ring-2 ring-rose-500/20 shadow-sm' : 'border-slate-200 hover:bg-slate-50'"
+            >
+              <input
+                type="radio"
+                name="reset_scope"
+                value="all"
+                v-model="resetScope"
+                class="mt-1 w-4 h-4 text-rose-600 focus:ring-rose-500 border-slate-300 cursor-pointer flex-shrink-0"
+              />
+              <div class="space-y-0.5 flex-1 min-w-0">
+                <span class="text-xs font-black text-slate-900 font-lexend block">Seluruh Nilai Rapor Kelas Ini (Semua Mapel)</span>
+                <span class="text-[11px] text-slate-500">Kosongkan semua nilai tarikan di kelas ini untuk semester ini agar lembaran rapor bersih kembali</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-4 sm:p-5 border-t border-slate-100 grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-2.5 bg-slate-50/50">
+          <button
+            type="button"
+            @click="showResetModal = false"
+            class="px-4 py-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer text-center"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            @click="executeResetScores"
+            :disabled="resettingScores || (resetScope === 'single' && !selectedResetSubjectId)"
+            class="col-span-2 sm:col-span-1 px-5 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 text-center"
+          >
+            <RotateCcw v-if="!resettingScores" class="w-4 h-4" />
+            <div v-else class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+            <span>{{ resettingScores ? 'Mengosongkan...' : 'Ya, Kosongkan Nilai' }}</span>
           </button>
         </div>
       </div>
@@ -1211,6 +1351,7 @@ import {
   Calendar,
   LayoutGrid,
   List,
+  AlertTriangle,
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -1268,6 +1409,12 @@ const notesForm = reactive({
 // Modal Pull Scores
 const showPullModal = ref(false);
 const selectedScoreSource = ref('final'); // 'final' (Nilai Jadi) | 'raw' (Nilai Asli)
+
+// Modal Reset Scores
+const showResetModal = ref(false);
+const resettingScores = ref(false);
+const resetScope = ref('single'); // 'single' | 'all'
+const selectedResetSubjectId = ref('');
 
 // Modal Titimangsa
 const showTitimangsaModal = ref(false);
@@ -1434,6 +1581,7 @@ async function executeAutoPullScores() {
       semester: activeSemester.value,
       academic_year_id: activeYear.value?.id,
       score_source: selectedScoreSource.value,
+      clean_sync: true,
     });
     const msg = res?.message || 'Nilai koreksi berhasil ditarik ke Rapor ASTS!';
     toast.success(msg);
@@ -1446,6 +1594,57 @@ async function executeAutoPullScores() {
     toast.error(err.response?.data?.message || 'Gagal menarik nilai koreksi.');
   } finally {
     pullingScores.value = false;
+  }
+}
+
+function openResetModal(preselectedSubjectId = null) {
+  if (!selectedClassId.value) {
+    toast.error('Silakan pilih kelas terlebih dahulu.');
+    return;
+  }
+  const filledSubjects = subjectStatuses.value.filter(s => s.has_scores);
+  if (preselectedSubjectId) {
+    resetScope.value = 'single';
+    selectedResetSubjectId.value = preselectedSubjectId;
+  } else if (filledSubjects.length > 0) {
+    resetScope.value = 'single';
+    selectedResetSubjectId.value = filledSubjects[0].subject_id;
+  } else {
+    resetScope.value = 'all';
+    selectedResetSubjectId.value = '';
+  }
+  showResetModal.value = true;
+}
+
+async function executeResetScores() {
+  if (!selectedClassId.value) return;
+  if (resetScope.value === 'single' && !selectedResetSubjectId.value) {
+    toast.error('Silakan pilih mata pelajaran yang ingin dikosongkan.');
+    return;
+  }
+
+  resettingScores.value = true;
+  try {
+    const payload = {
+      class_id: selectedClassId.value,
+      semester: activeSemester.value,
+      academic_year_id: activeYear.value?.id,
+    };
+    if (resetScope.value === 'single') {
+      payload.subject_id = selectedResetSubjectId.value;
+    }
+
+    const res = await api.post('/teacher/asts-reports/reset-scores', payload);
+    toast.success(res?.message || 'Nilai rapor berhasil dikosongkan!');
+    showResetModal.value = false;
+    await fetchLedger();
+    if (activeSubTab.value === 'print' || selectedStudentId.value) {
+      await fetchPrintData();
+    }
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal mengosongkan nilai rapor.');
+  } finally {
+    resettingScores.value = false;
   }
 }
 

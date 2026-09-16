@@ -132,6 +132,7 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::post('asts-reports/save-titimangsa', [\App\Http\Controllers\AstsReportController::class, 'saveTitimangsa']);
     Route::post('asts-reports/adjust-ranks', [\App\Http\Controllers\AstsReportController::class, 'adjustRanks']);
     Route::post('asts-reports/reset-ranks', [\App\Http\Controllers\AstsReportController::class, 'resetRanks']);
+    Route::post('asts-reports/reset-scores', [\App\Http\Controllers\AstsReportController::class, 'resetScores']);
     Route::get('asts-reports/student/{studentId}', [\App\Http\Controllers\AstsReportController::class, 'studentReport']);
     Route::get('asts-reports/batch-class/{classId}', [\App\Http\Controllers\AstsReportController::class, 'batchClassReport']);
 });

@@ -498,11 +498,15 @@ class AstsReportController extends Controller
         }
 
         $totalScoresSynced = 0;
+        $totalScoresCleaned = 0;
         $syncedSubjects = [];
+        $cleanSync = $request->boolean('clean_sync', true);
 
         DB::beginTransaction();
         try {
             foreach ($exams as $exam) {
+                $examSyncedStudentIds = [];
+
                 foreach ($exam->submissions as $sub) {
                     if (!empty($classStudentIds) && !in_array($sub->student_id, $classStudentIds)) {
                         continue;
@@ -547,22 +551,39 @@ class AstsReportController extends Controller
                         ]
                     );
 
+                    $examSyncedStudentIds[] = $sub->student_id;
                     $totalScoresSynced++;
                 }
 
-                $syncedSubjects[] = $exam->subject?->name ?? 'Mapel #' . $exam->subject_id;
+                // SINKRONISASI BERSIH: Jika guru mapel telah mereset/mengosongkan nilai ujian (atau sebagian siswa),
+                // hapus sisa nilai lama di Rapor ASTS kelas ini yang tidak ada di lembar koreksi ujian!
+                if ($cleanSync && !empty($classStudentIds)) {
+                    $cleaned = AstsSubjectScore::where('subject_id', $exam->subject_id)
+                        ->where('academic_year_id', $yearId)
+                        ->where('semester', $semester)
+                        ->whereIn('student_id', $classStudentIds)
+                        ->whereNotIn('student_id', $examSyncedStudentIds)
+                        ->delete();
+                    $totalScoresCleaned += $cleaned;
+                }
+
+                if (!empty($examSyncedStudentIds)) {
+                    $syncedSubjects[] = $exam->subject?->name ?? 'Mapel #' . $exam->subject_id;
+                }
             }
 
             DB::commit();
 
             $uniqueSubjects = array_unique($syncedSubjects);
             $sourceLabel = $scoreSource === 'raw' ? 'Nilai Asli (Murni)' : 'Nilai Jadi (Standar Rapor)';
+            $cleanMsg = $totalScoresCleaned > 0 ? " ({$totalScoresCleaned} nilai lama yang sudah direset guru mapel berhasil dibersihkan)" : '';
 
             return response()->json([
                 'status' => 'success',
-                'message' => "Berhasil menarik {$totalScoresSynced} data {$sourceLabel} dari " . count($uniqueSubjects) . " mata pelajaran ke Rapor ASTS Semester " . ucfirst($semester) . "!",
+                'message' => "Berhasil menarik {$totalScoresSynced} data {$sourceLabel} dari " . count($uniqueSubjects) . " mata pelajaran ke Rapor ASTS Semester " . ucfirst($semester) . "{$cleanMsg}!",
                 'synced_subjects_count' => count($uniqueSubjects),
                 'synced_scores_count' => $totalScoresSynced,
+                'cleaned_scores_count' => $totalScoresCleaned,
                 'subjects' => $uniqueSubjects,
                 'score_source' => $scoreSource,
             ]);
@@ -573,6 +594,66 @@ class AstsReportController extends Controller
                 'message' => 'Gagal menarik nilai: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Reset / Kosongkan nilai rapor ASTS untuk 1 mapel tertentu atau seluruh mapel di kelas ini.
+     */
+    public function resetScores(Request $request)
+    {
+        $request->validate([
+            'class_id' => 'required|exists:classes,id',
+            'semester' => 'nullable|string|in:ganjil,genap',
+            'academic_year_id' => 'nullable|exists:academic_years,id',
+            'subject_id' => 'nullable|exists:subjects,id',
+        ]);
+
+        $classId = (int)$request->class_id;
+        $semester = $request->input('semester', 'ganjil');
+
+        if (!$this->checkHomeroomAccess($request->user(), $classId, $request)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
+            ], 403);
+        }
+
+        $activeYear = AcademicYear::where('is_active', true)->first();
+        $yearId = $request->input('academic_year_id', $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));
+
+        $classStudents = $this->getStudentsForClass($classId);
+        $classStudentIds = $classStudents->pluck('id')->toArray();
+
+        if (empty($classStudentIds)) {
+            return response()->json([
+                'status' => 'warning',
+                'message' => 'Tidak ada siswa yang terdaftar di kelas ini.',
+                'deleted_count' => 0,
+            ]);
+        }
+
+        $query = AstsSubjectScore::whereIn('student_id', $classStudentIds)
+            ->where('academic_year_id', $yearId)
+            ->where('semester', $semester);
+
+        $subjectName = 'Semua Mata Pelajaran';
+        if ($request->filled('subject_id')) {
+            $subjectId = (int)$request->subject_id;
+            $subject = Subject::find($subjectId);
+            if ($subject) {
+                $subjectName = $subject->name;
+            }
+            $query->where('subject_id', $subjectId);
+        }
+
+        $deletedCount = $query->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Berhasil mengosongkan {$deletedCount} data nilai untuk {$subjectName} di kelas ini!",
+            'deleted_count' => $deletedCount,
+            'subject_name' => $subjectName,
+        ]);
     }
 
     /**
