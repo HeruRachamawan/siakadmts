@@ -43,7 +43,7 @@ class ExamCorrectionController extends Controller
                 $name = trim($c->name);
                 $lower = strtolower($name);
                 $isLokal = in_array($name, ['7', '8']) || in_array($lower, ['kelas 7', 'kelas 8']) ||
-                    in_array($name, ['9A', '9a', '9-A', '9-a', '9B', '9b', '9-B', '9-b']);
+                    str_contains($lower, 'lokal') || str_starts_with($lower, 'l-') || str_starts_with($lower, 'lok-');
 
                 $lokalCount = \App\Models\Student::where('lokal_class_id', $c->id)->count();
 
