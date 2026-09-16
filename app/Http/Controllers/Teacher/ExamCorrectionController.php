@@ -292,7 +292,8 @@ class ExamCorrectionController extends Controller
         if ($targetClass) {
             $name = trim($targetClass->name);
             $lower = strtolower($name);
-            $isLokalClass = in_array($name, ['7', '8']) || in_array($lower, ['kelas 7', 'kelas 8']);
+            $isLokalClass = in_array($name, ['7', '8']) || in_array($lower, ['kelas 7', 'kelas 8']) ||
+                str_contains($lower, 'lokal') || str_starts_with($lower, 'l-') || str_starts_with($lower, 'lok-');
         }
 
         if ($isLokalClass) {
