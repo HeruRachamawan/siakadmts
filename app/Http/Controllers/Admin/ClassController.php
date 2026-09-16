@@ -40,6 +40,10 @@ class ClassController extends BaseController
 
     public function store(Request $request)
     {
+        if ($request->has('homeroom_teacher_id') && (empty($request->input('homeroom_teacher_id')) || $request->input('homeroom_teacher_id') === '')) {
+            $request->merge(['homeroom_teacher_id' => null]);
+        }
+
         $request->validate([
             'homeroom_teacher_id' => ['nullable', 'exists:teachers,id'],
             'academic_year_id' => ['required', 'exists:academic_years,id'],
@@ -61,6 +65,10 @@ class ClassController extends BaseController
 
     public function update(Request $request, ClassRoom $class)
     {
+        if ($request->has('homeroom_teacher_id') && (empty($request->input('homeroom_teacher_id')) || $request->input('homeroom_teacher_id') === '')) {
+            $request->merge(['homeroom_teacher_id' => null]);
+        }
+
         $request->validate([
             'homeroom_teacher_id' => ['sometimes', 'nullable', 'exists:teachers,id'],
             'academic_year_id' => ['sometimes', 'required', 'exists:academic_years,id'],

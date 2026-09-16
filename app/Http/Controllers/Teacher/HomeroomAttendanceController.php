@@ -55,10 +55,13 @@ class HomeroomAttendanceController extends TeacherController
 
         $date = $request->input('date', now()->toDateString());
 
-        // Get all students in the selected class
-        $students = Student::where('class_id', $selectedClass->id)
-            ->orderBy('full_name', 'asc')
-            ->get();
+        // Get all students in the selected class (supports regular and lokal class)
+        $students = Student::where(function ($q) use ($selectedClass) {
+            $q->where('class_id', $selectedClass->id)
+              ->orWhere('lokal_class_id', $selectedClass->id);
+        })
+        ->orderBy('full_name', 'asc')
+        ->get();
 
         // Fetch existing attendance records for this class and date (daily attendance with subject_id null)
         $attendances = Attendance::where('class_id', $selectedClass->id)
@@ -106,7 +109,10 @@ class HomeroomAttendanceController extends TeacherController
                 'name' => $c->name,
                 'grade_level' => $c->grade_level,
                 'is_my_homeroom' => ($c->homeroom_teacher_id == $teacher->id),
-                'students_count' => Student::where('class_id', $c->id)->count(),
+                'students_count' => Student::where(function ($q) use ($c) {
+                    $q->where('class_id', $c->id)
+                      ->orWhere('lokal_class_id', $c->id);
+                })->count(),
             ];
         });
 

@@ -119,6 +119,19 @@ class AuthController extends BaseController
         $payload = $user->only(['id', 'name', 'email', 'username', 'role']);
 
         $teacher = $user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first();
+        if (!$teacher && $user) {
+            $byNip = \App\Models\Teacher::where('nip', $user->username)->first();
+            if ($byNip) {
+                $byNip->update(['user_id' => $user->id]);
+                $teacher = $byNip;
+            } else {
+                $byName = \App\Models\Teacher::where('full_name', $user->name)->first();
+                if ($byName) {
+                    $byName->update(['user_id' => $user->id]);
+                    $teacher = $byName;
+                }
+            }
+        }
 
         if ($teacher) {
             $homeroomClasses = ClassRoom::where('homeroom_teacher_id', $teacher->id)->get(['id', 'name', 'grade_level']);

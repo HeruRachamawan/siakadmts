@@ -9,8 +9,12 @@ class ClassController extends TeacherController
 {
     public function index(Request $request)
     {
-        $user = $request->user();
-        $teacher = $user ? ($user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first()) : null;
+        $teacher = null;
+        try {
+            $teacher = $this->resolveTeacher($request);
+        } catch (\Throwable $e) {
+            return response()->json([]);
+        }
 
         if (!$teacher) {
             return response()->json([]);

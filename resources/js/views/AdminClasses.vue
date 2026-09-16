@@ -526,7 +526,8 @@ const isLokalOnly = (cls) => {
 
 const isBothUtamaAndLokal = (cls) => {
   const name = (cls?.name || '').trim().toLowerCase();
-  return name === '9a' || name === 'kelas 9a' || name === '9b' || name === 'kelas 9b';
+  return name === '9a' || name === 'kelas 9a' || name === '9-a' || name === 'kelas 9-a' ||
+         name === '9b' || name === 'kelas 9b' || name === '9-b' || name === 'kelas 9-b';
 };
 
 const sortClasses = (list) => {

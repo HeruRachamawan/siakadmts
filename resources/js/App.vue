@@ -483,19 +483,26 @@ const teacherAttendanceRequests = ref([]);
 const myPasswordResetRequests = ref([]);
 const seenTeacherNotifIds = ref(JSON.parse(localStorage.getItem('seen_teacher_notif_ids') || '[]'));
 const seenTeacherPassNotifIds = ref(JSON.parse(localStorage.getItem('seen_teacher_pass_notif_ids') || '[]'));
+const teacherHomeroomActive = ref(null);
+
 const isHomeroomTeacher = computed(() => {
   // Hanya berlaku jika saat ini sedang dalam mode Guru
   if (currentRole.value !== 'teacher') return false;
 
+  // 1. Jika sudah diverifikasi secara real-time dari endpoint backend
+  if (teacherHomeroomActive.value !== null) {
+    return teacherHomeroomActive.value;
+  }
+
   const u = user.value;
   if (!u) return false;
 
-  // 1. Cek flag boolean is_homeroom_teacher langsung dari payload login/me
+  // 2. Cek flag boolean is_homeroom_teacher langsung dari payload login/me
   if (u.is_homeroom_teacher !== undefined && u.is_homeroom_teacher !== null) {
     return Boolean(u.is_homeroom_teacher);
   }
 
-  // 2. Cek apakah ada daftar kelas binaan pada homeroom_classes
+  // 3. Cek apakah ada daftar kelas binaan pada homeroom_classes
   if (Array.isArray(u.homeroom_classes)) {
     return u.homeroom_classes.length > 0;
   }
@@ -509,21 +516,21 @@ const isPpdbCommittee = computed(() => {
 });
 
 async function checkTeacherHomeroom() {
-  if (currentRole.value === 'teacher') {
-    const u = user.value;
-    if (u && u.is_homeroom_teacher !== undefined) {
-      return;
-    }
+  if (currentRole.value === 'teacher' && auth.token) {
     try {
-      const clsRes = await api.get('teacher/classes');
+      const clsRes = await api.get('/teacher/classes');
       const list = Array.isArray(clsRes) ? clsRes : (clsRes.data || []);
       const isHomeroom = list.length > 0;
-      if (auth.user) {
-        auth.user.is_homeroom_teacher = isHomeroom;
+      teacherHomeroomActive.value = isHomeroom;
+      if (user.value) {
+        user.value.is_homeroom_teacher = isHomeroom;
+        user.value.homeroom_classes = list;
       }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to check teacher homeroom status:', e);
     }
+  } else if (currentRole.value !== 'teacher') {
+    teacherHomeroomActive.value = null;
   }
 }
 
@@ -749,6 +756,7 @@ onMounted(() => {
   timer = setInterval(updateTime, 1000);
   loadSettings();
   fetchRoleNotifications();
+  checkTeacherHomeroom();
   notifTimer = setInterval(fetchRoleNotifications, 15000);
 });
 onUnmounted(() => {
@@ -758,11 +766,17 @@ onUnmounted(() => {
 
 watch([user, currentRole], () => {
   fetchRoleNotifications();
+  if (currentRole.value === 'teacher') {
+    checkTeacherHomeroom();
+  }
 }, { immediate: true });
 
 watch(() => route.path, () => {
   isMobileSidebarOpen.value = false;
   fetchRoleNotifications();
+  if (currentRole.value === 'teacher') {
+    checkTeacherHomeroom();
+  }
 });
 
 const currentRouteName = computed(() => {

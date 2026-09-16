@@ -225,14 +225,14 @@
           </RouterLink>
         </template>
 
-        <!-- 4. DATA MASTER (Admin, Kepala Madrasah, Operator, Kurikulum & Wali Kelas) -->
-        <template v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum' || currentRole === 'kepala_sekolah' || (currentRole === 'teacher' && isHomeroomTeacher)">
+        <!-- 4. DATA MASTER (Admin, Kepala Madrasah, Operator, Kurikulum) -->
+        <template v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum' || currentRole === 'kepala_sekolah'">
           <div v-if="!isCollapsed" class="nav-section">Data Master</div>
           <div v-else class="my-1 border-t border-slate-200/50"></div>
 
           <!-- Data Siswa -->
           <RouterLink
-            :to="`/${currentRole === 'teacher' ? 'teacher' : 'admin'}/students`"
+            to="/admin/students"
             :title="isCollapsed ? 'Data Siswa' : ''"
             class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
