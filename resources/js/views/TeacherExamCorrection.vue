@@ -3,8 +3,8 @@
     <!-- Header Card -->
     <div class="bg-white rounded-2xl sm:rounded-[2rem] p-3.5 sm:p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20 flex-shrink-0">
-          <CheckSquare class="w-6 h-6 text-white" />
+        <div class="w-11 h-11 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 flex-shrink-0">
+          <FileCheck2 class="w-6 h-6 text-white" />
         </div>
         <div>
           <h1 class="text-xl font-black text-slate-800 font-lexend uppercase tracking-wider">Koreksi Soal & Analisis Butir Soal</h1>
@@ -3196,7 +3196,7 @@ import { api } from '../api';
 import { useToast } from '../composables/useToast';
 import { useConfirm } from '../composables/useConfirm';
 import {
-  CheckSquare,
+  FileCheck2,
   PlusCircle,
   BookOpen,
   Award,

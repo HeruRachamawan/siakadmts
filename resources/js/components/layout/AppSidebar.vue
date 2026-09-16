@@ -177,7 +177,7 @@
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <CheckSquare class="w-4 h-4 flex-shrink-0" />
+            <FileCheck2 class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Koreksi</span>
             </Transition>
@@ -432,7 +432,7 @@
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <CheckSquare class="w-4 h-4 flex-shrink-0" />
+            <FileCheck2 class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Koreksi Soal</span>
             </Transition>
@@ -524,7 +524,7 @@
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <CheckSquare class="w-4 h-4 flex-shrink-0" />
+            <FileCheck2 class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Koreksi</span>
             </Transition>
@@ -842,7 +842,7 @@ import {
   Inbox,
   Send,
   Users,
-  CheckSquare,
+  FileCheck2,
   BookOpenCheck,
   ArrowRightLeft,
   X

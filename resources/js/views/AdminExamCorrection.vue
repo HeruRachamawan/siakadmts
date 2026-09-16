@@ -6,7 +6,7 @@
 
       <div class="relative z-10 flex items-center gap-3.5">
         <div class="w-12 h-12 bg-white/10 rounded-md border border-white/20 p-2 flex items-center justify-center shadow-inner flex-shrink-0">
-          <CheckSquare class="w-6 h-6 text-emerald-300" />
+          <FileCheck2 class="w-6 h-6 text-emerald-300" />
         </div>
         <div>
           <div class="flex items-center gap-2 mb-0.5">
@@ -612,7 +612,7 @@ import { api } from '../api';
 import { useToast } from '../composables/useToast';
 import ExamCorrectionPrintModals from '../components/ExamCorrectionPrintModals.vue';
 import {
-  CheckSquare,
+  FileCheck2,
   BookOpen,
   Award,
   CheckCircle2,

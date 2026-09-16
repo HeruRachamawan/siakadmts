@@ -323,7 +323,7 @@
             <td style="width: 33.33%; vertical-align: top; padding: 0 6px;">
               <div>
                 <p style="font-weight: 700; color: #334155; margin: 0;">Wali Kelas,</p>
-                <p style="font-weight: 700; color: #0f172a; margin: 0;">Kelas {{ report?.student?.class_name || '' }}</p>
+                <p style="font-weight: 700; color: #0f172a; margin: 0;">{{ (report?.student?.class_name || '').toLowerCase().startsWith('kelas') ? report?.student?.class_name : ('Kelas ' + (report?.student?.class_name || '')) }}</p>
               </div>
               <div style="height: 38px;"></div>
               <div>

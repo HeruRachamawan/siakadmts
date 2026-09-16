@@ -67,7 +67,7 @@
             to="/admin/exam-corrections"
             class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-emerald-600 text-white border border-emerald-500 hover:bg-emerald-500 transition-colors shadow-2xs"
           >
-            <CheckSquare class="w-3.5 h-3.5" />
+            <FileCheck2 class="w-3.5 h-3.5" />
             <span>Koreksi Ujian</span>
           </RouterLink>
 
@@ -707,6 +707,7 @@ import {
   Users,
   Building2,
   FileText,
+  FileCheck2,
   CalendarDays,
   Clock,
   Search,

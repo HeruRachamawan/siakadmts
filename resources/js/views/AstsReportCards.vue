@@ -1827,6 +1827,7 @@ async function fetchSingleReport() {
     const res = await api.get(`/teacher/asts-reports/student/${selectedStudentId.value}`, {
       semester: activeSemester.value,
       academic_year_id: activeYear.value?.id,
+      class_id: selectedClassId.value,
     });
     singleReportData.value = res?.data || res || null;
   } catch (err) {

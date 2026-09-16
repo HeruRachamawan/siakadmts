@@ -1157,18 +1157,23 @@ class AstsReportController extends Controller
         // Display Class & Homeroom Teacher resolution
         $displayClass = $contextClassId ? ClassRoom::with('homeroomTeacher')->find($contextClassId) : $student->classRoom;
         $isLokal = $displayClass ? self::isLokalClass($displayClass) : false;
+        // Opsi A: Nama kelas persis di sistem tanpa embel-embel teks (Lokal)
         $className = $displayClass?->name ?? ($student->classRoom?->name ?? '-');
-        if ($isLokal && !str_contains(strtolower($className), 'lokal')) {
-            $className .= ' (Lokal)';
-        }
 
+        // Resolusi Wali Kelas / Pembina Kelas
         $homeroomTeacher = $displayClass?->homeroomTeacher ?: $student->classRoom?->homeroomTeacher;
         if (!$homeroomTeacher && $displayClass) {
-            $fallbackPrimary = ClassRoom::where('grade_level', $displayClass->grade_level)
-                ->whereNotNull('homeroom_teacher_id')
-                ->with('homeroomTeacher')
-                ->first();
-            $homeroomTeacher = $fallbackPrimary?->homeroomTeacher;
+            // Jika guru login adalah pembina / wali kelas untuk rombel ini, utamakan guru tersebut
+            $currentTeacher = auth()->user()?->teacher ?: (auth()->id() ? \App\Models\Teacher::where('user_id', auth()->id())->first() : null);
+            if ($currentTeacher && $this->checkHomeroomAccess(auth()->user(), (int)$displayClass->id)) {
+                $homeroomTeacher = $currentTeacher;
+            } else {
+                $fallbackPrimary = ClassRoom::where('grade_level', $displayClass->grade_level)
+                    ->whereNotNull('homeroom_teacher_id')
+                    ->with('homeroomTeacher')
+                    ->first();
+                $homeroomTeacher = $fallbackPrimary?->homeroomTeacher;
+            }
         }
 
         // Titimangsa (Tempat & Tanggal Terbit Rapor)
