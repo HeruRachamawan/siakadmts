@@ -1044,8 +1044,18 @@
 
             <button
               type="button"
+              @click="clearRemedialScores"
+              class="px-3 py-2 rounded-xl bg-white hover:bg-rose-50 active:scale-95 text-rose-600 font-bold text-xs border border-rose-200 shadow-sm transition-all flex items-center gap-1 cursor-pointer ml-auto"
+              title="Kosongkan semua nilai jadi (kembali kosong / fallback ke nilai asli)"
+            >
+              <RotateCcw class="w-3.5 h-3.5" />
+              <span>Kosongkan Nilai Jadi</span>
+            </button>
+
+            <button
+              type="button"
               @click="resetAdjustedToOriginal"
-              class="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 active:scale-95 text-slate-600 font-bold text-xs border border-slate-300 shadow-sm transition-all flex items-center gap-1 cursor-pointer ml-auto"
+              class="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 active:scale-95 text-slate-600 font-bold text-xs border border-slate-300 shadow-sm transition-all flex items-center gap-1 cursor-pointer"
               title="Kembalikan nilai jadi sama dengan nilai asli"
             >
               <RotateCcw class="w-3.5 h-3.5" />
@@ -4582,6 +4592,13 @@ function resetAdjustedToOriginal() {
     s.remedial_score = s.total_score;
   });
   toast.info('Nilai jadi dikembalikan sama persis dengan nilai asli koreksi.');
+}
+
+function clearRemedialScores() {
+  activeStudents.value.forEach(s => {
+    s.remedial_score = null;
+  });
+  toast.info('Seluruh nilai jadi berhasil dikosongkan.');
 }
 
 async function saveAdjustedScores() {
