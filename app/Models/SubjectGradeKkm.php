@@ -77,7 +77,19 @@ class SubjectGradeKkm extends Model
             }
         }
 
-        // 3. Fallback to subject's general passing_grade
+        // 3. Fallback to settings per grade level (default_kkm_7, default_kkm_8, default_kkm_9)
+        if ($normalizedGrade !== null) {
+            $rawSettings = \App\Models\Setting::where('key', 'exam_correction_settings')->value('value');
+            if ($rawSettings) {
+                $decoded = json_decode($rawSettings, true);
+                $key = 'default_kkm_' . $normalizedGrade;
+                if (!empty($decoded[$key])) {
+                    return floatval($decoded[$key]);
+                }
+            }
+        }
+
+        // 4. Fallback to subject's general passing_grade
         $subject = Subject::find($subjectId);
         if ($subject && !empty($subject->passing_grade)) {
             return floatval($subject->passing_grade);

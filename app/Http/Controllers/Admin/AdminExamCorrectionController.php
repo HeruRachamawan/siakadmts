@@ -199,6 +199,9 @@ class AdminExamCorrectionController extends Controller
     {
         $defaultSettings = [
             'default_kkm' => 75,
+            'default_kkm_7' => 75,
+            'default_kkm_8' => 75,
+            'default_kkm_9' => 75,
             'default_pg_weight' => 70,
             'default_essay_weight' => 30,
             'default_options_count' => 4, // 4: A-D, 5: A-E
@@ -208,7 +211,13 @@ class AdminExamCorrectionController extends Controller
         ];
 
         $raw = \App\Models\Setting::where('key', 'exam_correction_settings')->value('value');
-        $settings = $raw ? array_merge($defaultSettings, json_decode($raw, true) ?: []) : $defaultSettings;
+        $saved = $raw ? (json_decode($raw, true) ?: []) : [];
+        $settings = array_merge($defaultSettings, $saved);
+
+        // Ensure grade-specific KKM fallbacks to general default_kkm if missing
+        if (!isset($saved['default_kkm_7'])) $settings['default_kkm_7'] = $settings['default_kkm'];
+        if (!isset($saved['default_kkm_8'])) $settings['default_kkm_8'] = $settings['default_kkm'];
+        if (!isset($saved['default_kkm_9'])) $settings['default_kkm_9'] = $settings['default_kkm'];
 
         return response()->json([
             'status' => 'success',
@@ -222,7 +231,10 @@ class AdminExamCorrectionController extends Controller
     public function updateSettings(Request $request)
     {
         $validated = $request->validate([
-            'default_kkm' => 'required|numeric|min:0|max:100',
+            'default_kkm' => 'nullable|numeric|min:0|max:100',
+            'default_kkm_7' => 'required|numeric|min:0|max:100',
+            'default_kkm_8' => 'required|numeric|min:0|max:100',
+            'default_kkm_9' => 'required|numeric|min:0|max:100',
             'default_pg_weight' => 'required|numeric|min:0|max:100',
             'default_essay_weight' => 'required|numeric|min:0|max:100',
             'default_options_count' => 'required|integer|in:4,5',
@@ -230,6 +242,10 @@ class AdminExamCorrectionController extends Controller
             'correction_deadline' => 'nullable|string',
             'allow_direct_sync' => 'required|boolean',
         ]);
+
+        if (empty($validated['default_kkm'])) {
+            $validated['default_kkm'] = round(($validated['default_kkm_7'] + $validated['default_kkm_8'] + $validated['default_kkm_9']) / 3, 1);
+        }
 
         \App\Models\Setting::updateOrCreate(
             ['key' => 'exam_correction_settings'],

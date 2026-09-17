@@ -1970,7 +1970,12 @@
           <!-- KKM & Weights -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Batas KKM/KKTP *</label>
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Batas KKM/KKTP *</label>
+                <span v-if="detectedKkmInfo" :class="detectedKkmInfo.class" class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">
+                  {{ detectedKkmInfo.label }}
+                </span>
+              </div>
               <input
                 v-model.number="examForm.kkm"
                 type="number"
@@ -1979,6 +1984,7 @@
                 required
                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 text-center focus:ring-2 focus:ring-teal-400"
               />
+              <p class="text-[10px] text-slate-400 font-medium">Otomatis menyesuaikan standar tingkat kelas</p>
             </div>
 
             <div class="space-y-1.5">
@@ -3234,6 +3240,37 @@ const exams = ref([]);
 const classes = ref([]);
 const subjects = ref([]);
 const activeAcademicYear = ref(null);
+const examCorrectionSettings = ref(null);
+
+const detectedKkmInfo = computed(() => {
+  const foundClass = classes.value.find(c => c.id == examForm.class_room_id);
+  const found = subjects.value.find(s => s.id == examForm.subject_id);
+
+  let gradeKey = null;
+  if (foundClass) {
+    const rawGrade = String(foundClass.grade_level || '').trim();
+    if (/7|VII/i.test(rawGrade)) gradeKey = '7';
+    else if (/8|VIII/i.test(rawGrade)) gradeKey = '8';
+    else if (/9|IX/i.test(rawGrade)) gradeKey = '9';
+  }
+
+  if (gradeKey) {
+    if (found && found.grade_kkms && found.grade_kkms[gradeKey] !== undefined) {
+      return {
+        label: `Standar Mapel Tkt ${gradeKey}`,
+        class: 'bg-emerald-100 text-emerald-800'
+      };
+    }
+    if (examCorrectionSettings.value && examCorrectionSettings.value[`default_kkm_${gradeKey}`] !== undefined) {
+      return {
+        label: `Standar Tingkat ${gradeKey}`,
+        class: 'bg-teal-100 text-teal-800'
+      };
+    }
+  }
+
+  return null;
+});
 
 function isLokalClass(c) {
   if (!c) return false;
@@ -4162,9 +4199,10 @@ async function fetchMeta() {
     activeAcademicYear.value = optData.active_academic_year || null;
 
     if (optData.settings) {
-      examForm.kkm = optData.settings.default_kkm ?? 75;
+      examCorrectionSettings.value = optData.settings;
       examForm.pg_weight = optData.settings.default_pg_weight ?? 70;
       examForm.essay_weight = optData.settings.default_essay_weight ?? 30;
+      onExamSubjectChange();
     }
   } catch (err) {
     console.error('Failed to load exam correction options:', err);
@@ -4240,26 +4278,44 @@ function examTypeLabel(type) {
 }
 
 function onExamSubjectChange() {
-  if (!examForm.subject_id) return;
-  const found = subjects.value.find(s => s.id == examForm.subject_id);
   const foundClass = classes.value.find(c => c.id == examForm.class_room_id);
-  if (found) {
-    if (foundClass && found.grade_kkms) {
-      const rawGrade = String(foundClass.grade_level || '').trim();
-      let gradeKey = rawGrade;
-      if (/7|VII/i.test(rawGrade)) gradeKey = '7';
-      else if (/8|VIII/i.test(rawGrade)) gradeKey = '8';
-      else if (/9|IX/i.test(rawGrade)) gradeKey = '9';
+  const found = subjects.value.find(s => s.id == examForm.subject_id);
 
-      if (found.grade_kkms[gradeKey] !== undefined) {
-        examForm.kkm = Number(found.grade_kkms[gradeKey]);
-        return;
-      }
-    }
-    if (found.passing_grade) {
-      examForm.kkm = Number(found.passing_grade);
+  let gradeKey = null;
+  if (foundClass) {
+    const rawGrade = String(foundClass.grade_level || '').trim();
+    if (/7|VII/i.test(rawGrade)) gradeKey = '7';
+    else if (/8|VIII/i.test(rawGrade)) gradeKey = '8';
+    else if (/9|IX/i.test(rawGrade)) gradeKey = '9';
+  }
+
+  // 1. Prioritas 1: KKM spesifik mapel untuk tingkatan kelas tersebut (dari Kurikulum / SubjectGradeKkm)
+  if (found && found.grade_kkms && gradeKey && found.grade_kkms[gradeKey] !== undefined) {
+    examForm.kkm = Number(found.grade_kkms[gradeKey]);
+    return;
+  }
+
+  // 2. Prioritas 2: Standar KKM tingkatan kelas dari pengaturan asesmen kurikulum (default_kkm_7, default_kkm_8, default_kkm_9)
+  if (gradeKey && examCorrectionSettings.value) {
+    const gradeSettingKey = `default_kkm_${gradeKey}`;
+    if (examCorrectionSettings.value[gradeSettingKey] !== undefined) {
+      examForm.kkm = Number(examCorrectionSettings.value[gradeSettingKey]);
+      return;
     }
   }
+
+  // 3. Prioritas 3: Standar passing grade mata pelajaran
+  if (found && found.passing_grade) {
+    examForm.kkm = Number(found.passing_grade);
+    return;
+  }
+
+  // 4. Fallback: Default KKM global asesmen atau 75
+  if (examCorrectionSettings.value?.default_kkm) {
+    examForm.kkm = Number(examCorrectionSettings.value.default_kkm);
+    return;
+  }
+  examForm.kkm = 75;
 }
 
 function openCreateModal() {

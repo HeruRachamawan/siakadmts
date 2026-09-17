@@ -470,32 +470,91 @@
         </div>
 
         <form @submit.prevent="saveSettings" class="p-8 space-y-5 max-h-[75vh] overflow-y-auto">
-          <!-- Default KKM & Option Count -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="space-y-1.5">
-              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">KKM/KKTP Standar *</label>
-              <input
-                v-model.number="settingsForm.default_kkm"
-                type="number"
-                min="0"
-                max="100"
-                required
-                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400 text-center"
-              />
-              <span class="text-[10px] text-slate-400 font-medium">Batas kelulusan default saat guru membuat ujian</span>
+          <!-- KKM / KKTP Standar Berdasarkan Tingkat (7, 8, 9) -->
+          <div class="space-y-2.5 p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <label class="block text-xs font-black text-slate-800 uppercase tracking-wider">Standar KKM / KKTP Per Tingkatan *</label>
+                <p class="text-[11px] text-slate-500 font-medium">Batas kelulusan otomatis saat guru membuat paket ujian kelas 7, 8, atau 9.</p>
+              </div>
+              <router-link
+                to="/admin/kurikulum/asts-monitoring"
+                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 text-[11px] font-bold transition-colors self-start sm:self-auto"
+                title="Buka Matriks Lengkap KKTP Per Mapel"
+              >
+                <span>Matriks Per Mapel</span>
+                <ChevronRight class="w-3 h-3" />
+              </router-link>
             </div>
 
-            <div class="space-y-1.5">
-              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Opsi Pilihan Ganda *</label>
-              <select
-                v-model.number="settingsForm.default_options_count"
-                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400"
-              >
-                <option :value="4">4 Pilihan (A, B, C, D) - Standar MTs</option>
-                <option :value="5">5 Pilihan (A, B, C, D, E)</option>
-              </select>
-              <span class="text-[10px] text-slate-400 font-medium">Format pilihan pada lembar kisi-kisi</span>
+            <div class="grid grid-cols-3 gap-3 pt-1">
+              <!-- Tingkat 7 -->
+              <div class="bg-white p-3 rounded-xl border border-emerald-200 shadow-2xs space-y-1.5 focus-within:ring-2 focus-within:ring-emerald-400">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-black text-emerald-700 uppercase tracking-wider">Tingkat VII</span>
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                </div>
+                <input
+                  v-model.number="settingsForm.default_kkm_7"
+                  type="number"
+                  min="0"
+                  max="100"
+                  required
+                  class="w-full bg-emerald-50/40 border border-emerald-100 rounded-lg px-2 py-1.5 text-center text-sm font-black text-emerald-950 focus:outline-hidden"
+                  placeholder="75"
+                />
+                <span class="block text-[9px] text-slate-400 text-center font-medium">Kelas 7</span>
+              </div>
+
+              <!-- Tingkat 8 -->
+              <div class="bg-white p-3 rounded-xl border border-blue-200 shadow-2xs space-y-1.5 focus-within:ring-2 focus-within:ring-blue-400">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-black text-blue-700 uppercase tracking-wider">Tingkat VIII</span>
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                </div>
+                <input
+                  v-model.number="settingsForm.default_kkm_8"
+                  type="number"
+                  min="0"
+                  max="100"
+                  required
+                  class="w-full bg-blue-50/40 border border-blue-100 rounded-lg px-2 py-1.5 text-center text-sm font-black text-blue-950 focus:outline-hidden"
+                  placeholder="75"
+                />
+                <span class="block text-[9px] text-slate-400 text-center font-medium">Kelas 8</span>
+              </div>
+
+              <!-- Tingkat 9 -->
+              <div class="bg-white p-3 rounded-xl border border-purple-200 shadow-2xs space-y-1.5 focus-within:ring-2 focus-within:ring-purple-400">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-black text-purple-700 uppercase tracking-wider">Tingkat IX</span>
+                  <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                </div>
+                <input
+                  v-model.number="settingsForm.default_kkm_9"
+                  type="number"
+                  min="0"
+                  max="100"
+                  required
+                  class="w-full bg-purple-50/40 border border-purple-100 rounded-lg px-2 py-1.5 text-center text-sm font-black text-purple-950 focus:outline-hidden"
+                  placeholder="75"
+                />
+                <span class="block text-[9px] text-slate-400 text-center font-medium">Kelas 9</span>
+              </div>
             </div>
+          </div>
+
+          <!-- Opsi Pilihan Ganda -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Opsi Pilihan Ganda *</label>
+            <select
+              v-model.number="settingsForm.default_options_count"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400"
+            >
+              <option :value="4">4 Pilihan (A, B, C, D) - Standar MTs</option>
+              <option :value="5">5 Pilihan (A, B, C, D, E)</option>
+            </select>
+            <span class="text-[10px] text-slate-400 font-medium">Format pilihan pada lembar kisi-kisi saat guru membuat soal</span>
           </div>
 
           <!-- Default Weights -->
@@ -628,6 +687,7 @@ import {
   BarChart2,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   FolderOpen,
   Layers
 } from 'lucide-vue-next';
@@ -664,6 +724,9 @@ const showSettingsModal = ref(false);
 const savingSettings = ref(false);
 const settingsForm = ref({
   default_kkm: 75,
+  default_kkm_7: 75,
+  default_kkm_8: 75,
+  default_kkm_9: 75,
   default_pg_weight: 70,
   default_essay_weight: 30,
   default_options_count: 4,
@@ -931,9 +994,15 @@ async function deleteExam(exam) {
 async function openSettingsModal() {
   try {
     const res = await api.get('/admin/exam-corrections/settings');
-    const sData = res?.data || res;
+    const sData = res?.data?.data || res?.data || res;
     if (sData) {
-      settingsForm.value = { ...settingsForm.value, ...sData };
+      settingsForm.value = {
+        ...settingsForm.value,
+        ...sData,
+        default_kkm_7: sData.default_kkm_7 ?? sData.default_kkm ?? 75,
+        default_kkm_8: sData.default_kkm_8 ?? sData.default_kkm ?? 75,
+        default_kkm_9: sData.default_kkm_9 ?? sData.default_kkm ?? 75,
+      };
     }
     showSettingsModal.value = true;
   } catch (err) {
