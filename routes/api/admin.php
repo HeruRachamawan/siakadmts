@@ -136,6 +136,11 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::get('asts-reports/student/{studentId}', [\App\Http\Controllers\AstsReportController::class, 'studentReport']);
     Route::get('asts-reports/batch-class/{classId}', [\App\Http\Controllers\AstsReportController::class, 'batchClassReport']);
 
+    // Kurikulum Monitoring ASTS & Matriks KKTP Per Tingkat (7, 8, 9)
+    Route::get('kurikulum/kktp-matrix', [\App\Http\Controllers\Kurikulum\KurikulumAstsMonitoringController::class, 'getKktpMatrix']);
+    Route::post('kurikulum/kktp-matrix', [\App\Http\Controllers\Kurikulum\KurikulumAstsMonitoringController::class, 'saveKktpMatrix']);
+    Route::get('kurikulum/asts-monitoring', [\App\Http\Controllers\Kurikulum\KurikulumAstsMonitoringController::class, 'getMonitoringOverview']);
+
     // Manajemen Ekstrakurikuler (Admin & Staff)
     Route::get('extracurriculars', [\App\Http\Controllers\ExtracurricularController::class, 'index']);
     Route::post('extracurriculars', [\App\Http\Controllers\ExtracurricularController::class, 'store']);

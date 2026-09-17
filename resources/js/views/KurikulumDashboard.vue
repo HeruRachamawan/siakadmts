@@ -140,6 +140,31 @@
       </RouterLink>
     </div>
 
+    <!-- BANNER: MONITORING RAPOR ASTS & KKTP PER TINGKAT -->
+    <div class="bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 rounded-2xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md border border-emerald-700/50">
+      <div class="flex items-start gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-white/10 text-emerald-300 flex items-center justify-center flex-shrink-0 border border-white/20">
+          <BookOpenCheck class="w-5 h-5" />
+        </div>
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm sm:text-base font-black font-lexend text-white">Monitoring Rapor ASTS & Standar KKTP</h3>
+            <span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-400 text-slate-950 uppercase">Baru</span>
+          </div>
+          <p class="text-xs text-emerald-100/80 font-medium leading-relaxed max-w-xl">
+            Atur standar KKTP/KKM per tingkat kelas (7, 8, 9) dan pantau live kemajuan setoran nilai seluruh rombel madrasah.
+          </p>
+        </div>
+      </div>
+      <RouterLink
+        to="/kurikulum/asts-monitoring"
+        class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-2 self-start sm:self-center cursor-pointer active:scale-95 whitespace-nowrap"
+      >
+        <span>Buka Panel Monitoring</span>
+        <ArrowRight class="w-4 h-4" />
+      </RouterLink>
+    </div>
+
     <!-- 3. LIVE KBM SESSION MONITOR (Sedang Berlangsung Sekarang - Seluruh Kelas) -->
     <div v-if="selectedDay === currentTodayDay && (hasLiveSessions || isSchoolHours)" class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg border border-slate-700/50 space-y-3.5">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 border-b border-slate-700/60 pb-3">
@@ -719,7 +744,9 @@ import {
   Coffee,
   Flag,
   Sparkles,
-  MoonStar
+  MoonStar,
+  BookOpenCheck,
+  ArrowRight
 } from 'lucide-vue-next';
 import { api } from '../api';
 

@@ -68,6 +68,16 @@ class ExamCorrectionController extends Controller
             $subjects = \App\Models\Subject::orderBy('name')->get();
         }
 
+        $subjects->load('gradeKkms');
+        $subjects->transform(function ($sbj) {
+            $kkmMap = [];
+            foreach ($sbj->gradeKkms as $gk) {
+                $kkmMap[(string)$gk->grade_level] = floatval($gk->kkm);
+            }
+            $sbj->grade_kkms = $kkmMap;
+            return $sbj;
+        });
+
         $activeYear = AcademicYear::where('is_active', true)->first()
             ?? AcademicYear::orderBy('id', 'desc')->first();
 
@@ -180,6 +190,14 @@ class ExamCorrectionController extends Controller
             $validated['academic_year_id'] = $activeYear ? $activeYear->id : null;
         }
 
+        $targetClass = \App\Models\ClassRoom::find($validated['class_room_id']);
+        $effectiveKkm = \App\Models\SubjectGradeKkm::getEffectiveKkm(
+            (int)$validated['subject_id'],
+            $targetClass?->grade_level,
+            $validated['academic_year_id'] ?? null
+        );
+        $finalKkm = !empty($validated['kkm']) ? floatval($validated['kkm']) : $effectiveKkm;
+
         DB::beginTransaction();
         try {
             $exam = ExamPackage::create([
@@ -191,7 +209,7 @@ class ExamCorrectionController extends Controller
                 'exam_type' => $validated['exam_type'],
                 'semester' => $validated['semester'] ?? 'ganjil',
                 'total_questions' => $validated['total_questions'],
-                'kkm' => $validated['kkm'] ?? 75.00,
+                'kkm' => $finalKkm,
                 'pg_weight' => $validated['pg_weight'] ?? 70.00,
                 'essay_weight' => $validated['essay_weight'] ?? 30.00,
                 'status' => 'draft',

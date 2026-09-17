@@ -197,6 +197,20 @@
             </Transition>
           </RouterLink>
 
+          <!-- Monitoring ASTS & Standar KKTP -->
+          <RouterLink
+            to="/kurikulum/asts-monitoring"
+            :title="isCollapsed ? 'Monitoring ASTS & Standar KKTP' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Sliders class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring & KKTP</span>
+            </Transition>
+          </RouterLink>
+
 
           <RouterLink
             to="/admin/calendar-events"
@@ -578,6 +592,20 @@
             </Transition>
           </RouterLink>
 
+          <!-- Monitoring ASTS & Standar KKTP -->
+          <RouterLink
+            to="/kurikulum/asts-monitoring"
+            :title="isCollapsed ? 'Monitoring ASTS & Standar KKTP' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Sliders class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring & KKTP</span>
+            </Transition>
+          </RouterLink>
+
 
           <!-- Rekap Presensi -->
           <RouterLink
@@ -878,6 +906,7 @@ import {
   Users,
   FileCheck2,
   BookOpenCheck,
+  Sliders,
   Tent,
   ArrowRightLeft,
   X

@@ -59,6 +59,9 @@ const routes = [
     // Waka Kurikulum Dedicated Routes
     { path: '/kurikulum/dashboard', component: () => import('../views/KurikulumDashboard.vue'), meta: { requiresAuth: true, roles: ['kurikulum', 'admin'], title: 'Dashboard Waka Kurikulum' } },
     { path: '/kurikulum/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['kurikulum', 'operator', 'admin', 'kepala_sekolah'], title: 'Buku Agenda Persuratan' } },
+    { path: '/kurikulum/asts-monitoring', component: () => import('../views/KurikulumAstsMonitoring.vue'), meta: { requiresAuth: true, roles: ['kurikulum', 'admin', 'operator', 'kepala_sekolah'], title: 'Monitoring ASTS & Standar KKTP' } },
+    { path: '/admin/kktp-settings', redirect: '/kurikulum/asts-monitoring' },
+    { path: '/admin/asts-monitoring', redirect: '/kurikulum/asts-monitoring' },
 
     // Admin & Shared Routes
     { path: '/admin/dashboard', component: () => import('../views/AdminDashboard.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Dashboard Admin' } },

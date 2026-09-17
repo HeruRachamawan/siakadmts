@@ -1635,7 +1635,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
               <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Kelas *</label>
-              <select v-model="examForm.class_room_id" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400">
+              <select v-model="examForm.class_room_id" @change="onExamSubjectChange" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400">
                 <option value="">-- Pilih Kelas --</option>
                 <optgroup v-if="lokalClasses.length > 0" label="📍 Kelompok / Kelas Lokal">
                   <option v-for="c in lokalClasses" :key="'modal-l-' + c.id" :value="c.id">
@@ -4242,8 +4242,23 @@ function examTypeLabel(type) {
 function onExamSubjectChange() {
   if (!examForm.subject_id) return;
   const found = subjects.value.find(s => s.id == examForm.subject_id);
-  if (found && found.passing_grade) {
-    examForm.kkm = Number(found.passing_grade);
+  const foundClass = classes.value.find(c => c.id == examForm.class_room_id);
+  if (found) {
+    if (foundClass && found.grade_kkms) {
+      const rawGrade = String(foundClass.grade_level || '').trim();
+      let gradeKey = rawGrade;
+      if (/7|VII/i.test(rawGrade)) gradeKey = '7';
+      else if (/8|VIII/i.test(rawGrade)) gradeKey = '8';
+      else if (/9|IX/i.test(rawGrade)) gradeKey = '9';
+
+      if (found.grade_kkms[gradeKey] !== undefined) {
+        examForm.kkm = Number(found.grade_kkms[gradeKey]);
+        return;
+      }
+    }
+    if (found.passing_grade) {
+      examForm.kkm = Number(found.passing_grade);
+    }
   }
 }
 
@@ -4275,6 +4290,7 @@ function openCreateModal() {
   examForm.pg_weight = 100;
   examForm.essay_weight = 0;
   examForm.quick_keys = '';
+  onExamSubjectChange();
   showCreateModal.value = true;
 }
 

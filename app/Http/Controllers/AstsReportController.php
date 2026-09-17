@@ -326,20 +326,23 @@ class AstsReportController extends Controller
         $scoreMap = [];
         $subjectStatusMap = [];
         foreach ($subjects as $sbj) {
+            $effectiveKkm = \App\Models\SubjectGradeKkm::getEffectiveKkm($sbj->id, $class->grade_level, $yearId);
+            $sbj->kkm = $effectiveKkm;
+            $sbj->passing_grade = $effectiveKkm;
+
             $subjectStatusMap[$sbj->id] = [
                 'subject_id' => $sbj->id,
                 'subject_name' => $sbj->name,
                 'subject_code' => $sbj->code,
+                'kkm' => $effectiveKkm,
                 'has_scores' => false,
                 'synced_count' => 0,
                 'last_synced_at' => null,
             ];
         }
 
-        $subjectPassingGradeMap = $subjects->pluck('passing_grade', 'id');
-
         foreach ($scores as $sc) {
-            $effectiveKkm = floatval($subjectPassingGradeMap->get($sc->subject_id) ?: ($sc->kkm ?: 75));
+            $effectiveKkm = \App\Models\SubjectGradeKkm::getEffectiveKkm($sc->subject_id, $class->grade_level, $yearId);
             $scoreMap[$sc->student_id][$sc->subject_id] = [
                 'score' => floatval($sc->score),
                 'kkm' => $effectiveKkm,
@@ -459,6 +462,7 @@ class AstsReportController extends Controller
         ]);
 
         $classId = $request->class_id;
+        $targetClass = ClassRoom::find($classId);
         $semester = $request->input('semester', 'ganjil');
         $scoreSource = $request->input('score_source', 'final'); // 'final' (Nilai Jadi / Rapor) | 'raw' (Nilai Asli / Murni)
 
@@ -536,7 +540,7 @@ class AstsReportController extends Controller
                         $finalScore = $sub->remedial_score !== null ? floatval($sub->remedial_score) : floatval($sub->total_score);
                     }
 
-                    $kkm = floatval($exam->subject?->passing_grade ?: ($exam->kkm ?: 75));
+                    $kkm = \App\Models\SubjectGradeKkm::getEffectiveKkm($exam->subject_id, $targetClass?->grade_level, $yearId);
                     $predicate = 'D';
                     if ($finalScore >= 90) {
                         $predicate = 'A';
@@ -1071,6 +1075,8 @@ class AstsReportController extends Controller
     {
         $yearId = $academicYear?->id;
         $targetClassId = $contextClassId ?: $student->class_id;
+        $targetClass = $targetClassId ? ClassRoom::find($targetClassId) : null;
+        $targetGradeLevel = $targetClass?->grade_level ?? $student->classRoom?->grade_level;
 
         // If rankData wasn't passed, calculate it for this target class
         if ($rankData === null && $targetClassId) {
@@ -1108,7 +1114,7 @@ class AstsReportController extends Controller
         foreach ($allSubjects as $sbj) {
             $sc = $scoreMap->get($sbj->id);
             $scoreVal = $sc ? floatval($sc->score) : null;
-            $kkmVal = floatval($sbj->passing_grade ?: ($sc?->kkm ?: 75));
+            $kkmVal = \App\Models\SubjectGradeKkm::getEffectiveKkm($sbj->id, $targetGradeLevel, $yearId);
             $predicateVal = $sc?->predicate ?? ($scoreVal !== null ? ($scoreVal >= 90 ? 'A' : ($scoreVal >= 80 ? 'B' : ($scoreVal >= $kkmVal ? 'C' : 'D'))) : '-');
             $descVal = $sc?->description ?? ($scoreVal !== null ? ($scoreVal >= $kkmVal ? 'Tercapai dengan baik.' : 'Perlu bimbingan lanjutan.') : '-');
 

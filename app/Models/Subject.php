@@ -22,4 +22,9 @@ class Subject extends Model
     {
         return $this->belongsToMany(Teacher::class);
     }
+
+    public function gradeKkms(): HasMany
+    {
+        return $this->hasMany(SubjectGradeKkm::class);
+    }
 }
