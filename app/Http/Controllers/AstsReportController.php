@@ -336,10 +336,13 @@ class AstsReportController extends Controller
             ];
         }
 
+        $subjectPassingGradeMap = $subjects->pluck('passing_grade', 'id');
+
         foreach ($scores as $sc) {
+            $effectiveKkm = floatval($subjectPassingGradeMap->get($sc->subject_id) ?: ($sc->kkm ?: 75));
             $scoreMap[$sc->student_id][$sc->subject_id] = [
                 'score' => floatval($sc->score),
-                'kkm' => floatval($sc->kkm),
+                'kkm' => $effectiveKkm,
                 'predicate' => $sc->predicate,
                 'description' => $sc->description,
                 'exam_package_id' => $sc->exam_package_id,
@@ -533,7 +536,7 @@ class AstsReportController extends Controller
                         $finalScore = $sub->remedial_score !== null ? floatval($sub->remedial_score) : floatval($sub->total_score);
                     }
 
-                    $kkm = floatval($exam->kkm ?? 75);
+                    $kkm = floatval($exam->subject?->passing_grade ?: ($exam->kkm ?: 75));
                     $predicate = 'D';
                     if ($finalScore >= 90) {
                         $predicate = 'A';
@@ -1105,7 +1108,7 @@ class AstsReportController extends Controller
         foreach ($allSubjects as $sbj) {
             $sc = $scoreMap->get($sbj->id);
             $scoreVal = $sc ? floatval($sc->score) : null;
-            $kkmVal = $sc ? floatval($sc->kkm) : floatval($sbj->passing_grade ?? 75);
+            $kkmVal = floatval($sbj->passing_grade ?: ($sc?->kkm ?: 75));
             $predicateVal = $sc?->predicate ?? ($scoreVal !== null ? ($scoreVal >= 90 ? 'A' : ($scoreVal >= 80 ? 'B' : ($scoreVal >= $kkmVal ? 'C' : 'D'))) : '-');
             $descVal = $sc?->description ?? ($scoreVal !== null ? ($scoreVal >= $kkmVal ? 'Tercapai dengan baik.' : 'Perlu bimbingan lanjutan.') : '-');
 

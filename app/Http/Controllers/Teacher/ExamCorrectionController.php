@@ -1221,7 +1221,7 @@ class ExamCorrectionController extends Controller
         foreach ($submissions as $sub) {
             $finalScore = $sub->remedial_score !== null ? floatval($sub->remedial_score) : floatval($sub->total_score);
 
-            $kkm = floatval($exam->kkm ?? 75);
+            $kkm = floatval($exam->subject?->passing_grade ?: ($exam->kkm ?: 75));
             $predicate = 'D';
             if ($finalScore >= 90) {
                 $predicate = 'A';
