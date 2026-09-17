@@ -170,9 +170,9 @@ class ExtracurricularController extends Controller
         $activeYear = AcademicYear::where('is_active', true)->first() ?? AcademicYear::orderBy('id', 'desc')->first();
         $yearId = $request->input('academic_year_id', $activeYear?->id);
 
-        // Jika Pramuka Wajib, seluruh siswa aktif adalah peserta
+        // Jika Pramuka Wajib, seluruh siswa adalah peserta
         if ($ekskul->is_mandatory) {
-            $studentsQuery = Student::where('status', 'aktif')->with(['classRoom']);
+            $studentsQuery = Student::with(['classRoom']);
             if ($request->filled('class_id')) {
                 $studentsQuery->where('class_id', $request->class_id);
             }
@@ -229,7 +229,7 @@ class ExtracurricularController extends Controller
 
         // Fetch eligible students
         if ($ekskul->is_mandatory) {
-            $studentsQuery = Student::where('status', 'aktif')->with(['classRoom', 'lokalClassRoom']);
+            $studentsQuery = Student::with(['classRoom', 'lokalClassRoom']);
             if ($classId) {
                 if ($classType === 'lokal') {
                     $studentsQuery->where('lokal_class_id', $classId);
@@ -508,8 +508,8 @@ class ExtracurricularController extends Controller
                 ];
             });
 
-        // Query active candidate students
-        $candidateQuery = Student::where('status', 'aktif')->with(['classRoom', 'lokalClassRoom']);
+        // Query candidate students
+        $candidateQuery = Student::with(['classRoom', 'lokalClassRoom']);
 
         if ($classId) {
             if ($classType === 'lokal') {
