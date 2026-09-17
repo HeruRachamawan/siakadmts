@@ -136,6 +136,8 @@ class AuthController extends BaseController
         if ($teacher) {
             $homeroomClasses = ClassRoom::where('homeroom_teacher_id', $teacher->id)->get(['id', 'name', 'grade_level']);
 
+            $advisorEkskuls = \App\Models\Extracurricular::where('teacher_id', $teacher->id)->where('is_active', true)->get(['id', 'name', 'code', 'is_mandatory']);
+
             $payload['teacher_id'] = $teacher->id;
             $payload['nip'] = $teacher->nip;
             $payload['full_name'] = $teacher->full_name;
@@ -145,6 +147,8 @@ class AuthController extends BaseController
             $payload['is_ppdb_committee'] = (bool) $teacher->is_ppdb_committee;
             $payload['is_homeroom_teacher'] = $homeroomClasses->isNotEmpty();
             $payload['homeroom_classes'] = $homeroomClasses;
+            $payload['is_extracurricular_advisor'] = $advisorEkskuls->isNotEmpty();
+            $payload['my_extracurriculars'] = $advisorEkskuls;
             $payload['teacher'] = [
                 'id' => $teacher->id,
                 'nip' => $teacher->nip,
@@ -153,10 +157,14 @@ class AuthController extends BaseController
                 'photo' => $teacher->photo,
                 'photo_url' => $teacher->photo_url,
                 'is_ppdb_committee' => (bool) $teacher->is_ppdb_committee,
+                'is_extracurricular_advisor' => $advisorEkskuls->isNotEmpty(),
+                'my_extracurriculars' => $advisorEkskuls,
             ];
         } else {
             $payload['is_homeroom_teacher'] = false;
             $payload['homeroom_classes'] = [];
+            $payload['is_extracurricular_advisor'] = false;
+            $payload['my_extracurriculars'] = [];
         }
 
         if ($user->student) {

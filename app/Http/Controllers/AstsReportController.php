@@ -314,6 +314,14 @@ class AstsReportController extends Controller
             $attMap[$att->student_id][$att->status] = $att->count;
         }
 
+        // Extracurricular grades for these students
+        $ekskulGrades = \App\Models\ExtracurricularGrade::whereIn('student_id', $studentIds)
+            ->where('academic_year_id', $yearId)
+            ->where('semester', $semester)
+            ->with('extracurricular')
+            ->get()
+            ->groupBy('student_id');
+
         // Map scores by student_id and subject_id
         $scoreMap = [];
         $subjectStatusMap = [];
@@ -382,6 +390,11 @@ class AstsReportController extends Controller
                 'sick_count' => $report?->sick_count ?? ($rawAtt['sakit'] ?? 0),
                 'permission_count' => $report?->permission_count ?? ($rawAtt['izin'] ?? 0),
                 'unexcused_count' => $report?->unexcused_count ?? ($rawAtt['alpa'] ?? 0),
+                'extracurriculars' => ($ekskulGrades->get($student->id, collect()))->map(fn($g) => [
+                    'name' => $g->extracurricular?->name,
+                    'grade' => $g->grade,
+                    'description' => $g->description,
+                ])->values(),
             ];
         }
 
@@ -1148,6 +1161,45 @@ class AstsReportController extends Controller
 
         $schoolSetting = SchoolSetting::first();
         $rawSettings = \App\Models\Setting::all()->pluck('value', 'key')->toArray();
+
+        // 5. Ekstrakurikuler & Penilaian Predikat
+        $extracurricularGrades = \App\Models\ExtracurricularGrade::where('student_id', $student->id)
+            ->where('academic_year_id', $yearId)
+            ->where('semester', $semester)
+            ->with(['extracurricular'])
+            ->get();
+
+        $studentExtracurriculars = [];
+        foreach ($extracurricularGrades as $eg) {
+            $studentExtracurriculars[] = [
+                'id' => $eg->id,
+                'name' => $eg->extracurricular?->name ?? 'Ekstrakurikuler',
+                'grade' => $eg->grade, // 'A', 'B', 'C'
+                'grade_label' => match($eg->grade) {
+                    'A' => 'Sangat Baik',
+                    'B' => 'Baik',
+                    'C' => 'Cukup',
+                    default => '-'
+                },
+                'description' => $eg->description ?? '-',
+                'is_mandatory' => (bool) ($eg->extracurricular?->is_mandatory ?? false),
+            ];
+        }
+
+        // Jika siswa belum ada nilai tapi ada ekstrakurikuler wajib (Pramuka), sertakan placeholder rapi
+        if (empty($studentExtracurriculars)) {
+            $mandatory = \App\Models\Extracurricular::where('is_mandatory', true)->orWhere('name', 'like', '%Pramuka%')->first();
+            if ($mandatory) {
+                $studentExtracurriculars[] = [
+                    'id' => null,
+                    'name' => $mandatory->name,
+                    'grade' => '-',
+                    'grade_label' => '-',
+                    'description' => 'Mengikuti kegiatan kepramukaan madrasah.',
+                    'is_mandatory' => true,
+                ];
+            }
+        }
         $principalTeacher = !empty($rawSettings['principal_teacher_id']) 
             ? \App\Models\Teacher::find($rawSettings['principal_teacher_id']) 
             : \App\Models\Teacher::where('position', 'like', '%Kepala%')->first();
@@ -1224,6 +1276,7 @@ class AstsReportController extends Controller
                 'permission' => $permissionCount,
                 'unexcused' => $unexcusedCount,
             ],
+            'extracurriculars' => $studentExtracurriculars,
             'homeroom_notes' => $astsReport?->homeroom_notes ?? 'Tingkatkan terus semangat belajar, ketekunan ibadah, dan keaktifan dalam kegiatan madrasah.',
             'school_setting' => [
                 'school_name' => $rawSettings['app_name'] ?? ($schoolSetting?->school_name ?? 'MTs AL - HASANAH'),

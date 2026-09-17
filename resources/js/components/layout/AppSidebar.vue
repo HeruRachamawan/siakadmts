@@ -197,6 +197,20 @@
             </Transition>
           </RouterLink>
 
+          <!-- Ekstrakurikuler (Admin, Kurikulum, Operator) -->
+          <RouterLink
+            to="/admin/extracurriculars"
+            :title="isCollapsed ? 'Ekstrakurikuler' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Tent class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Ekstrakurikuler</span>
+            </Transition>
+          </RouterLink>
+
 
           <RouterLink
             to="/admin/calendar-events"
@@ -438,6 +452,22 @@
             </Transition>
           </RouterLink>
 
+          <!-- Ekstrakurikuler (Pembina Ekskul & Dewan Guru) -->
+          <RouterLink
+            to="/teacher/extracurriculars"
+            :title="isCollapsed ? 'Penilaian Ekstrakurikuler' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Tent class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
+                <span class="text-sm whitespace-nowrap overflow-hidden">Ekstrakurikuler</span>
+                <span v-if="isExtracurricularAdvisor" class="px-1.5 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-[9px] font-bold uppercase">Pembina</span>
+              </div>
+            </Transition>
+          </RouterLink>
 
           <!-- Jadwal Mengajar Saya -->
           <RouterLink
@@ -541,6 +571,20 @@
             <BookOpenCheck class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rapor ASTS</span>
+            </Transition>
+          </RouterLink>
+
+          <!-- Ekstrakurikuler (Kurikulum) -->
+          <RouterLink
+            to="/admin/extracurriculars"
+            :title="isCollapsed ? 'Ekstrakurikuler' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Tent class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Ekstrakurikuler</span>
             </Transition>
           </RouterLink>
 
@@ -844,6 +888,7 @@ import {
   Users,
   FileCheck2,
   BookOpenCheck,
+  Tent,
   ArrowRightLeft,
   X
 } from 'lucide-vue-next';
@@ -855,6 +900,7 @@ const props = defineProps({
   isMobileSidebarOpen: Boolean,
   isHomeroomTeacher: Boolean,
   isPpdbCommittee: Boolean,
+  isExtracurricularAdvisor: Boolean,
   pendingResetRequestsCount: {
     type: Number,
     default: 0

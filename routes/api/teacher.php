@@ -78,6 +78,14 @@ Route::middleware(['auth:sanctum', 'role:teacher,admin,operator,kurikulum,kepala
     Route::post('asts-reports/reset-scores', [\App\Http\Controllers\AstsReportController::class, 'resetScores']);
     Route::get('asts-reports/student/{studentId}', [\App\Http\Controllers\AstsReportController::class, 'studentReport']);
     Route::get('asts-reports/batch-class/{classId}', [\App\Http\Controllers\AstsReportController::class, 'batchClassReport']);
+
+    // Penilaian & Keanggotaan Ekstrakurikuler Guru Pembina
+    Route::get('extracurriculars', [\App\Http\Controllers\ExtracurricularController::class, 'index']);
+    Route::get('extracurriculars/{id}', [\App\Http\Controllers\ExtracurricularController::class, 'show']);
+    Route::get('extracurriculars/{id}/grading-sheet', [\App\Http\Controllers\ExtracurricularController::class, 'getGradingSheet']);
+    Route::post('extracurriculars/{id}/grades', [\App\Http\Controllers\ExtracurricularController::class, 'saveGrades']);
+    Route::post('extracurriculars/{id}/members', [\App\Http\Controllers\ExtracurricularController::class, 'addMembers']);
+    Route::delete('extracurriculars/{id}/members/{studentId}', [\App\Http\Controllers\ExtracurricularController::class, 'removeMember']);
 });
 
 

@@ -220,7 +220,44 @@
       </table>
     </div>
 
-    <!-- 5. KETIDAKHADIRAN & CATATAN WALI KELAS (COMPACT TABLE FORMAT) -->
+    <!-- 5. PENGEMBANGAN DIRI & EKSTRAKURIKULER (KATEGORI PREDIKAT A, B, C) -->
+    <div style="margin-bottom: 4px;">
+      <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 9px; line-height: 1.2;">
+        <thead>
+          <tr style="background-color: #f1f5f9; color: #020617; font-weight: 900; text-transform: uppercase; text-align: center; border-bottom: 1.5px solid #0f172a; font-size: 8.5px;">
+            <th style="border: 1px solid #0f172a; padding: 2.5px 2px; width: 4%;">No</th>
+            <th style="border: 1px solid #0f172a; padding: 2.5px 6px; text-align: left; width: 35%;">Kegiatan Ekstrakurikuler</th>
+            <th style="border: 1px solid #0f172a; padding: 2.5px 2px; width: 12%; text-align: center;">Predikat</th>
+            <th style="border: 1px solid #0f172a; padding: 2.5px 6px; text-align: left; width: 49%;">Keterangan / Capaian</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-if="report?.extracurriculars && report.extracurriculars.length > 0">
+            <tr v-for="(ekskul, eIdx) in report.extracurriculars" :key="'ekskul-' + eIdx">
+              <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace;">{{ eIdx + 1 }}</td>
+              <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-weight: 700; color: #0f172a;">
+                {{ ekskul.name }}
+                <span v-if="ekskul.is_mandatory" style="font-size: 7.5px; color: #059669; font-weight: 800; text-transform: uppercase; margin-left: 4px;">(Wajib)</span>
+              </td>
+              <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: 900; font-family: monospace; font-size: 10.5px; color: #0f172a;">
+                {{ ekskul.grade || '-' }}
+              </td>
+              <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; color: #334155; line-height: 1.2;">
+                {{ ekskul.description || '-' }}
+              </td>
+            </tr>
+          </template>
+          <tr v-else>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center;">1</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px; color: #64748b; font-style: italic;">Pendidikan Kepramukaan (Wajib)</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; color: #64748b;">-</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px 6px; color: #64748b; font-size: 8.5px; font-style: italic;">Mengikuti kegiatan kepramukaan madrasah.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 6. KETIDAKHADIRAN & CATATAN WALI KELAS (COMPACT TABLE FORMAT) -->
     <table style="width: 100%; border-collapse: collapse; margin-top: 3px; margin-bottom: 4px;">
       <tbody>
         <tr>

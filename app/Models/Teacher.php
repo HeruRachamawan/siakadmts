@@ -63,4 +63,9 @@ class Teacher extends Model
     {
         return $this->hasMany(TeacherAttendanceRequest::class, 'teacher_id');
     }
+
+    public function extracurriculars(): HasMany
+    {
+        return $this->hasMany(Extracurricular::class, 'teacher_id');
+    }
 }

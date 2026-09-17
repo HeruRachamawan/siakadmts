@@ -72,4 +72,21 @@ class Student extends Model
     {
         return $this->hasMany(Attendance::class);
     }
+
+    public function extracurricularMembers(): HasMany
+    {
+        return $this->hasMany(ExtracurricularMember::class);
+    }
+
+    public function extracurriculars(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Extracurricular::class, 'extracurricular_members', 'student_id', 'extracurricular_id')
+            ->withPivot(['academic_year_id', 'joined_date', 'notes'])
+            ->withTimestamps();
+    }
+
+    public function extracurricularGrades(): HasMany
+    {
+        return $this->hasMany(ExtracurricularGrade::class);
+    }
 }

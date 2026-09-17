@@ -135,6 +135,17 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::post('asts-reports/reset-scores', [\App\Http\Controllers\AstsReportController::class, 'resetScores']);
     Route::get('asts-reports/student/{studentId}', [\App\Http\Controllers\AstsReportController::class, 'studentReport']);
     Route::get('asts-reports/batch-class/{classId}', [\App\Http\Controllers\AstsReportController::class, 'batchClassReport']);
+
+    // Manajemen Ekstrakurikuler (Admin & Staff)
+    Route::get('extracurriculars', [\App\Http\Controllers\ExtracurricularController::class, 'index']);
+    Route::post('extracurriculars', [\App\Http\Controllers\ExtracurricularController::class, 'store']);
+    Route::get('extracurriculars/{id}', [\App\Http\Controllers\ExtracurricularController::class, 'show']);
+    Route::put('extracurriculars/{id}', [\App\Http\Controllers\ExtracurricularController::class, 'update']);
+    Route::delete('extracurriculars/{id}', [\App\Http\Controllers\ExtracurricularController::class, 'destroy']);
+    Route::get('extracurriculars/{id}/grading-sheet', [\App\Http\Controllers\ExtracurricularController::class, 'getGradingSheet']);
+    Route::post('extracurriculars/{id}/grades', [\App\Http\Controllers\ExtracurricularController::class, 'saveGrades']);
+    Route::post('extracurriculars/{id}/members', [\App\Http\Controllers\ExtracurricularController::class, 'addMembers']);
+    Route::delete('extracurriculars/{id}/members/{studentId}', [\App\Http\Controllers\ExtracurricularController::class, 'removeMember']);
 });
 
 

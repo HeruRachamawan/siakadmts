@@ -32,6 +32,7 @@
           :isMobileSidebarOpen="isMobileSidebarOpen"
           :isHomeroomTeacher="isHomeroomTeacher"
           :isPpdbCommittee="isPpdbCommittee"
+          :isExtracurricularAdvisor="isExtracurricularAdvisor"
           :pendingResetRequestsCount="pendingResetRequests.length"
           :getImageUrl="getImageUrl"
           @close-mobile-sidebar="isMobileSidebarOpen = false"
@@ -513,6 +514,15 @@ const isHomeroomTeacher = computed(() => {
 const isPpdbCommittee = computed(() => {
   if (user.value?.role === 'admin') return true;
   return !!(user.value?.teacher?.is_ppdb_committee || user.value?.is_ppdb_committee);
+});
+
+const isExtracurricularAdvisor = computed(() => {
+  if (currentRole.value !== 'teacher') return false;
+  const u = user.value;
+  if (!u) return false;
+  if (u.is_extracurricular_advisor !== undefined) return Boolean(u.is_extracurricular_advisor);
+  if (Array.isArray(u.my_extracurriculars) && u.my_extracurriculars.length > 0) return true;
+  return false;
 });
 
 async function checkTeacherHomeroom() {

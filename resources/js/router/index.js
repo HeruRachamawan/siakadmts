@@ -85,9 +85,11 @@ const routes = [
     { path: '/kurikulum/profile', redirect: '/admin/profile' },
     { path: '/operator/profile', redirect: '/admin/profile' },
     { path: '/kepala-sekolah/profile', redirect: '/admin/profile' },
-    { path: '/kurikulum/asts-reports', redirect: '/admin/asts-reports' },
-    { path: '/operator/asts-reports', redirect: '/admin/asts-reports' },
-    { path: '/kepala-sekolah/asts-reports', redirect: '/admin/asts-reports' },
+    { path: '/admin/extracurriculars', component: () => import('../views/Extracurriculars.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah', 'teacher'], title: 'Manajemen Ekstrakurikuler' } },
+    { path: '/kurikulum/extracurriculars', redirect: '/admin/extracurriculars' },
+    { path: '/operator/extracurriculars', redirect: '/admin/extracurriculars' },
+    { path: '/kepala-sekolah/extracurriculars', redirect: '/admin/extracurriculars' },
+    { path: '/teacher/extracurriculars', component: () => import('../views/Extracurriculars.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Penilaian Ekstrakurikuler' } },
 
     { path: '/admin/posts', component: () => import('../components/CrudPage.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Berita & Informasi' }, props: { endpoint: 'admin/posts', resource: 'admin/posts', title: 'Berita & Artikel', formFields: postFields(), fields: postFields(), columns: [
         { label: 'Gambar', field: 'image' },
