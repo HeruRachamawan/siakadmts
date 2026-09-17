@@ -45,7 +45,7 @@
     <!-- 2. JUDUL LEMBAR RAPOR ASTS -->
     <div style="text-align: center; margin-bottom: 6px;">
       <div style="font-size: 13px; font-weight: 900; text-transform: uppercase; color: #020617; font-family: 'Lexend', system-ui, sans-serif; letter-spacing: 0.04em; line-height: 1.3;">
-        <span style="text-decoration: underline; text-underline-offset: 2.5px;">LAPORAN BELAJAR</span>
+        <span style="text-decoration: underline; text-underline-offset: 2.5px;">LAPORAN BELAJAR PESERTA DIDIK</span>
       </div>
       <div style="font-size: 12px; font-weight: 900; text-transform: uppercase; color: #020617; font-family: 'Lexend', system-ui, sans-serif; letter-spacing: 0.03em; line-height: 1.3; margin-top: 1px;">
         <span style="text-decoration: underline; text-underline-offset: 2.5px;">ASESMEN SUMATIF TENGAH SEMESTER (ASTS)</span>
