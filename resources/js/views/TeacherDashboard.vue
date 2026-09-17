@@ -30,6 +30,12 @@
               <span v-if="teacherInfo.position" class="inline-flex items-center gap-1 px-2 py-0.5 bg-white/10 text-slate-200 rounded text-[11px] font-semibold border border-white/15">
                 <span>Jabatan: {{ teacherInfo.position }}</span>
               </span>
+
+              <!-- Ekskul Advisor Badge -->
+              <span v-if="advisorEkskuls.length > 0" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-400 text-slate-950 rounded-full text-[11px] font-black shadow-xs border border-amber-300">
+                <span>⭐</span>
+                <span>Pembina {{ advisorEkskuls.map(e => e.name).join(', ') }}</span>
+              </span>
             </div>
 
             <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white uppercase font-sans leading-tight">
@@ -304,6 +310,102 @@
 
     </div>
 
+    <!-- ================= SECTION KHUSUS PEMBINA EKSTRAKURIKULER ================= -->
+    <div v-if="advisorEkskuls.length > 0" class="bg-gradient-to-br from-emerald-950 via-teal-900 to-slate-950 rounded-2xl p-5 sm:p-6 text-white shadow-md border border-emerald-700/60 space-y-5 relative overflow-hidden">
+      <!-- Ambient light effect -->
+      <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10 border-b border-emerald-800/60 pb-4">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center justify-center font-bold shadow-inner">
+            <Tent class="w-6 h-6 text-emerald-300" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-200 border border-emerald-400/40">
+                Workspace Pembina
+              </span>
+              <span class="text-xs text-emerald-200/80 font-medium">T.A. Aktif Rapor</span>
+            </div>
+            <h2 class="text-base sm:text-lg font-bold text-white tracking-tight mt-0.5">
+              Portal Pembina Kegiatan Ekstrakurikuler
+            </h2>
+          </div>
+        </div>
+
+        <RouterLink
+          to="/teacher/extracurriculars"
+          class="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/20 active:scale-95 cursor-pointer"
+        >
+          <Award class="w-4 h-4 text-slate-950" />
+          <span>Input Nilai Rapor (A, B, C) &rarr;</span>
+        </RouterLink>
+      </div>
+
+      <!-- Grid Kartu Ekskul yang Dibina -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
+        <div
+          v-for="ek in advisorEkskuls"
+          :key="'advisor-ek-'+ek.id"
+          class="bg-white/5 hover:bg-white/10 rounded-xl p-4 border border-white/10 transition-all space-y-3 flex flex-col justify-between"
+        >
+          <div class="space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span
+                v-if="ek.is_mandatory"
+                class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-500/30 text-emerald-200 border border-emerald-400/40"
+              >
+                Wajib Seluruh Siswa
+              </span>
+              <span
+                v-else
+                class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 text-slate-200 border border-white/10"
+              >
+                Minat Bakat
+              </span>
+              <span class="text-[11px] font-mono text-emerald-300 font-bold">
+                {{ ek.schedule_day || '-' }} {{ ek.schedule_time ? `(${ek.schedule_time})` : '' }}
+              </span>
+            </div>
+
+            <h3 class="text-sm font-bold text-white leading-snug">
+              {{ ek.name }}
+            </h3>
+
+            <p class="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
+              {{ ek.description || 'Kegiatan pembinaan karakter dan bakat santri madrasah.' }}
+            </p>
+          </div>
+
+          <!-- Progress Bar Penilaian Rapor ASTS -->
+          <div class="pt-2 border-t border-white/10 space-y-1.5 text-xs">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-slate-300">Progres Input Nilai Rapor:</span>
+              <span class="font-bold font-mono text-emerald-300">
+                {{ ek.graded_count }} / {{ ek.total_participants }} ({{ ek.progress_percent }}%)
+              </span>
+            </div>
+            <!-- Progress Track -->
+            <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+              <div
+                class="bg-emerald-400 h-2 rounded-full transition-all duration-500"
+                :style="{ width: `${ek.progress_percent}%` }"
+              ></div>
+            </div>
+            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
+              <span>{{ ek.pending_count }} Siswa Belum Dinilai</span>
+              <RouterLink
+                to="/teacher/extracurriculars"
+                class="text-emerald-300 hover:text-emerald-200 font-bold underline cursor-pointer"
+              >
+                Buka Lembar Nilai
+              </RouterLink>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Kelas Diampu / List Section (HANYA DITAMPILKAN JIKA GURU ADALAH WALI KELAS) -->
     <div v-if="stats.classesCount > 0" class="bg-white rounded-[2.5rem] shadow-[0_4px_25px_rgb(0,0,0,0.03)] border border-slate-100 p-8">
       <div class="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
@@ -390,13 +492,18 @@ import {
   XCircle,
   Camera,
   Navigation,
-  BookOpenCheck
+  BookOpenCheck,
+  Tent,
+  Award,
+  Sparkles
 } from 'lucide-vue-next';
 
 const toast = useToast();
 const auth = useAuthStore();
 const router = useRouter();
 const { user } = storeToRefs(auth);
+
+const advisorEkskuls = ref([]);
 
 function switchToStaff() {
   const target = auth.primaryRole || 'operator';
@@ -562,6 +669,7 @@ onMounted(async () => {
       stats.classesCount = data.classes_count || 0;
       stats.studentsCount = data.students_count || 0;
       stats.schedulesCount = data.schedules_count || 0;
+      advisorEkskuls.value = data.extracurriculars || [];
     }
 
     if (clsRes) {
