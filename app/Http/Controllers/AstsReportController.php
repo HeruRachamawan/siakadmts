@@ -370,13 +370,16 @@ class AstsReportController extends Controller
 
             foreach ($subjects as $sbj) {
                 $val = $scoreMap[$student->id][$sbj->id] ?? null;
-                $studentScores[$sbj->id] = $val;
                 if ($val !== null && isset($val['score'])) {
-                    $totalScore += $val['score'];
+                    $roundedScore = round(floatval($val['score']));
+                    $val['score'] = $roundedScore;
+                    $totalScore += $roundedScore;
                     $subjectCountWithScore++;
                 }
+                $studentScores[$sbj->id] = $val;
             }
 
+            $totalScore = round($totalScore);
             $avgScore = $subjectCountWithScore > 0 ? round($totalScore / $subjectCountWithScore, 2) : 0;
 
             $report = $reports->get($student->id);
@@ -404,9 +407,11 @@ class AstsReportController extends Controller
             ];
         }
 
-        // Calculate rankings based on average_score
+        // Calculate rankings based on average_score, then total_score, then name
         usort($ledgerStudents, function ($a, $b) {
-            return $b['average_score'] <=> $a['average_score'];
+            return ($b['average_score'] <=> $a['average_score'])
+                ?: ($b['total_score'] <=> $a['total_score'])
+                ?: strcasecmp($a['full_name'], $b['full_name']);
         });
 
         foreach ($ledgerStudents as $rank => &$sData) {
@@ -533,11 +538,11 @@ class AstsReportController extends Controller
                     }
 
                     if ($scoreSource === 'raw') {
-                        // Nilai Asli (Skor Murni pengerjaan ujian tanpa remedial)
-                        $finalScore = floatval($sub->total_score);
+                        // Nilai Asli (Skor Murni pengerjaan ujian tanpa remedial - dibulatkan)
+                        $finalScore = round(floatval($sub->total_score));
                     } else {
-                        // Nilai Jadi (Standar Rapor Bebas Remedial: prioritaskan remedial_score)
-                        $finalScore = $sub->remedial_score !== null ? floatval($sub->remedial_score) : floatval($sub->total_score);
+                        // Nilai Jadi (Standar Rapor Bebas Remedial: prioritaskan remedial_score - dibulatkan)
+                        $finalScore = round($sub->remedial_score !== null ? floatval($sub->remedial_score) : floatval($sub->total_score));
                     }
 
                     $kkm = \App\Models\SubjectGradeKkm::getEffectiveKkm($exam->subject_id, $targetClass?->grade_level, $yearId);
@@ -842,7 +847,7 @@ class AstsReportController extends Controller
                     $factor = $currentAvg > 0 ? ($targetAvg / $currentAvg) : 1.0;
 
                     foreach ($sScores as $sc) {
-                        $newScore = round(max(50, min(99, $sc->score * $factor)), 1);
+                        $newScore = (int) round(max(50, min(99, $sc->score * $factor)));
                         $kkm = $sc->kkm ?? 75;
                         $predicate = $newScore >= 90 ? 'A' : ($newScore >= 80 ? 'B' : ($newScore >= $kkm ? 'C' : 'D'));
                         $description = $newScore >= $kkm ? 'Tercapai dengan sangat memuaskan.' : 'Perlu bimbingan dan peningkatan ketekunan.';
@@ -1030,16 +1035,22 @@ class AstsReportController extends Controller
         $studentAverages = [];
         foreach ($students as $s) {
             $sScores = $scores->get($s->id, collect());
-            $avg = $sScores->isNotEmpty() ? round($sScores->avg('score'), 2) : 0;
+            $roundedScores = $sScores->map(fn($sc) => round(floatval($sc->score)));
+            $total = $roundedScores->sum();
+            $avg = $sScores->isNotEmpty() ? round($total / $sScores->count(), 2) : 0;
             $studentAverages[] = [
                 'student_id' => $s->id,
+                'full_name' => $s->full_name,
+                'total_score' => $total,
                 'average_score' => $avg,
             ];
         }
 
-        // Sort descending by average
+        // Sort descending by average, then total, then name
         usort($studentAverages, function ($a, $b) {
-            return $b['average_score'] <=> $a['average_score'];
+            return ($b['average_score'] <=> $a['average_score'])
+                ?: ($b['total_score'] <=> $a['total_score'])
+                ?: strcasecmp($a['full_name'], $b['full_name']);
         });
 
         $ranks = [];
@@ -1113,7 +1124,7 @@ class AstsReportController extends Controller
 
         foreach ($allSubjects as $sbj) {
             $sc = $scoreMap->get($sbj->id);
-            $scoreVal = $sc ? floatval($sc->score) : null;
+            $scoreVal = $sc && $sc->score !== null ? round(floatval($sc->score)) : null;
             $kkmVal = \App\Models\SubjectGradeKkm::getEffectiveKkm($sbj->id, $targetGradeLevel, $yearId);
             $predicateVal = $sc?->predicate ?? ($scoreVal !== null ? ($scoreVal >= 90 ? 'A' : ($scoreVal >= 80 ? 'B' : ($scoreVal >= $kkmVal ? 'C' : 'D'))) : '-');
             $descVal = $sc?->description ?? ($scoreVal !== null ? ($scoreVal >= $kkmVal ? 'Tercapai dengan baik.' : 'Perlu bimbingan lanjutan.') : '-');
@@ -1213,6 +1224,7 @@ class AstsReportController extends Controller
             ? \App\Models\Teacher::find($rawSettings['principal_teacher_id']) 
             : \App\Models\Teacher::where('position', 'like', '%Kepala%')->first();
 
+        $totalScore = round($totalScore);
         $avg = $countScore > 0 ? round($totalScore / $countScore, 2) : 0;
 
         // Display Class & Homeroom Teacher resolution

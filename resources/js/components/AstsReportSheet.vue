@@ -190,7 +190,7 @@
             <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-weight: bold; color: #0f172a;">{{ sbj.name }}</td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: bold; color: #334155;">{{ sbj.kkm }}</td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: 900;" :style="{ color: sbj.score !== null && sbj.score >= sbj.kkm ? '#020617' : '#be123c' }">
-              {{ sbj.score !== null ? sbj.score : '-' }}
+              {{ sbj.score !== null ? Math.round(Number(sbj.score)) : '-' }}
             </td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: 900; color: #1e293b;">{{ sbj.predicate || '-' }}</td>
             <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; line-height: 1.2; color: #334155;">{{ sbj.description || '-' }}</td>
@@ -199,12 +199,12 @@
           <!-- REKAP TOTAL & RATA-RATA & PERINGKAT -->
           <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 1.5px solid #0f172a; font-size: 9.5px;">
             <td colspan="3" style="border: 1px solid #0f172a; padding: 2px 6px; text-align: right; text-transform: uppercase; letter-spacing: 0.05em;">Jumlah Nilai Keseluruhan</td>
-            <td style="border: 1px solid #0f172a; padding: 2px; text-align: center; font-family: monospace; font-weight: 900; color: #020617; font-size: 10.5px;">{{ report?.total_score || 0 }}</td>
+            <td style="border: 1px solid #0f172a; padding: 2px; text-align: center; font-family: monospace; font-weight: 900; color: #020617; font-size: 10.5px;">{{ Math.round(Number(report?.total_score) || 0) }}</td>
             <td colspan="2" style="border: 1px solid #0f172a; padding: 2px 6px; color: #64748b; font-size: 8.5px; font-style: italic;">Total perolehan nilai ASTS</td>
           </tr>
           <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 1px solid #94a3b8; font-size: 9.5px;">
             <td colspan="3" style="border: 1px solid #0f172a; padding: 2px 6px; text-align: right; text-transform: uppercase; letter-spacing: 0.05em;">Rata-Rata Nilai Siswa</td>
-            <td style="border: 1px solid #0f172a; padding: 2px; text-align: center; font-family: monospace; font-weight: 900; color: #065f46; font-size: 10.5px;">{{ report?.average_score || 0 }}</td>
+            <td style="border: 1px solid #0f172a; padding: 2px; text-align: center; font-family: monospace; font-weight: 900; color: #065f46; font-size: 10.5px;">{{ report?.average_score !== undefined && report?.average_score !== null ? Number(report.average_score).toFixed(2) : '0.00' }}</td>
             <td colspan="2" style="border: 1px solid #0f172a; padding: 2px 6px; color: #64748b; font-size: 8.5px; font-style: italic;">Rata-rata capaian tengah semester</td>
           </tr>
           <tr style="background-color: #fffbeb; font-weight: bold; border-top: 1px solid #94a3b8; font-size: 9.5px;" class="print:bg-transparent">
@@ -216,7 +216,7 @@
             </td>
             <td colspan="2" style="border: 1px solid #0f172a; padding: 2px 6px; color: #1e293b; font-size: 9px;">
               <span style="font-weight: bold;">Peringkat ke-{{ report?.rank || '-' }}</span> dari <span style="font-weight: bold;">{{ report?.total_students || '-' }}</span> siswa
-              <span v-if="report?.class_average_score" style="color: #64748b;"> (Rata-rata Kelas: <strong style="color: #1e293b;">{{ report.class_average_score }}</strong>)</span>
+              <span v-if="report?.class_average_score" style="color: #64748b;"> (Rata-rata Kelas: <strong style="color: #1e293b;">{{ Number(report.class_average_score).toFixed(2) }}</strong>)</span>
             </td>
           </tr>
         </tbody>

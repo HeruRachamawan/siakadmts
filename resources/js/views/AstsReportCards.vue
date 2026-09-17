@@ -318,11 +318,11 @@
             <div class="grid grid-cols-3 gap-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-center">
               <div>
                 <span class="block text-[9px] font-bold text-slate-400 uppercase">Total Nilai</span>
-                <span class="text-xs font-black font-mono text-slate-800">{{ st.total_score }}</span>
+                <span class="text-xs font-black font-mono text-slate-800">{{ Math.round(Number(st.total_score) || 0) }}</span>
               </div>
               <div class="border-x border-slate-200">
                 <span class="block text-[9px] font-bold text-emerald-600 uppercase">Rata-Rata</span>
-                <span class="text-xs font-black font-mono text-emerald-700">{{ st.average_score }}</span>
+                <span class="text-xs font-black font-mono text-emerald-700">{{ Number(st.average_score || 0).toFixed(2) }}</span>
               </div>
               <div>
                 <span class="block text-[9px] font-bold text-indigo-600 uppercase">Presensi (S/I/A)</span>
@@ -453,7 +453,7 @@
                           class="px-1.5 py-0.5 rounded text-xs font-extrabold"
                           :class="st.scores[sbj.id].score >= (st.scores[sbj.id].kkm || 75) ? 'text-emerald-700 bg-emerald-50/60' : 'text-rose-700 bg-rose-50/60'"
                         >
-                          {{ st.scores[sbj.id].score }}
+                          {{ Math.round(Number(st.scores[sbj.id].score)) }}
                         </span>
                       </template>
                       <span v-else class="text-slate-300">-</span>
@@ -461,10 +461,10 @@
 
                     <!-- Total, Average & Rank -->
                     <td class="px-3 py-3 text-center font-bold font-mono bg-slate-50/50 text-slate-800">
-                      {{ st.total_score }}
+                      {{ Math.round(Number(st.total_score) || 0) }}
                     </td>
                     <td class="px-3 py-3 text-center font-black font-mono bg-emerald-50/40 text-emerald-700">
-                      {{ st.average_score }}
+                      {{ Number(st.average_score || 0).toFixed(2) }}
                     </td>
                     <td class="px-2 py-3 text-center font-black font-lexend bg-amber-50/40">
                       <div class="flex items-center justify-center gap-1">
@@ -652,7 +652,7 @@
                   class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer truncate shadow-2xs font-lexend"
                 >
                   <option v-for="(st, sIdx) in ledgerStudents" :key="'opt-st-'+st.student_id" :value="st.student_id">
-                    #{{ st.rank || (sIdx + 1) }} — {{ st.full_name }} (Avg: {{ st.average_score }})
+                    #{{ st.rank || (sIdx + 1) }} — {{ st.full_name }} (Avg: {{ Number(st.average_score || 0).toFixed(2) }})
                   </option>
                 </select>
               </div>
@@ -745,7 +745,7 @@
                       <div class="text-[10px] text-slate-400 flex items-center gap-1.5 font-mono">
                         <span>NISN: {{ st.nisn || '-' }}</span>
                         <span>&bull;</span>
-                        <span class="font-bold text-emerald-700">Avg: {{ st.average_score }}</span>
+                        <span class="font-bold text-emerald-700">Avg: {{ Number(st.average_score || 0).toFixed(2) }}</span>
                       </div>
                     </div>
                   </div>
@@ -853,7 +853,7 @@
                     <div class="text-[10px] text-slate-400 font-mono">NISN: {{ item.nisn || '-' }}</div>
                   </td>
                   <td class="p-3 text-center font-bold font-mono text-emerald-700 bg-emerald-50/30">
-                    {{ item.average_score }}
+                    {{ Number(item.average_score || 0).toFixed(2) }}
                   </td>
                   <td class="p-3 text-center">
                     <span v-if="item.rank !== item.calculated_rank" class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
@@ -1900,9 +1900,9 @@ function exportLedgerExcel() {
     const r = [idx + 1, st.nisn || '-', st.full_name, st.gender];
     subjectsList.value.forEach(s => {
       const score = st.scores?.[s.id]?.score;
-      r.push(score !== undefined && score !== null ? score : '-');
+      r.push(score !== undefined && score !== null ? Math.round(Number(score)) : '-');
     });
-    r.push(st.total_score, st.average_score, st.rank, st.sick_count, st.permission_count, st.unexcused_count, st.homeroom_notes || '-');
+    r.push(Math.round(Number(st.total_score) || 0), Number(st.average_score || 0).toFixed(2), st.rank, st.sick_count, st.permission_count, st.unexcused_count, st.homeroom_notes || '-');
     rows.push(r);
   });
 
