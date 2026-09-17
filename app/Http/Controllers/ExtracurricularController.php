@@ -296,9 +296,11 @@ class ExtracurricularController extends Controller
             $clean = strtolower(preg_replace('/^(kelas|kls)\s*/i', '', $name));
 
             // Standalone '7' and '8' are specifically for Jadwal Lokal
-            $isLokal = in_array($clean, ['7', '8', '9a', '9-a', '9b', '9-b']);
+            $isStandaloneLokal = in_array($clean, ['7', '8']);
+            // 9A / 9B / 9-A / 9-B dual function: regular rombel utama & kelompok lokal
+            $isDualClass = in_array($clean, ['9a', '9-a', '9b', '9-b']);
 
-            if ($isLokal) {
+            if ($isStandaloneLokal || $isDualClass) {
                 $lokalClasses[] = [
                     'id' => $c->id,
                     'name' => $c->name,
@@ -306,7 +308,10 @@ class ExtracurricularController extends Controller
                     'students_count' => $c->lokal_students_count > 0 ? $c->lokal_students_count : $c->students_count,
                     'type' => 'lokal',
                 ];
-            } else {
+            }
+
+            // All regular classes (including 9-A, 9-B, 7A, 7B, 8A, 8B) are available as Rombel Utama
+            if (!$isStandaloneLokal) {
                 $utamaClasses[] = [
                     'id' => $c->id,
                     'name' => $c->name,
