@@ -23,13 +23,21 @@ class ScheduleController extends TeacherController
             ->orderBy('start_time')
             ->get();
 
+        // Extracurriculars guided by this teacher
+        $extracurriculars = \App\Models\Extracurricular::where('teacher_id', $teacher->id)
+            ->where('is_active', true)
+            ->withCount('members')
+            ->get();
+
         return $this->success([
             'teacher' => [
                 'id' => $teacher->id,
                 'full_name' => $teacher->full_name,
                 'nip' => $teacher->nip,
+                'is_advisor' => (bool) $teacher->is_extracurricular_advisor,
             ],
-            'schedules' => $schedules
+            'schedules' => $schedules,
+            'extracurriculars' => $extracurriculars,
         ]);
     }
 }

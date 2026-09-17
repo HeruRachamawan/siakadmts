@@ -18,19 +18,27 @@
       <!-- Quick Summary Stats -->
       <div class="flex items-center gap-4 z-10">
         <div class="bg-slate-900 text-white rounded-2xl p-4 min-w-[130px] text-center shadow-lg shadow-slate-900/10">
-          <span class="text-2xl font-black font-lexend block" :class="activeScheduleType === 'lokal' ? 'text-teal-400' : 'text-emerald-400'">
+          <span
+            class="text-2xl font-black font-lexend block"
+            :class="activeScheduleType === 'lokal' ? 'text-teal-400' : (activeScheduleType === 'ekskul' ? 'text-indigo-400' : 'text-emerald-400')"
+          >
             {{ totalTeachingSlots }}
           </span>
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Sesi / Mgg</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            {{ activeScheduleType === 'ekskul' ? 'Total Ekskul' : 'Total Sesi / Mgg' }}
+          </span>
         </div>
 
         <div
-          :class="activeScheduleType === 'lokal' ? 'bg-teal-600 shadow-teal-600/20' : 'bg-emerald-600 shadow-emerald-600/20'"
+          :class="activeScheduleType === 'lokal' ? 'bg-teal-600 shadow-teal-600/20' : (activeScheduleType === 'ekskul' ? 'bg-indigo-600 shadow-indigo-600/20' : 'bg-emerald-600 shadow-emerald-600/20')"
           class="text-white rounded-2xl p-4 min-w-[130px] text-center shadow-lg transition-colors"
         >
           <span class="text-2xl font-black font-lexend block text-white">{{ todaySlotsCount }}</span>
-          <span class="text-[10px] font-bold uppercase tracking-wider" :class="activeScheduleType === 'lokal' ? 'text-teal-100' : 'text-emerald-100'">
-            Sesi Hari Ini
+          <span
+            class="text-[10px] font-bold uppercase tracking-wider"
+            :class="activeScheduleType === 'lokal' ? 'text-teal-100' : (activeScheduleType === 'ekskul' ? 'text-indigo-100' : 'text-emerald-100')"
+          >
+            {{ activeScheduleType === 'ekskul' ? 'Latihan Hari Ini' : 'Sesi Hari Ini' }}
           </span>
         </div>
       </div>
@@ -70,6 +78,23 @@
             {{ totalLokalSlots }} Sesi
           </span>
         </button>
+
+        <button
+          v-if="myEkskuls.length > 0 || isAdvisor"
+          type="button"
+          @click="setScheduleType('ekskul')"
+          :class="activeScheduleType === 'ekskul' ? 'bg-white text-indigo-800 font-extrabold shadow-sm ring-1 ring-slate-200/50' : 'text-slate-500 hover:text-slate-800 font-bold'"
+          class="px-5 py-2 rounded-lg text-xs transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <span class="text-sm">⛺</span>
+          <span>Jadwal Ekstrakurikuler</span>
+          <span
+            class="text-[10px] px-2 py-0.5 rounded-md font-bold transition-colors"
+            :class="activeScheduleType === 'ekskul' ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-200 text-slate-600'"
+          >
+            {{ totalEkskulSlots }} Kegiatan
+          </span>
+        </button>
       </div>
 
       <div class="flex items-center gap-2 text-xs text-slate-500 font-medium px-2">
@@ -77,9 +102,13 @@
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
           <span>Menampilkan jadwal mengajar KBM <b>Gedung Utama</b></span>
         </span>
-        <span v-else class="flex items-center gap-1.5">
+        <span v-else-if="activeScheduleType === 'lokal'" class="flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-teal-500"></span>
           <span>Menampilkan jadwal mengajar KBM <b>Ruang Lokal</b></span>
+        </span>
+        <span v-else-if="activeScheduleType === 'ekskul'" class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+          <span>Menampilkan jadwal latihan rutin <b>Kegiatan Ekstrakurikuler Binaan</b></span>
         </span>
       </div>
     </div>
@@ -128,68 +157,138 @@
           </div>
 
           <span class="text-[10px] font-black px-2.5 py-1 bg-white/10 rounded-full text-white/90">
-            {{ getTeacherDaySchedules(day.key).length }} Jam Mengajar
+            {{ activeScheduleType === 'ekskul' ? `${getTeacherDayEkskuls(day.key).length} Kegiatan` : `${getTeacherDaySchedules(day.key).length} Jam Mengajar` }}
           </span>
         </div>
 
         <!-- Schedule Items List -->
         <div class="p-6 flex-1 space-y-3 bg-slate-50/40">
-          <!-- Empty State for Day -->
-          <div
-            v-if="getTeacherDaySchedules(day.key).length === 0"
-            class="py-10 text-center text-slate-400 text-xs font-medium border-2 border-dashed border-slate-200/80 rounded-2xl flex flex-col items-center justify-center gap-1.5"
-          >
-            <Clock class="w-7 h-7 text-slate-300" />
-            <span class="font-bold text-slate-500">Tidak Ada Jam Mengajar</span>
-            <span class="text-[10px] text-slate-400">
-              {{ activeScheduleType === 'lokal' ? 'Tidak ada sesi KBM di Ruang Lokal' : 'Jam Bebas / Persiapan Materi' }}
-            </span>
-          </div>
-
-          <!-- Schedule Item Cards -->
-          <div
-            v-for="item in getTeacherDaySchedules(day.key)"
-            :key="item.id"
-            class="p-4 rounded-2xl border bg-white border-slate-200/70 shadow-2xs hover:border-emerald-300 hover:shadow-md transition-all space-y-2.5"
-          >
-            <!-- Time Badge & Class Badge -->
-            <div class="flex items-center justify-between gap-2">
-              <span class="px-2.5 py-1 bg-slate-900 text-white font-mono text-[11px] font-extrabold rounded-lg shadow-2xs flex items-center gap-1.5">
-                <Clock class="w-3 h-3 text-emerald-300" />
-                <span>{{ item.start_time }} - {{ item.end_time }}</span>
-              </span>
-
-              <span
-                :class="isItemLokal(item) ? 'bg-teal-50 text-teal-800 border-teal-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'"
-                class="px-2.5 py-1 font-lexend text-xs font-black rounded-lg border flex items-center gap-1.5"
-              >
-                <Building2 class="w-3 h-3" :class="isItemLokal(item) ? 'text-teal-600' : 'text-emerald-600'" />
-                <span>{{ getClassName(item) }}</span>
+          <!-- VIEW EKSKUL: Empty State for Day -->
+          <template v-if="activeScheduleType === 'ekskul'">
+            <div
+              v-if="getTeacherDayEkskuls(day.key).length === 0"
+              class="py-10 text-center text-slate-400 text-xs font-medium border-2 border-dashed border-slate-200/80 rounded-2xl flex flex-col items-center justify-center gap-1.5"
+            >
+              <Tent class="w-7 h-7 text-slate-300" />
+              <span class="font-bold text-slate-500">Tidak Ada Kegiatan Ekskul</span>
+              <span class="text-[10px] text-slate-400">
+                Tidak ada agenda latihan ekskul pada hari {{ day.name }}
               </span>
             </div>
 
-            <!-- Subject & Details -->
-            <div class="pt-1">
-              <h4 class="font-extrabold text-sm text-slate-900 uppercase tracking-wide leading-snug">
-                {{ item.subject?.name || item.activity_name }}
-              </h4>
-              
-              <div class="mt-1.5 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-                <span v-if="isItemLokal(item)" class="inline-flex items-center gap-1 text-teal-700 font-bold bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/70">
-                  <MapPin class="w-3 h-3 text-teal-500" />
-                  <span>Ruang: Lokal</span>
-                </span>
-                <span v-else class="inline-flex items-center gap-1 text-slate-600 font-semibold">
-                  <MapPin class="w-3 h-3 text-slate-400" />
-                  <span>Gedung Utama</span>
+            <!-- Ekskul Item Cards -->
+            <div
+              v-for="ek in getTeacherDayEkskuls(day.key)"
+              :key="'ekskul-' + ek.id"
+              class="p-4 rounded-2xl border bg-white border-slate-200/70 shadow-2xs hover:border-indigo-300 hover:shadow-md transition-all space-y-3 group"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <span class="px-2.5 py-1 bg-indigo-900 text-white font-mono text-[11px] font-extrabold rounded-lg shadow-2xs flex items-center gap-1.5">
+                  <Clock class="w-3 h-3 text-indigo-300" />
+                  <span>{{ ek.schedule_time || 'Waktu Fleksibel' }}</span>
                 </span>
 
-                <span v-if="getDurationBadge(item)" class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-black border border-amber-200">
-                  {{ getDurationBadge(item) }}
+                <span
+                  v-if="ek.is_mandatory"
+                  class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200"
+                >
+                  Wajib
+                </span>
+                <span
+                  v-else
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"
+                >
+                  Pilihan
                 </span>
               </div>
+
+              <div>
+                <h4 class="font-extrabold text-sm text-slate-900 font-lexend group-hover:text-indigo-600 transition-colors">
+                  {{ ek.name }}
+                </h4>
+                <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">
+                  {{ ek.description || 'Kegiatan ekstrakurikuler minat & bakat siswa madrasah.' }}
+                </p>
+              </div>
+
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                  <Users class="w-3.5 h-3.5 text-indigo-500" />
+                  <span v-if="ek.is_mandatory">Seluruh Siswa</span>
+                  <span v-else>{{ ek.members_count || 0 }} Siswa Terdaftar</span>
+                </div>
+
+                <button
+                  type="button"
+                  @click="goToEkskulGrading(ek)"
+                  class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center gap-1 transition-all shadow-xs cursor-pointer"
+                >
+                  <Award class="w-3.5 h-3.5" />
+                  <span>Input Nilai</span>
+                </button>
+              </div>
             </div>
-          </div>
+          </template>
+
+          <!-- VIEW KBM UTAMA & LOKAL -->
+          <template v-else>
+            <!-- Empty State for Day -->
+            <div
+              v-if="getTeacherDaySchedules(day.key).length === 0"
+              class="py-10 text-center text-slate-400 text-xs font-medium border-2 border-dashed border-slate-200/80 rounded-2xl flex flex-col items-center justify-center gap-1.5"
+            >
+              <Clock class="w-7 h-7 text-slate-300" />
+              <span class="font-bold text-slate-500">Tidak Ada Jam Mengajar</span>
+              <span class="text-[10px] text-slate-400">
+                {{ activeScheduleType === 'lokal' ? 'Tidak ada sesi KBM di Ruang Lokal' : 'Jam Bebas / Persiapan Materi' }}
+              </span>
+            </div>
+
+            <!-- Schedule Item Cards -->
+            <div
+              v-for="item in getTeacherDaySchedules(day.key)"
+              :key="item.id"
+              class="p-4 rounded-2xl border bg-white border-slate-200/70 shadow-2xs hover:border-emerald-300 hover:shadow-md transition-all space-y-2.5"
+            >
+              <!-- Time Badge & Class Badge -->
+              <div class="flex items-center justify-between gap-2">
+                <span class="px-2.5 py-1 bg-slate-900 text-white font-mono text-[11px] font-extrabold rounded-lg shadow-2xs flex items-center gap-1.5">
+                  <Clock class="w-3 h-3 text-emerald-300" />
+                  <span>{{ item.start_time }} - {{ item.end_time }}</span>
+                </span>
+
+                <span
+                  :class="isItemLokal(item) ? 'bg-teal-50 text-teal-800 border-teal-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'"
+                  class="px-2.5 py-1 font-lexend text-xs font-black rounded-lg border flex items-center gap-1.5"
+                >
+                  <Building2 class="w-3 h-3" :class="isItemLokal(item) ? 'text-teal-600' : 'text-emerald-600'" />
+                  <span>{{ getClassName(item) }}</span>
+                </span>
+              </div>
+
+              <!-- Subject & Details -->
+              <div class="pt-1">
+                <h4 class="font-extrabold text-sm text-slate-900 uppercase tracking-wide leading-snug">
+                  {{ item.subject?.name || item.activity_name }}
+                </h4>
+                
+                <div class="mt-1.5 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                  <span v-if="isItemLokal(item)" class="inline-flex items-center gap-1 text-teal-700 font-bold bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/70">
+                    <MapPin class="w-3 h-3 text-teal-500" />
+                    <span>Ruang: Lokal</span>
+                  </span>
+                  <span v-else class="inline-flex items-center gap-1 text-slate-600 font-semibold">
+                    <MapPin class="w-3 h-3 text-slate-400" />
+                    <span>Gedung Utama</span>
+                  </span>
+
+                  <span v-if="getDurationBadge(item)" class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-black border border-amber-200">
+                    {{ getDurationBadge(item) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </div>
@@ -205,13 +304,21 @@ import {
   Clock,
   Building2,
   MapPin,
+  Award,
+  Users,
+  Tent,
+  ArrowRight,
 } from 'lucide-vue-next';
+import { useRouter } from 'vue-router';
 
 const toast = useToast();
+const router = useRouter();
 const loading = ref(true);
 const teacherName = ref('');
+const isAdvisor = ref(false);
 const schedules = ref([]);
-const activeScheduleType = ref(localStorage.getItem('teacher_schedule_type') || 'utama'); // 'utama' | 'lokal'
+const myEkskuls = ref([]);
+const activeScheduleType = ref(localStorage.getItem('teacher_schedule_type') || 'utama'); // 'utama' | 'lokal' | 'ekskul'
 
 const daysList = [
   { key: 'senin', name: 'Senin' },
@@ -249,7 +356,12 @@ const totalLokalSlots = computed(() => {
   return schedules.value.filter(s => !s.is_activity && isItemLokal(s)).length;
 });
 
+const totalEkskulSlots = computed(() => {
+  return myEkskuls.value.length;
+});
+
 const filteredSchedules = computed(() => {
+  if (activeScheduleType.value === 'ekskul') return [];
   return schedules.value.filter(s => {
     if (s.is_activity) return false;
     if (activeScheduleType.value === 'lokal') {
@@ -260,12 +372,18 @@ const filteredSchedules = computed(() => {
 });
 
 const totalTeachingSlots = computed(() => {
+  if (activeScheduleType.value === 'ekskul') {
+    return totalEkskulSlots.value;
+  }
   return filteredSchedules.value.length;
 });
 
 const todaySlotsCount = computed(() => {
   const dayNames = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
   const todayKey = dayNames[new Date().getDay()];
+  if (activeScheduleType.value === 'ekskul') {
+    return getTeacherDayEkskuls(todayKey).length;
+  }
   return filteredSchedules.value.filter(s => s.day?.toLowerCase() === todayKey).length;
 });
 
@@ -278,6 +396,21 @@ function isToday(dayKey) {
 function getTeacherDaySchedules(dayKey) {
   return filteredSchedules.value.filter(s => {
     return s.day?.toLowerCase() === dayKey;
+  });
+}
+
+function getTeacherDayEkskuls(dayKey) {
+  return myEkskuls.value.filter(ek => {
+    if (!ek.schedule_day) return false;
+    const d = ek.schedule_day.toLowerCase().trim();
+    return d === dayKey || d.includes(dayKey);
+  });
+}
+
+function goToEkskulGrading(ekskul) {
+  router.push({
+    path: '/teacher/extracurriculars',
+    query: { id: ekskul.id }
   });
 }
 
@@ -302,7 +435,14 @@ const fetchSchedules = async () => {
     const res = await api.get('/teacher/schedules');
     const data = res?.data || res || {};
     teacherName.value = data.teacher?.full_name || '';
+    isAdvisor.value = Boolean(data.teacher?.is_advisor);
     schedules.value = data.schedules || [];
+    myEkskuls.value = data.extracurriculars || [];
+
+    // Jika guru tidak punya jadwal KBM reguler tapi punya binaan ekskul, otomatis aktifkan tab ekskul
+    if (schedules.value.length === 0 && myEkskuls.value.length > 0) {
+      activeScheduleType.value = 'ekskul';
+    }
   } catch (err) {
     toast.error('Gagal memuat jadwal mengajar guru.');
   } finally {
