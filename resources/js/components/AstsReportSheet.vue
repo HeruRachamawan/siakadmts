@@ -368,7 +368,6 @@
               <div style="height: 32px;"></div>
               <div>
                 <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0;">{{ report?.student?.homeroom_teacher_name || '............................................' }}</p>
-                <p style="font-size: 8.5px; color: #475569; font-family: monospace; margin: 1px 0 0 0;">NIP. {{ report?.student?.homeroom_teacher_nip || '-' }}</p>
               </div>
             </td>
 
