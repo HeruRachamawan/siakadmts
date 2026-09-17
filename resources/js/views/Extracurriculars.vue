@@ -95,9 +95,13 @@
 
       <div v-else-if="filteredEkskuls.length === 0" class="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-2xs">
         <Tent class="w-12 h-12 text-slate-300 mx-auto mb-3" />
-        <h3 class="text-sm font-bold text-slate-700 font-lexend">Belum Ada Ekstrakurikuler</h3>
+        <h3 class="text-sm font-bold text-slate-700 font-lexend">
+          {{ isAdvisorView ? 'Belum Ada Ekstrakurikuler yang Dibina' : 'Belum Ada Ekstrakurikuler' }}
+        </h3>
         <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-          Silakan tambahkan data kegiatan ekstrakurikuler baru untuk memulai penilaian predikat siswa.
+          {{ isAdvisorView 
+              ? 'Akun Anda belum ditugaskan membina kegiatan ekstrakurikuler. Hubungi Administrator madrasah untuk penugasan.' 
+              : 'Silakan tambahkan data kegiatan ekstrakurikuler baru untuk memulai penilaian predikat siswa.' }}
         </p>
       </div>
 

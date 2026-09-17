@@ -46,13 +46,15 @@ class ExtracurricularController extends Controller
         $this->ensureMandatoryPramukaExists();
 
         $user = $request->user();
-        $isTeacherOnly = $user && $user->role === 'teacher';
+        $isStaff = $user && in_array($user->role, ['admin', 'kurikulum', 'operator', 'kepala_sekolah']);
         $teacher = $user ? ($user->teacher ?: Teacher::where('user_id', $user->id)->first()) : null;
 
         $query = Extracurricular::with(['teacher'])->withCount('members');
 
-        // Jika guru membuka dalam mode pembina, bisa filter ekskul yang dibinanya
-        if ($request->boolean('my_only') && $teacher) {
+        // Jika akun guru biasa/pembina (bukan staf admin), HANYA tampilkan ekskul yang dibina oleh guru tersebut
+        if (!$isStaff && $teacher) {
+            $query->where('teacher_id', $teacher->id);
+        } elseif ($request->boolean('my_only') && $teacher) {
             $query->where('teacher_id', $teacher->id);
         }
 
