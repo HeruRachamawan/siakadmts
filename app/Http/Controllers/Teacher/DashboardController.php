@@ -40,7 +40,7 @@ class DashboardController extends TeacherController
             ->get();
 
         $ekskulData = [];
-        $totalActiveStudents = \App\Models\Student::where('status', 'aktif')->count();
+        $totalActiveStudents = \App\Models\Student::count();
 
         foreach ($myEkskuls as $ek) {
             $totalParticipants = 0;
