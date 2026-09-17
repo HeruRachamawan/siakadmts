@@ -1652,9 +1652,9 @@
 
             <div class="space-y-1.5">
               <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Mata Pelajaran *</label>
-              <select v-model="examForm.subject_id" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400">
+              <select v-model="examForm.subject_id" @change="onExamSubjectChange" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400">
                 <option value="">-- Pilih Mata Pelajaran --</option>
-                <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
+                <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }} (KKM: {{ s.passing_grade || 75 }})</option>
               </select>
             </div>
           </div>
@@ -4239,12 +4239,21 @@ function examTypeLabel(type) {
   return map[type] || type?.toUpperCase() || '-';
 }
 
+function onExamSubjectChange() {
+  if (!examForm.subject_id) return;
+  const found = subjects.value.find(s => s.id == examForm.subject_id);
+  if (found && found.passing_grade) {
+    examForm.kkm = Number(found.passing_grade);
+  }
+}
+
 function openCreateModal() {
   editingExamId.value = null;
   examForm.title = '';
   const classWithStudents = classes.value.find(c => (c.students_count || 0) > 0) || classes.value[0];
   examForm.class_room_id = classWithStudents?.id || '';
-  examForm.subject_id = subjects.value[0]?.id || '';
+  const firstSubj = subjects.value[0];
+  examForm.subject_id = firstSubj?.id || '';
   examForm.exam_type = 'uh';
   examForm.semester = 'ganjil';
   examForm.pg_count = 20;
@@ -4262,7 +4271,7 @@ function openCreateModal() {
   examForm.essay_count = 0;
   examForm.essay_point = 10;
   examForm.total_questions = 20;
-  examForm.kkm = 75;
+  examForm.kkm = firstSubj?.passing_grade ? Number(firstSubj.passing_grade) : 75;
   examForm.pg_weight = 100;
   examForm.essay_weight = 0;
   examForm.quick_keys = '';
