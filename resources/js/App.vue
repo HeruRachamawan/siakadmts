@@ -33,6 +33,7 @@
           :isHomeroomTeacher="isHomeroomTeacher"
           :isPpdbCommittee="isPpdbCommittee"
           :isExtracurricularAdvisor="isExtracurricularAdvisor"
+          :isTeaching="isTeachingTeacher"
           :pendingResetRequestsCount="pendingResetRequests.length"
           :getImageUrl="getImageUrl"
           @close-mobile-sidebar="isMobileSidebarOpen = false"
@@ -523,6 +524,17 @@ const isExtracurricularAdvisor = computed(() => {
   if (u.is_extracurricular_advisor !== undefined) return Boolean(u.is_extracurricular_advisor);
   if (Array.isArray(u.my_extracurriculars) && u.my_extracurriculars.length > 0) return true;
   return false;
+});
+
+const isTeachingTeacher = computed(() => {
+  if (currentRole.value !== 'teacher') return true;
+  const u = user.value;
+  if (!u) return true;
+  // If user is pure advisor with no teaching schedule/classes
+  if (u.is_only_advisor) return false;
+  if (u.is_teaching !== undefined) return Boolean(u.is_teaching);
+  // Default to true if not explicitly flagged as advisor-only
+  return true;
 });
 
 async function checkTeacherHomeroom() {

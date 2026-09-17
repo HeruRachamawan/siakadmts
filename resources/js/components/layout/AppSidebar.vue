@@ -413,6 +413,7 @@
 
           <!-- Input Presensi Kelas -->
           <RouterLink
+            v-if="isTeaching"
             to="/teacher/attendance"
             :title="isCollapsed ? 'Input Presensi Kelas' : ''"
             class="nav-link"
@@ -427,6 +428,7 @@
 
           <!-- Input Nilai -->
           <RouterLink
+            v-if="isTeaching"
             to="/teacher/grades"
             :title="isCollapsed ? 'Input Nilai' : ''"
             class="nav-link"
@@ -441,6 +443,7 @@
 
           <!-- Koreksi Soal & Asesmen -->
           <RouterLink
+            v-if="isTeaching"
             to="/teacher/exam-corrections"
             :title="isCollapsed ? 'Koreksi Soal & Asesmen' : ''"
             class="nav-link"
@@ -888,6 +891,10 @@ const props = defineProps({
   isHomeroomTeacher: Boolean,
   isPpdbCommittee: Boolean,
   isExtracurricularAdvisor: Boolean,
+  isTeaching: {
+    type: Boolean,
+    default: true
+  },
   pendingResetRequestsCount: {
     type: Number,
     default: 0

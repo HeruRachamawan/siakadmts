@@ -138,6 +138,11 @@ class AuthController extends BaseController
 
             $advisorEkskuls = \App\Models\Extracurricular::where('teacher_id', $teacher->id)->where('is_active', true)->get(['id', 'name', 'code', 'is_mandatory']);
 
+            $hasSubjects = $teacher->subjects()->exists();
+            $hasSchedules = \App\Models\Schedule::where('teacher_id', $teacher->id)->exists();
+            $hasTeachingClasses = $teacher->teachingClasses()->exists() || $teacher->subjectClasses()->exists();
+            $isTeaching = $hasSubjects || $hasSchedules || $hasTeachingClasses;
+
             $payload['teacher_id'] = $teacher->id;
             $payload['nip'] = $teacher->nip;
             $payload['full_name'] = $teacher->full_name;
@@ -148,6 +153,8 @@ class AuthController extends BaseController
             $payload['is_homeroom_teacher'] = $homeroomClasses->isNotEmpty();
             $payload['homeroom_classes'] = $homeroomClasses;
             $payload['is_extracurricular_advisor'] = $advisorEkskuls->isNotEmpty();
+            $payload['is_teaching'] = $isTeaching;
+            $payload['is_only_advisor'] = ($advisorEkskuls->isNotEmpty() && !$isTeaching && $homeroomClasses->isEmpty());
             $payload['my_extracurriculars'] = $advisorEkskuls;
             $payload['teacher'] = [
                 'id' => $teacher->id,
@@ -158,6 +165,8 @@ class AuthController extends BaseController
                 'photo_url' => $teacher->photo_url,
                 'is_ppdb_committee' => (bool) $teacher->is_ppdb_committee,
                 'is_extracurricular_advisor' => $advisorEkskuls->isNotEmpty(),
+                'is_teaching' => $isTeaching,
+                'is_only_advisor' => ($advisorEkskuls->isNotEmpty() && !$isTeaching && $homeroomClasses->isEmpty()),
                 'my_extracurriculars' => $advisorEkskuls,
             ];
         } else {
