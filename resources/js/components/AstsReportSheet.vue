@@ -44,10 +44,13 @@
 
     <!-- 2. JUDUL LEMBAR RAPOR ASTS -->
     <div style="text-align: center; margin-bottom: 6px;">
-      <h2 style="font-size: 12px; font-weight: 900; text-transform: uppercase; color: #020617; font-family: 'Lexend', system-ui, sans-serif; letter-spacing: 0.03em; text-decoration: underline; margin: 0;">
-        LAPORAN HASIL BELAJAR ASESMEN SUMATIF TENGAH SEMESTER (ASTS)
-      </h2>
-      <p style="font-size: 9.5px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.03em; margin: 2px 0 0 0;">
+      <div style="font-size: 13px; font-weight: 900; text-transform: uppercase; color: #020617; font-family: 'Lexend', system-ui, sans-serif; letter-spacing: 0.04em; line-height: 1.3;">
+        <span style="text-decoration: underline; text-underline-offset: 2.5px;">LAPORAN BELAJAR</span>
+      </div>
+      <div style="font-size: 12px; font-weight: 900; text-transform: uppercase; color: #020617; font-family: 'Lexend', system-ui, sans-serif; letter-spacing: 0.03em; line-height: 1.3; margin-top: 1px;">
+        <span style="text-decoration: underline; text-underline-offset: 2.5px;">ASESMEN SUMATIF TENGAH SEMESTER (ASTS)</span>
+      </div>
+      <p style="font-size: 9.5px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.03em; margin: 3px 0 0 0;">
         SEMESTER {{ (report?.semester === 'genap' ? 'GENAP' : 'GANJIL') }} &bull; TAHUN PELAJARAN {{ report?.academic_year || '2026/2027' }}
       </p>
     </div>
