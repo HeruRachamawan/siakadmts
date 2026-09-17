@@ -596,8 +596,16 @@ async function fetchExtracurriculars() {
 async function fetchTeachers() {
   if (!canManageMaster.value) return;
   try {
-    const res = await api.get('/admin/teachers');
-    teachersList.value = res?.data || res || [];
+    const res = await api.get('/admin/teachers', { all: true, per_page: -1 });
+    if (Array.isArray(res)) {
+      teachersList.value = res;
+    } else if (Array.isArray(res?.data)) {
+      teachersList.value = res.data;
+    } else if (Array.isArray(res?.data?.data)) {
+      teachersList.value = res.data.data;
+    } else {
+      teachersList.value = [];
+    }
   } catch (e) {
     console.warn('Gagal memuat daftar guru pembina:', e);
   }
@@ -708,7 +716,7 @@ function openEditModal(ekskul) {
   form.code = ekskul.code;
   form.description = ekskul.description;
   form.teacher_id = ekskul.teacher_id;
-  form.is_mandatory = (bool) => ekskul.is_mandatory;
+  form.is_mandatory = Boolean(ekskul.is_mandatory);
   form.schedule_day = ekskul.schedule_day;
   form.schedule_time = ekskul.schedule_time;
   form.is_active = ekskul.is_active;
