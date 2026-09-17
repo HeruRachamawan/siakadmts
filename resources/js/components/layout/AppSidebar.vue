@@ -158,17 +158,20 @@
           </RouterLink>
 
           <RouterLink
-            to="/admin/grades"
-            :title="isCollapsed ? 'Rekap Nilai Siswa' : ''"
+            to="/admin/calendar-events"
+            :title="isCollapsed ? 'Kalender Akademik' : ''"
             class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <Award class="w-4 h-4 flex-shrink-0" />
+            <Calendar class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
-              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rekap Nilai Siswa</span>
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Kalender Akademik</span>
             </Transition>
           </RouterLink>
+
+          <div v-if="!isCollapsed" class="nav-section">Asesmen & Rapor</div>
+          <div v-else class="my-1 border-t border-slate-200/50"></div>
 
           <RouterLink
             to="/admin/exam-corrections"
@@ -180,6 +183,19 @@
             <FileCheck2 class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Koreksi</span>
+            </Transition>
+          </RouterLink>
+
+          <RouterLink
+            to="/admin/grades"
+            :title="isCollapsed ? 'Rekap Nilai Siswa' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Award class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rekap Nilai Siswa</span>
             </Transition>
           </RouterLink>
 
@@ -211,19 +227,8 @@
             </Transition>
           </RouterLink>
 
-
-          <RouterLink
-            to="/admin/calendar-events"
-            :title="isCollapsed ? 'Kalender Akademik' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <Calendar class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade">
-              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Kalender Akademik</span>
-            </Transition>
-          </RouterLink>
+          <div v-if="!isCollapsed" class="nav-section">Supervisi Kehadiran</div>
+          <div v-else class="my-1 border-t border-slate-200/50"></div>
 
           <RouterLink
             to="/admin/teacher-presensi-monitoring"
@@ -336,7 +341,8 @@
 
         <!-- 3. PRESENSI & KEHADIRAN GURU (Khusus Peran Teacher) -->
         <template v-if="currentRole === 'teacher'">
-          <div v-if="!isCollapsed" class="nav-section">Kehadiran Guru (GPS)</div>
+          <!-- A. PRESENSI & JADWAL GURU -->
+          <div v-if="!isCollapsed" class="nav-section">Presensi & Jadwal Guru</div>
           <div v-else class="my-1 border-t border-slate-200/50"></div>
 
           <!-- Absensi Saya GPS -->
@@ -367,126 +373,6 @@
             </Transition>
           </RouterLink>
 
-          <!-- 4. AKADEMIK & PEMBELAJARAN GURU -->
-          <div v-if="!isCollapsed" class="nav-section">Akademik & Kelas</div>
-          <div v-else class="my-1 border-t border-slate-200/50"></div>
-
-          <!-- Absensi Harian Kelas (Khusus Wali Kelas) -->
-          <RouterLink
-            v-if="isHomeroomTeacher"
-            to="/teacher/homeroom-attendance"
-            :title="isCollapsed ? 'Absensi Harian Kelas' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <ClipboardList class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade">
-              <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
-                <span class="text-sm whitespace-nowrap overflow-hidden">Absensi Harian</span>
-                <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold uppercase">Wali</span>
-              </div>
-            </Transition>
-          </RouterLink>
-
-          <!-- Data Siswa Binaan (Khusus Wali Kelas) -->
-          <RouterLink
-            v-if="isHomeroomTeacher"
-            to="/teacher/students"
-            :title="isCollapsed ? 'Data Siswa Binaan' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <Users class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade">
-              <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
-                <span class="text-sm whitespace-nowrap overflow-hidden">Data Siswa</span>
-                <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold uppercase">Wali</span>
-              </div>
-            </Transition>
-          </RouterLink>
-
-          <!-- Rapor ASTS (Sumatif Tengah Semester - Khusus Wali Kelas) -->
-          <RouterLink
-            v-if="isHomeroomTeacher"
-            to="/teacher/asts-reports"
-            :title="isCollapsed ? 'Rapor ASTS (Tengah Semester)' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <BookOpenCheck class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade">
-              <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
-                <span class="text-sm whitespace-nowrap overflow-hidden">Rapor ASTS</span>
-                <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold uppercase">Wali</span>
-              </div>
-            </Transition>
-          </RouterLink>
-
-          <!-- Input Presensi Kelas -->
-          <RouterLink
-            v-if="isTeaching"
-            to="/teacher/attendance"
-            :title="isCollapsed ? 'Input Presensi Kelas' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <ClipboardCheck class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade">
-              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Presensi Mapel</span>
-            </Transition>
-          </RouterLink>
-
-          <!-- Input Nilai -->
-          <RouterLink
-            v-if="isTeaching"
-            to="/teacher/grades"
-            :title="isCollapsed ? 'Input Nilai' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <Award class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade">
-              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Nilai & Transkrip</span>
-            </Transition>
-          </RouterLink>
-
-          <!-- Koreksi Soal & Asesmen -->
-          <RouterLink
-            v-if="isTeaching"
-            to="/teacher/exam-corrections"
-            :title="isCollapsed ? 'Koreksi Soal & Asesmen' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <FileCheck2 class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade">
-              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Koreksi Soal</span>
-            </Transition>
-          </RouterLink>
-
-          <!-- Ekstrakurikuler (Pembina Ekskul & Dewan Guru) -->
-          <RouterLink
-            to="/teacher/extracurriculars"
-            :title="isCollapsed ? 'Penilaian Ekstrakurikuler' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <Tent class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade">
-              <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
-                <span class="text-sm whitespace-nowrap overflow-hidden">Ekstrakurikuler</span>
-                <span v-if="isExtracurricularAdvisor" class="px-1.5 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-[9px] font-bold uppercase">Pembina</span>
-              </div>
-            </Transition>
-          </RouterLink>
-
           <!-- Jadwal Mengajar Saya -->
           <RouterLink
             to="/teacher/schedules"
@@ -514,6 +400,136 @@
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Kalender Akademik</span>
             </Transition>
           </RouterLink>
+
+          <!-- B. PEMBELAJARAN & ASESMEN -->
+          <div v-if="!isCollapsed" class="nav-section">Pembelajaran & Asesmen</div>
+          <div v-else class="my-1 border-t border-slate-200/50"></div>
+
+          <!-- Input Presensi Kelas -->
+          <RouterLink
+            v-if="isTeaching"
+            to="/teacher/attendance"
+            :title="isCollapsed ? 'Input Presensi Kelas' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <ClipboardCheck class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Presensi Mapel</span>
+            </Transition>
+          </RouterLink>
+
+          <!-- Koreksi Soal & Asesmen -->
+          <RouterLink
+            v-if="isTeaching"
+            to="/teacher/exam-corrections"
+            :title="isCollapsed ? 'Koreksi Soal & Asesmen' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <FileCheck2 class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Koreksi Soal</span>
+            </Transition>
+          </RouterLink>
+
+          <!-- Input Nilai -->
+          <RouterLink
+            v-if="isTeaching"
+            to="/teacher/grades"
+            :title="isCollapsed ? 'Input Nilai' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Award class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Nilai & Transkrip</span>
+            </Transition>
+          </RouterLink>
+
+          <!-- Ekstrakurikuler (Pembina Ekskul & Dewan Guru) -->
+          <RouterLink
+            to="/teacher/extracurriculars"
+            :title="isCollapsed ? 'Penilaian Ekstrakurikuler' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Tent class="w-4 h-4 flex-shrink-0" />
+            <Transition name="label-fade">
+              <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
+                <span class="text-sm whitespace-nowrap overflow-hidden">Ekstrakurikuler</span>
+                <span v-if="isExtracurricularAdvisor" class="px-1.5 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-[9px] font-bold uppercase">Pembina</span>
+              </div>
+            </Transition>
+          </RouterLink>
+
+          <!-- C. RUANG WALI KELAS (Khusus Wali Kelas) -->
+          <template v-if="isHomeroomTeacher">
+            <div v-if="!isCollapsed" class="nav-section flex items-center justify-between">
+              <span>Ruang Wali Kelas</span>
+              <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[8px] font-extrabold uppercase">Wali</span>
+            </div>
+            <div v-else class="my-1 border-t border-slate-200/50"></div>
+
+            <!-- Absensi Harian Kelas (Khusus Wali Kelas) -->
+            <RouterLink
+              to="/teacher/homeroom-attendance"
+              :title="isCollapsed ? 'Absensi Harian Kelas' : ''"
+              class="nav-link"
+              :class="isCollapsed ? 'justify-center' : ''"
+              active-class="nav-link-active"
+            >
+              <ClipboardList class="w-4 h-4 flex-shrink-0" />
+              <Transition name="label-fade">
+                <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
+                  <span class="text-sm whitespace-nowrap overflow-hidden">Absensi Harian</span>
+                  <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold uppercase">Wali</span>
+                </div>
+              </Transition>
+            </RouterLink>
+
+            <!-- Data Siswa Binaan (Khusus Wali Kelas) -->
+            <RouterLink
+              to="/teacher/students"
+              :title="isCollapsed ? 'Data Siswa Binaan' : ''"
+              class="nav-link"
+              :class="isCollapsed ? 'justify-center' : ''"
+              active-class="nav-link-active"
+            >
+              <Users class="w-4 h-4 flex-shrink-0" />
+              <Transition name="label-fade">
+                <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
+                  <span class="text-sm whitespace-nowrap overflow-hidden">Data Siswa</span>
+                  <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold uppercase">Wali</span>
+                </div>
+              </Transition>
+            </RouterLink>
+
+            <!-- Rapor ASTS (Sumatif Tengah Semester - Khusus Wali Kelas) -->
+            <RouterLink
+              to="/teacher/asts-reports"
+              :title="isCollapsed ? 'Rapor ASTS (Tengah Semester)' : ''"
+              class="nav-link"
+              :class="isCollapsed ? 'justify-center' : ''"
+              active-class="nav-link-active"
+            >
+              <BookOpenCheck class="w-4 h-4 flex-shrink-0" />
+              <Transition name="label-fade">
+                <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
+                  <span class="text-sm whitespace-nowrap overflow-hidden">Rapor ASTS</span>
+                  <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold uppercase">Wali</span>
+                </div>
+              </Transition>
+            </RouterLink>
+          </template>
+
+          <!-- D. TUGAS TAMBAHAN & PROFIL -->
+          <div v-if="!isCollapsed" class="nav-section">Tugas Tambahan & Akun</div>
+          <div v-else class="my-1 border-t border-slate-200/50"></div>
 
           <!-- Panitia PPDB (Jika Ditugaskan) -->
           <RouterLink
@@ -547,7 +563,7 @@
 
         <!-- Monitoring & Rekap (Admin & Kepala Madrasah) -->
         <template v-if="currentRole === 'admin' || currentRole === 'kepala_sekolah'">
-          <div v-if="!isCollapsed" class="nav-section">Monitoring & Rekap</div>
+          <div v-if="!isCollapsed" class="nav-section">Supervisi & Monitoring</div>
           <div v-else class="my-1 border-t border-slate-200/50"></div>
 
           <!-- Monitoring Absensi Siswa Harian -->
@@ -652,7 +668,7 @@
 
         <!-- Student Links -->
         <template v-if="currentRole === 'student'">
-          <div v-if="!isCollapsed" class="nav-section">Akademik Siswa</div>
+          <div v-if="!isCollapsed" class="nav-section">Akademik & Nilai Siswa</div>
           <div v-else class="my-1 border-t border-slate-200/50"></div>
 
           <RouterLink
@@ -750,8 +766,9 @@
             </Transition>
           </RouterLink>
 
-          <!-- 5. PENGATURAN & CETAK (Admin) -->
-          <div class="nav-section">Sistem & Laporan</div>
+          <!-- 5. PENGATURAN & KEAMANAN (Admin) -->
+          <div v-if="!isCollapsed" class="nav-section">Sistem & Keamanan</div>
+          <div v-else class="my-1 border-t border-slate-200/50"></div>
 
           <!-- Kalender Akademik -->
           <RouterLink
@@ -764,20 +781,6 @@
             <Calendar class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Kalender Akademik</span>
-            </Transition>
-          </RouterLink>
-
-          <!-- Pusat Cetak -->
-          <RouterLink
-            to="/admin/print-center"
-            :title="isCollapsed ? 'Pusat Cetak' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <Printer class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade">
-              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Pusat Cetak</span>
             </Transition>
           </RouterLink>
 
