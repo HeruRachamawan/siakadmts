@@ -161,7 +161,18 @@
               class="flex-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
             >
               <Award class="w-3.5 h-3.5" />
-              <span>Input Nilai (A/B/C)</span>
+              <span>Input Nilai</span>
+            </button>
+
+            <button
+              v-if="!ekskul.is_mandatory"
+              type="button"
+              @click="openMembersModal(ekskul)"
+              class="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-emerald-700 font-bold rounded-xl text-xs flex items-center gap-1 transition-all cursor-pointer border border-slate-200"
+              title="Kelola / Tambah Anggota Siswa"
+            >
+              <Users class="w-3.5 h-3.5 text-emerald-600" />
+              <span>Anggota</span>
             </button>
 
             <!-- Edit/Delete Action for Staff -->
@@ -215,8 +226,18 @@
             </p>
           </div>
 
-          <!-- Save Button -->
-          <div class="flex items-center gap-2">
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <button
+              v-if="!selectedEkskul.is_mandatory"
+              type="button"
+              @click="openMembersModal(selectedEkskul)"
+              class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition-all flex items-center gap-2 cursor-pointer border border-slate-200 shadow-2xs hover:border-slate-300"
+            >
+              <Users class="w-4 h-4 text-emerald-600" />
+              <span>Kelola / Tambah Anggota</span>
+            </button>
+
             <button
               type="button"
               @click="saveAllGrades"
@@ -326,8 +347,27 @@
           <p class="text-xs font-medium">Memuat lembar penilaian siswa...</p>
         </div>
 
-        <div v-else-if="gradingStudents.length === 0" class="py-16 text-center text-slate-400 text-xs">
-          Tidak ada data siswa pada filter ini.
+        <div v-else-if="gradingStudents.length === 0" class="py-16 px-4 text-center">
+          <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
+            <Users class="w-6 h-6" />
+          </div>
+          <p class="text-sm font-bold text-slate-700 mb-1">
+            {{ !selectedEkskul.is_mandatory && !gradingFilterClass ? 'Belum Ada Anggota Siswa Terdaftar' : 'Tidak Ada Data Siswa pada Filter Ini' }}
+          </p>
+          <p class="text-xs text-slate-400 max-w-md mx-auto mb-4">
+            {{ !selectedEkskul.is_mandatory 
+                ? 'Ekstrakurikuler ini merupakan pilihan minat/bakat. Daftarkan siswa yang bergabung melalui tombol Kelola Anggota.' 
+                : 'Tidak ada siswa aktif yang ditemukan sesuai filter kelas yang dipilih.' }}
+          </p>
+          <button
+            v-if="!selectedEkskul.is_mandatory"
+            type="button"
+            @click="openMembersModal(selectedEkskul)"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
+          >
+            <UserPlus class="w-4 h-4" />
+            <span>Kelola & Tambah Anggota Sekarang</span>
+          </button>
         </div>
 
         <div v-else class="overflow-x-auto">
@@ -533,6 +573,274 @@
       </div>
     </div>
 
+    <!-- ================= MODAL KELOLA / TAMBAH ANGGOTA SISWA ================= -->
+    <div
+      v-if="showMembersModal && modalEkskul"
+      class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs"
+    >
+      <div class="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <!-- Modal Header -->
+        <div class="px-6 py-4 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <Users class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="text-base font-black text-slate-800 font-lexend">
+                Kelola Anggota: {{ modalEkskul.name }}
+              </h3>
+              <p class="text-xs text-slate-500">
+                Pilih dan daftarkan siswa peserta ekstrakurikuler minat/bakat (T.A {{ activeYear?.name || '-' }}).
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="closeMembersModal"
+            class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"
+          >
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Navigation Tabs: Tambah Anggota vs Anggota Saat Ini -->
+        <div class="px-6 pt-3 pb-0 border-b border-slate-100 flex items-center gap-4 bg-white">
+          <button
+            type="button"
+            @click="membersTab = 'candidates'"
+            :class="membersTab === 'candidates' 
+              ? 'text-emerald-600 border-b-2 border-emerald-600 font-black' 
+              : 'text-slate-500 hover:text-slate-800 font-bold'"
+            class="pb-3 text-xs flex items-center gap-2 cursor-pointer transition-colors"
+          >
+            <UserPlus class="w-4 h-4" />
+            <span>Pilih Siswa Baru</span>
+            <span v-if="selectedCandidateIds.length > 0" class="px-2 py-0.2 bg-emerald-600 text-white text-[10px] font-black rounded-full">
+              {{ selectedCandidateIds.length }}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            @click="membersTab = 'enrolled'"
+            :class="membersTab === 'enrolled' 
+              ? 'text-emerald-600 border-b-2 border-emerald-600 font-black' 
+              : 'text-slate-500 hover:text-slate-800 font-bold'"
+            class="pb-3 text-xs flex items-center gap-2 cursor-pointer transition-colors"
+          >
+            <Users class="w-4 h-4" />
+            <span>Anggota Terdaftar</span>
+            <span class="px-2 py-0.2 bg-slate-100 text-slate-700 text-[10px] font-black rounded-full border border-slate-200">
+              {{ enrolledMembersList.length }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Tab 1: PILIH SISWA BARU / KANDIDAT -->
+        <div v-if="membersTab === 'candidates'" class="p-6 flex-1 overflow-y-auto space-y-4">
+          <!-- Filter Candidate Bar -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/90 p-3 rounded-2xl border border-slate-100">
+            <!-- Filter Class Selector -->
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
+                Filter Kelas / Rombel
+              </label>
+              <select
+                v-model="candidateFilterComposite"
+                @change="onCandidateFilterChange"
+                class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-400 focus:outline-none cursor-pointer"
+              >
+                <option value="">-- Semua Kelas --</option>
+                <optgroup v-if="candidateUtamaClasses.length > 0" label="🏫 Rombel Siswa Utama (Reguler)">
+                  <option
+                    v-for="cls in candidateUtamaClasses"
+                    :key="'cand-utama-' + cls.id"
+                    :value="'utama:' + cls.id"
+                  >
+                    🏫 Kelas {{ cls.name }} ({{ cls.students_count || 0 }} Siswa)
+                  </option>
+                </optgroup>
+                <optgroup v-if="candidateLokalClasses.length > 0" label="📍 Kelompok Siswa / Jadwal Lokal">
+                  <option
+                    v-for="cls in candidateLokalClasses"
+                    :key="'cand-lokal-' + cls.id"
+                    :value="'lokal:' + cls.id"
+                  >
+                    📍 Kelompok Lokal {{ cls.name }} ({{ cls.students_count || 0 }} Siswa)
+                  </option>
+                </optgroup>
+              </select>
+            </div>
+
+            <!-- Search by Name / NISN -->
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
+                Cari Nama / NISN Siswa
+              </label>
+              <div class="relative">
+                <Search class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  v-model="candidateSearch"
+                  type="text"
+                  placeholder="Ketik nama atau NISN..."
+                  class="w-full pl-8.5 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-emerald-400 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Select All & Summary Bar -->
+          <div class="flex items-center justify-between text-xs px-1">
+            <div class="flex items-center gap-2">
+              <input
+                id="chk-select-all"
+                type="checkbox"
+                :checked="isAllCandidatesSelected"
+                :indeterminate="isCandidatesIndeterminate"
+                @change="toggleSelectAllCandidates"
+                class="w-4 h-4 text-emerald-600 rounded cursor-pointer"
+              />
+              <label for="chk-select-all" class="font-bold text-slate-700 cursor-pointer">
+                Pilih Semua yang Ditampilkan ({{ unEnrolledCandidates.length }} siswa belum terdaftar)
+              </label>
+            </div>
+            <span class="text-slate-400 text-[11px]">
+              Terpilih: <strong class="text-emerald-700 font-black">{{ selectedCandidateIds.length }}</strong> siswa
+            </span>
+          </div>
+
+          <!-- Candidate Students List -->
+          <div v-if="loadingCandidates" class="py-12 text-center text-slate-400">
+            <div class="animate-spin h-6 w-6 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+            <p class="text-xs">Memuat daftar siswa madrasah...</p>
+          </div>
+
+          <div v-else-if="filteredCandidates.length === 0" class="py-12 text-center text-slate-400 text-xs bg-slate-50 rounded-2xl">
+            Tidak ditemukan siswa dengan filter atau kata kunci tersebut.
+          </div>
+
+          <div v-else class="border border-slate-200/80 rounded-2xl overflow-hidden divide-y divide-slate-100 max-h-[340px] overflow-y-auto">
+            <div
+              v-for="st in filteredCandidates"
+              :key="'cand-st-' + st.id"
+              :class="st.is_enrolled ? 'bg-emerald-50/40 text-slate-400' : 'hover:bg-slate-50/80 cursor-pointer'"
+              @click="!st.is_enrolled && toggleCandidateSelection(st.id)"
+              class="p-3 flex items-center justify-between gap-3 transition-colors"
+            >
+              <div class="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  :disabled="st.is_enrolled"
+                  :checked="st.is_enrolled || selectedCandidateIds.includes(st.id)"
+                  @click.stop="toggleCandidateSelection(st.id)"
+                  class="w-4 h-4 text-emerald-600 rounded cursor-pointer disabled:opacity-40"
+                />
+                <div>
+                  <div class="font-bold text-xs" :class="st.is_enrolled ? 'text-slate-500' : 'text-slate-800'">
+                    {{ st.full_name }}
+                  </div>
+                  <div class="text-[10px] text-slate-400 font-mono">
+                    NISN: {{ st.nisn || '-' }} &bull; Gender: {{ st.gender === 'L' ? 'Laki-laki' : 'Perempuan' }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 bg-slate-100 rounded-md font-bold text-slate-700 text-[10px]">
+                  🏫 {{ st.class_name }}
+                </span>
+                <span v-if="st.lokal_class_name" class="px-1.5 py-0.5 bg-teal-50 text-teal-700 border border-teal-200/80 rounded text-[9px] font-bold">
+                  📍 {{ st.lokal_class_name }}
+                </span>
+                <span
+                  v-if="st.is_enrolled"
+                  class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-full text-[10px] flex items-center gap-1"
+                >
+                  <Check class="w-3 h-3" /> Sudah Terdaftar
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: DAFTAR ANGGOTA TERDAFTAR SAAT INI -->
+        <div v-else-if="membersTab === 'enrolled'" class="p-6 flex-1 overflow-y-auto space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-700">
+              Total Anggota Aktif: <strong class="text-emerald-700 font-black">{{ enrolledMembersList.length }}</strong> Siswa
+            </span>
+            <span class="text-[11px] text-slate-400">
+              Siswa yang ada di daftar ini akan otomatis muncul pada Lembar Penilaian.
+            </span>
+          </div>
+
+          <div v-if="enrolledMembersList.length === 0" class="py-12 text-center text-slate-400 text-xs bg-slate-50 rounded-2xl">
+            Belum ada anggota terdaftar. Beralih ke tab <strong>Pilih Siswa Baru</strong> untuk menambahkan anggota.
+          </div>
+
+          <div v-else class="border border-slate-200/80 rounded-2xl overflow-hidden divide-y divide-slate-100 max-h-[380px] overflow-y-auto">
+            <div
+              v-for="(m, mIdx) in enrolledMembersList"
+              :key="'enrolled-m-' + m.id"
+              class="p-3 flex items-center justify-between gap-3 hover:bg-slate-50/60 transition-colors"
+            >
+              <div class="flex items-center gap-3">
+                <span class="w-6 text-center font-mono font-bold text-slate-400 text-xs">{{ mIdx + 1 }}</span>
+                <div>
+                  <div class="font-bold text-xs text-slate-800">{{ m.full_name }}</div>
+                  <div class="text-[10px] text-slate-400 font-mono">
+                    NISN: {{ m.nisn || '-' }} &bull; Bergabung: {{ m.joined_date || '-' }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 bg-slate-100 rounded-md font-bold text-slate-700 text-[10px]">
+                  🏫 {{ m.class_name }}
+                </span>
+                <span v-if="m.lokal_class_name" class="px-1.5 py-0.5 bg-teal-50 text-teal-700 border border-teal-200/80 rounded text-[9px] font-bold">
+                  📍 {{ m.lokal_class_name }}
+                </span>
+
+                <button
+                  type="button"
+                  @click="removeSingleMember(m)"
+                  :disabled="removingMemberId === m.student_id"
+                  class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                  title="Keluarkan dari Ekskul Ini"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between">
+          <button
+            type="button"
+            @click="closeMembersModal"
+            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer"
+          >
+            Tutup
+          </button>
+
+          <div v-if="membersTab === 'candidates'" class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="submitAddMembers"
+              :disabled="submittingMembers || selectedCandidateIds.length === 0"
+              class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 disabled:opacity-50 text-white font-black rounded-xl text-xs transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 cursor-pointer"
+            >
+              <Check class="w-4 h-4" />
+              <span>{{ submittingMembers ? 'Menyimpan...' : `Tambahkan ${selectedCandidateIds.length} Siswa ke Ekskul` }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -553,7 +861,11 @@ import {
   Search,
   Check,
   CheckCircle2,
-  ArrowLeft
+  ArrowLeft,
+  Users,
+  UserPlus,
+  UserMinus,
+  X
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -810,6 +1122,177 @@ async function confirmDeleteEkskul(ekskul) {
     await fetchExtracurriculars();
   } catch (err) {
     toast.error('Gagal menghapus ekstrakurikuler.');
+  }
+}
+
+// Member Management Modal State
+const showMembersModal = ref(false);
+const modalEkskul = ref(null);
+const membersTab = ref('candidates'); // 'candidates' | 'enrolled'
+const loadingCandidates = ref(false);
+const submittingMembers = ref(false);
+const removingMemberId = ref(null);
+
+const candidateStudents = ref([]);
+const enrolledMembersList = ref([]);
+const candidateUtamaClasses = ref([]);
+const candidateLokalClasses = ref([]);
+const selectedCandidateIds = ref([]);
+
+const candidateFilterClass = ref('');
+const candidateFilterClassType = ref('utama');
+const candidateFilterComposite = ref('');
+const candidateSearch = ref('');
+
+function onCandidateFilterChange() {
+  const val = candidateFilterComposite.value;
+  if (!val) {
+    candidateFilterClass.value = '';
+    candidateFilterClassType.value = 'utama';
+  } else {
+    const parts = val.split(':');
+    candidateFilterClassType.value = parts[0] || 'utama';
+    candidateFilterClass.value = parts[1] || '';
+  }
+  fetchCandidateStudents();
+}
+
+async function openMembersModal(ekskul) {
+  modalEkskul.value = ekskul;
+  membersTab.value = 'candidates';
+  candidateFilterComposite.value = '';
+  candidateFilterClass.value = '';
+  candidateFilterClassType.value = 'utama';
+  candidateSearch.value = '';
+  selectedCandidateIds.value = [];
+  showMembersModal.value = true;
+  await fetchCandidateStudents();
+}
+
+function closeMembersModal() {
+  showMembersModal.value = false;
+  modalEkskul.value = null;
+  selectedCandidateIds.value = [];
+  // Refresh grading sheet if currently viewing grading view
+  if (activeView.value === 'grading' && selectedEkskul.value) {
+    fetchGradingSheet();
+  }
+}
+
+async function fetchCandidateStudents() {
+  if (!modalEkskul.value) return;
+  loadingCandidates.value = true;
+  try {
+    const res = await api.get(`/teacher/extracurriculars/${modalEkskul.value.id}/candidates`, {
+      class_id: candidateFilterClass.value || undefined,
+      class_type: candidateFilterClassType.value || 'utama',
+      search: candidateSearch.value || undefined,
+    });
+    const d = res?.data || res || {};
+    candidateStudents.value = d.candidates || [];
+    enrolledMembersList.value = d.members || [];
+    candidateUtamaClasses.value = d.utama_classes || [];
+    candidateLokalClasses.value = d.lokal_classes || [];
+    if (d.academic_year) {
+      activeYear.value = d.academic_year;
+    }
+  } catch (err) {
+    toast.error('Gagal memuat daftar siswa untuk kelola anggota.');
+  } finally {
+    loadingCandidates.value = false;
+  }
+}
+
+const filteredCandidates = computed(() => {
+  if (!candidateSearch.value) return candidateStudents.value;
+  const q = candidateSearch.value.toLowerCase();
+  return candidateStudents.value.filter(s =>
+    (s.full_name || '').toLowerCase().includes(q) ||
+    (s.nisn || '').toLowerCase().includes(q) ||
+    (s.nis || '').toLowerCase().includes(q)
+  );
+});
+
+const unEnrolledCandidates = computed(() => {
+  return filteredCandidates.value.filter(s => !s.is_enrolled);
+});
+
+const isAllCandidatesSelected = computed(() => {
+  if (unEnrolledCandidates.value.length === 0) return false;
+  return unEnrolledCandidates.value.every(s => selectedCandidateIds.value.includes(s.id));
+});
+
+const isCandidatesIndeterminate = computed(() => {
+  if (unEnrolledCandidates.value.length === 0) return false;
+  const count = unEnrolledCandidates.value.filter(s => selectedCandidateIds.value.includes(s.id)).length;
+  return count > 0 && count < unEnrolledCandidates.value.length;
+});
+
+function toggleSelectAllCandidates(e) {
+  if (e.target.checked) {
+    const idsToAdd = unEnrolledCandidates.value.map(s => s.id);
+    selectedCandidateIds.value = Array.from(new Set([...selectedCandidateIds.value, ...idsToAdd]));
+  } else {
+    const idsToRemove = new Set(unEnrolledCandidates.value.map(s => s.id));
+    selectedCandidateIds.value = selectedCandidateIds.value.filter(id => !idsToRemove.has(id));
+  }
+}
+
+function toggleCandidateSelection(studentId) {
+  const idx = selectedCandidateIds.value.indexOf(studentId);
+  if (idx > -1) {
+    selectedCandidateIds.value.splice(idx, 1);
+  } else {
+    selectedCandidateIds.value.push(studentId);
+  }
+}
+
+async function submitAddMembers() {
+  if (!modalEkskul.value || selectedCandidateIds.value.length === 0) return;
+  submittingMembers.value = true;
+  try {
+    const res = await api.post(`/teacher/extracurriculars/${modalEkskul.value.id}/members`, {
+      student_ids: selectedCandidateIds.value,
+      academic_year_id: activeYear.value?.id,
+    });
+    toast.success(res?.message || `Berhasil menambahkan ${selectedCandidateIds.value.length} siswa ke ${modalEkskul.value.name}!`);
+    selectedCandidateIds.value = [];
+    await fetchCandidateStudents();
+    membersTab.value = 'enrolled';
+    // If currently in grading view of this ekskul, refresh the grading table
+    if (activeView.value === 'grading' && selectedEkskul.value?.id === modalEkskul.value?.id) {
+      fetchGradingSheet();
+    }
+  } catch (err) {
+    toast.error(err?.response?.data?.message || 'Gagal menambahkan anggota siswa.');
+  } finally {
+    submittingMembers.value = false;
+  }
+}
+
+async function removeSingleMember(member) {
+  if (!modalEkskul.value) return;
+  const confirmed = await confirm({
+    title: 'Keluarkan Siswa dari Anggota?',
+    message: `Apakah Anda yakin ingin mengeluarkan '${member.full_name}' dari keanggotaan ekstrakurikuler ${modalEkskul.value.name}?`,
+    confirmText: 'Ya, Keluarkan',
+    confirmType: 'danger'
+  });
+  if (!confirmed) return;
+
+  removingMemberId.value = member.student_id;
+  try {
+    await api.delete(`/teacher/extracurriculars/${modalEkskul.value.id}/members/${member.student_id}`);
+    toast.success(`${member.full_name} berhasil dikeluarkan dari ekskul.`);
+    await fetchCandidateStudents();
+    // If currently in grading view of this ekskul, refresh the grading table
+    if (activeView.value === 'grading' && selectedEkskul.value?.id === modalEkskul.value?.id) {
+      fetchGradingSheet();
+    }
+  } catch (err) {
+    toast.error('Gagal mengeluarkan siswa dari keanggotaan.');
+  } finally {
+    removingMemberId.value = null;
   }
 }
 

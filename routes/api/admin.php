@@ -143,6 +143,7 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::put('extracurriculars/{id}', [\App\Http\Controllers\ExtracurricularController::class, 'update']);
     Route::delete('extracurriculars/{id}', [\App\Http\Controllers\ExtracurricularController::class, 'destroy']);
     Route::get('extracurriculars/{id}/grading-sheet', [\App\Http\Controllers\ExtracurricularController::class, 'getGradingSheet']);
+    Route::get('extracurriculars/{id}/candidates', [\App\Http\Controllers\ExtracurricularController::class, 'getCandidates']);
     Route::post('extracurriculars/{id}/grades', [\App\Http\Controllers\ExtracurricularController::class, 'saveGrades']);
     Route::post('extracurriculars/{id}/members', [\App\Http\Controllers\ExtracurricularController::class, 'addMembers']);
     Route::delete('extracurriculars/{id}/members/{studentId}', [\App\Http\Controllers\ExtracurricularController::class, 'removeMember']);

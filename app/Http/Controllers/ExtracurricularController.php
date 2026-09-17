@@ -468,6 +468,127 @@ class ExtracurricularController extends Controller
     }
 
     /**
+     * Get candidate students and current members for extracurricular membership management
+     */
+    public function getCandidates(Request $request, $id)
+    {
+        $ekskul = Extracurricular::with('teacher')->findOrFail($id);
+        $activeYear = AcademicYear::where('is_active', true)->first() ?? AcademicYear::orderBy('id', 'desc')->first();
+        $yearId = $request->input('academic_year_id', $activeYear?->id);
+
+        $classId = $request->input('class_id');
+        $classType = $request->input('class_type', 'utama');
+        $search = trim($request->input('search', ''));
+
+        // Current member student IDs
+        $enrolledMemberIds = ExtracurricularMember::where('extracurricular_id', $ekskul->id)
+            ->when($yearId, fn($q) => $q->where('academic_year_id', $yearId))
+            ->pluck('student_id')
+            ->toArray();
+
+        // Enrolled members list with details
+        $members = ExtracurricularMember::where('extracurricular_id', $ekskul->id)
+            ->when($yearId, fn($q) => $q->where('academic_year_id', $yearId))
+            ->with(['student.classRoom', 'student.lokalClassRoom'])
+            ->get()
+            ->map(function ($m) {
+                $st = $m->student;
+                return [
+                    'id' => $m->id,
+                    'student_id' => $st?->id,
+                    'full_name' => $st?->full_name ?? '-',
+                    'nisn' => $st?->nisn,
+                    'nis' => $st?->nis,
+                    'gender' => $st?->gender,
+                    'class_name' => $st?->classRoom?->name ?? '-',
+                    'class_id' => $st?->class_id,
+                    'lokal_class_name' => $st?->lokalClassRoom?->name ?? null,
+                    'lokal_class_id' => $st?->lokal_class_id,
+                    'joined_date' => $m->joined_date?->format('Y-m-d'),
+                ];
+            });
+
+        // Query active candidate students
+        $candidateQuery = Student::where('status', 'aktif')->with(['classRoom', 'lokalClassRoom']);
+
+        if ($classId) {
+            if ($classType === 'lokal') {
+                $candidateQuery->where('lokal_class_id', $classId);
+            } else {
+                $candidateQuery->where('class_id', $classId);
+            }
+        }
+
+        if ($search !== '') {
+            $candidateQuery->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                  ->orWhere('nisn', 'like', "%{$search}%")
+                  ->orWhere('nis', 'like', "%{$search}%");
+            });
+        }
+
+        $candidates = $candidateQuery->orderBy('full_name')->get()->map(function ($st) use ($enrolledMemberIds) {
+            return [
+                'id' => $st->id,
+                'full_name' => $st->full_name,
+                'nisn' => $st->nisn,
+                'nis' => $st->nis,
+                'gender' => $st->gender,
+                'class_name' => $st->classRoom?->name ?? '-',
+                'class_id' => $st->class_id,
+                'lokal_class_name' => $st->lokalClassRoom?->name ?? null,
+                'lokal_class_id' => $st->lokal_class_id,
+                'is_enrolled' => in_array($st->id, $enrolledMemberIds),
+            ];
+        });
+
+        // Classes list
+        $allClasses = ClassRoom::withCount(['students', 'lokalStudents'])->orderBy('grade_level')->orderBy('name')->get();
+        $utamaClasses = [];
+        $lokalClasses = [];
+
+        foreach ($allClasses as $c) {
+            $name = trim($c->name);
+            $clean = strtolower(preg_replace('/^(kelas|kls)\s*/i', '', $name));
+            $isStandaloneLokal = in_array($clean, ['7', '8']);
+            $isDualClass = in_array($clean, ['9a', '9-a', '9b', '9-b']);
+
+            if ($isStandaloneLokal || $isDualClass) {
+                $lokalClasses[] = [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'grade_level' => $c->grade_level,
+                    'students_count' => $c->lokal_students_count > 0 ? $c->lokal_students_count : $c->students_count,
+                    'type' => 'lokal',
+                ];
+            }
+
+            if (!$isStandaloneLokal) {
+                $utamaClasses[] = [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'grade_level' => $c->grade_level,
+                    'students_count' => $c->students_count,
+                    'type' => 'utama',
+                ];
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'extracurricular' => $ekskul,
+                'academic_year' => $activeYear,
+                'members' => $members,
+                'candidates' => $candidates,
+                'total_members' => count($members),
+                'utama_classes' => $utamaClasses,
+                'lokal_classes' => $lokalClasses,
+            ]
+        ]);
+    }
+
+    /**
      * Remove member student from extracurricular
      */
     public function removeMember($id, $studentId)
@@ -482,3 +603,4 @@ class ExtracurricularController extends Controller
         ]);
     }
 }
+
