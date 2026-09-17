@@ -197,20 +197,6 @@
             </Transition>
           </RouterLink>
 
-          <!-- Ekstrakurikuler (Admin, Kurikulum, Operator) -->
-          <RouterLink
-            to="/admin/extracurriculars"
-            :title="isCollapsed ? 'Ekstrakurikuler' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <Tent class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade">
-              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Ekstrakurikuler</span>
-            </Transition>
-          </RouterLink>
-
 
           <RouterLink
             to="/admin/calendar-events"
@@ -586,20 +572,6 @@
             <BookOpenCheck class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rapor ASTS</span>
-            </Transition>
-          </RouterLink>
-
-          <!-- Ekstrakurikuler (Kurikulum) -->
-          <RouterLink
-            to="/admin/extracurriculars"
-            :title="isCollapsed ? 'Ekstrakurikuler' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <Tent class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade">
-              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Ekstrakurikuler</span>
             </Transition>
           </RouterLink>
 
