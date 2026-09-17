@@ -45,7 +45,16 @@
           <span>Kartu Pelajar</span>
         </button>
 
-        <!-- Tab 5: Kalender -->
+        <!-- Tab 5: Kartu Akun Siswa (NEW) -->
+        <button
+          @click="activeTab = 'account_card'"
+          :class="[activeTab === 'account_card' ? 'bg-white text-emerald-700 shadow-sm font-bold' : 'text-slate-500 font-semibold', 'px-3.5 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer']"
+        >
+          <KeyRound class="w-4 h-4 text-emerald-600" />
+          <span>Kartu Akun Siswa</span>
+        </button>
+
+        <!-- Tab 6: Kalender -->
         <button
           @click="activeTab = 'calendar'"
           :class="[activeTab === 'calendar' ? 'bg-white text-emerald-700 shadow-sm font-bold' : 'text-slate-500 font-semibold', 'px-3.5 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer']"
@@ -546,7 +555,164 @@
       </div>
     </div>
 
-    <!-- ==================== TAB 5: CETAK KALENDER ==================== -->
+    <!-- ==================== TAB 5: CETAK KARTU AKUN SISWA (NEW) ==================== -->
+    <div v-if="activeTab === 'account_card'" class="space-y-6">
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-wrap items-center justify-between gap-4 no-print">
+        <div class="flex flex-wrap items-center gap-4">
+          <div>
+            <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Target Cetak</label>
+            <select v-model="accountCardPrintTarget" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer">
+              <option value="class">Per Kelas</option>
+              <option value="single">Per Siswa Satuan</option>
+            </select>
+          </div>
+
+          <div v-if="accountCardPrintTarget === 'class'">
+            <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Pilih Kelas</label>
+            <select v-model="accountCardSelectedClass" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer">
+              <option value="">Semua Kelas ({{ students.length }} Siswa)</option>
+              <option v-for="cls in classes" :key="cls.id" :value="cls.id">Kelas {{ cls.name }}</option>
+            </select>
+          </div>
+
+          <div v-if="accountCardPrintTarget === 'single'">
+            <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Pilih Siswa</label>
+            <select v-model="accountCardSelectedStudentId" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer max-w-xs">
+              <option v-for="st in students" :key="st.id" :value="st.id">{{ st.full_name }} ({{ st.nisn || st.nis || '-' }})</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Ukuran Kertas Cetak</label>
+            <select v-model="selectedPaperSize" @change="applyPaperSize" class="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 focus:outline-none cursor-pointer">
+              <option value="F4">📜 F4 / Folio (Standar)</option>
+              <option value="A4">📄 A4 (Standar)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            @click="exportExcelStudentAccounts"
+            class="px-4 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold rounded-xl text-xs hover:bg-emerald-100 transition-colors flex items-center gap-2 shadow-xs cursor-pointer"
+          >
+            <Download class="w-4 h-4 text-emerald-600" />
+            <span>Export Excel Akun</span>
+          </button>
+          <button
+            @click="triggerPrint"
+            class="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-2 shadow-md cursor-pointer"
+          >
+            <Printer class="w-4 h-4 text-emerald-200" />
+            <span>Cetak Kartu Akun</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Notice Banner (No Print) -->
+      <div class="p-3.5 bg-emerald-50/80 rounded-2xl border border-emerald-200 text-xs text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">🔐</span>
+          <div>
+            <strong class="font-bold">Kartu Kredensial & Akses Login Siswa:</strong>
+            <span class="text-slate-600 ml-1">Format kartu siap potong (86x54mm) lengkap dengan Username, Password Default (NISN), dan QR Code scan login.</span>
+          </div>
+        </div>
+        <div class="text-[11px] font-mono font-bold text-emerald-800 bg-emerald-100/80 px-3 py-1 rounded-xl flex-shrink-0">
+          {{ getStudentsForAccountCardPrint().length }} Kartu Terpilih
+        </div>
+      </div>
+
+      <!-- Account ID Cards Grid Area -->
+      <div id="print-account-card-area" class="account-cards-container grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          v-for="st in getStudentsForAccountCardPrint()"
+          :key="'account-card-' + st.id"
+          class="account-card-item page-break bg-gradient-to-br from-slate-900 via-teal-950 to-emerald-950 text-white p-4 rounded-2xl shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[220px] border border-emerald-500/40"
+        >
+          <!-- Background Pattern -->
+          <div class="account-card-pattern absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:12px_12px] pointer-events-none"></div>
+
+          <!-- Top Bar: Logo, School Name & Badge -->
+          <div class="account-card-header relative z-10 flex items-center justify-between gap-2 border-b border-white/20 pb-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="account-card-logo w-8 h-8 bg-white rounded-lg p-0.5 flex items-center justify-center flex-shrink-0 shadow-xs">
+                <img v-if="appSettings?.app_logo" :src="getImageUrl(appSettings.app_logo)" class="w-full h-full object-contain" alt="Logo" />
+                <div v-else class="text-emerald-800 font-black text-[10px]">MTS</div>
+              </div>
+              <div class="min-w-0">
+                <h3 class="account-card-title text-[10px] font-black uppercase tracking-wider text-white font-lexend truncate leading-tight">
+                  {{ appSettings?.app_name || 'MTs AL-HASANAH' }}
+                </h3>
+                <p class="account-card-subtitle text-[8px] text-emerald-300 font-extrabold uppercase tracking-widest">
+                  KARTU AKSES & LOGIN SISWA
+                </p>
+              </div>
+            </div>
+            <div class="account-card-badge bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2 py-0.5 rounded-full text-[7.5px] font-mono font-bold uppercase tracking-wider flex-shrink-0">
+              PORTAL SISWA
+            </div>
+          </div>
+
+          <!-- Body: Student Info + Credentials Box -->
+          <div class="account-card-body relative z-10 py-2.5 flex items-stretch gap-3">
+            <!-- Left Column: Photo + QR Code -->
+            <div class="flex flex-col items-center justify-between gap-1.5 flex-shrink-0 w-16">
+              <div class="account-card-photo w-14 h-16 bg-white/10 rounded-xl overflow-hidden border border-white/30 flex items-center justify-center shadow-inner">
+                <img v-if="st.photo_url" :src="st.photo_url" class="w-full h-full object-cover" alt="Foto Siswa" />
+                <span v-else class="text-white font-black text-lg">{{ st.full_name?.charAt(0) || 'S' }}</span>
+              </div>
+              <!-- QR Code to login portal -->
+              <div class="account-card-qr w-14 h-14 bg-white p-0.5 rounded-lg border border-white/50 flex items-center justify-center shadow-xs">
+                <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(getStudentPortalUrl())}`" class="w-full h-full object-contain" alt="QR Portal" />
+              </div>
+            </div>
+
+            <!-- Right Column: Student Details & Credential Box -->
+            <div class="flex-1 min-w-0 flex flex-col justify-between">
+              <div>
+                <p class="account-card-name text-[11px] font-black text-white truncate leading-tight uppercase font-lexend">
+                  {{ st.full_name }}
+                </p>
+                <div class="flex items-center gap-1.5 mt-0.5 text-[9px] text-slate-300">
+                  <span>Kelas: <strong class="text-emerald-300 font-bold">{{ st.classRoom?.name || st.class_name || '-' }}</strong></span>
+                  <span>&bull;</span>
+                  <span class="font-mono">NISN: <strong class="text-white">{{ st.nisn || '-' }}</strong></span>
+                </div>
+              </div>
+
+              <!-- Credential Box -->
+              <div class="account-card-credentials mt-2 bg-black/45 border border-emerald-400/50 rounded-xl p-2 text-[9px] space-y-1 backdrop-blur-xs">
+                <div class="flex items-center justify-between text-slate-300 account-card-cred-row">
+                  <span class="text-[7.5px] uppercase tracking-wider text-emerald-400 font-bold">Portal URL</span>
+                  <span class="font-mono font-medium text-white truncate text-[8px] max-w-[125px]">{{ getPortalDomain() }}</span>
+                </div>
+                <div class="flex items-center justify-between border-t border-white/10 pt-1 account-card-cred-row">
+                  <span class="text-[8px] uppercase font-bold text-slate-300">Username</span>
+                  <span class="account-card-cred-val font-mono font-black text-amber-300 text-[9.5px] bg-amber-400/10 px-1.5 py-0.2 rounded border border-amber-400/30">
+                    {{ st.user?.username || st.nisn }}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between border-t border-white/10 pt-1 account-card-cred-row">
+                  <span class="text-[8px] uppercase font-bold text-slate-300">Password</span>
+                  <span class="account-card-cred-val pass font-mono font-black text-emerald-300 text-[9.5px] bg-emerald-400/10 px-1.5 py-0.2 rounded border border-emerald-400/30">
+                    {{ st.nisn }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="account-card-footer relative z-10 border-t border-white/20 pt-1.5 flex items-center justify-between text-[7px] text-emerald-200/80 font-mono">
+            <span class="truncate pr-2">⚠️ Jaga kerahasiaan & ubah sandi setelah login</span>
+            <span class="flex-shrink-0 font-bold">T.A. {{ activeAcademicYear?.year || '2026/2027' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 6: CETAK KALENDER ==================== -->
     <div v-if="activeTab === 'calendar'" class="space-y-6">
       <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-wrap items-center justify-between gap-4 no-print">
         <div>
@@ -678,6 +844,7 @@ import {
   GraduationCap,
   UserCheck,
   CreditCard,
+  KeyRound,
   Calendar,
   Download,
   Printer,
@@ -709,6 +876,11 @@ const teacherFilterPosition = ref('');
 const cardPrintTarget = ref('class');
 const cardSelectedClass = ref('');
 const cardSelectedStudentId = ref('');
+
+// Account Card Print Controls (NEW)
+const accountCardPrintTarget = ref('class');
+const accountCardSelectedClass = ref('');
+const accountCardSelectedStudentId = ref('');
 
 const months = [
   { id: 7, num: '07', name: 'Juli' },
@@ -907,6 +1079,55 @@ const getStudentsForCardPrint = () => {
   return students.value;
 };
 
+// Filtered Students for Account Card Print (NEW)
+const getStudentsForAccountCardPrint = () => {
+  if (accountCardPrintTarget.value === 'single') {
+    const found = students.value.find(s => s.id == accountCardSelectedStudentId.value);
+    return found ? [found] : students.value.slice(0, 1);
+  }
+  if (accountCardSelectedClass.value) {
+    return students.value.filter(s => s.class_id == accountCardSelectedClass.value);
+  }
+  return students.value;
+};
+
+const getPortalDomain = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.host;
+  }
+  return 'siakad.mtsalhasanah.sch.id';
+};
+
+const getStudentPortalUrl = () => {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/login`;
+  }
+  return 'https://siakad.mtsalhasanah.sch.id/login';
+};
+
+const exportExcelStudentAccounts = () => {
+  const targetStudents = getStudentsForAccountCardPrint();
+  const rows = [
+    ['NO', 'NAMA LENGKAP', 'KELAS', 'NISN', 'NIS', 'USERNAME PORTAL', 'PASSWORD DEFAULT', 'STATUS AKUN'],
+    ...targetStudents.map((st, idx) => [
+      idx + 1,
+      st.full_name || '-',
+      st.classRoom?.name || st.class_name || '-',
+      st.nisn || '-',
+      st.nis || '-',
+      st.user?.username || st.nisn || '-',
+      st.nisn || '-',
+      st.user ? 'Aktif' : 'Belum Dibuat',
+    ]),
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Akun Siswa');
+  const className = accountCardSelectedClass.value ? getClassName(accountCardSelectedClass.value) : 'Semua-Kelas';
+  XLSX.writeFile(wb, `Data-Akun-Login-Siswa-${className}.xlsx`);
+};
+
 const getTodayDateFormatted = () => {
   const d = new Date();
   const options = { day: 'numeric', month: 'long', year: 'numeric' };
@@ -933,8 +1154,11 @@ const applyPaperSize = () => {
 
 const triggerPrint = () => {
   // SPECIAL HANDLING: ID Cards Grid Printing (Exact 86x54mm Card Dimensions & Color Preservation)
-  if (activeTab.value === 'card') {
-    const printElem = document.getElementById('print-card-area');
+  if (activeTab.value === 'card' || activeTab.value === 'account_card') {
+    const isAccountCard = activeTab.value === 'account_card';
+    const targetElemId = isAccountCard ? 'print-account-card-area' : 'print-card-area';
+    const docTitle = isAccountCard ? 'Cetak Kartu Akun Login Siswa' : 'Cetak Kartu Tanda Pelajar';
+    const printElem = document.getElementById(targetElemId);
     if (!printElem) {
       window.print();
       return;
@@ -951,11 +1175,11 @@ const triggerPrint = () => {
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <title>Cetak Kartu Tanda Pelajar - ${appSettings.value?.app_name || 'Sekolah'}</title>
+  <title>${docTitle} - ${appSettings.value?.app_name || 'Sekolah'}</title>
   <style>
     @page {
       size: A4 portrait;
-      margin: 12mm 10mm;
+      margin: 10mm 8mm;
     }
     * {
       box-sizing: border-box;
@@ -973,31 +1197,33 @@ const triggerPrint = () => {
       font-size: 10px;
       font-weight: bold;
       color: #64748b;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
       border-bottom: 1px dashed #cbd5e1;
     }
-    .id-cards-container {
+    .id-cards-container,
+    .account-cards-container {
       display: grid !important;
       grid-template-columns: repeat(2, 86mm) !important;
-      gap: 8mm 6mm !important;
+      gap: 6mm 6mm !important;
       justify-content: center !important;
       padding: 0 !important;
     }
-    .id-card-item {
+    .id-card-item,
+    .account-card-item {
       width: 86mm !important;
       height: 54mm !important;
       max-width: 86mm !important;
       max-height: 54mm !important;
       box-sizing: border-box !important;
-      background: linear-gradient(135deg, #065f46 0%, #064e3b 60%, #0f172a 100%) !important;
+      background: linear-gradient(135deg, #022c22 0%, #064e3b 50%, #0f172a 100%) !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
       color: #ffffff !important;
-      border-radius: 12px !important;
-      border: 1px solid rgba(16, 185, 129, 0.5) !important;
+      border-radius: 10px !important;
+      border: 1px solid rgba(16, 185, 129, 0.45) !important;
       box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important;
-      padding: 8px 12px !important;
+      padding: 7px 10px !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: space-between !important;
@@ -1006,27 +1232,31 @@ const triggerPrint = () => {
       page-break-inside: avoid !important;
       break-inside: avoid !important;
     }
-    .id-card-pattern {
+    .id-card-pattern,
+    .account-card-pattern {
       position: absolute !important;
       inset: 0 !important;
-      background-image: radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px) !important;
+      background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px) !important;
       background-size: 10px 10px !important;
       pointer-events: none !important;
     }
-    .id-card-header {
+    .id-card-header,
+    .account-card-header {
       position: relative !important;
       z-index: 10 !important;
       display: flex !important;
       align-items: center !important;
-      gap: 8px !important;
+      justify-content: space-between !important;
+      gap: 6px !important;
       border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important;
-      padding-bottom: 5px !important;
+      padding-bottom: 4px !important;
     }
-    .id-card-logo {
-      width: 28px !important;
-      height: 28px !important;
+    .id-card-logo,
+    .account-card-logo {
+      width: 24px !important;
+      height: 24px !important;
       background: #ffffff !important;
-      border-radius: 6px !important;
+      border-radius: 5px !important;
       padding: 2px !important;
       display: flex !important;
       align-items: center !important;
@@ -1035,40 +1265,57 @@ const triggerPrint = () => {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
-    .id-card-logo img {
+    .id-card-logo img,
+    .account-card-logo img {
       width: 100% !important;
       height: 100% !important;
       object-fit: contain !important;
     }
-    .id-card-title {
-      font-size: 9px !important;
+    .id-card-title,
+    .account-card-title {
+      font-size: 8.5px !important;
       font-weight: 900 !important;
       text-transform: uppercase !important;
       color: #ffffff !important;
       line-height: 1.1 !important;
       font-family: 'Lexend', sans-serif, system-ui !important;
     }
-    .id-card-subtitle {
-      font-size: 7px !important;
+    .id-card-subtitle,
+    .account-card-subtitle {
+      font-size: 6.5px !important;
       font-weight: 800 !important;
       color: #6ee7b7 !important;
       text-transform: uppercase !important;
       letter-spacing: 0.5px !important;
     }
-    .id-card-body {
+    .account-card-badge {
+      background: rgba(16, 185, 129, 0.2) !important;
+      color: #6ee7b7 !important;
+      border: 1px solid rgba(52, 211, 153, 0.4) !important;
+      padding: 1px 5px !important;
+      border-radius: 10px !important;
+      font-size: 6.5px !important;
+      font-weight: 800 !important;
+      font-family: monospace !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .id-card-body,
+    .account-card-body {
       position: relative !important;
       z-index: 10 !important;
       display: flex !important;
       align-items: center !important;
-      gap: 10px !important;
-      padding: 3px 0 !important;
+      gap: 8px !important;
+      padding: 2px 0 !important;
       flex: 1 !important;
     }
-    .id-card-photo {
-      width: 36px !important;
-      height: 46px !important;
-      border-radius: 6px !important;
-      background: rgba(255, 255, 255, 0.18) !important;
+    .id-card-photo,
+    .account-card-photo {
+      width: 32px !important;
+      height: 40px !important;
+      border-radius: 5px !important;
+      background: rgba(255, 255, 255, 0.15) !important;
       border: 1px solid rgba(255, 255, 255, 0.35) !important;
       overflow: hidden !important;
       flex-shrink: 0 !important;
@@ -1078,7 +1325,8 @@ const triggerPrint = () => {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
-    .id-card-photo img {
+    .id-card-photo img,
+    .account-card-photo img {
       width: 100% !important;
       height: 100% !important;
       object-fit: cover !important;
@@ -1086,15 +1334,35 @@ const triggerPrint = () => {
     .id-card-photo-placeholder {
       color: #ffffff !important;
       font-weight: 900 !important;
-      font-size: 15px !important;
+      font-size: 14px !important;
     }
-    .id-card-info {
+    .account-card-qr {
+      width: 32px !important;
+      height: 32px !important;
+      background: #ffffff !important;
+      padding: 1.5px !important;
+      border-radius: 4px !important;
+      flex-shrink: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .account-card-qr img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain !important;
+    }
+    .id-card-info,
+    .account-card-info {
       flex: 1 !important;
       min-width: 0 !important;
-      line-height: 1.25 !important;
+      line-height: 1.2 !important;
     }
-    .id-card-name {
-      font-size: 9.5px !important;
+    .id-card-name,
+    .account-card-name {
+      font-size: 9px !important;
       font-weight: 900 !important;
       color: #ffffff !important;
       text-transform: uppercase !important;
@@ -1102,20 +1370,54 @@ const triggerPrint = () => {
       overflow: hidden !important;
       text-overflow: ellipsis !important;
     }
-    .id-card-nisn {
-      font-size: 8px !important;
+    .id-card-nisn,
+    .account-card-nisn {
+      font-size: 7.5px !important;
       font-family: ui-monospace, SFMono-Regular, monospace !important;
       color: #a7f3d0 !important;
       margin-top: 1px !important;
     }
-    .id-card-class {
+    .id-card-class,
+    .account-card-class {
       font-size: 7.5px !important;
       color: #cbd5e1 !important;
-      margin-top: 1px !important;
+      margin-top: 0.5px !important;
     }
-    .id-card-class strong {
+    .id-card-class strong,
+    .account-card-class strong {
       color: #ffffff !important;
       font-weight: 800 !important;
+    }
+    .account-card-credentials {
+      margin-top: 3px !important;
+      background: rgba(0, 0, 0, 0.45) !important;
+      border: 1px solid rgba(52, 211, 153, 0.5) !important;
+      border-radius: 6px !important;
+      padding: 3px 6px !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .account-card-cred-row {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      font-size: 7px !important;
+      padding: 0.5px 0 !important;
+    }
+    .account-card-cred-row span:first-child {
+      color: #cbd5e1 !important;
+      font-weight: bold !important;
+      text-transform: uppercase !important;
+      font-size: 6.5px !important;
+    }
+    .account-card-cred-val {
+      font-family: ui-monospace, SFMono-Regular, monospace !important;
+      font-weight: 900 !important;
+      font-size: 8px !important;
+      color: #fef08a !important;
+    }
+    .account-card-cred-val.pass {
+      color: #6ee7b7 !important;
     }
     .id-card-ttl {
       font-size: 7px !important;
@@ -1125,15 +1427,16 @@ const triggerPrint = () => {
       overflow: hidden !important;
       text-overflow: ellipsis !important;
     }
-    .id-card-footer {
+    .id-card-footer,
+    .account-card-footer {
       position: relative !important;
       z-index: 10 !important;
       display: flex !important;
       justify-content: space-between !important;
       align-items: center !important;
       border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
-      padding-top: 4px !important;
-      font-size: 6.5px !important;
+      padding-top: 3px !important;
+      font-size: 6px !important;
       font-family: ui-monospace, SFMono-Regular, monospace !important;
       color: rgba(167, 243, 208, 0.9) !important;
     }
@@ -1143,7 +1446,7 @@ const triggerPrint = () => {
   <div class="print-instructions">
     ✂️ PETUNJUK CETAK KARTU: Gunakan kertas tebal / Glossy / Kertas Foto, skala 100%, lalu gunting sesuai ukuran standar ID Card (86 x 54 mm).
   </div>
-  <div class="id-cards-container">
+  <div class="${isAccountCard ? 'account-cards-container' : 'id-cards-container'}">
     ${content}
   </div>
 </body>
@@ -1651,6 +1954,7 @@ onMounted(async () => {
 
     if (students.value.length > 0) {
       cardSelectedStudentId.value = students.value[0].id;
+      accountCardSelectedStudentId.value = students.value[0].id;
     }
 
     schedules.value = Array.isArray(schRes?.data) ? schRes.data : (Array.isArray(schRes?.data?.data) ? schRes.data.data : (Array.isArray(schRes) ? schRes : []));
@@ -1691,6 +1995,7 @@ onMounted(async () => {
   #print-students-area,
   #print-teachers-area,
   #print-card-area,
+  #print-account-card-area,
   #print-calendar-area {
     padding: 0 !important;
     margin: 0 !important;
