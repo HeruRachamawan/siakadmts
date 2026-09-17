@@ -305,7 +305,7 @@
 
           <!-- Right: Catatan Wali Kelas (70%) -->
           <td style="width: 70%; vertical-align: top; padding-left: 6px;">
-            <div style="border: 1px solid #0f172a; border-radius: 4px; padding: 4px 6px; min-height: 60px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="border: 1px solid #0f172a; border-radius: 4px; padding: 4px 6px; min-height: 46px; display: flex; flex-direction: column; justify-content: space-between;">
               <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 2px; margin-bottom: 2px;">
                 <span style="font-weight: 800; text-transform: uppercase; font-size: 8.5px; color: #1e293b; letter-spacing: 0.03em;">
                   Catatan & Motivasi Perkembangan Belajar Wali Kelas:
@@ -355,7 +355,7 @@
                 <p style="font-weight: 700; color: #334155; margin: 0;">Mengetahui,</p>
                 <p style="font-weight: 700; color: #0f172a; margin: 0;">Orang Tua / Wali Siswa</p>
               </div>
-              <div style="height: 38px;"></div>
+              <div style="height: 32px;"></div>
               <div style="border-bottom: 1px solid #0f172a; width: 80%; margin: 0 auto;"></div>
             </td>
 
@@ -365,7 +365,7 @@
                 <p style="font-weight: 700; color: #334155; margin: 0;">Wali Kelas,</p>
                 <p style="font-weight: 700; color: #0f172a; margin: 0;">{{ (report?.student?.class_name || '').toLowerCase().startsWith('kelas') ? report?.student?.class_name : ('Kelas ' + (report?.student?.class_name || '')) }}</p>
               </div>
-              <div style="height: 38px;"></div>
+              <div style="height: 32px;"></div>
               <div>
                 <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0;">{{ report?.student?.homeroom_teacher_name || '............................................' }}</p>
                 <p style="font-size: 8.5px; color: #475569; font-family: monospace; margin: 1px 0 0 0;">NIP. {{ report?.student?.homeroom_teacher_nip || '-' }}</p>
@@ -378,10 +378,9 @@
                 <p style="font-weight: 700; color: #334155; margin: 0;">Mengetahui,</p>
                 <p style="font-weight: 700; color: #0f172a; margin: 0;">Kepala Madrasah</p>
               </div>
-              <div style="height: 38px;"></div>
+              <div style="height: 32px;"></div>
               <div>
                 <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0;">{{ report?.school_setting?.principal_name || '............................................' }}</p>
-                <p style="font-size: 8.5px; color: #475569; font-family: monospace; margin: 1px 0 0 0;">NIP. {{ report?.school_setting?.principal_nip || '-' }}</p>
               </div>
             </td>
           </tr>

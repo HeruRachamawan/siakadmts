@@ -772,7 +772,7 @@
               <div class="w-full overflow-x-auto flex justify-center pb-6">
                 <div
                   id="asts-report-single-area"
-                  class="bg-white p-4 sm:p-7 rounded-2xl shadow-md border border-slate-300 text-slate-900 print-page print-sheet w-full max-w-[210mm] transition-all flex-shrink-0"
+                  class="bg-white p-4 sm:p-7 rounded-2xl shadow-md border border-slate-300 text-slate-900 print-sheet w-full max-w-[210mm] transition-all flex-shrink-0"
                 >
                   <div v-if="loadingSingleReport" class="py-24 text-center text-slate-400 space-y-2">
                     <div class="animate-spin h-8 w-8 border-3 border-emerald-500 border-t-transparent rounded-full mx-auto"></div>
@@ -1986,15 +1986,25 @@ onMounted(() => {
     display: block !important;
     width: 100% !important;
     max-width: 100% !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
     background: #ffffff !important;
   }
 
-  /* 5. Pagination per halaman */
-  .print-page {
+  /* 5. Pagination per halaman: SINGLE MODE HARUS TEPAT 1 LEMBAR */
+  #asts-report-single-area {
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* BATCH MODE: Ganti halaman per siswa, kecuali siswa terakhir */
+  #asts-report-batch-area .print-page {
     page-break-after: always !important;
     break-after: page !important;
     page-break-inside: avoid !important;
@@ -2003,9 +2013,15 @@ onMounted(() => {
     padding: 0 !important;
   }
 
-  .print-page:last-child {
+  #asts-report-batch-area .print-page:last-child {
     page-break-after: auto !important;
     break-after: auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  @page {
+    margin: 4mm 8mm 4mm 8mm !important;
   }
 
   /* Pastikan border tabel rapor terlihat tajam */
