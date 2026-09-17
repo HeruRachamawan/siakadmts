@@ -232,16 +232,37 @@
         <!-- Filter Dropdowns (Kelas, Semester, Tahun) -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100">
           <div>
-            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filter Rombel / Kelas</label>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
+              Filter Kelompok Siswa / Kelas
+            </label>
             <select
-              v-model="gradingFilterClass"
-              @change="fetchGradingSheet"
+              v-model="gradingFilterClassComposite"
+              @change="onClassFilterChange"
               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-400 focus:outline-none cursor-pointer"
             >
-              <option value="">-- Semua Kelas ({{ gradingClasses.length }} Rombel) --</option>
-              <option v-for="cls in gradingClasses" :key="'cls-opt-'+cls.id" :value="cls.id">
-                {{ cls.name }}
-              </option>
+              <option value="">-- Semua Siswa (Semua Kelas) --</option>
+              
+              <!-- KELAS / ROMBEL UTAMA (REGULER) -->
+              <optgroup v-if="gradingUtamaClasses.length > 0" label="🏫 Rombel Siswa Utama (Reguler)">
+                <option
+                  v-for="cls in gradingUtamaClasses"
+                  :key="'cls-utama-' + cls.id"
+                  :value="'utama:' + cls.id"
+                >
+                  🏫 Kelas {{ cls.name }} ({{ cls.students_count || 0 }} Siswa)
+                </option>
+              </optgroup>
+
+              <!-- KELOMPOK SISWA / JADWAL LOKAL -->
+              <optgroup v-if="gradingLokalClasses.length > 0" label="📍 Kelompok Siswa / Jadwal Lokal">
+                <option
+                  v-for="cls in gradingLokalClasses"
+                  :key="'cls-lokal-' + cls.id"
+                  :value="'lokal:' + cls.id"
+                >
+                  📍 Kelas {{ cls.name }} ({{ cls.students_count || 0 }} Siswa)
+                </option>
+              </optgroup>
             </select>
           </div>
 
@@ -333,9 +354,14 @@
                   <div class="text-[10px] text-slate-400 font-mono">NISN: {{ st.nisn || '-' }}</div>
                 </td>
                 <td class="px-3 py-3 text-center">
-                  <span class="px-2 py-0.5 bg-slate-100 rounded-md font-bold text-slate-700 text-[11px]">
-                    {{ st.class_name }}
-                  </span>
+                  <div class="flex flex-col items-center gap-1">
+                    <span class="px-2 py-0.5 bg-slate-100 rounded-md font-bold text-slate-700 text-[11px]" title="Rombel Utama">
+                      🏫 {{ st.class_name }}
+                    </span>
+                    <span v-if="st.lokal_class_name" class="px-1.5 py-0.5 bg-teal-50 text-teal-700 border border-teal-200/80 rounded text-[9px] font-bold" title="Kelas Jadwal Lokal">
+                      📍 Lokal {{ st.lokal_class_name }}
+                    </span>
+                  </div>
                 </td>
 
                 <!-- Predicate Buttons / Selector -->
@@ -547,9 +573,26 @@ const loadingGrading = ref(false);
 const savingGrades = ref(false);
 const gradingStudents = ref([]);
 const gradingClasses = ref([]);
+const gradingUtamaClasses = ref([]);
+const gradingLokalClasses = ref([]);
 const gradingSemester = ref('ganjil');
 const gradingFilterClass = ref('');
+const gradingFilterClassType = ref('utama'); // 'utama' | 'lokal'
+const gradingFilterClassComposite = ref(''); // format: 'utama:ID' or 'lokal:ID' or ''
 const activeYear = ref(null);
+
+function onClassFilterChange() {
+  const val = gradingFilterClassComposite.value;
+  if (!val) {
+    gradingFilterClass.value = '';
+    gradingFilterClassType.value = 'utama';
+  } else {
+    const parts = val.split(':');
+    gradingFilterClassType.value = parts[0] || 'utama';
+    gradingFilterClass.value = parts[1] || '';
+  }
+  fetchGradingSheet();
+}
 
 // Form Modal State
 const showFormModal = ref(false);
@@ -618,6 +661,9 @@ async function fetchTeachers() {
 function openGradingForEkskul(ekskul) {
   selectedEkskul.value = ekskul;
   activeView.value = 'grading';
+  gradingFilterClassComposite.value = '';
+  gradingFilterClass.value = '';
+  gradingFilterClassType.value = 'utama';
   fetchGradingSheet();
 }
 
@@ -628,10 +674,13 @@ async function fetchGradingSheet() {
     const res = await api.get(`/teacher/extracurriculars/${selectedEkskul.value.id}/grading-sheet`, {
       semester: gradingSemester.value,
       class_id: gradingFilterClass.value || undefined,
+      class_type: gradingFilterClassType.value || 'utama',
     });
     const d = res?.data || res || {};
     gradingStudents.value = d.students || [];
     gradingClasses.value = d.classes || [];
+    gradingUtamaClasses.value = d.utama_classes || [];
+    gradingLokalClasses.value = d.lokal_classes || [];
     activeYear.value = d.academic_year || null;
   } catch (err) {
     toast.error('Gagal memuat lembar penilaian ekstrakurikuler.');

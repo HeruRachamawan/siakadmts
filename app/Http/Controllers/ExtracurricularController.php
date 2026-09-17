@@ -225,23 +225,33 @@ class ExtracurricularController extends Controller
             ], 403);
         }
 
+        $classType = $request->input('class_type', 'utama'); // 'utama' | 'lokal'
+
         // Fetch eligible students
         if ($ekskul->is_mandatory) {
-            $studentsQuery = Student::where('status', 'aktif')->with(['classRoom']);
+            $studentsQuery = Student::where('status', 'aktif')->with(['classRoom', 'lokalClassRoom']);
             if ($classId) {
-                $studentsQuery->where('class_id', $classId);
+                if ($classType === 'lokal') {
+                    $studentsQuery->where('lokal_class_id', $classId);
+                } else {
+                    $studentsQuery->where('class_id', $classId);
+                }
             }
             $students = $studentsQuery->orderBy('full_name')->get();
         } else {
             $membersQuery = ExtracurricularMember::where('extracurricular_id', $ekskul->id)
                 ->when($yearId, fn($q) => $q->where('academic_year_id', $yearId))
-                ->with(['student.classRoom']);
+                ->with(['student.classRoom', 'student.lokalClassRoom']);
 
             $members = $membersQuery->get();
             $students = $members->pluck('student')->filter();
 
             if ($classId) {
-                $students = $students->filter(fn($s) => $s->class_id == $classId);
+                if ($classType === 'lokal') {
+                    $students = $students->filter(fn($s) => $s->lokal_class_id == $classId);
+                } else {
+                    $students = $students->filter(fn($s) => $s->class_id == $classId);
+                }
             }
             $students = $students->values();
         }
@@ -267,14 +277,45 @@ class ExtracurricularController extends Controller
                 'gender' => $student->gender,
                 'class_name' => $student->classRoom?->name ?? '-',
                 'class_id' => $student->class_id,
+                'lokal_class_name' => $student->lokalClassRoom?->name ?? null,
+                'lokal_class_id' => $student->lokal_class_id,
                 'grade' => $eg?->grade ?? null, // 'A', 'B', 'C' or null
                 'description' => $eg?->description ?? '',
                 'updated_at' => $eg?->updated_at?->translatedFormat('d M Y H:i'),
             ];
         }
 
-        // Classes list for filter
-        $classes = ClassRoom::orderBy('grade_level')->orderBy('name')->get(['id', 'name', 'grade_level']);
+        // Classes list with categorized groups (Utama & Lokal)
+        $allClasses = ClassRoom::withCount(['students', 'lokalStudents'])->orderBy('grade_level')->orderBy('name')->get();
+
+        $utamaClasses = [];
+        $lokalClasses = [];
+
+        foreach ($allClasses as $c) {
+            $name = trim($c->name);
+            $clean = strtolower(preg_replace('/^(kelas|kls)\s*/i', '', $name));
+
+            // Standalone '7' and '8' are specifically for Jadwal Lokal
+            $isLokal = in_array($clean, ['7', '8', '9a', '9-a', '9b', '9-b']);
+
+            if ($isLokal) {
+                $lokalClasses[] = [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'grade_level' => $c->grade_level,
+                    'students_count' => $c->lokal_students_count > 0 ? $c->lokal_students_count : $c->students_count,
+                    'type' => 'lokal',
+                ];
+            } else {
+                $utamaClasses[] = [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'grade_level' => $c->grade_level,
+                    'students_count' => $c->students_count,
+                    'type' => 'utama',
+                ];
+            }
+        }
 
         return response()->json([
             'status' => 'success',
@@ -283,7 +324,9 @@ class ExtracurricularController extends Controller
                 'semester' => $semester,
                 'academic_year' => $activeYear,
                 'academic_years' => AcademicYear::orderBy('id', 'desc')->get(),
-                'classes' => $classes,
+                'classes' => $allClasses,
+                'utama_classes' => $utamaClasses,
+                'lokal_classes' => $lokalClasses,
                 'students' => $sheetData,
                 'total_students' => count($sheetData),
             ]
