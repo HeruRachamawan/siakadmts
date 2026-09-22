@@ -838,9 +838,15 @@ class AstsReportController extends Controller
                 });
 
                 $totalRanks = count($rankList);
-                // Baseline target range: rank 1 gets ~93, rank last gets ~75
-                $topTarget = 93.0;
-                $bottomTarget = max(74.0, $topTarget - ($totalRanks * 1.5));
+                
+                // Hitung rata-rata nilai riil kelas saat ini
+                $allCurrentScores = $scores->flatten();
+                $actualClassAvg = $allCurrentScores->isNotEmpty() ? $allCurrentScores->avg('score') : 76.0;
+
+                // Rentang wajar dan realistis (Juara 1 kisaran 80-81, peringkat bawah kisaran 75-76)
+                // Nilai tetap natural (78, 79, 80) dan tidak melonjak drastis ke 90-an
+                $topTarget = min(82.0, max(79.0, round($actualClassAvg + 3.0, 1)));
+                $bottomTarget = max(74.5, min(76.0, round($topTarget - 5.0, 1)));
                 $step = $totalRanks > 1 ? ($topTarget - $bottomTarget) / ($totalRanks - 1) : 0;
 
                 foreach ($rankList as $idx => $rItem) {
@@ -856,7 +862,7 @@ class AstsReportController extends Controller
                     $factor = $currentAvg > 0 ? ($targetAvg / $currentAvg) : 1.0;
 
                     foreach ($sScores as $sc) {
-                        $newScore = (int) round(max(50, min(99, $sc->score * $factor)));
+                        $newScore = (int) round(max(60, min(85, $sc->score * $factor)));
                         $kkm = $sc->kkm ?? 75;
                         $predicate = $newScore >= 90 ? 'A' : ($newScore >= 80 ? 'B' : ($newScore >= $kkm ? 'C' : 'D'));
                         $description = $newScore >= $kkm ? 'Tercapai dengan sangat memuaskan.' : 'Perlu bimbingan dan peningkatan ketekunan.';

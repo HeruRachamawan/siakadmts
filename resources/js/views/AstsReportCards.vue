@@ -962,9 +962,9 @@
               class="mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
             />
             <label for="adjust-scores-checkbox" class="text-xs cursor-pointer select-none">
-              <span class="font-black text-slate-900 block">⚡ Opsional: Selaraskan nilai mata pelajaran siswa dengan peringkat baru</span>
+              <span class="font-black text-slate-900 block">⚡ Opsional: Selaraskan nilai rata-rata secara wajar & bertahap (kisaran 78 - 81)</span>
               <span class="text-slate-500 text-[11px] block mt-0.5 leading-relaxed">
-                Jika dicentang, nilai di lembar rapor akan disesuaikan proporsional secara otomatis agar siswa ranking atas memiliki rata-rata lebih tinggi. Jika tidak dicentang, hanya nomor ranking saja yang berubah, nilai asli tetap aman.
+                Jika dicentang, nilai disesuaikan secara proporsional dan alami mengikuti peringkat (juara teratas berkisar 79–81, tanpa lonjakan ekstrem ke 90-an). Jika tidak dicentang, nilai asli tidak berubah sama sekali.
               </span>
             </label>
           </div>
