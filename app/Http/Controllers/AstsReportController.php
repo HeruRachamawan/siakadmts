@@ -789,6 +789,15 @@ class AstsReportController extends Controller
         $rankList = $request->input('ranks');
         $shouldAdjustScores = (bool) $request->input('adjust_scores', false);
 
+        // Ensure no duplicate ranks exist in submitted list
+        $submittedRankValues = array_column($rankList, 'rank');
+        if (count($submittedRankValues) !== count(array_unique($submittedRankValues))) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Peringkat tidak boleh kembar. Setiap siswa harus memiliki nomor peringkat yang unik!'
+            ], 422);
+        }
+
         if (!$this->checkHomeroomAccess($request->user(), (int)$classId, $request)) {
             return response()->json([
                 'status' => 'error',

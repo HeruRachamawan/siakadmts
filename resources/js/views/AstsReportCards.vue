@@ -797,70 +797,155 @@
     </div>
 
     <!-- MODAL ATUR PERINGKAT SISWA (SMART RANK ADJUSTER) -->
-    <div v-if="showRankModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 no-print">
-      <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 transform transition-all">
+    <!-- MODAL ATUR PERINGKAT SISWA (USER-FRIENDLY & ANTI-PERINGKAT KEMBAR) -->
+    <div v-if="showRankModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 no-print">
+      <div class="bg-white rounded-2xl sm:rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100 transform transition-all animate-in fade-in zoom-in-95 duration-200">
         <!-- Modal Header -->
-        <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-amber-500/10 via-amber-50 to-transparent">
+        <div class="px-5 py-4 sm:px-6 sm:py-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-amber-500/10 via-amber-50 to-transparent">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+            <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20 flex-shrink-0">
               <Trophy class="w-5 h-5" />
             </div>
             <div>
-              <h2 class="text-base font-black text-slate-800 font-lexend uppercase tracking-wider">Atur Peringkat Siswa</h2>
-              <p class="text-xs text-slate-500 font-medium">Kelas {{ ledgerData?.class?.name }} • Semester {{ activeSemester === 'genap' ? 'Genap' : 'Ganjil' }}</p>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm sm:text-base font-black text-slate-800 font-lexend uppercase tracking-wider">Atur Peringkat Siswa</h2>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                  {{ rankEditList.length }} Siswa
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 font-medium mt-0.5">Kelas {{ ledgerData?.class?.name }} • Semester {{ activeSemester === 'genap' ? 'Genap' : 'Ganjil' }}</p>
             </div>
           </div>
-          <button @click="showRankModal = false" class="w-8 h-8 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 cursor-pointer">
+          <button @click="showRankModal = false" class="w-8 h-8 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 cursor-pointer transition-colors">
             <X class="w-4 h-4" />
           </button>
         </div>
 
         <!-- Modal Body: Rank List -->
-        <div class="p-6 overflow-y-auto space-y-4 flex-1">
-          <div class="p-3.5 bg-amber-50/80 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-2">
-            <div class="flex items-start gap-2">
-              <span class="text-base">💡</span>
-              <div class="leading-relaxed">
-                <strong>Cara Kerja Penyesuaian Peringkat:</strong> Anda dapat mengubah nomor peringkat siswa secara manual. Jika opsi centang di bawah diaktifkan, sistem akan <strong>menyelaraskan nilai rata-rata mata pelajaran secara cerdas</strong> agar peringkat siswa yang lebih tinggi memperoleh nilai proporsional yang lebih baik.
+        <div class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
+          <!-- Petunjuk Ramah Guru -->
+          <div class="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50/50 rounded-2xl border border-amber-200/80 text-xs text-amber-950 space-y-2">
+            <div class="flex items-start gap-2.5">
+              <div class="w-5 h-5 rounded-full bg-amber-200/70 text-amber-800 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-xs">
+                💡
+              </div>
+              <div class="leading-relaxed space-y-1">
+                <p class="font-bold text-slate-900">Panduan Mudah Mengatur Posisi Juara:</p>
+                <p class="text-slate-600 text-[11px]">
+                  Gunakan tombol panah <strong>⬆ (Naik)</strong> atau <strong>⬇ (Turun)</strong> untuk menukar posisi ranking siswa dengan cepat dan rapi. Sistem akan otomatis memastikan <strong>tidak ada nomor peringkat yang kembar</strong>.
+                </p>
               </div>
             </div>
           </div>
 
-          <!-- Rank Items Table -->
-          <div class="border border-slate-200 rounded-2xl overflow-hidden">
+          <!-- Alert Peringatan Jika Ada Peringkat Kembar -->
+          <div v-if="hasDuplicateRank" class="p-3.5 bg-rose-50 rounded-2xl border border-rose-200 text-xs text-rose-800 flex items-start gap-3 shadow-xs animate-shake">
+            <AlertTriangle class="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+            <div class="flex-1">
+              <span class="font-black block">Perhatian: Ditemukan Nomor Peringkat Kembar!</span>
+              <p class="text-[11px] text-rose-700 mt-0.5 leading-relaxed">
+                Nomor peringkat <strong>#{{ duplicateRanks.join(', #') }}</strong> digunakan oleh lebih dari satu siswa. Setiap siswa wajib memiliki peringkat unik.
+              </p>
+              <button
+                type="button"
+                @click="autoSequenceRanks"
+                class="mt-2 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-[10px] transition-colors inline-flex items-center gap-1 cursor-pointer"
+              >
+                <Sparkles class="w-3 h-3" />
+                <span>Rapikan Otomatis (1 s/d {{ rankEditList.length }})</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabel Peringkat Siswa Interaktif -->
+          <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b border-slate-200">
                 <tr>
-                  <th class="p-3 w-16 text-center">Peringkat</th>
-                  <th class="p-3">Nama Siswa</th>
-                  <th class="p-3 w-28 text-center">Rata-Rata Saat Ini</th>
+                  <th class="p-3 w-16 text-center">Urutan</th>
+                  <th class="p-3 w-20 text-center">Tukar Posisi</th>
+                  <th class="p-3">Nama Lengkap Siswa</th>
+                  <th class="p-3 w-28 text-center">Rata-Rata Nilai</th>
                   <th class="p-3 w-28 text-center">Status</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100">
-                <tr v-for="(item, idx) in rankEditList" :key="'rank-item-'+item.student_id" class="hover:bg-slate-50/60 transition-colors">
-                  <td class="p-2 text-center">
-                    <input
-                      v-model.number="item.rank"
-                      type="number"
-                      min="1"
-                      :max="rankEditList.length"
-                      class="w-14 text-center py-1 px-1 bg-white border border-slate-300 rounded-lg font-black text-amber-900 focus:ring-2 focus:ring-amber-400 font-mono text-xs shadow-2xs"
-                    />
+                <tr
+                  v-for="(item, idx) in rankEditList"
+                  :key="'rank-item-'+item.student_id"
+                  class="transition-colors hover:bg-slate-50/80"
+                  :class="{
+                    'bg-amber-50/50': item.rank === 1,
+                    'bg-slate-50/50': item.rank === 2,
+                    'bg-orange-50/30': item.rank === 3,
+                    'bg-rose-50/40': duplicateRanks.includes(parseInt(item.rank))
+                  }"
+                >
+                  <!-- Badge & Input Nomor Peringkat -->
+                  <td class="p-2.5 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                      <!-- Medal Emoji for Top 3 -->
+                      <span v-if="item.rank === 1" class="text-sm" title="Juara 1">🥇</span>
+                      <span v-else-if="item.rank === 2" class="text-sm" title="Juara 2">🥈</span>
+                      <span v-else-if="item.rank === 3" class="text-sm" title="Juara 3">🥉</span>
+                      
+                      <input
+                        v-model.number="item.rank"
+                        type="number"
+                        min="1"
+                        :max="rankEditList.length"
+                        class="w-12 text-center py-1 px-1 bg-white border rounded-lg font-black font-mono text-xs shadow-2xs focus:ring-2"
+                        :class="duplicateRanks.includes(parseInt(item.rank)) 
+                          ? 'border-rose-400 text-rose-700 focus:ring-rose-400 bg-rose-50/50' 
+                          : 'border-slate-300 text-slate-800 focus:ring-amber-400'"
+                      />
+                    </div>
                   </td>
+
+                  <!-- Tombol Naikkan / Turunkan Posisi -->
+                  <td class="p-2 text-center">
+                    <div class="inline-flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                      <button
+                        type="button"
+                        @click="moveStudentRank(idx, -1)"
+                        :disabled="idx === 0"
+                        title="Naikkan 1 posisi ke atas"
+                        class="w-6 h-6 flex items-center justify-center rounded bg-white hover:bg-amber-50 text-slate-600 hover:text-amber-700 disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-slate-600 cursor-pointer transition-all shadow-2xs"
+                      >
+                        <ArrowUp class="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        @click="moveStudentRank(idx, 1)"
+                        :disabled="idx === rankEditList.length - 1"
+                        title="Turunkan 1 posisi ke bawah"
+                        class="w-6 h-6 flex items-center justify-center rounded bg-white hover:bg-amber-50 text-slate-600 hover:text-amber-700 disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-slate-600 cursor-pointer transition-all shadow-2xs"
+                      >
+                        <ArrowDown class="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+
+                  <!-- Nama & Identitas Siswa -->
                   <td class="p-3">
-                    <div class="font-bold text-slate-800 font-lexend">{{ item.full_name }}</div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-bold text-slate-800 font-lexend">{{ item.full_name }}</span>
+                    </div>
                     <div class="text-[10px] text-slate-400 font-mono">NISN: {{ item.nisn || '-' }}</div>
                   </td>
-                  <td class="p-3 text-center font-bold font-mono text-emerald-700 bg-emerald-50/30">
+
+                  <!-- Rata-rata Nilai -->
+                  <td class="p-3 text-center font-bold font-mono text-emerald-700 bg-emerald-50/20">
                     {{ Number(item.average_score || 0).toFixed(2) }}
                   </td>
+
+                  <!-- Status Peringkat -->
                   <td class="p-3 text-center">
-                    <span v-if="item.rank !== item.calculated_rank" class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
-                      Manual (Sistem: {{ item.calculated_rank !== '-' ? '#' + item.calculated_rank : '-' }})
+                    <span v-if="item.rank !== item.calculated_rank" class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
+                      Manual (Murni: {{ item.calculated_rank !== '-' ? '#' + item.calculated_rank : '-' }})
                     </span>
                     <span v-else class="text-slate-400 text-[10px] whitespace-nowrap">
-                      Otomatis {{ item.calculated_rank !== '-' ? '(#' + item.calculated_rank + ')' : '' }}
+                      Sesuai Nilai {{ item.calculated_rank !== '-' ? '(#' + item.calculated_rank + ')' : '' }}
                     </span>
                   </td>
                 </tr>
@@ -868,8 +953,8 @@
             </table>
           </div>
 
-          <!-- Smart Adjustment Checkbox -->
-          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-start gap-3">
+          <!-- Opsi Tambahan: Selaraskan Nilai Siswa -->
+          <div class="p-4 bg-slate-50/90 rounded-2xl border border-slate-200 flex items-start gap-3">
             <input
               id="adjust-scores-checkbox"
               v-model="adjustScoresWithRank"
@@ -877,9 +962,9 @@
               class="mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
             />
             <label for="adjust-scores-checkbox" class="text-xs cursor-pointer select-none">
-              <span class="font-black text-slate-900 block">⚡ Otomatis selaraskan nilai mata pelajaran siswa dengan peringkat baru</span>
-              <span class="text-slate-500 text-[11px] block mt-0.5 leading-normal">
-                Nilai rapor siswa akan disesuaikan secara proporsional sehingga nilai rata-rata siswa selaras dengan urutan juara yang Anda tentukan di atas.
+              <span class="font-black text-slate-900 block">⚡ Opsional: Selaraskan nilai mata pelajaran siswa dengan peringkat baru</span>
+              <span class="text-slate-500 text-[11px] block mt-0.5 leading-relaxed">
+                Jika dicentang, nilai di lembar rapor akan disesuaikan proporsional secara otomatis agar siswa ranking atas memiliki rata-rata lebih tinggi. Jika tidak dicentang, hanya nomor ranking saja yang berubah, nilai asli tetap aman.
               </span>
             </label>
           </div>
@@ -887,15 +972,28 @@
 
         <!-- Modal Footer -->
         <div class="p-4 sm:p-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-slate-50/50">
-          <button
-            type="button"
-            @click="resetRanksToDefault"
-            :disabled="savingRanks"
-            class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-          >
-            <RotateCcw class="w-3.5 h-3.5" />
-            <span>Reset ke Otomatis</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="resetRanksToDefault"
+              :disabled="savingRanks"
+              class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              title="Urutkan kembali sesuai rata-rata murni nilai rapor"
+            >
+              <RotateCcw class="w-3.5 h-3.5" />
+              <span>Kembalikan ke Nilai Murni</span>
+            </button>
+            <button
+              type="button"
+              @click="autoSequenceRanks"
+              :disabled="savingRanks"
+              class="px-3 py-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              title="Rapikan urutan nomor 1 sampai selesai tanpa ada nomor loncat"
+            >
+              <Sparkles class="w-3.5 h-3.5 text-amber-500" />
+              <span class="hidden sm:inline">Rapikan Nomor (1 s/d N)</span>
+            </button>
+          </div>
 
           <div class="grid grid-cols-2 sm:flex items-center gap-2">
             <button
@@ -908,8 +1006,8 @@
             <button
               type="button"
               @click="saveRanksSubmit"
-              :disabled="savingRanks"
-              class="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95 text-center"
+              :disabled="savingRanks || hasDuplicateRank"
+              class="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 text-center"
             >
               <Check class="w-4 h-4" />
               <span>{{ savingRanks ? 'Menyimpan...' : 'Simpan Peringkat' }}</span>
@@ -1352,6 +1450,9 @@ import {
   LayoutGrid,
   List,
   AlertTriangle,
+  ArrowUp,
+  ArrowDown,
+  Info,
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -1667,6 +1768,59 @@ function openRankModal() {
 
   adjustScoresWithRank.value = false;
   showRankModal.value = true;
+}
+
+// Move student up in the rank list (swaps position and re-indexes sequentially)
+function moveStudentRank(index, direction) {
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= rankEditList.value.length) return;
+
+  const currentList = [...rankEditList.value];
+  const itemToMove = currentList[index];
+  currentList.splice(index, 1);
+  currentList.splice(targetIndex, 0, itemToMove);
+
+  // Auto-assign clean sequential ranks (1, 2, 3...) so duplicates are impossible
+  currentList.forEach((item, idx) => {
+    item.rank = idx + 1;
+  });
+
+  rankEditList.value = currentList;
+}
+
+// Check for duplicate ranks
+const duplicateRanks = computed(() => {
+  const counts = {};
+  const duplicates = new Set();
+  rankEditList.value.forEach(item => {
+    const r = parseInt(item.rank);
+    if (!isNaN(r)) {
+      counts[r] = (counts[r] || 0) + 1;
+      if (counts[r] > 1) {
+        duplicates.add(r);
+      }
+    }
+  });
+  return Array.from(duplicates);
+});
+
+const hasDuplicateRank = computed(() => duplicateRanks.value.length > 0);
+
+// Auto re-sequence ranks sequentially based on current list order
+function autoSequenceRanks() {
+  rankEditList.value.forEach((item, idx) => {
+    item.rank = idx + 1;
+  });
+  toast.success('Peringkat berhasil dirapikan berurutan 1 sampai ' + rankEditList.value.length);
+}
+
+// Sort list according to the manual rank input values
+function sortListByRankInputs() {
+  rankEditList.value = [...rankEditList.value].sort((a, b) => {
+    const rA = parseInt(a.rank) || 9999;
+    const rB = parseInt(b.rank) || 9999;
+    return rA - rB;
+  });
 }
 
 async function saveRanksSubmit() {
