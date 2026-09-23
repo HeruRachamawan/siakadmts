@@ -1841,16 +1841,21 @@ function openRankModal() {
   const sorted = [...ledgerStudents.value].sort((a, b) => {
     const rankA = typeof a.rank === 'number' ? a.rank : 9999;
     const rankB = typeof b.rank === 'number' ? b.rank : 9999;
-    return rankA - rankB;
+    if (rankA !== rankB) return rankA - rankB;
+    const avgA = Number(a.average_score) || 0;
+    const avgB = Number(b.average_score) || 0;
+    if (avgB !== avgA) return avgB - avgA;
+    return (a.full_name || '').localeCompare(b.full_name || '');
   });
 
+  // Always ensure ranks are sequential 1 to N (1, 2, 3... total siswa)
   rankEditList.value = sorted.map((st, idx) => ({
     student_id: st.student_id,
     full_name: st.full_name,
     nisn: st.nisn,
     average_score: st.average_score,
     calculated_rank: st.calculated_rank || (idx + 1),
-    rank: typeof st.rank === 'number' ? st.rank : (idx + 1),
+    rank: idx + 1,
   }));
 
   adjustScoresWithRank.value = false;

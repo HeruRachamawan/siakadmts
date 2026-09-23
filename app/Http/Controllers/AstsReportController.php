@@ -1094,6 +1094,19 @@ class AstsReportController extends Controller
                 ?: strcasecmp($a['full_name'], $b['full_name']);
         });
 
+        // If adjusted mode and manual ranks exist, order student list by manual_rank, then average
+        if ($rankType === 'adjusted') {
+            usort($studentAverages, function ($a, $b) use ($reports) {
+                $mRankA = $reports->get($a['student_id'])?->manual_rank;
+                $mRankB = $reports->get($b['student_id'])?->manual_rank;
+                $rA = !empty($mRankA) ? (int) $mRankA : 9999;
+                $rB = !empty($mRankB) ? (int) $mRankB : 9999;
+                if ($rA !== $rB) return $rA - $rB;
+                if ($b['average_score'] !== $a['average_score']) return ($b['average_score'] <=> $a['average_score']);
+                return strcasecmp($a['full_name'], $b['full_name']);
+            });
+        }
+
         $ranks = [];
         $totalAvgs = 0;
         foreach ($studentAverages as $pos => $item) {
@@ -1103,7 +1116,8 @@ class AstsReportController extends Controller
             $manualRank = $reports->get($sId)?->manual_rank;
 
             $hasManual = !empty($manualRank);
-            $effectiveRank = ($rankType === 'original' || !$hasManual) ? $calcRank : (int) $manualRank;
+            // In adjusted mode: ranks are sequenced cleanly from 1 to N based on the adjusted order
+            $effectiveRank = ($rankType === 'original' || !$hasManual) ? $calcRank : ($pos + 1);
 
             $ranks[$sId] = [
                 'rank' => $effectiveRank,

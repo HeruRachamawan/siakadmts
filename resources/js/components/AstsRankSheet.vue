@@ -299,12 +299,18 @@ const sortedStudents = computed(() => {
     if (rankA !== rankB) return rankA - rankB;
     const avgA = Number(a.average_score) || 0;
     const avgB = Number(b.average_score) || 0;
-    return avgB - avgA;
+    if (avgB !== avgA) return avgB - avgA;
+    const totA = Number(a.total_score) || 0;
+    const totB = Number(b.total_score) || 0;
+    if (totB !== totA) return totB - totA;
+    return (a.full_name || '').localeCompare(b.full_name || '');
   });
 
+  // Always sequentially number ranks 1 to N without any missing/skipped numbers
   return list.map((st, idx) => ({
     ...st,
-    display_rank: typeof st.rank === 'number' ? st.rank : (idx + 1),
+    display_rank: idx + 1,
+    raw_manual_rank: st.rank,
   }));
 });
 
