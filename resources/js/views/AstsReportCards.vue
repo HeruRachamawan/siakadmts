@@ -225,30 +225,6 @@
               <TableProperties class="w-3.5 h-3.5 text-amber-200 flex-shrink-0" />
               <span>Cetak Ledger Diatur</span>
             </button>
-
-            <!-- Cetak Lembar Peringkat Asli -->
-            <button
-              type="button"
-              @click="printRankingSheet('original')"
-              :disabled="!ledgerStudents.length"
-              class="px-3 py-2 bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
-              title="Cetak lembar resmi daftar peringkat kelas berdasarkan nilai asli murni"
-            >
-              <Printer class="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
-              <span>Peringkat Asli</span>
-            </button>
-
-            <!-- Cetak Lembar Peringkat Diatur -->
-            <button
-              type="button"
-              @click="printRankingSheet('adjusted')"
-              :disabled="!ledgerStudents.length"
-              class="px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
-              title="Cetak lembar resmi daftar peringkat kelas hasil penataan wali kelas"
-            >
-              <Trophy class="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-              <span>Peringkat Diatur</span>
-            </button>
           </div>
         </div>
 
