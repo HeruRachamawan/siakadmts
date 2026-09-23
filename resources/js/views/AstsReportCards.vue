@@ -1489,7 +1489,7 @@
         :class-info="ledgerData?.class || {}"
         :academic-year="activeYear || {}"
         :semester="activeSemester"
-        :school-setting="globalSchoolSetting"
+        :school-setting="effectiveSchoolSetting"
         :city="currentCity"
         :issued-date="currentIssuedDate"
         :rank-type="rankingSheetRankType"
@@ -2098,6 +2098,13 @@ async function fetchBatchReports() {
 const printTarget = ref('report');
 const rankingSheetRankType = ref('adjusted'); // 'adjusted' | 'original'
 const globalSchoolSetting = ref(null);
+
+const effectiveSchoolSetting = computed(() => {
+  return singleReportData.value?.school_setting ||
+    ledgerData.value?.school_setting ||
+    globalSchoolSetting.value ||
+    {};
+});
 
 const currentCity = computed(() => {
   return singleReportData.value?.city || titimangsaForm.city || 'Bogor';

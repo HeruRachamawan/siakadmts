@@ -258,8 +258,12 @@ const props = defineProps({
 
 function getImageUrl(path) {
   if (!path) return '';
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
-  return `/${path.replace(/^\/+/, '')}`;
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
+  const clean = path.replace(/^\/?storage\//, '').replace(/^\//, '');
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}/storage/${clean}`;
+  }
+  return `/storage/${clean}`;
 }
 
 function formatClassName(name) {

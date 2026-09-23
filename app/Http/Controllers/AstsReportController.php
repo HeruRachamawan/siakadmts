@@ -60,6 +60,28 @@ class AstsReportController extends Controller
     }
 
     /**
+     * Helper to get standardized official school/madrasah identity settings.
+     */
+    public static function getOfficialSchoolSetting(): array
+    {
+        $rawSettings = \App\Models\Setting::all()->pluck('value', 'key')->toArray();
+        $principalTeacher = !empty($rawSettings['principal_teacher_id'])
+            ? \App\Models\Teacher::find($rawSettings['principal_teacher_id'])
+            : \App\Models\Teacher::where('position', 'like', '%Kepala%')->first();
+
+        return [
+            'school_name' => $rawSettings['app_name'] ?? 'MTs AL - HASANAH',
+            'foundation_name' => $rawSettings['school_foundation'] ?? 'YAYASAN PENDIDIKAN ISLAM AL - HASANAH',
+            'address' => $rawSettings['school_address'] ?? 'Jl. Ciapus Sukamakmur No.05, Kec. Ciomas, Kab. Bogor',
+            'phone' => $rawSettings['school_phone'] ?? '081617666017',
+            'email' => $rawSettings['school_email'] ?? 'mtsalhasanah.ciomas@gmail.com',
+            'principal_name' => $principalTeacher?->full_name ?? 'H. Umar Usman Ali, S.Pd, S.Pd.I',
+            'principal_nip' => $principalTeacher?->nip ?? '-',
+            'logo_url' => $rawSettings['app_logo'] ?? null,
+        ];
+    }
+
+    /**
      * Helper to verify if the user has access to view/manage reports for the given class.
      * When accessed through teacher routes (or by teacher role), strictly verify homeroom ownership
      * or matching grade local class ownership.
@@ -174,7 +196,7 @@ class AstsReportController extends Controller
         $activeYear = AcademicYear::where('is_active', true)->first()
             ?? AcademicYear::orderBy('id', 'desc')->first();
 
-        $schoolSetting = SchoolSetting::first();
+        $officialSchoolSetting = self::getOfficialSchoolSetting();
         $rawSettings = \App\Models\Setting::all()->pluck('value', 'key')->toArray();
 
         $defaultCity = $rawSettings['asts_issued_city'] ?? 'Bogor';
@@ -186,7 +208,7 @@ class AstsReportController extends Controller
                 'classes' => $classes,
                 'subjects' => $subjects,
                 'active_academic_year' => $activeYear,
-                'school_setting' => $schoolSetting,
+                'school_setting' => $officialSchoolSetting,
                 'settings' => $rawSettings,
                 'homeroom_class_id' => $homeroomClassId,
                 'is_homeroom_only' => (bool) $isTeacherRoute,
@@ -451,6 +473,7 @@ class AstsReportController extends Controller
                 'students' => $ledgerStudents,
                 'total_students' => count($ledgerStudents),
                 'class_average_score' => $classAverageScore,
+                'school_setting' => self::getOfficialSchoolSetting(),
             ]
         ]);
     }
@@ -1328,16 +1351,7 @@ class AstsReportController extends Controller
             ],
             'extracurriculars' => $studentExtracurriculars,
             'homeroom_notes' => $astsReport?->homeroom_notes ?? 'Tingkatkan terus semangat belajar, ketekunan ibadah, dan keaktifan dalam kegiatan madrasah.',
-            'school_setting' => [
-                'school_name' => $rawSettings['app_name'] ?? ($schoolSetting?->school_name ?? 'MTs AL - HASANAH'),
-                'foundation_name' => $rawSettings['school_foundation'] ?? 'YAYASAN PENDIDIKAN ISLAM AL - HASANAH',
-                'address' => $rawSettings['school_address'] ?? ($schoolSetting?->address ?? 'Jl. Ciapus Sukamakmur No.05, Kec. Ciomas, Kab. Bogor'),
-                'phone' => $rawSettings['school_phone'] ?? '081617666017',
-                'email' => $rawSettings['school_email'] ?? 'mtsalhasanah.ciomas@gmail.com',
-                'principal_name' => $principalTeacher?->full_name ?? 'H. Umar Usman Ali, S.Pd, S.Pd.I',
-                'principal_nip' => $principalTeacher?->nip ?? '-',
-                'logo_url' => $rawSettings['app_logo'] ?? ($schoolSetting?->logo_url ?? null),
-            ],
+            'school_setting' => self::getOfficialSchoolSetting(),
             'issued_date' => $formattedDate,
             'raw_issued_date' => $dateVal ?: now()->format('Y-m-d'),
             'city' => $cityVal,
