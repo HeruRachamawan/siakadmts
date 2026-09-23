@@ -196,9 +196,34 @@
               type="button"
               @click="exportLedgerExcel"
               class="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              title="Export ledger nilai ke format file Excel"
             >
               <Download class="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
               <span>Export Excel</span>
+            </button>
+
+            <!-- Cetak Lembar Peringkat Asli -->
+            <button
+              type="button"
+              @click="printRankingSheet('original')"
+              :disabled="!ledgerStudents.length"
+              class="px-3 py-2 bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
+              title="Cetak lembar resmi daftar peringkat kelas berdasarkan nilai asli murni"
+            >
+              <Printer class="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
+              <span>Cetak Peringkat Asli</span>
+            </button>
+
+            <!-- Cetak Lembar Peringkat Diatur -->
+            <button
+              type="button"
+              @click="printRankingSheet('adjusted')"
+              :disabled="!ledgerStudents.length"
+              class="px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
+              title="Cetak lembar resmi daftar peringkat kelas hasil penataan wali kelas"
+            >
+              <Trophy class="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+              <span>Cetak Peringkat Diatur</span>
             </button>
           </div>
         </div>
@@ -552,33 +577,6 @@
                 <option value="a4">📄 A4 (210 x 297 mm)</option>
               </select>
             </div>
-
-            <!-- Opsi Peringkat Cetak: Peringkat Hasil Atur vs Peringkat Asli Murni -->
-            <div class="w-full sm:w-auto">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Peringkat Rapor</label>
-              <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-xl border border-slate-200 shadow-2xs">
-                <button
-                  type="button"
-                  @click="setRankType('adjusted')"
-                  :class="selectedRankType === 'adjusted' ? 'bg-amber-500 text-white font-black shadow-xs' : 'text-slate-600 font-bold hover:text-slate-900'"
-                  class="px-2.5 py-1.5 sm:py-1 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center gap-1 text-center"
-                  title="Gunakan peringkat yang sudah diatur oleh wali kelas"
-                >
-                  <Trophy class="w-3.5 h-3.5 flex-shrink-0" />
-                  <span class="truncate">Peringkat Diatur</span>
-                </button>
-                <button
-                  type="button"
-                  @click="setRankType('original')"
-                  :class="selectedRankType === 'original' ? 'bg-teal-700 text-white font-black shadow-xs' : 'text-slate-600 font-bold hover:text-slate-900'"
-                  class="px-2.5 py-1.5 sm:py-1 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center gap-1 text-center"
-                  title="Gunakan peringkat asli/murni hasil perhitungan nilai rata-rata ujian"
-                >
-                  <Sparkles class="w-3.5 h-3.5 flex-shrink-0" />
-                  <span class="truncate">Peringkat Asli</span>
-                </button>
-              </div>
-            </div>
           </div>
 
           <!-- Action Buttons Group (Grid on mobile, flex on desktop) -->
@@ -627,18 +625,37 @@
               <span>Titimangsa</span>
             </button>
 
-            <!-- Trigger Print Button (Full-width on mobile) -->
+            <!-- Tombol Cetak Peringkat Saja (Asli & Diatur) -->
+            <button
+              type="button"
+              @click="printRankingSheet('original')"
+              :disabled="!ledgerStudents.length"
+              class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50 active:scale-95"
+              title="Cetak lembar resmi daftar peringkat siswa berdasarkan nilai asli murni"
+            >
+              <Printer class="w-3.5 h-3.5 text-teal-200 flex-shrink-0" />
+              <span>Peringkat Asli</span>
+            </button>
+
+            <button
+              type="button"
+              @click="printRankingSheet('adjusted')"
+              :disabled="!ledgerStudents.length"
+              class="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50 active:scale-95"
+              title="Cetak lembar resmi daftar peringkat siswa hasil penataan wali kelas"
+            >
+              <Trophy class="w-3.5 h-3.5 text-amber-200 flex-shrink-0" />
+              <span>Peringkat Diatur</span>
+            </button>
+
+            <!-- Trigger Print Rapor Siswa Asli Seperti Semula -->
             <button
               @click="triggerPrint"
               type="button"
-              class="col-span-2 sm:col-span-1 px-4 py-2.5 sm:py-2 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer active:scale-95"
-              :class="selectedRankType === 'original' ? 'bg-teal-900 hover:bg-teal-800' : 'bg-slate-900 hover:bg-slate-800'"
-              :title="`Cetak rapor dengan ${selectedRankType === 'original' ? 'Peringkat Asli (Murni)' : 'Peringkat yang Sudah Diatur'}`"
+              class="col-span-2 sm:col-span-1 px-5 py-2.5 sm:py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer active:scale-95"
             >
-              <Printer class="w-4 h-4 flex-shrink-0" :class="selectedRankType === 'original' ? 'text-teal-300' : 'text-emerald-400'" />
-              <span>
-                {{ printMode === 'batch' ? `Cetak 1 Kelas (${selectedRankType === 'original' ? 'Peringkat Asli' : 'Peringkat Diatur'})` : `Cetak Rapor (${selectedRankType === 'original' ? 'Peringkat Asli' : 'Peringkat Diatur'})` }}
-              </span>
+              <Printer class="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <span>{{ printMode === 'batch' ? `Cetak 1 Kelas (${ledgerStudents.length} Siswa)` : 'Cetak Rapor Siswa Ini' }}</span>
             </button>
           </div>
         </div>
@@ -790,16 +807,9 @@
             <div :class="showMobileStudentList ? 'hidden lg:flex' : 'flex'" class="lg:col-span-8 flex-col items-center w-full">
               <!-- Preview Status & Mobile Touch Hint -->
               <div class="w-full max-w-[210mm] flex items-center justify-between gap-2 pb-2 text-[11px] text-slate-400 no-print">
-                <span class="flex items-center gap-1.5 text-slate-500 font-medium truncate">
-                  <span>📄 Kertas {{ selectedPaperSize.toUpperCase() }}</span>
+                <span class="flex items-center gap-1 text-slate-500 font-medium truncate">
+                  <span>📄 Pratinjau Kertas {{ selectedPaperSize.toUpperCase() }}</span>
                   <span v-if="singleReportData?.city" class="hidden sm:inline">&bull; {{ singleReportData.city }}, {{ singleReportData.issued_date }}</span>
-                  <span
-                    class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-2xs inline-flex items-center gap-1"
-                    :class="selectedRankType === 'original' ? 'bg-teal-50 text-teal-800 border-teal-200' : 'bg-amber-50 text-amber-900 border-amber-300'"
-                  >
-                    <component :is="selectedRankType === 'original' ? Sparkles : Trophy" class="w-3 h-3" />
-                    <span>Mode: {{ selectedRankType === 'original' ? 'Peringkat Asli (Murni)' : 'Peringkat Hasil Atur' }}</span>
-                  </span>
                 </span>
                 <div class="sm:hidden text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 text-[10px]">
                   Geser ke samping ↔️
@@ -1010,7 +1020,7 @@
 
         <!-- Modal Footer -->
         <div class="p-4 sm:p-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-slate-50/50">
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
             <button
               type="button"
               @click="resetRanksToDefault"
@@ -1030,6 +1040,17 @@
             >
               <Sparkles class="w-3.5 h-3.5 text-amber-500" />
               <span class="hidden sm:inline">Rapikan Nomor (1 s/d N)</span>
+            </button>
+
+            <!-- Cetak Peringkat Langsung dari Modal -->
+            <button
+              type="button"
+              @click="printRankingSheet('adjusted')"
+              class="px-3 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+              title="Cetak lembar resmi daftar peringkat hasil atur ini"
+            >
+              <Printer class="w-3.5 h-3.5 text-amber-700" />
+              <span>Cetak Hasil Atur</span>
             </button>
           </div>
 
@@ -1456,6 +1477,24 @@
         </form>
       </div>
     </div>
+
+    <!-- HIDDEN DEDICATED PRINT AREA FOR CLASS RANKING SHEET -->
+    <div
+      id="asts-ranking-sheet-print-area"
+      :class="printTarget === 'ranking' ? 'block print-active-sheet' : 'hidden'"
+      class="print-rank-sheet bg-white p-4 sm:p-7 rounded-2xl border border-slate-300"
+    >
+      <AstsRankSheet
+        :students="ledgerStudents"
+        :class-info="ledgerData?.class || {}"
+        :academic-year="activeYear || {}"
+        :semester="activeSemester"
+        :school-setting="globalSchoolSetting"
+        :city="currentCity"
+        :issued-date="currentIssuedDate"
+        :rank-type="rankingSheetRankType"
+      />
+    </div>
   </div>
 </template>
 
@@ -1465,6 +1504,7 @@ import * as XLSX from 'xlsx';
 import { api } from '../api';
 import { useToast } from '../composables/useToast';
 import AstsReportSheet from '../components/AstsReportSheet.vue';
+import AstsRankSheet from '../components/AstsRankSheet.vue';
 import {
   BookOpenCheck,
   GraduationCap,
@@ -1671,6 +1711,7 @@ async function fetchOptions() {
     classes.value = d.classes || [];
     activeYear.value = d.active_academic_year || null;
     isHomeroomOnly.value = !!d.is_homeroom_only;
+    globalSchoolSetting.value = d.school_setting || null;
 
     if (d.homeroom_class_id) {
       selectedClassId.value = d.homeroom_class_id;
@@ -2053,15 +2094,59 @@ async function fetchBatchReports() {
   }
 }
 
-async function fetchPrintData() {
-  if (printMode.value === 'single') {
-    await fetchSingleReport();
-  } else {
-    await fetchBatchReports();
+// Print Target Type: 'report' | 'ranking'
+const printTarget = ref('report');
+const rankingSheetRankType = ref('adjusted'); // 'adjusted' | 'original'
+const globalSchoolSetting = ref(null);
+
+const currentCity = computed(() => {
+  return singleReportData.value?.city || titimangsaForm.city || 'Bogor';
+});
+
+const currentIssuedDate = computed(() => {
+  return singleReportData.value?.issued_date || formattedPreviewTitimangsa.value || '';
+});
+
+function printRankingSheet(type = 'adjusted') {
+  if (!ledgerStudents.value.length) {
+    toast.error('Belum ada data siswa untuk dicetak peringkatnya.');
+    return;
   }
+  rankingSheetRankType.value = type;
+  printTarget.value = 'ranking';
+  document.body.classList.add('printing-ranking');
+
+  const isA4 = selectedPaperSize.value === 'a4';
+  const paperSize = isA4 ? 'A4 portrait' : '215mm 330mm';
+
+  let styleEl = document.getElementById('asts-print-page-style');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'asts-print-page-style';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.innerHTML = `
+    @media print {
+      @page {
+        size: ${paperSize};
+        margin: 5mm 8mm 5mm 8mm;
+      }
+    }
+  `;
+
+  // Print after DOM update, then reset printTarget to report
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      printTarget.value = 'report';
+      document.body.classList.remove('printing-ranking');
+    }, 1000);
+  }, 150);
 }
 
 function triggerPrint() {
+  printTarget.value = 'report';
+  document.body.classList.remove('printing-ranking');
   const isA4 = selectedPaperSize.value === 'a4';
   const paperSize = isA4 ? 'A4 portrait' : '215mm 330mm';
 
@@ -2181,11 +2266,11 @@ onMounted(() => {
     box-shadow: none !important;
   }
 
-  /* 4. Area rapor (single & batch) memenuhi kertas secara murni */
+  /* 4. Area rapor (single & batch) & Area Peringkat memenuhi kertas secara murni */
   #asts-report-single-area,
   #asts-report-batch-area,
+  #asts-ranking-sheet-print-area,
   .print-sheet {
-    display: block !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 auto !important;
@@ -2193,6 +2278,27 @@ onMounted(() => {
     border: none !important;
     box-shadow: none !important;
     background: #ffffff !important;
+  }
+
+  /* Sembunyikan area ranking saat mencetak rapor biasa */
+  body:not(.printing-ranking) #asts-ranking-sheet-print-area {
+    display: none !important;
+  }
+
+  /* Saat mencetak ranking sheet, sembunyikan area rapor siswa */
+  body.printing-ranking #asts-report-single-area,
+  body.printing-ranking #asts-report-batch-area {
+    display: none !important;
+  }
+
+  body.printing-ranking #asts-ranking-sheet-print-area {
+    display: block !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   /* 5. Pagination per halaman: SINGLE MODE HARUS TEPAT 1 LEMBAR */
