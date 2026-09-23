@@ -935,6 +935,7 @@ class AstsReportController extends Controller
     public function studentReport(Request $request, $studentId)
     {
         $semester = $request->input('semester', 'ganjil');
+        $rankType = $request->input('rank_type', 'adjusted'); // 'adjusted' or 'original'
 
         $activeYear = AcademicYear::where('is_active', true)->first();
         $yearId = $request->input('academic_year_id', $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));
@@ -957,9 +958,9 @@ class AstsReportController extends Controller
 
         // Fetch all students in the selected class context to accurately determine rank and class average
         $classStudents = $this->getStudentsForClass((int)$selectedClassId);
-        $rankData = $this->calculateClassRankings($classStudents, (int)$selectedClassId, $semester, $academicYear?->id);
+        $rankData = $this->calculateClassRankings($classStudents, (int)$selectedClassId, $semester, $academicYear?->id, $rankType);
 
-        $report = $this->buildSingleReportData($student, $semester, $academicYear, $rankData, (int)$selectedClassId);
+        $report = $this->buildSingleReportData($student, $semester, $academicYear, $rankData, (int)$selectedClassId, $rankType);
 
         return response()->json([
             'status' => 'success',
@@ -973,6 +974,7 @@ class AstsReportController extends Controller
     public function batchClassReport(Request $request, $classId)
     {
         $semester = $request->input('semester', 'ganjil');
+        $rankType = $request->input('rank_type', 'adjusted'); // 'adjusted' or 'original'
 
         if (!$this->checkHomeroomAccess($request->user(), (int)$classId, $request)) {
             return response()->json([
@@ -999,12 +1001,12 @@ class AstsReportController extends Controller
         $students = $this->getStudentsForClass((int)$classId);
         $academicYear = AcademicYear::find($yearId) ?? $activeYear;
 
-        $rankData = $this->calculateClassRankings($students, (int)$classId, $semester, $academicYear?->id);
+        $rankData = $this->calculateClassRankings($students, (int)$classId, $semester, $academicYear?->id, $rankType);
 
         $reports = [];
         foreach ($students as $student) {
             $student->setRelation('classRoom', $class);
-            $reports[] = $this->buildSingleReportData($student, $semester, $academicYear, $rankData, (int)$classId);
+            $reports[] = $this->buildSingleReportData($student, $semester, $academicYear, $rankData, (int)$classId, $rankType);
         }
 
         return response()->json([
@@ -1016,6 +1018,7 @@ class AstsReportController extends Controller
                 'reports' => $reports,
                 'total_students' => count($reports),
                 'class_average_score' => $rankData['class_average_score'] ?? 0,
+                'rank_type' => $rankType,
             ]
         ]);
     }
@@ -1023,7 +1026,7 @@ class AstsReportController extends Controller
     /**
      * Helper to compute rankings and class average score for a classroom.
      */
-    private function calculateClassRankings($students, $classId, string $semester, ?int $yearId): array
+    private function calculateClassRankings($students, $classId, string $semester, ?int $yearId, string $rankType = 'adjusted'): array
     {
         if ($students->isEmpty()) {
             return [
@@ -1076,10 +1079,15 @@ class AstsReportController extends Controller
             $calcRank = $item['average_score'] > 0 ? ($pos + 1) : '-';
             $manualRank = $reports->get($sId)?->manual_rank;
 
+            $hasManual = !empty($manualRank);
+            $effectiveRank = ($rankType === 'original' || !$hasManual) ? $calcRank : (int) $manualRank;
+
             $ranks[$sId] = [
-                'rank' => !empty($manualRank) ? (int) $manualRank : $calcRank,
+                'rank' => $effectiveRank,
                 'calculated_rank' => $calcRank,
-                'is_manual_rank' => !empty($manualRank),
+                'manual_rank' => $manualRank ? (int) $manualRank : null,
+                'is_manual_rank' => $hasManual,
+                'is_showing_manual' => ($rankType !== 'original' && $hasManual),
                 'average_score' => $item['average_score'],
             ];
         }
@@ -1091,13 +1099,14 @@ class AstsReportController extends Controller
             'ranks' => $ranks,
             'total_students' => $count,
             'class_average_score' => $classAvg,
+            'rank_type' => $rankType,
         ];
     }
 
     /**
      * Helper to assemble single student printable report structure.
      */
-    private function buildSingleReportData(Student $student, string $semester, ?AcademicYear $academicYear, ?array $rankData = null, ?int $contextClassId = null): array
+    private function buildSingleReportData(Student $student, string $semester, ?AcademicYear $academicYear, ?array $rankData = null, ?int $contextClassId = null, string $rankType = 'adjusted'): array
     {
         $yearId = $academicYear?->id;
         $targetClassId = $contextClassId ?: $student->class_id;
@@ -1107,13 +1116,15 @@ class AstsReportController extends Controller
         // If rankData wasn't passed, calculate it for this target class
         if ($rankData === null && $targetClassId) {
             $classStudents = $this->getStudentsForClass((int)$targetClassId);
-            $rankData = $this->calculateClassRankings($classStudents, (int)$targetClassId, $semester, $yearId);
+            $rankData = $this->calculateClassRankings($classStudents, (int)$targetClassId, $semester, $yearId, $rankType);
         }
 
         $sRankInfo = $rankData['ranks'][$student->id] ?? [
             'rank' => '-',
             'calculated_rank' => '-',
+            'manual_rank' => null,
             'is_manual_rank' => false,
+            'is_showing_manual' => false,
         ];
 
         // Fetch scores
@@ -1304,7 +1315,10 @@ class AstsReportController extends Controller
             'average_score' => $avg,
             'rank' => $sRankInfo['rank'],
             'calculated_rank' => $sRankInfo['calculated_rank'],
+            'manual_rank' => $sRankInfo['manual_rank'] ?? null,
             'is_manual_rank' => $sRankInfo['is_manual_rank'],
+            'is_showing_manual' => $sRankInfo['is_showing_manual'] ?? false,
+            'rank_type' => $rankType,
             'total_students' => $rankData['total_students'] ?? 0,
             'class_average_score' => $rankData['class_average_score'] ?? 0,
             'attendance' => [
