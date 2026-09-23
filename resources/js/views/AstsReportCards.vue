@@ -155,17 +155,6 @@
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:items-center gap-2 w-full lg:w-auto">
-            <!-- Smart Rank Adjuster Button -->
-            <button
-              type="button"
-              @click="openRankModal"
-              class="px-3 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-              title="Atur peringkat juara siswa atau selaraskan nilai secara otomatis"
-            >
-              <Trophy class="w-3.5 h-3.5 text-amber-200 flex-shrink-0" />
-              <span>Atur Peringkat</span>
-            </button>
-
             <!-- 1-Click Auto Pull Button with Source Selection -->
             <button
               type="button"
