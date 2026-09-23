@@ -202,6 +202,30 @@
               <span>Export Excel</span>
             </button>
 
+            <!-- Cetak Ledger Nilai Lengkap (Matriks Mapel) - Asli -->
+            <button
+              type="button"
+              @click="printLedgerSheet('original')"
+              :disabled="!ledgerStudents.length"
+              class="px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-sm active:scale-95"
+              title="Cetak lembar rekap ledger nilai seluruh mata pelajaran (Landscape) berdasarkan nilai asli murni"
+            >
+              <TableProperties class="w-3.5 h-3.5 text-emerald-200 flex-shrink-0" />
+              <span>Cetak Ledger Asli</span>
+            </button>
+
+            <!-- Cetak Ledger Nilai Lengkap (Matriks Mapel) - Diatur -->
+            <button
+              type="button"
+              @click="printLedgerSheet('adjusted')"
+              :disabled="!ledgerStudents.length"
+              class="px-3 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-sm active:scale-95"
+              title="Cetak lembar rekap ledger nilai seluruh mata pelajaran (Landscape) hasil penataan wali kelas"
+            >
+              <TableProperties class="w-3.5 h-3.5 text-amber-200 flex-shrink-0" />
+              <span>Cetak Ledger Diatur</span>
+            </button>
+
             <!-- Cetak Lembar Peringkat Asli -->
             <button
               type="button"
@@ -211,7 +235,7 @@
               title="Cetak lembar resmi daftar peringkat kelas berdasarkan nilai asli murni"
             >
               <Printer class="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
-              <span>Cetak Peringkat Asli</span>
+              <span>Peringkat Asli</span>
             </button>
 
             <!-- Cetak Lembar Peringkat Diatur -->
@@ -223,7 +247,7 @@
               title="Cetak lembar resmi daftar peringkat kelas hasil penataan wali kelas"
             >
               <Trophy class="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-              <span>Cetak Peringkat Diatur</span>
+              <span>Peringkat Diatur</span>
             </button>
           </div>
         </div>
@@ -1495,6 +1519,25 @@
         :rank-type="rankingSheetRankType"
       />
     </div>
+
+    <!-- HIDDEN DEDICATED PRINT AREA FOR COMPLETE CLASS LEDGER MATRIX SHEET -->
+    <div
+      id="asts-ledger-sheet-print-area"
+      :class="printTarget === 'ledger' ? 'block print-active-sheet' : 'hidden'"
+      class="print-ledger-sheet bg-white p-3 sm:p-6 rounded-2xl border border-slate-300"
+    >
+      <AstsLedgerSheet
+        :students="ledgerStudents"
+        :subjects="subjectsList"
+        :class-info="ledgerData?.class || {}"
+        :academic-year="activeYear || {}"
+        :semester="activeSemester"
+        :school-setting="effectiveSchoolSetting"
+        :city="currentCity"
+        :issued-date="currentIssuedDate"
+        :rank-type="ledgerSheetRankType"
+      />
+    </div>
   </div>
 </template>
 
@@ -1505,6 +1548,7 @@ import { api } from '../api';
 import { useToast } from '../composables/useToast';
 import AstsReportSheet from '../components/AstsReportSheet.vue';
 import AstsRankSheet from '../components/AstsRankSheet.vue';
+import AstsLedgerSheet from '../components/AstsLedgerSheet.vue';
 import {
   BookOpenCheck,
   GraduationCap,
@@ -2099,9 +2143,10 @@ async function fetchBatchReports() {
   }
 }
 
-// Print Target Type: 'report' | 'ranking'
+// Print Target Type: 'report' | 'ranking' | 'ledger'
 const printTarget = ref('report');
 const rankingSheetRankType = ref('adjusted'); // 'adjusted' | 'original'
+const ledgerSheetRankType = ref('adjusted'); // 'adjusted' | 'original'
 const globalSchoolSetting = ref(null);
 
 const effectiveSchoolSetting = computed(() => {
@@ -2126,6 +2171,7 @@ function printRankingSheet(type = 'adjusted') {
   }
   rankingSheetRankType.value = type;
   printTarget.value = 'ranking';
+  document.body.classList.remove('printing-ledger');
   document.body.classList.add('printing-ranking');
 
   const isA4 = selectedPaperSize.value === 'a4';
@@ -2152,6 +2198,45 @@ function printRankingSheet(type = 'adjusted') {
     setTimeout(() => {
       printTarget.value = 'report';
       document.body.classList.remove('printing-ranking');
+    }, 1000);
+  }, 150);
+}
+
+function printLedgerSheet(type = 'adjusted') {
+  if (!ledgerStudents.value.length) {
+    toast.error('Belum ada data nilai siswa untuk dicetak ledgernya.');
+    return;
+  }
+  ledgerSheetRankType.value = type;
+  printTarget.value = 'ledger';
+  document.body.classList.remove('printing-ranking');
+  document.body.classList.add('printing-ledger');
+
+  const isA4 = selectedPaperSize.value === 'a4';
+  // Ledger selalu dicetak secara Landscape (Folio 330x215mm atau A4 Landscape 297x210mm)
+  const paperSize = isA4 ? 'A4 landscape' : '330mm 215mm';
+
+  let styleEl = document.getElementById('asts-print-page-style');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'asts-print-page-style';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.innerHTML = `
+    @media print {
+      @page {
+        size: ${paperSize};
+        margin: 4mm 6mm 4mm 6mm;
+      }
+    }
+  `;
+
+  // Print after DOM update, then reset printTarget to report
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      printTarget.value = 'report';
+      document.body.classList.remove('printing-ledger');
     }, 1000);
   }, 150);
 }
@@ -2278,10 +2363,11 @@ onMounted(() => {
     box-shadow: none !important;
   }
 
-  /* 4. Area rapor (single & batch) & Area Peringkat memenuhi kertas secara murni */
+  /* 4. Area rapor (single & batch), Area Peringkat, & Area Ledger memenuhi kertas secara murni */
   #asts-report-single-area,
   #asts-report-batch-area,
   #asts-ranking-sheet-print-area,
+  #asts-ledger-sheet-print-area,
   .print-sheet {
     width: 100% !important;
     max-width: 100% !important;
@@ -2292,12 +2378,15 @@ onMounted(() => {
     background: #ffffff !important;
   }
 
-  /* Sembunyikan area ranking saat mencetak rapor biasa */
+  /* Sembunyikan area ranking & ledger saat mencetak rapor biasa */
   body:not(.printing-ranking) #asts-ranking-sheet-print-area {
     display: none !important;
   }
+  body:not(.printing-ledger) #asts-ledger-sheet-print-area {
+    display: none !important;
+  }
 
-  /* Saat mencetak ranking sheet, sembunyikan SELURUH elemen lain di container agar tidak ada sisa tinggi/margin halaman pertama kosong */
+  /* Saat mencetak ranking sheet, sembunyikan SELURUH elemen lain di container */
   body.printing-ranking .print-container > *:not(#asts-ranking-sheet-print-area) {
     display: none !important;
     visibility: hidden !important;
@@ -2310,12 +2399,48 @@ onMounted(() => {
   }
 
   body.printing-ranking #asts-report-single-area,
-  body.printing-ranking #asts-report-batch-area {
+  body.printing-ranking #asts-report-batch-area,
+  body.printing-ranking #asts-ledger-sheet-print-area {
     display: none !important;
     height: 0 !important;
   }
 
   body.printing-ranking #asts-ranking-sheet-print-area {
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    page-break-before: auto !important;
+    break-before: auto !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  /* Saat mencetak ledger sheet (Landscape), sembunyikan SELURUH elemen lain di container */
+  body.printing-ledger .print-container > *:not(#asts-ledger-sheet-print-area) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+  }
+
+  body.printing-ledger #asts-report-single-area,
+  body.printing-ledger #asts-report-batch-area,
+  body.printing-ledger #asts-ranking-sheet-print-area {
+    display: none !important;
+    height: 0 !important;
+  }
+
+  body.printing-ledger #asts-ledger-sheet-print-area {
     display: block !important;
     position: relative !important;
     width: 100% !important;
