@@ -2297,20 +2297,43 @@ onMounted(() => {
     display: none !important;
   }
 
-  /* Saat mencetak ranking sheet, sembunyikan area rapor siswa */
+  /* Saat mencetak ranking sheet, sembunyikan SELURUH elemen lain di container agar tidak ada sisa tinggi/margin halaman pertama kosong */
+  body.printing-ranking .print-container > *:not(#asts-ranking-sheet-print-area) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+  }
+
   body.printing-ranking #asts-report-single-area,
   body.printing-ranking #asts-report-batch-area {
     display: none !important;
+    height: 0 !important;
   }
 
   body.printing-ranking #asts-ranking-sheet-print-area {
     display: block !important;
-    page-break-before: avoid !important;
-    break-before: avoid !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
+    position: relative !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    page-break-before: auto !important;
+    break-before: auto !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  /* Saat mencetak rapor biasa (single/batch), sembunyikan sisa wrapper non-cetak */
+  body:not(.printing-ranking) .print-container > :not([class*="space-y-6"]):not([class*="space-y-4"]) {
+    /* pastikan modal atau wrapper di luar print area tidak memakan ruang cetak */
   }
 
   /* 5. Pagination per halaman: SINGLE MODE HARUS TEPAT 1 LEMBAR */
@@ -2346,8 +2369,8 @@ onMounted(() => {
 
   /* Pastikan border tabel rapor terlihat tajam */
   table {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }

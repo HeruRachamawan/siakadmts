@@ -96,17 +96,17 @@
     </table>
 
     <!-- 4. TABEL DAFTAR PERINGKAT KELAS -->
-    <div style="margin-bottom: 6px; overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 9px; line-height: 1.2;">
+    <div style="margin-bottom: 4px; overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 8.5px; line-height: 1.15;">
         <thead>
           <tr style="background-color: #f1f5f9; color: #020617; font-weight: 900; text-transform: uppercase; text-align: center; border-bottom: 1.5px solid #0f172a;">
-            <th style="border: 1px solid #0f172a; padding: 4px 2px; width: 8%;">Peringkat</th>
-            <th style="border: 1px solid #0f172a; padding: 4px 4px; width: 14%;">NISN / NIS</th>
-            <th style="border: 1px solid #0f172a; padding: 4px 6px; text-align: left; width: 34%;">Nama Lengkap Siswa</th>
-            <th style="border: 1px solid #0f172a; padding: 4px 2px; width: 6%; text-align: center;">L/P</th>
-            <th style="border: 1px solid #0f172a; padding: 4px 4px; width: 12%; text-align: center;">Jumlah Nilai</th>
-            <th style="border: 1px solid #0f172a; padding: 4px 4px; width: 12%; text-align: center;">Rata-Rata</th>
-            <th style="border: 1px solid #0f172a; padding: 4px 6px; text-align: center; width: 14%;">Keterangan</th>
+            <th style="border: 1px solid #0f172a; padding: 2.5px 2px; width: 7%;">Peringkat</th>
+            <th style="border: 1px solid #0f172a; padding: 2.5px 4px; width: 14%;">NISN / NIS</th>
+            <th style="border: 1px solid #0f172a; padding: 2.5px 5px; text-align: left; width: 35%;">Nama Lengkap Siswa</th>
+            <th style="border: 1px solid #0f172a; padding: 2.5px 2px; width: 5%; text-align: center;">L/P</th>
+            <th style="border: 1px solid #0f172a; padding: 2.5px 4px; width: 12%; text-align: center;">Jumlah Nilai</th>
+            <th style="border: 1px solid #0f172a; padding: 2.5px 4px; width: 12%; text-align: center;">Rata-Rata</th>
+            <th style="border: 1px solid #0f172a; padding: 2.5px 4px; text-align: center; width: 15%;">Keterangan</th>
           </tr>
         </thead>
         <tbody>
@@ -117,7 +117,7 @@
             style="border-bottom: 1px solid #cbd5e1;"
           >
             <!-- Kolom Peringkat -->
-            <td style="border: 1px solid #94a3b8; padding: 3px 2px; text-align: center; font-weight: 900; font-family: monospace; font-size: 10px;" :style="{ color: sIdx < 3 ? '#b45309' : '#020617' }">
+            <td style="border: 1px solid #94a3b8; padding: 2px 2px; text-align: center; font-weight: 900; font-family: monospace; font-size: 9px;" :style="{ color: sIdx < 3 ? '#b45309' : '#020617' }">
               <span v-if="sIdx === 0">🥇 1</span>
               <span v-else-if="sIdx === 1">🥈 2</span>
               <span v-else-if="sIdx === 2">🥉 3</span>
@@ -125,32 +125,32 @@
             </td>
 
             <!-- Kolom NISN / NIS -->
-            <td style="border: 1px solid #94a3b8; padding: 3px 4px; text-align: center; font-family: monospace; color: #475569;">
+            <td style="border: 1px solid #94a3b8; padding: 2px 4px; text-align: center; font-family: monospace; color: #475569; font-size: 8px;">
               {{ st.nisn || st.nis || '-' }}
             </td>
 
             <!-- Kolom Nama Siswa -->
-            <td style="border: 1px solid #94a3b8; padding: 3px 6px; font-weight: 700; color: #0f172a;">
+            <td style="border: 1px solid #94a3b8; padding: 2px 5px; font-weight: 700; color: #0f172a;">
               {{ st.full_name }}
             </td>
 
             <!-- Kolom L/P -->
-            <td style="border: 1px solid #94a3b8; padding: 3px 2px; text-align: center; font-weight: bold; color: #475569;">
+            <td style="border: 1px solid #94a3b8; padding: 2px 2px; text-align: center; font-weight: bold; color: #475569;">
               {{ st.gender === 'L' ? 'L' : (st.gender === 'P' ? 'P' : '-') }}
             </td>
 
             <!-- Kolom Jumlah Nilai -->
-            <td style="border: 1px solid #94a3b8; padding: 3px 4px; text-align: center; font-family: monospace; font-weight: 900; color: #0f172a;">
+            <td style="border: 1px solid #94a3b8; padding: 2px 4px; text-align: center; font-family: monospace; font-weight: 900; color: #0f172a;">
               {{ Math.round(Number(st.total_score) || 0) }}
             </td>
 
             <!-- Kolom Rata-Rata -->
-            <td style="border: 1px solid #94a3b8; padding: 3px 4px; text-align: center; font-family: monospace; font-weight: 900; color: #065f46; font-size: 9.5px;">
+            <td style="border: 1px solid #94a3b8; padding: 2px 4px; text-align: center; font-family: monospace; font-weight: 900; color: #065f46; font-size: 9px;">
               {{ Number(st.average_score || 0).toFixed(2) }}
             </td>
 
             <!-- Kolom Keterangan / Capaian -->
-            <td style="border: 1px solid #94a3b8; padding: 3px 4px; text-align: center; font-size: 8.5px; font-weight: 700;">
+            <td style="border: 1px solid #94a3b8; padding: 2px 4px; text-align: center; font-size: 8px; font-weight: 700;">
               <span v-if="sIdx === 0" style="color: #b45309;">Terbaik I</span>
               <span v-else-if="sIdx === 1" style="color: #b45309;">Terbaik II</span>
               <span v-else-if="sIdx === 2" style="color: #b45309;">Terbaik III</span>
@@ -170,12 +170,12 @@
     </div>
 
     <!-- 5. TITIMANGSA & TANDA TANGAN RESMI -->
-    <div style="padding-top: 4px; page-break-inside: avoid; break-inside: avoid;">
-      <div style="text-align: right; font-size: 9.5px; font-weight: 700; color: #1e293b; padding-right: 8px; margin-bottom: 4px;">
+    <div style="padding-top: 2px; page-break-inside: avoid; break-inside: avoid;">
+      <div style="text-align: right; font-size: 9px; font-weight: 700; color: #1e293b; padding-right: 8px; margin-bottom: 2px;">
         <span>{{ city || 'Bogor' }}, {{ issuedDate || '........................' }}</span>
       </div>
 
-      <table style="width: 100%; text-align: center; font-size: 9.5px; border-collapse: collapse;">
+      <table style="width: 100%; text-align: center; font-size: 9px; border-collapse: collapse;">
         <tbody>
           <tr>
             <!-- Wali Kelas -->
@@ -184,12 +184,12 @@
                 <p style="font-weight: 700; color: #334155; margin: 0;">Wali Kelas,</p>
                 <p style="font-weight: 700; color: #0f172a; margin: 0;">{{ formatClassName(classInfo?.name) }}</p>
               </div>
-              <div style="height: 38px;"></div>
+              <div style="height: 32px;"></div>
               <div>
                 <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0;">
                   {{ classInfo?.homeroom_teacher?.full_name || classInfo?.homeroom_teacher_name || '............................................' }}
                 </p>
-                <p style="font-size: 8.5px; color: #475569; margin: 2px 0 0 0; font-family: monospace;">
+                <p style="font-size: 8px; color: #475569; margin: 1px 0 0 0; font-family: monospace;">
                   NIP: {{ classInfo?.homeroom_teacher?.nip || '-' }}
                 </p>
               </div>
@@ -201,12 +201,12 @@
                 <p style="font-weight: 700; color: #334155; margin: 0;">Mengetahui,</p>
                 <p style="font-weight: 700; color: #0f172a; margin: 0;">Kepala Madrasah</p>
               </div>
-              <div style="height: 38px;"></div>
+              <div style="height: 32px;"></div>
               <div>
                 <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0;">
                   {{ schoolSetting?.principal_name || 'H. Umar Usman Ali, S.Pd, S.Pd.I' }}
                 </p>
-                <p style="font-size: 8.5px; color: #475569; margin: 2px 0 0 0; font-family: monospace;">
+                <p style="font-size: 8px; color: #475569; margin: 1px 0 0 0; font-family: monospace;">
                   NIP: {{ schoolSetting?.principal_nip || '-' }}
                 </p>
               </div>
