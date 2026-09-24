@@ -2238,7 +2238,7 @@ async function saveRanksSubmit() {
 }
 
 async function resetRanksToDefault() {
-  if (!confirm('Apakah Anda yakin ingin mengembalikan urutan peringkat sesuai rata-rata murni tanpa penyesuaian manual?')) {
+  if (!confirm('Apakah Anda yakin ingin mengembalikan urutan peringkat ke peringkat murni otomatis (menghapus pengaturan peringkat manual)?')) {
     return;
   }
   savingRanks.value = true;
@@ -2247,16 +2247,18 @@ async function resetRanksToDefault() {
       class_id: selectedClassId.value,
       semester: activeSemester.value,
       academic_year_id: activeYear.value?.id,
+      score_source: selectedScoreSource.value, // Menyelaraskan sesuai sumber nilai yang dipilih (Nilai Jadi / Nilai Asli)
     };
     const res = await api.post('/teacher/asts-reports/reset-ranks', payload);
-    toast.success(res?.message || 'Peringkat dikembalikan ke otomatis.');
+    toast.success(res?.message || 'Peringkat dikembalikan ke otomatis murni.');
+    selectedRankType.value = 'original'; // Beralih ke peringkat asli murni
     showRankModal.value = false;
     await fetchLedger();
     if (activeSubTab.value === 'print') {
       await fetchPrintData();
     }
   } catch (err) {
-    toast.error('Gagal mereset peringkat.');
+    toast.error(err.response?.data?.message || 'Gagal mereset peringkat.');
   } finally {
     savingRanks.value = false;
   }
