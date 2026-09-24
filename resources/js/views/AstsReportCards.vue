@@ -1019,10 +1019,12 @@
                   :key="'rank-item-'+item.student_id"
                   class="transition-colors hover:bg-slate-50/80"
                   :class="{
-                    'bg-amber-50/50': item.rank === 1,
-                    'bg-slate-50/50': item.rank === 2,
-                    'bg-orange-50/30': item.rank === 3,
-                    'bg-rose-50/40': duplicateRanks.includes(parseInt(item.rank))
+                    'bg-amber-50/60': item.rank === 1 && item.rank === item.calculated_rank,
+                    'bg-slate-50/60': item.rank === 2 && item.rank === item.calculated_rank,
+                    'bg-orange-50/40': item.rank === 3 && item.rank === item.calculated_rank,
+                    'bg-emerald-50/40': typeof item.calculated_rank === 'number' && item.rank < item.calculated_rank,
+                    'bg-rose-50/40': typeof item.calculated_rank === 'number' && item.rank > item.calculated_rank,
+                    'ring-2 ring-rose-400 bg-rose-50/70': duplicateRanks.includes(parseInt(item.rank))
                   }"
                 >
                   <!-- Badge & Input Nomor Peringkat -->
@@ -1088,12 +1090,30 @@
                     {{ Number(item.average_score || 0).toFixed(2) }}
                   </td>
 
-                  <!-- Status Peringkat -->
+                  <!-- Status Peringkat (Hijau jika Naik, Merah jika Turun) -->
                   <td class="p-3 text-center">
-                    <span v-if="item.rank !== item.calculated_rank" class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
-                      Manual (Murni: {{ item.calculated_rank !== '-' ? '#' + item.calculated_rank : '-' }})
+                    <!-- Kasus 1: Peringkat Naik (Angka rank lebih kecil dari murni) -> HIJAU -->
+                    <span
+                      v-if="typeof item.calculated_rank === 'number' && item.rank < item.calculated_rank"
+                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs whitespace-nowrap"
+                      title="Siswa dinaikkan posisinya lebih tinggi dari ranking aslinya"
+                    >
+                      <span>▲ Naik {{ item.calculated_rank - item.rank }}</span>
+                      <span class="text-emerald-600 font-semibold">(Murni: #{{ item.calculated_rank }})</span>
                     </span>
-                    <span v-else class="text-slate-400 text-[10px] whitespace-nowrap">
+
+                    <!-- Kasus 2: Peringkat Turun (Angka rank lebih besar dari murni) -> MERAH -->
+                    <span
+                      v-else-if="typeof item.calculated_rank === 'number' && item.rank > item.calculated_rank"
+                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300 shadow-2xs whitespace-nowrap"
+                      title="Siswa diturunkan posisinya lebih rendah dari ranking aslinya"
+                    >
+                      <span>▼ Turun {{ item.rank - item.calculated_rank }}</span>
+                      <span class="text-rose-600 font-semibold">(Murni: #{{ item.calculated_rank }})</span>
+                    </span>
+
+                    <!-- Kasus 3: Tetap / Sesuai Nilai Murni -> Netral Abu-abu -->
+                    <span v-else class="text-slate-400 text-[10.5px] font-medium whitespace-nowrap">
                       Sesuai Nilai {{ item.calculated_rank !== '-' ? '(#' + item.calculated_rank + ')' : '' }}
                     </span>
                   </td>
