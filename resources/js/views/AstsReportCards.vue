@@ -1008,7 +1008,8 @@
                   <th class="p-3 w-16 text-center">Urutan</th>
                   <th class="p-3 w-20 text-center">Tukar Posisi</th>
                   <th class="p-3">Nama Lengkap Siswa</th>
-                  <th class="p-3 w-28 text-center">Rata-Rata Nilai</th>
+                  <th class="p-3 w-24 text-center bg-blue-50/50 text-blue-900 border-x border-slate-200/60">Total Nilai</th>
+                  <th class="p-3 w-24 text-center bg-emerald-50/50 text-emerald-900 border-r border-slate-200/60">Rata-Rata</th>
                   <th class="p-3 w-28 text-center">Status</th>
                 </tr>
               </thead>
@@ -1077,8 +1078,13 @@
                     <div class="text-[10px] text-slate-400 font-mono">NISN: {{ item.nisn || '-' }}</div>
                   </td>
 
+                  <!-- Total Nilai Keseluruhan -->
+                  <td class="p-3 text-center font-black font-mono text-slate-800 bg-blue-50/20 border-x border-slate-100">
+                    {{ item.total_score !== undefined ? Math.round(Number(item.total_score)) : '-' }}
+                  </td>
+
                   <!-- Rata-rata Nilai -->
-                  <td class="p-3 text-center font-bold font-mono text-emerald-700 bg-emerald-50/20">
+                  <td class="p-3 text-center font-bold font-mono text-emerald-700 bg-emerald-50/20 border-r border-slate-100">
                     {{ Number(item.average_score || 0).toFixed(2) }}
                   </td>
 
@@ -2256,6 +2262,7 @@ function openRankModal() {
     student_id: st.student_id,
     full_name: st.full_name,
     nisn: st.nisn,
+    total_score: st.total_score || 0,
     average_score: st.average_score,
     calculated_rank: st.calculated_rank || (idx + 1),
     rank: idx + 1,
