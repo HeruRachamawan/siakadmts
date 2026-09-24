@@ -2153,8 +2153,12 @@ async function executeAutoPullScores() {
       score_source: selectedScoreSource.value,
       clean_sync: true,
     });
-    const msg = res?.message || 'Nilai koreksi berhasil ditarik ke Rapor ASTS!';
-    toast.success(msg);
+    if (res?.status === 'warning') {
+      toast.warning(res?.message || 'Tidak ada data nilai yang dapat ditarik.');
+    } else {
+      const msg = res?.message || 'Nilai koreksi berhasil ditarik ke Rapor ASTS!';
+      toast.success(msg);
+    }
     showPullModal.value = false;
     await fetchLedger();
     if (activeSubTab.value === 'print' || selectedStudentId.value) {
