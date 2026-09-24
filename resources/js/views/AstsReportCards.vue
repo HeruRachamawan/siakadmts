@@ -180,6 +180,18 @@
               <span>Reset Nilai</span>
             </button>
 
+            <!-- Atur Peringkat Siswa -->
+            <button
+              type="button"
+              @click="openRankModal"
+              :disabled="!ledgerStudents.length"
+              class="px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
+              title="Atur susunan juara dan nomor urut peringkat siswa di kelas ini"
+            >
+              <Trophy class="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+              <span>Atur Peringkat</span>
+            </button>
+
             <!-- Export Excel Ledger -->
             <button
               type="button"
@@ -213,6 +225,65 @@
             >
               <TableProperties class="w-3.5 h-3.5 text-amber-200 flex-shrink-0" />
               <span>Cetak Ledger Diatur</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner Indikator Status Peringkat (Otomatis vs Manual) -->
+        <div
+          v-if="ledgerStudents.length"
+          class="p-3.5 sm:p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+          :class="hasManualRanks
+            ? 'bg-amber-50/80 border-amber-300 text-amber-950'
+            : 'bg-emerald-50/60 border-emerald-200 text-emerald-950'"
+        >
+          <div class="flex items-center gap-3 min-w-0">
+            <div
+              class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm shadow-2xs"
+              :class="hasManualRanks ? 'bg-amber-500 text-white shadow-amber-300' : 'bg-emerald-500 text-white shadow-emerald-200'"
+            >
+              <Trophy v-if="hasManualRanks" class="w-4 h-4" />
+              <Check v-else class="w-4 h-4" />
+            </div>
+            <div class="space-y-0.5 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-black font-lexend">
+                  {{ hasManualRanks ? '⚠️ Peringkat Manual Wali Kelas Sedang Aktif' : '🟢 Peringkat Otomatis Murni Aktif' }}
+                </span>
+                <span
+                  class="px-2 py-0.5 rounded-full text-[9px] font-black"
+                  :class="hasManualRanks ? 'bg-amber-200 text-amber-900' : 'bg-emerald-200 text-emerald-900'"
+                >
+                  {{ hasManualRanks ? 'Penyesuaian Manual' : '100% Sesuai Rata-Rata Nilai' }}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-600 leading-tight">
+                {{ hasManualRanks
+                  ? 'Urutan ranking rapor dan leger saat ini menggunakan pengaturan manual wali kelas. Klik tombol di kanan jika ingin mengembalikan ke otomatis.'
+                  : 'Seluruh urutan ranking siswa saat ini dihitung otomatis secara objektif berdasarkan rata-rata total nilai rapor.' }}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
+            <button
+              v-if="hasManualRanks"
+              type="button"
+              @click="resetRanksToDefault"
+              :disabled="savingRanks"
+              class="px-3 py-1.5 bg-white hover:bg-amber-100 border border-amber-300 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 disabled:opacity-50"
+              title="Hapus penyesuaian manual dan kembalikan ke perhitungan otomatis"
+            >
+              <RotateCcw class="w-3.5 h-3.5 text-amber-700" />
+              <span>Reset ke Otomatis</span>
+            </button>
+            <button
+              type="button"
+              @click="openRankModal"
+              class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+            >
+              <Trophy class="w-3.5 h-3.5 text-amber-200" />
+              <span>{{ hasManualRanks ? 'Ubah Urutan' : 'Atur Peringkat' }}</span>
             </button>
           </div>
         </div>
@@ -1025,18 +1096,32 @@
             </table>
           </div>
 
+          <!-- Peringatan Cerdas Jika Urutan Peringkat Berlawanan dengan Rata-Rata tapi Nilai Tidak Diselaraskan -->
+          <div
+            v-if="hasInvertedRank && !adjustScoresWithRank"
+            class="p-3.5 bg-amber-50 rounded-2xl border border-amber-300 text-xs text-amber-900 flex items-start gap-3 shadow-xs animate-in fade-in"
+          >
+            <AlertTriangle class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div class="space-y-1">
+              <span class="font-black block">💡 Rekomendasi: Urutan Ranking Belum Sejalan dengan Rata-Rata</span>
+              <p class="text-[11px] text-amber-800 leading-relaxed">
+                Anda menempatkan siswa pada ranking lebih tinggi padahal nilai rata-ratanya lebih rendah. Agar tidak tampak janggal di cetakan rapor resmi siswa, disarankan <strong>mencentang opsi "Selaraskan Nilai Siswa"</strong> di bawah agar nilai mapel disesuaikan secara proporsional.
+              </p>
+            </div>
+          </div>
+
           <!-- Opsi Tambahan: Selaraskan Nilai Siswa -->
           <div class="p-4 bg-slate-50/90 rounded-2xl border border-slate-200 flex items-start gap-3">
             <input
               id="adjust-scores-checkbox"
               v-model="adjustScoresWithRank"
               type="checkbox"
-              class="mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+              class="mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer flex-shrink-0"
             />
             <label for="adjust-scores-checkbox" class="text-xs cursor-pointer select-none">
               <span class="font-black text-slate-900 block">⚡ Opsional: Selaraskan nilai rata-rata secara wajar & bertahap (kisaran 78 - 81)</span>
               <span class="text-slate-500 text-[11px] block mt-0.5 leading-relaxed">
-                Jika dicentang, nilai disesuaikan secara proporsional dan alami mengikuti peringkat (juara teratas berkisar 79–81, tanpa lonjakan ekstrem ke 90-an). Jika tidak dicentang, nilai asli tidak berubah sama sekali.
+                Jika dicentang, nilai disesuaikan secara proporsional dan alami mengikuti peringkat (juara teratas berkisar 79–81, tanpa lonjakan ekstrem ke 90-an). Jika tidak dicentang, nilai rapor siswa tetap apa adanya (hanya nomor ranking yang berubah).
               </span>
             </label>
           </div>
@@ -1049,11 +1134,11 @@
               type="button"
               @click="resetRanksToDefault"
               :disabled="savingRanks"
-              class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-              title="Urutkan kembali sesuai rata-rata murni nilai rapor"
+              class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              title="Hapus pengaturan manual dan kembalikan urutan ranking murni 100% otomatis sesuai rata-rata rapor"
             >
-              <RotateCcw class="w-3.5 h-3.5" />
-              <span>Kembalikan ke Nilai Murni</span>
+              <RotateCcw class="w-3.5 h-3.5 text-slate-700" />
+              <span>Reset ke Peringkat Otomatis</span>
             </button>
             <button
               type="button"
@@ -1949,6 +2034,10 @@ const isClassScoresComplete = computed(() => {
   return subjectsList.value.length > 0 && missingScoreSubjects.value.length === 0;
 });
 
+const hasManualRanks = computed(() => {
+  return ledgerStudents.value.some(s => s.is_manual_rank || (s.rank && s.calculated_rank && s.rank !== s.calculated_rank));
+});
+
 function getSubjectShort(name) {
   if (!name) return '';
   const parts = name.split(' ');
@@ -2190,6 +2279,21 @@ const duplicateRanks = computed(() => {
 });
 
 const hasDuplicateRank = computed(() => duplicateRanks.value.length > 0);
+
+// Check if any student with higher rank (smaller number) has lower average than a student below them
+const hasInvertedRank = computed(() => {
+  if (rankEditList.value.length < 2) return false;
+  // Sort list by assigned rank
+  const sorted = [...rankEditList.value].sort((a, b) => (parseInt(a.rank) || 9999) - (parseInt(b.rank) || 9999));
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const avgCurrent = Number(sorted[i].average_score) || 0;
+    const avgNext = Number(sorted[i + 1].average_score) || 0;
+    if (avgCurrent < avgNext) {
+      return true;
+    }
+  }
+  return false;
+});
 
 // Auto re-sequence ranks sequentially based on current list order
 function autoSequenceRanks() {
