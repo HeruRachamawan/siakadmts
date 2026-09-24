@@ -48,7 +48,7 @@
         <span style="text-decoration: underline; text-underline-offset: 2px;">LEDGER CAPAIAN NILAI SISWA (REKAP KELAS)</span>
       </div>
       <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #0f172a; letter-spacing: 0.03em; line-height: 1.2; margin-top: 1px;">
-        ASESMEN SUMATIF TENGAH SEMESTER (ASTS) &bull; {{ rankType === 'original' ? 'NILAI ASLI / MURNI' : 'HASIL PENYESUAIAN WALI KELAS' }}
+        ASESMEN SUMATIF TENGAH SEMESTER (ASTS) &bull; {{ rankType === 'original' ? 'PERINGKAT OTOMATIS MURNI' : 'HASIL PENYESUAIAN WALI KELAS' }}
       </div>
       <p style="font-size: 8.5px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.03em; margin: 2px 0 0 0;">
         SEMESTER {{ (semester === 'genap' ? 'GENAP' : 'GANJIL') }} &bull; TAHUN PELAJARAN {{ academicYear?.year || '2026/2027' }}

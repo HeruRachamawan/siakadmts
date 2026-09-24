@@ -1022,109 +1022,15 @@ class AstsReportController extends Controller
         $students = $this->getStudentsForClass((int)$classId);
         $studentIds = $students->pluck('id')->toArray();
 
-        // 1. Hapus nomor peringkat manual (kembali ke peringkat otomatis murni sesuai nilai rapor)
+        // 1. Hapus nomor peringkat manual (100% kembali ke urutan otomatis murni dari nilai rapor saat ini)
         AstsReport::whereIn('student_id', $studentIds)
             ->where('academic_year_id', $academicYearId)
             ->where('semester', $semester)
             ->update(['manual_rank' => null]);
 
-        $scoreSource = $request->input('score_source'); // 'final', 'raw', or null (hanya reset urutan)
-        $scoresRestored = 0;
-
-        // Jika score_source diberikan (misal user memilih mengembalikan nilai ke Nilai Jadi atau Nilai Asli)
-        if ($scoreSource && in_array($scoreSource, ['raw', 'final'])) {
-            $targetClass = ClassRoom::find($classId);
-            $exams = ExamPackage::where('class_room_id', $classId)
-                ->where(function ($q) use ($semester) {
-                    $q->where('exam_type', 'sts')
-                      ->orWhere('title', 'like', '%ASTS%')
-                      ->orWhere('title', 'like', '%STS%')
-                      ->orWhere('title', 'like', '%Tengah Semester%');
-                })
-                ->where('semester', $semester)
-                ->where('academic_year_id', $academicYearId)
-                ->with(['submissions', 'subject'])
-                ->get();
-
-            if ($exams->isEmpty() && $targetClass) {
-                $gradeClassIds = ClassRoom::where('grade_level', $targetClass->grade_level)->pluck('id');
-                $exams = ExamPackage::whereIn('class_room_id', $gradeClassIds)
-                    ->where(function ($q) use ($semester) {
-                        $q->where('exam_type', 'sts')
-                          ->orWhere('title', 'like', '%ASTS%')
-                          ->orWhere('title', 'like', '%STS%')
-                          ->orWhere('title', 'like', '%Tengah Semester%');
-                    })
-                    ->where('semester', $semester)
-                    ->where('academic_year_id', $academicYearId)
-                    ->with(['submissions', 'subject'])
-                    ->get();
-            }
-
-            if ($exams->isNotEmpty()) {
-                DB::beginTransaction();
-                try {
-                    foreach ($exams as $exam) {
-                        foreach ($exam->submissions as $sub) {
-                            if (!empty($studentIds) && !in_array($sub->student_id, $studentIds)) {
-                                continue;
-                            }
-
-                            if ($scoreSource === 'raw') {
-                                $resolvedScore = round(floatval($sub->total_score));
-                            } else {
-                                $resolvedScore = round($sub->remedial_score !== null ? floatval($sub->remedial_score) : floatval($sub->total_score));
-                            }
-
-                            $kkm = \App\Models\SubjectGradeKkm::getEffectiveKkm($exam->subject_id, $targetClass?->grade_level, $academicYearId);
-                            $predicate = 'D';
-                            if ($resolvedScore >= 90) {
-                                $predicate = 'A';
-                            } elseif ($resolvedScore >= 80) {
-                                $predicate = 'B';
-                            } elseif ($resolvedScore >= $kkm) {
-                                $predicate = 'C';
-                            }
-
-                            $description = $resolvedScore >= $kkm
-                                ? 'Menunjukkan penguasaan kompetensi yang tuntas pada asesmen tengah semester.'
-                                : 'Perlu peningkatan dan pendampingan materi lebih lanjut.';
-
-                            AstsSubjectScore::updateOrCreate(
-                                [
-                                    'student_id' => $sub->student_id,
-                                    'subject_id' => $exam->subject_id,
-                                    'academic_year_id' => $academicYearId,
-                                    'semester' => $semester,
-                                ],
-                                [
-                                    'score' => $resolvedScore,
-                                    'kkm' => $kkm,
-                                    'predicate' => $predicate,
-                                    'description' => $description,
-                                    'exam_package_id' => $exam->id,
-                                    'synced_at' => now(),
-                                ]
-                            );
-                            $scoresRestored++;
-                        }
-                    }
-                    DB::commit();
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                }
-            }
-        }
-
-        $sourceLabel = $scoreSource === 'raw' ? 'Nilai Asli CBT' : ($scoreSource === 'final' ? 'Nilai Jadi Rapor' : '');
-        $msgDetail = ($scoresRestored > 0 && $sourceLabel)
-            ? " dan {$scoresRestored} nilai mata pelajaran telah diselaraskan kembali ke {$sourceLabel}!"
-            : "!";
-
         return response()->json([
             'status' => 'success',
-            'message' => 'Peringkat siswa telah dikembalikan ke peringkat murni otomatis (tanpa peringkat diatur)' . $msgDetail,
-            'scores_restored' => $scoresRestored,
+            'message' => 'Peringkat siswa telah dikembalikan ke otomatis murni sesuai nilai rapor!',
         ]);
     }
 

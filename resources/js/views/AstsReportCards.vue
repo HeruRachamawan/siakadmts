@@ -203,19 +203,19 @@
               <span>Export Excel</span>
             </button>
 
-            <!-- Cetak Ledger Nilai Lengkap (Matriks Mapel) - Asli -->
+            <!-- Cetak Ledger Nilai Lengkap (Matriks Mapel) - Otomatis Murni -->
             <button
               type="button"
               @click="printLedgerSheet('original')"
               :disabled="!ledgerStudents.length"
               class="px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-sm active:scale-95"
-              title="Cetak lembar rekap ledger nilai seluruh mata pelajaran (Landscape) berdasarkan nilai asli murni"
+              title="Cetak lembar rekap ledger nilai seluruh mata pelajaran (Landscape) urut peringkat otomatis murni"
             >
               <TableProperties class="w-3.5 h-3.5 text-emerald-200 flex-shrink-0" />
-              <span>Cetak Ledger Asli</span>
+              <span>Ledger Otomatis</span>
             </button>
 
-            <!-- Cetak Ledger Nilai Lengkap (Matriks Mapel) - Diatur -->
+            <!-- Cetak Ledger Nilai Lengkap (Matriks Mapel) - Hasil Atur -->
             <button
               type="button"
               @click="printLedgerSheet('adjusted')"
@@ -224,7 +224,7 @@
               title="Cetak lembar rekap ledger nilai seluruh mata pelajaran (Landscape) hasil penataan wali kelas"
             >
               <TableProperties class="w-3.5 h-3.5 text-amber-200 flex-shrink-0" />
-              <span>Cetak Ledger Diatur</span>
+              <span>Ledger Diatur</span>
             </button>
           </div>
         </div>
@@ -720,16 +720,16 @@
               <span>Titimangsa</span>
             </button>
 
-            <!-- Tombol Cetak Peringkat Saja (Asli & Diatur) -->
+            <!-- Tombol Cetak Peringkat Saja (Otomatis & Diatur) -->
             <button
               type="button"
               @click="printRankingSheet('original')"
               :disabled="!ledgerStudents.length"
               class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50 active:scale-95"
-              title="Cetak lembar resmi daftar peringkat siswa berdasarkan nilai asli murni"
+              title="Cetak lembar resmi daftar peringkat siswa berdasarkan rata-rata nilai rapor murni otomatis"
             >
               <Printer class="w-3.5 h-3.5 text-teal-200 flex-shrink-0" />
-              <span>Peringkat Asli</span>
+              <span>Peringkat Otomatis</span>
             </button>
 
             <button
