@@ -165,7 +165,7 @@
             :key="'gb-'+sbj.subject_id"
             style="border-bottom: 1px solid #cbd5e1;"
           >
-            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: bold; color: #334155;">{{ ['i', 'ii', 'iii', 'iv', 'v'][i] || (i + 1) }}.</td>
+            <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: bold; color: #334155;">{{ i + 1 }}</td>
             <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-weight: bold; color: #0f172a;">{{ sbj.name }}</td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: bold; color: #334155;">{{ sbj.kkm }}</td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-family: monospace; font-weight: 900;" :style="{ color: sbj.score !== null && sbj.score >= sbj.kkm ? '#020617' : '#be123c' }">
