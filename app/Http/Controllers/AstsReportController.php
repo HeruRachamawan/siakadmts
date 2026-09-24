@@ -752,6 +752,87 @@ class AstsReportController extends Controller
     }
 
     /**
+     * Save bulk homeroom notes & attendance overrides for an entire class.
+     */
+    public function saveBulkNotes(Request $request)
+    {
+        $request->validate([
+            'class_id' => 'required|exists:classes,id',
+            'semester' => 'required|string|in:ganjil,genap',
+            'academic_year_id' => 'required|exists:academic_years,id',
+            'items' => 'required|array|min:1',
+            'items.*.student_id' => 'required|exists:students,id',
+            'items.*.homeroom_notes' => 'nullable|string',
+            'items.*.sick_count' => 'nullable|integer|min:0',
+            'items.*.permission_count' => 'nullable|integer|min:0',
+            'items.*.unexcused_count' => 'nullable|integer|min:0',
+        ]);
+
+        $classId = (int)$request->class_id;
+        $semester = $request->semester;
+        $academicYearId = (int)$request->academic_year_id;
+
+        if (!$this->checkHomeroomAccess($request->user(), $classId, $request)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
+            ], 403);
+        }
+
+        $items = $request->input('items', []);
+        $studentIdsInItems = collect($items)->pluck('student_id')->all();
+
+        // Ensure all students belong to this class or local class
+        $validStudentIds = Student::where(function ($q) use ($classId) {
+                $q->where('class_id', $classId)
+                  ->orWhere('lokal_class_id', $classId);
+            })
+            ->whereIn('id', $studentIdsInItems)
+            ->pluck('id')
+            ->toArray();
+
+        $savedCount = 0;
+        DB::beginTransaction();
+        try {
+            foreach ($items as $item) {
+                $sId = (int)$item['student_id'];
+                if (!in_array($sId, $validStudentIds)) {
+                    continue;
+                }
+
+                AstsReport::updateOrCreate(
+                    [
+                        'student_id' => $sId,
+                        'academic_year_id' => $academicYearId,
+                        'semester' => $semester,
+                    ],
+                    [
+                        'homeroom_notes' => $item['homeroom_notes'] ?? null,
+                        'sick_count' => isset($item['sick_count']) ? (int)$item['sick_count'] : 0,
+                        'permission_count' => isset($item['permission_count']) ? (int)$item['permission_count'] : 0,
+                        'unexcused_count' => isset($item['unexcused_count']) ? (int)$item['unexcused_count'] : 0,
+                    ]
+                );
+                $savedCount++;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => "Berhasil menyimpan catatan wali kelas dan presensi untuk {$savedCount} siswa!",
+                'saved_count' => $savedCount
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal menyimpan catatan kolektif: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Save titimangsa (issuing place & date) for report cards.
      */
     public function saveTitimangsa(Request $request)
