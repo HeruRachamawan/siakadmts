@@ -2054,10 +2054,19 @@ function setSemester(sem) {
 
 function setPrintMode(mode) {
   printMode.value = mode;
-  if (mode === 'batch') {
-    fetchBatchReports();
-  } else {
-    fetchSingleReport();
+  fetchPrintData();
+}
+
+async function fetchPrintData(isSilent = false) {
+  if (!selectedClassId.value) return;
+  try {
+    if (printMode.value === 'batch') {
+      await fetchBatchReports(isSilent);
+    } else {
+      await fetchSingleReport(isSilent);
+    }
+  } catch (err) {
+    console.error('Error fetching print data:', err);
   }
 }
 
@@ -2107,9 +2116,9 @@ async function fetchOptions() {
   }
 }
 
-async function fetchLedger() {
+async function fetchLedger(isSilent = false) {
   if (!selectedClassId.value) return;
-  loading.value = true;
+  if (!isSilent) loading.value = true;
   try {
     const res = await api.get('/teacher/asts-reports/ledger', {
       class_id: selectedClassId.value,
@@ -2124,13 +2133,17 @@ async function fetchLedger() {
         selectedStudentId.value = ledgerStudents.value[0].student_id;
       }
       if (activeSubTab.value === 'print') {
-        fetchPrintData();
+        fetchPrintData(true);
       }
     }
   } catch (err) {
-    toast.error('Gagal memuat ledger nilai ASTS.');
+    if (!isSilent) {
+      toast.error('Gagal memuat ledger nilai ASTS.');
+    } else {
+      console.error('Silent ledger refresh failed:', err);
+    }
   } finally {
-    loading.value = false;
+    if (!isSilent) loading.value = false;
   }
 }
 
@@ -2160,9 +2173,9 @@ async function executeAutoPullScores() {
       toast.success(msg);
     }
     showPullModal.value = false;
-    await fetchLedger();
+    await fetchLedger(true);
     if (activeSubTab.value === 'print' || selectedStudentId.value) {
-      await fetchPrintData();
+      await fetchPrintData(true);
     }
   } catch (err) {
     toast.error(err.response?.data?.message || 'Gagal menarik nilai koreksi.');
@@ -2209,11 +2222,15 @@ async function executeResetScores() {
     }
 
     const res = await api.post('/teacher/asts-reports/reset-scores', payload);
-    toast.success(res?.message || 'Nilai rapor berhasil dikosongkan!');
+    if (res?.status === 'warning') {
+      toast.warning(res?.message || 'Tidak ada data nilai yang perlu dikosongkan.');
+    } else {
+      toast.success(res?.message || 'Nilai rapor berhasil dikosongkan!');
+    }
     showResetModal.value = false;
-    await fetchLedger();
+    await fetchLedger(true);
     if (activeSubTab.value === 'print' || selectedStudentId.value) {
-      await fetchPrintData();
+      await fetchPrintData(true);
     }
   } catch (err) {
     toast.error(err.response?.data?.message || 'Gagal mengosongkan nilai rapor.');
@@ -2334,9 +2351,9 @@ async function saveRanksSubmit() {
     const res = await api.post('/teacher/asts-reports/adjust-ranks', payload);
     toast.success(res?.message || 'Peringkat siswa berhasil diperbarui!');
     showRankModal.value = false;
-    await fetchLedger();
+    await fetchLedger(true);
     if (activeSubTab.value === 'print') {
-      await fetchPrintData();
+      await fetchPrintData(true);
     }
   } catch (err) {
     toast.error(err.response?.data?.message || 'Gagal menyimpan penyesuaian peringkat.');
@@ -2361,9 +2378,9 @@ async function resetRanksToDefault() {
     toast.success(res?.message || 'Peringkat dikembalikan ke otomatis murni.');
     selectedRankType.value = 'original'; // Beralih ke peringkat asli murni
     showRankModal.value = false;
-    await fetchLedger();
+    await fetchLedger(true);
     if (activeSubTab.value === 'print') {
-      await fetchPrintData();
+      await fetchPrintData(true);
     }
   } catch (err) {
     toast.error(err.response?.data?.message || 'Gagal mereset peringkat.');
@@ -2486,9 +2503,9 @@ async function saveBulkNotesSubmit() {
     const res = await api.post('/teacher/asts-reports/save-bulk-notes', payload);
     toast.success(res?.message || 'Catatan kelas dan presensi berhasil disimpan!');
     showBulkNotesModal.value = false;
-    await fetchLedger();
+    await fetchLedger(true);
     if (activeSubTab.value === 'print' || selectedStudentId.value) {
-      await fetchSingleReport();
+      await fetchSingleReport(true);
     }
   } catch (err) {
     const errMsg = err.response?.data?.message || 'Gagal menyimpan catatan kelas sekaligus.';
@@ -2530,7 +2547,7 @@ async function saveTitimangsaSubmit() {
     toast.success(res?.message || 'Titimangsa rapor berhasil disimpan!');
     showTitimangsaModal.value = false;
     if (activeSubTab.value === 'print' || selectedStudentId.value) {
-      await fetchPrintData();
+      await fetchPrintData(true);
     }
   } catch (err) {
     toast.error('Gagal menyimpan titimangsa rapor.');
@@ -2546,9 +2563,9 @@ function previewSingleStudent(studentId) {
   fetchSingleReport();
 }
 
-async function fetchSingleReport() {
+async function fetchSingleReport(isSilent = false) {
   if (!selectedStudentId.value) return;
-  loadingSingleReport.value = true;
+  if (!isSilent) loadingSingleReport.value = true;
   try {
     const res = await api.get(`/teacher/asts-reports/student/${selectedStudentId.value}`, {
       semester: activeSemester.value,
@@ -2558,13 +2575,17 @@ async function fetchSingleReport() {
     });
     singleReportData.value = res?.data || res || null;
   } catch (err) {
-    toast.error('Gagal memuat pratinjau rapor siswa.');
+    if (!isSilent) {
+      toast.error('Gagal memuat pratinjau rapor siswa.');
+    } else {
+      console.error('Silent single report refresh failed:', err);
+    }
   } finally {
-    loadingSingleReport.value = false;
+    if (!isSilent) loadingSingleReport.value = false;
   }
 }
 
-async function fetchBatchReports() {
+async function fetchBatchReports(isSilent = false) {
   if (!selectedClassId.value) return;
   try {
     const res = await api.get(`/teacher/asts-reports/batch-class/${selectedClassId.value}`, {
@@ -2575,7 +2596,11 @@ async function fetchBatchReports() {
     const d = res?.data || res || {};
     batchReportsList.value = d.reports || [];
   } catch (err) {
-    toast.error('Gagal memuat rapor massal 1 kelas.');
+    if (!isSilent) {
+      toast.error('Gagal memuat rapor massal 1 kelas.');
+    } else {
+      console.error('Silent batch report refresh failed:', err);
+    }
   }
 }
 
