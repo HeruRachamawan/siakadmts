@@ -135,7 +135,7 @@
               {{ sbj.score !== null ? sbj.score : '-' }}
             </td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: 900; color: #1e293b;">{{ sbj.predicate || '-' }}</td>
-            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; line-height: 1.2; color: #334155;">{{ sbj.description || '-' }}</td>
+            <td class="compact-desc" style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; line-height: 1.2; color: #334155;">{{ sbj.description || '-' }}</td>
           </tr>
 
           <!-- Kelompok Wajib A: General Subjects (2, 3, 4, 5, 6, 7, 8) -->
@@ -151,7 +151,7 @@
               {{ sbj.score !== null ? sbj.score : '-' }}
             </td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: 900; color: #1e293b;">{{ sbj.predicate || '-' }}</td>
-            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; line-height: 1.2; color: #334155;">{{ sbj.description || '-' }}</td>
+            <td class="compact-desc" style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; line-height: 1.2; color: #334155;">{{ sbj.description || '-' }}</td>
           </tr>
 
           <!-- 2. KELOMPOK WAJIB B -->
@@ -172,7 +172,7 @@
               {{ sbj.score !== null ? sbj.score : '-' }}
             </td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: 900; color: #1e293b;">{{ sbj.predicate || '-' }}</td>
-            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; line-height: 1.2; color: #334155;">{{ sbj.description || '-' }}</td>
+            <td class="compact-desc" style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; line-height: 1.2; color: #334155;">{{ sbj.description || '-' }}</td>
           </tr>
 
           <!-- 3. MUATAN LOKAL (MULOK) -->
@@ -193,7 +193,7 @@
               {{ sbj.score !== null ? Math.round(Number(sbj.score)) : '-' }}
             </td>
             <td style="border: 1px solid #94a3b8; padding: 2px; text-align: center; font-weight: 900; color: #1e293b;">{{ sbj.predicate || '-' }}</td>
-            <td style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; line-height: 1.2; color: #334155;">{{ sbj.description || '-' }}</td>
+            <td class="compact-desc" style="border: 1px solid #94a3b8; padding: 2px 6px; font-size: 8.5px; line-height: 1.2; color: #334155;">{{ sbj.description || '-' }}</td>
           </tr>
 
           <!-- REKAP TOTAL & RATA-RATA & PERINGKAT -->
@@ -421,6 +421,18 @@ function getImageUrl(path) {
 @media print {
   .no-print {
     display: none !important;
+  }
+
+  /* KUNCI 1 LEMBAR RAPOR: Batasi tinggi deskripsi capaian kompetensi agar anti-overflow */
+  .compact-desc {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-height: 2.7em !important;
+    line-height: 1.18 !important;
+    font-size: 8px !important;
   }
 }
 </style>
