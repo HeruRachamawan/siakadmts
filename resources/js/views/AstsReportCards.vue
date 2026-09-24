@@ -598,17 +598,6 @@
               <span class="truncate">Catatan 1 Kelas</span>
             </button>
 
-            <!-- Edit Notes Quick Trigger -->
-            <button
-              type="button"
-              @click="openNotesModalForCurrentStudent"
-              :disabled="loadingSingleReport || !singleReportData"
-              class="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
-              title="Edit kehadiran & catatan siswa terpilih"
-            >
-              <Pencil class="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
-              <span class="truncate">Edit Catatan</span>
-            </button>
 
             <!-- Adjust Rank Quick Trigger -->
             <button
