@@ -535,6 +535,45 @@
 
       <!-- ==================== SUB-TAB 2: PRATINJAU & CETAK RAPOR RESMI ==================== -->
       <div v-else-if="activeSubTab === 'print'" class="space-y-4">
+        <!-- Banner Indikator Kesiapan & Kelengkapan Nilai Kelas (No Print) -->
+        <div v-if="ledgerStudents.length" class="no-print rounded-2xl p-3 sm:px-4 sm:py-3 border shadow-xs transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+          :class="isClassScoresComplete ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950' : 'bg-amber-50/80 border-amber-200 text-amber-950'">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0"
+              :class="isClassScoresComplete ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'">
+              <Check v-if="isClassScoresComplete" class="w-4 h-4" />
+              <AlertTriangle v-else class="w-4 h-4" />
+            </div>
+            <div>
+              <div class="text-xs font-black font-lexend flex items-center gap-2">
+                <span>{{ isClassScoresComplete ? 'Semua Nilai Mata Pelajaran Lengkap (Siap Cetak)' : 'Perhatian: Ada Mata Pelajaran yang Nilainya Belum Masuk' }}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  :class="isClassScoresComplete ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'">
+                  {{ subjectsWithScoresCount }} / {{ subjectsList.length }} Mapel Terisi
+                </span>
+              </div>
+              <p class="text-[11px] font-medium leading-tight mt-0.5"
+                :class="isClassScoresComplete ? 'text-emerald-800' : 'text-amber-800'">
+                <template v-if="isClassScoresComplete">
+                  Seluruh nilai ASTS siswa pada kelas ini sudah lengkap dan valid untuk dicetak atau dibagikan.
+                </template>
+                <template v-else>
+                  Mapel belum terisi: <strong class="underline">{{ missingScoreSubjects.map(s => s.name).join(', ') || 'Belum ada nilai' }}</strong>. Anda dapat menarik nilai di tab Leger Nilai.
+                </template>
+              </p>
+            </div>
+          </div>
+          <button
+            v-if="!isClassScoresComplete"
+            type="button"
+            @click="activeSubTab = 'ledger'"
+            class="self-start sm:self-center px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold rounded-xl transition-all shadow-xs cursor-pointer flex items-center gap-1 active:scale-95 flex-shrink-0"
+          >
+            <Sparkles class="w-3.5 h-3.5 text-amber-200" />
+            <span>Tarik di Leger</span>
+          </button>
+        </div>
+
         <!-- Print Control Bar (No Print) -->
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4 no-print">
           <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-1">
@@ -1902,6 +1941,14 @@ const subjectsWithScoresCount = computed(() => {
   return subjectStatuses.value.filter(s => s.has_scores).length;
 });
 
+const missingScoreSubjects = computed(() => {
+  return subjectStatuses.value.filter(s => !s.has_scores);
+});
+
+const isClassScoresComplete = computed(() => {
+  return subjectsList.value.length > 0 && missingScoreSubjects.value.length === 0;
+});
+
 function getSubjectShort(name) {
   if (!name) return '';
   const parts = name.split(' ');
@@ -2232,18 +2279,9 @@ function openNotesModalForCurrentStudent() {
   if (!selectedStudentId.value && !singleReportData.value) return;
   const sId = selectedStudentId.value || singleReportData.value?.student?.id;
   const found = ledgerStudents.value.find(s => s.student_id == sId);
-  if (found) {
-    openNotesModal(found);
-  } else if (singleReportData.value) {
-    const rep = singleReportData.value;
-    openNotesModal({
-      student_id: rep.student?.id || sId,
-      full_name: rep.student?.full_name || 'Siswa',
-      sick_count: rep.attendance?.sick || 0,
-      permission_count: rep.attendance?.permission || 0,
-      unexcused_count: rep.attendance?.unexcused || 0,
-      homeroom_notes: rep.homeroom_notes || '',
-    });
+  openBulkNotesModal();
+  if (found?.full_name) {
+    bulkNotesSearch.value = found.full_name;
   }
 }
 
