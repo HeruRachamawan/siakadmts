@@ -347,10 +347,12 @@ class AstsReportController extends Controller
         // Map scores by student_id and subject_id
         $scoreMap = [];
         $subjectStatusMap = [];
+        $subjectKkmMap = [];
         foreach ($subjects as $sbj) {
             $effectiveKkm = \App\Models\SubjectGradeKkm::getEffectiveKkm($sbj->id, $class->grade_level, $yearId);
             $sbj->kkm = $effectiveKkm;
             $sbj->passing_grade = $effectiveKkm;
+            $subjectKkmMap[$sbj->id] = $effectiveKkm;
 
             $subjectStatusMap[$sbj->id] = [
                 'subject_id' => $sbj->id,
@@ -364,7 +366,7 @@ class AstsReportController extends Controller
         }
 
         foreach ($scores as $sc) {
-            $effectiveKkm = \App\Models\SubjectGradeKkm::getEffectiveKkm($sc->subject_id, $class->grade_level, $yearId);
+            $effectiveKkm = $subjectKkmMap[$sc->subject_id] ?? \App\Models\SubjectGradeKkm::getEffectiveKkm($sc->subject_id, $class->grade_level, $yearId);
             $scoreMap[$sc->student_id][$sc->subject_id] = [
                 'score' => floatval($sc->score),
                 'kkm' => $effectiveKkm,
