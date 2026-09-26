@@ -19,10 +19,18 @@ class SettingController extends Controller
             $settings['app_logo_url'] = asset('storage/' . ltrim(preg_replace('/^(\/?storage\/)+/', '', $settings['app_logo']), '/'));
         }
 
-        $settings['academic_year_id'] = $settings['academic_year_id'] ?? ($activeYear?->id ?? null);
+        // Sinkronkan ke ID tahun akademik aktif saat ini
+        if ($activeYear) {
+            $settings['academic_year_id'] = (string) $activeYear->id;
+        } else {
+            $settings['academic_year_id'] = $settings['academic_year_id'] ?? null;
+        }
         $settings['active_academic_year'] = $activeYear;
 
-        return response()->json($settings);
+        return response()->json(array_merge([
+            'success' => true,
+            'data' => $settings,
+        ], $settings));
     }
 
     public function update(Request $request)

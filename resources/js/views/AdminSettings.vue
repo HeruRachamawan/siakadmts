@@ -307,8 +307,8 @@ const cleanMapsUrl = computed(() => {
 
 const loadAcademicYears = async () => {
   try {
-    const res = await api.get('admin/academic-years');
-    academicYears.value = res.data?.data || res.data || [];
+    const res = await api.get('admin/academic-years?per_page=100');
+    academicYears.value = res?.data?.data || res?.data || (Array.isArray(res) ? res : []);
   } catch (err) {
     console.error('Failed to load academic years', err);
   }
@@ -316,8 +316,8 @@ const loadAcademicYears = async () => {
 
 const loadTeachers = async () => {
   try {
-    const res = await api.get('admin/teachers');
-    teachersList.value = res.data?.data || res.data || [];
+    const res = await api.get('admin/teachers?all=true');
+    teachersList.value = res?.data?.data || res?.data || (Array.isArray(res) ? res : []);
   } catch (err) {
     console.error('Failed to load teachers', err);
   }
@@ -326,13 +326,20 @@ const loadTeachers = async () => {
 const loadSettings = async () => {
   try {
     const res = await api.get('admin/settings');
-    const data = res.data?.data || res.data || {};
+    const data = (res && typeof res === 'object') ? (res.data?.data || res.data || res) : {};
     
     Object.keys(form).forEach(key => {
-      if (data[key] !== undefined && key !== 'app_logo' && key !== 'hero_background') {
+      if (data[key] !== undefined && data[key] !== null && key !== 'app_logo' && key !== 'hero_background') {
         form[key] = data[key];
       }
     });
+
+    if (form.academic_year_id !== '' && form.academic_year_id !== null && form.academic_year_id !== undefined) {
+      form.academic_year_id = Number(form.academic_year_id);
+    }
+    if (form.principal_teacher_id !== '' && form.principal_teacher_id !== null && form.principal_teacher_id !== undefined) {
+      form.principal_teacher_id = Number(form.principal_teacher_id);
+    }
 
     const logo = data.app_logo_url || data.app_logo;
     if (logo) {
@@ -342,6 +349,7 @@ const loadSettings = async () => {
       logoPreview.value = initialLogoUrl.value;
     }
   } catch (err) {
+    console.error('Failed to load settings', err);
     toast.error('Gagal memuat pengaturan aplikasi');
   }
 };
@@ -384,9 +392,9 @@ async function saveSettings() {
 
 onMounted(async () => {
   await Promise.all([
-    loadSettings(),
     loadAcademicYears(),
     loadTeachers()
   ]);
+  await loadSettings();
 });
 </script>
