@@ -54,7 +54,16 @@
           <span>Kartu Akun Siswa</span>
         </button>
 
-        <!-- Tab 6: Kalender -->
+        <!-- Tab 6: Kartu Login Guru (NEW) -->
+        <button
+          @click="activeTab = 'teacher_account_card'"
+          :class="[activeTab === 'teacher_account_card' ? 'bg-white text-emerald-700 shadow-sm font-bold' : 'text-slate-500 font-semibold', 'px-3.5 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer']"
+        >
+          <ShieldCheck class="w-4 h-4 text-emerald-600" />
+          <span>Kartu Login Guru</span>
+        </button>
+
+        <!-- Tab 7: Kalender -->
         <button
           @click="activeTab = 'calendar'"
           :class="[activeTab === 'calendar' ? 'bg-white text-emerald-700 shadow-sm font-bold' : 'text-slate-500 font-semibold', 'px-3.5 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer']"
@@ -712,7 +721,160 @@
       </div>
     </div>
 
-    <!-- ==================== TAB 6: CETAK KALENDER ==================== -->
+    <!-- ==================== TAB 6: CETAK KARTU LOGIN GURU (NEW) ==================== -->
+    <div v-if="activeTab === 'teacher_account_card'" class="space-y-6">
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-wrap items-center justify-between gap-4 no-print">
+        <div class="flex flex-wrap items-center gap-4">
+          <div>
+            <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Target Cetak</label>
+            <select v-model="teacherCardPrintTarget" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer">
+              <option value="all">Semua Dewan Guru ({{ teachers.length }} Orang)</option>
+              <option value="single">Per Guru Satuan</option>
+            </select>
+          </div>
+
+          <div v-if="teacherCardPrintTarget === 'single'">
+            <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Pilih Guru</label>
+            <select v-model="teacherCardSelectedId" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer max-w-xs">
+              <option value="">-- Pilih Guru --</option>
+              <option v-for="t in teachers" :key="t.id" :value="t.id">{{ t.full_name }} (NIP: {{ t.nip || '-' }})</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Ukuran Kertas Cetak</label>
+            <select v-model="selectedPaperSize" @change="applyPaperSize" class="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 focus:outline-none cursor-pointer">
+              <option value="F4">📜 F4 / Folio (Standar)</option>
+              <option value="A4">📄 A4 (Standar)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            @click="exportExcelTeacherAccounts"
+            class="px-4 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold rounded-xl text-xs hover:bg-emerald-100 transition-colors flex items-center gap-2 shadow-xs cursor-pointer"
+          >
+            <Download class="w-4 h-4 text-emerald-600" />
+            <span>Export Excel Akun Guru</span>
+          </button>
+          <button
+            @click="triggerPrint"
+            class="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-2 shadow-md cursor-pointer"
+          >
+            <Printer class="w-4 h-4 text-emerald-200" />
+            <span>Cetak Kartu Login Guru</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Notice Banner (No Print) -->
+      <div class="p-3.5 bg-emerald-50/80 rounded-2xl border border-emerald-200 text-xs text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">🛡️</span>
+          <div>
+            <strong class="font-bold">Kartu Kredensial & Akses Login Dewan Guru:</strong>
+            <span class="text-slate-600 ml-1">Format kartu siap potong (86x54mm) lengkap dengan NIP/Username, Password Awal, Jabatan, Mapel, dan QR Code portal.</span>
+          </div>
+        </div>
+        <div class="text-[11px] font-mono font-bold text-emerald-800 bg-emerald-100/80 px-3 py-1 rounded-xl flex-shrink-0">
+          {{ getTeachersForAccountCardPrint().length }} Kartu Terpilih
+        </div>
+      </div>
+
+      <!-- Teacher Account Cards Grid Area -->
+      <div id="print-teacher-account-card-area" class="account-cards-container teacher-account-cards-container grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          v-for="t in getTeachersForAccountCardPrint()"
+          :key="'teacher-card-' + t.id"
+          class="account-card-item teacher-account-card-item page-break bg-gradient-to-br from-slate-900 via-emerald-950 to-[#022c22] text-white p-4 rounded-2xl shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[220px] border border-emerald-500/40"
+        >
+          <!-- Background Pattern -->
+          <div class="account-card-pattern absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:12px_12px] pointer-events-none"></div>
+
+          <!-- Top Bar: Logo, School Name & Badge -->
+          <div class="account-card-header relative z-10 flex items-center justify-between gap-2 border-b border-white/20 pb-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="account-card-logo w-8 h-8 bg-white rounded-lg p-0.5 flex items-center justify-center flex-shrink-0 shadow-xs">
+                <img v-if="appSettings?.app_logo" :src="getImageUrl(appSettings.app_logo)" class="w-full h-full object-contain" alt="Logo" />
+                <div v-else class="text-emerald-800 font-black text-[10px]">MTS</div>
+              </div>
+              <div class="min-w-0">
+                <h3 class="account-card-title text-[10px] font-black uppercase tracking-wider text-white font-lexend truncate leading-tight">
+                  {{ appSettings?.app_name || 'MTs AL-HASANAH' }}
+                </h3>
+                <p class="account-card-subtitle text-[8px] text-amber-300 font-extrabold uppercase tracking-widest">
+                  KARTU AKSES & LOGIN PENDIDIK
+                </p>
+              </div>
+            </div>
+            <div class="account-card-badge bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full text-[7.5px] font-mono font-bold uppercase tracking-wider flex-shrink-0">
+              PORTAL GURU & GTK
+            </div>
+          </div>
+
+          <!-- Body: Teacher Info + Credentials Box -->
+          <div class="account-card-body relative z-10 py-2.5 flex items-stretch gap-3">
+            <!-- Left Column: Photo + QR Code -->
+            <div class="flex flex-col items-center justify-between gap-1.5 flex-shrink-0 w-16">
+              <div class="account-card-photo w-14 h-16 bg-white/10 rounded-xl overflow-hidden border border-white/30 flex items-center justify-center shadow-inner">
+                <img v-if="t.photo_url" :src="t.photo_url" class="w-full h-full object-cover" alt="Foto Guru" />
+                <span v-else class="text-white font-black text-lg">{{ t.full_name?.charAt(0) || 'G' }}</span>
+              </div>
+              <!-- QR Code to login portal -->
+              <div class="account-card-qr w-14 h-14 bg-white p-0.5 rounded-lg border border-white/50 flex items-center justify-center shadow-xs">
+                <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(getTeacherPortalUrl(t))}`" class="w-full h-full object-contain" alt="QR Portal" />
+              </div>
+            </div>
+
+            <!-- Right Column: Teacher Details & Credential Box -->
+            <div class="flex-1 min-w-0 flex flex-col justify-between">
+              <div>
+                <p class="account-card-name text-[11px] font-black text-white truncate leading-tight uppercase font-lexend">
+                  {{ t.full_name }}
+                </p>
+                <div class="flex items-center gap-1.5 mt-0.5 text-[9px] text-slate-300">
+                  <span class="truncate">Jabatan: <strong class="text-emerald-300 font-bold">{{ t.position || 'Pendidik' }}</strong></span>
+                  <span>&bull;</span>
+                  <span class="font-mono flex-shrink-0">NIP: <strong class="text-white">{{ t.nip || '-' }}</strong></span>
+                </div>
+                <div v-if="t.subjects && t.subjects.length > 0" class="text-[8px] text-emerald-200/90 truncate mt-0.5">
+                  Mapel: <span class="font-medium text-white">{{ t.subjects.map(s => s.name).join(', ') }}</span>
+                </div>
+              </div>
+
+              <!-- Credential Box -->
+              <div class="account-card-credentials mt-2 bg-black/45 border border-amber-400/40 rounded-xl p-2 text-[9px] space-y-1 backdrop-blur-xs">
+                <div class="flex items-center justify-between text-slate-300 account-card-cred-row">
+                  <span class="text-[7.5px] uppercase tracking-wider text-amber-400 font-bold">Portal URL</span>
+                  <span class="font-mono font-medium text-white truncate text-[8px] max-w-[125px]">{{ getPortalDomain() }}</span>
+                </div>
+                <div class="flex items-center justify-between border-t border-white/10 pt-1 account-card-cred-row">
+                  <span class="text-[8px] uppercase font-bold text-slate-300">Username</span>
+                  <span class="account-card-cred-val font-mono font-black text-amber-300 text-[9.5px] bg-amber-400/10 px-1.5 py-0.2 rounded border border-amber-400/30">
+                    {{ t.user?.username || t.nip || '-' }}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between border-t border-white/10 pt-1 account-card-cred-row">
+                  <span class="text-[8px] uppercase font-bold text-slate-300">Password Awal</span>
+                  <span class="account-card-cred-val pass font-mono font-black text-emerald-300 text-[9.5px] bg-emerald-400/10 px-1.5 py-0.2 rounded border border-emerald-400/30">
+                    {{ t.nip || t.user?.username || 'Password Anda' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="account-card-footer relative z-10 border-t border-white/20 pt-1.5 flex items-center justify-between text-[7px] text-emerald-200/80 font-mono">
+            <span class="truncate pr-2">🛡️ Sistem Informasi Manajemen Madrasah Terpadu</span>
+            <span class="flex-shrink-0 font-bold">T.A. {{ activeAcademicYear?.year || '2026/2027' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 7: CETAK KALENDER ==================== -->
     <div v-if="activeTab === 'calendar'" class="space-y-6">
       <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-wrap items-center justify-between gap-4 no-print">
         <div>
@@ -845,6 +1007,7 @@ import {
   UserCheck,
   CreditCard,
   KeyRound,
+  ShieldCheck,
   Calendar,
   Download,
   Printer,
@@ -881,6 +1044,10 @@ const cardSelectedStudentId = ref('');
 const accountCardPrintTarget = ref('class');
 const accountCardSelectedClass = ref('');
 const accountCardSelectedStudentId = ref('');
+
+// Teacher Account Card Print Controls (NEW)
+const teacherCardPrintTarget = ref('all');
+const teacherCardSelectedId = ref('');
 
 const months = [
   { id: 7, num: '07', name: 'Juli' },
@@ -1128,6 +1295,48 @@ const exportExcelStudentAccounts = () => {
   XLSX.writeFile(wb, `Data-Akun-Login-Siswa-${className}.xlsx`);
 };
 
+// Teacher Account Card Methods (NEW)
+const getTeachersForAccountCardPrint = () => {
+  if (teacherCardPrintTarget.value === 'single') {
+    const found = teachers.value.find(t => t.id == teacherCardSelectedId.value);
+    return found ? [found] : (teachers.value.length > 0 ? [teachers.value[0]] : []);
+  }
+  return teachers.value;
+};
+
+const getTeacherPortalUrl = (t) => {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/login`;
+  }
+  return 'https://siakad.mtsalhasanah.sch.id/login';
+};
+
+const exportExcelTeacherAccounts = () => {
+  const targetTeachers = getTeachersForAccountCardPrint();
+  const rows = [
+    ['NO', 'NAMA LENGKAP & GELAR', 'NIP / NUPTK', 'JABATAN', 'MATA PELAJARAN', 'USERNAME LOGIN', 'PASSWORD AWAL', 'NO HP / WA', 'STATUS AKUN'],
+    ...targetTeachers.map((t, idx) => [
+      idx + 1,
+      t.full_name || '-',
+      t.nip || '-',
+      t.position || 'Guru Pengampu',
+      (t.subjects && t.subjects.length > 0) ? t.subjects.map(s => s.name).join(', ') : '-',
+      t.user?.username || t.nip || '-',
+      t.nip || t.user?.username || 'Password Anda',
+      t.phone || '-',
+      t.user ? 'Aktif' : 'Pendidik',
+    ]),
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Akun Guru');
+  const targetName = (teacherCardPrintTarget.value === 'single' && teacherCardSelectedId.value)
+    ? `Guru-${teacherCardSelectedId.value}`
+    : 'Semua-Dewan-Guru';
+  XLSX.writeFile(wb, `Data-Akun-Login-Guru-${targetName}.xlsx`);
+};
+
 const getTodayDateFormatted = () => {
   const d = new Date();
   const options = { day: 'numeric', month: 'long', year: 'numeric' };
@@ -1154,10 +1363,11 @@ const applyPaperSize = () => {
 
 const triggerPrint = () => {
   // SPECIAL HANDLING: ID Cards Grid Printing (Exact 86x54mm Card Dimensions & Color Preservation)
-  if (activeTab.value === 'card' || activeTab.value === 'account_card') {
+  if (activeTab.value === 'card' || activeTab.value === 'account_card' || activeTab.value === 'teacher_account_card') {
+    const isTeacherCard = activeTab.value === 'teacher_account_card';
     const isAccountCard = activeTab.value === 'account_card';
-    const targetElemId = isAccountCard ? 'print-account-card-area' : 'print-card-area';
-    const docTitle = isAccountCard ? 'Cetak Kartu Akun Login Siswa' : 'Cetak Kartu Tanda Pelajar';
+    const targetElemId = isTeacherCard ? 'print-teacher-account-card-area' : (isAccountCard ? 'print-account-card-area' : 'print-card-area');
+    const docTitle = isTeacherCard ? 'Cetak Kartu Login Dewan Guru' : (isAccountCard ? 'Cetak Kartu Akun Login Siswa' : 'Cetak Kartu Tanda Pelajar');
     const printElem = document.getElementById(targetElemId);
     if (!printElem) {
       window.print();
@@ -1956,6 +2166,9 @@ onMounted(async () => {
       cardSelectedStudentId.value = students.value[0].id;
       accountCardSelectedStudentId.value = students.value[0].id;
     }
+    if (teachers.value.length > 0) {
+      teacherCardSelectedId.value = teachers.value[0].id;
+    }
 
     schedules.value = Array.isArray(schRes?.data) ? schRes.data : (Array.isArray(schRes?.data?.data) ? schRes.data.data : (Array.isArray(schRes) ? schRes : []));
 
@@ -1996,6 +2209,7 @@ onMounted(async () => {
   #print-teachers-area,
   #print-card-area,
   #print-account-card-area,
+  #print-teacher-account-card-area,
   #print-calendar-area {
     padding: 0 !important;
     margin: 0 !important;
