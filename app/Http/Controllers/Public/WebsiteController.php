@@ -34,8 +34,18 @@ class WebsiteController extends Controller
             }
         }
 
+        // Teks bawaan untuk banner utama jika belum diatur secara kustom
+        if (empty($settings['hero_title']) || $settings['hero_title'] === 'SISTEM INFORMASI DAN MENEJEMEN DIGITAL') {
+            $settings['hero_title'] = "Mendidik Generasi Qur'ani, Berakhlak Mulia & Unggul di Era Digital.";
+        }
+        if (empty($settings['hero_description'])) {
+            $settings['hero_description'] = "Selamat datang di portal resmi " . ($settings['app_name'] ?? 'MTs Al - Hasanah') . ". Lembaga pendidikan madrasah terpadu yang memadukan penguatan karakter keislaman, tahfidzul qur'an, dan sains teknologi modern.";
+        }
+
         // Ambil data Rombel Utama (Kelas Reguler Induk) pada Tahun Ajaran Aktif
-        $activeYearId = AcademicYear::where('is_active', true)->value('id');
+        $activeYear = AcademicYear::where('is_active', true)->first();
+        $activeYearId = $activeYear?->id;
+        $settings['active_academic_year'] = $activeYear;
 
         $classesQuery = ClassRoom::query();
         if ($activeYearId && ClassRoom::where('academic_year_id', $activeYearId)->exists()) {

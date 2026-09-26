@@ -79,6 +79,47 @@
                 <label class="block text-xs font-semibold text-slate-700">Alamat Lengkap</label>
                 <textarea v-model="form.school_address" rows="2" placeholder="Contoh: Jl. Raya Ciomas No. 123, Kabupaten Bogor" class="form-input h-20 resize-none"></textarea>
               </div>
+
+              <!-- Banner Utama Website (Hero Headline & Description) -->
+              <div class="pt-5 border-t border-slate-100 space-y-4">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900">Teks Banner Utama Halaman Depan (Hero Section)</h4>
+                </div>
+                <p class="text-[11px] text-slate-500 font-normal leading-relaxed -mt-2">
+                  Ubah judul besar (headline) dan paragraf penjelasan yang tampil di bagian paling atas beranda publik website.
+                </p>
+
+                <!-- Headline / Judul Besar -->
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-semibold text-slate-800 flex items-center justify-between">
+                    <span>Judul Besar Banner Utama (Headline)</span>
+                    <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Text Box Lega</span>
+                  </label>
+                  <textarea
+                    v-model="form.hero_title"
+                    rows="2"
+                    placeholder="Contoh: Mendidik Generasi Qur'ani, Berakhlak Mulia & Unggul di Era Digital."
+                    class="form-input h-20 resize-none font-semibold text-slate-900 leading-snug"
+                  ></textarea>
+                  <p class="text-[10px] text-slate-400">Teks judul besar yang langsung terlihat pertama kali saat pengunjung membuka website.</p>
+                </div>
+
+                <!-- Paragraf Deskripsi / Penjelasan -->
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-semibold text-slate-800 flex items-center justify-between">
+                    <span>Paragraf Deskripsi Banner Utama</span>
+                    <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Text Box Luas</span>
+                  </label>
+                  <textarea
+                    v-model="form.hero_description"
+                    rows="3"
+                    placeholder="Contoh: Selamat datang di portal resmi MTs Al - Hasanah. Lembaga pendidikan madrasah terpadu yang memadukan penguatan karakter keislaman..."
+                    class="form-input h-28 resize-none text-slate-800 leading-relaxed font-normal"
+                  ></textarea>
+                  <p class="text-[10px] text-slate-400">Paragraf pengantar dan ringkasan madrasah yang terletak tepat di bawah judul besar.</p>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -284,6 +325,7 @@ const form = reactive({
   school_mission: '',
   academic_year_id: '',
   hero_title: '',
+  hero_description: '',
   google_maps_embed: '',
   google_maps_link: '',
   school_phone: '',

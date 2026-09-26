@@ -19,6 +19,14 @@ class SettingController extends Controller
             $settings['app_logo_url'] = asset('storage/' . ltrim(preg_replace('/^(\/?storage\/)+/', '', $settings['app_logo']), '/'));
         }
 
+        // Teks bawaan untuk banner utama jika belum diatur secara kustom
+        if (empty($settings['hero_title']) || $settings['hero_title'] === 'SISTEM INFORMASI DAN MENEJEMEN DIGITAL') {
+            $settings['hero_title'] = "Mendidik Generasi Qur'ani, Berakhlak Mulia & Unggul di Era Digital.";
+        }
+        if (empty($settings['hero_description'])) {
+            $settings['hero_description'] = "Selamat datang di portal resmi " . ($settings['app_name'] ?? 'MTs Al - Hasanah') . ". Lembaga pendidikan madrasah terpadu yang memadukan penguatan karakter keislaman, tahfidzul qur'an, dan sains teknologi modern.";
+        }
+
         // Sinkronkan ke ID tahun akademik aktif saat ini
         if ($activeYear) {
             $settings['academic_year_id'] = (string) $activeYear->id;
@@ -47,7 +55,8 @@ class SettingController extends Controller
             'school_accreditation' => 'nullable|string|max:50',
             'academic_year_id' => 'nullable|exists:academic_years,id',
             'app_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
-            'hero_title' => 'nullable|string|max:255',
+            'hero_title' => 'nullable|string',
+            'hero_description' => 'nullable|string',
             'hero_background' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'google_maps_embed' => 'nullable|string',
             'google_maps_link' => 'nullable|string',
@@ -58,7 +67,7 @@ class SettingController extends Controller
         $settings = $request->only([
             'app_name', 'app_tagline', 'school_address', 'academic_year_id',
             'principal_teacher_id', 'principal_message', 'principal_description', 'school_vision', 'school_mission',
-            'hero_title', 'school_accreditation',
+            'hero_title', 'hero_description', 'school_accreditation',
             'google_maps_embed', 'google_maps_link', 'school_phone', 'school_email'
         ]);
 

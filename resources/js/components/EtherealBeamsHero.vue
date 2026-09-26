@@ -21,17 +21,22 @@
             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
             <span class="tracking-wider uppercase text-[11px] font-bold text-white">{{ accreditationText }}</span>
             <span class="text-emerald-500">&bull;</span>
-            <span class="text-emerald-300 font-medium">T.A. 2026/2027</span>
+            <span class="text-emerald-300 font-medium">T.A. {{ activeAcademicYearText }}</span>
           </div>
 
-          <!-- Main Human-Centered Headline -->
+          <!-- Main Dynamic Human-Centered Headline -->
           <div class="space-y-3">
-            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.18] font-lexend">
-              Mendidik Generasi Qur'ani, <br class="hidden sm:inline" />
-              <span class="text-emerald-300 font-extrabold">Berakhlak Mulia & Unggul</span> di Era Digital.
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.18] font-lexend whitespace-pre-line">
+              <template v-if="settings.hero_title">
+                {{ settings.hero_title }}
+              </template>
+              <template v-else>
+                Mendidik Generasi Qur'ani, <br class="hidden sm:inline" />
+                <span class="text-emerald-300 font-extrabold">Berakhlak Mulia & Unggul</span> di Era Digital.
+              </template>
             </h1>
-            <p class="text-xs sm:text-base text-emerald-100/80 max-w-2xl font-normal leading-relaxed">
-              Selamat datang di portal resmi <strong>{{ settings.app_name || 'MTs Al - Hasanah' }}</strong>. Lembaga pendidikan madrasah terpadu yang memadukan penguatan karakter keislaman, tahfidzul qur'an, dan sains teknologi modern.
+            <p class="text-xs sm:text-base text-emerald-100/80 max-w-2xl font-normal leading-relaxed whitespace-pre-line">
+              {{ settings.hero_description || `Selamat datang di portal resmi ${settings.app_name || 'MTs Al - Hasanah'}. Lembaga pendidikan madrasah terpadu yang memadukan penguatan karakter keislaman, tahfidzul qur'an, dan sains teknologi modern.` }}
             </p>
           </div>
 
@@ -179,6 +184,10 @@ const accreditationText = computed(() => {
     return acc;
   }
   return `Akreditasi ${acc}`;
+});
+
+const activeAcademicYearText = computed(() => {
+  return props.settings.active_academic_year?.year || '2026/2027';
 });
 
 const currentAddress = computed(() => {
