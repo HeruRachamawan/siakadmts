@@ -939,277 +939,17 @@
       </div>
     </div>
 
-    <!-- MODAL ATUR PERINGKAT SISWA (SMART RANK ADJUSTER) -->
-    <!-- MODAL ATUR PERINGKAT SISWA (USER-FRIENDLY & ANTI-PERINGKAT KEMBAR) -->
-    <div v-if="showRankModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 no-print">
-      <div class="bg-white rounded-2xl sm:rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100 transform transition-all animate-in fade-in zoom-in-95 duration-200">
-        <!-- Modal Header -->
-        <div class="px-5 py-4 sm:px-6 sm:py-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-amber-500/10 via-amber-50 to-transparent">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20 flex-shrink-0">
-              <Trophy class="w-5 h-5" />
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h2 class="text-sm sm:text-base font-black text-slate-800 font-lexend uppercase tracking-wider">Atur Peringkat Siswa</h2>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                  {{ rankEditList.length }} Siswa
-                </span>
-              </div>
-              <p class="text-xs text-slate-500 font-medium mt-0.5">Kelas {{ ledgerData?.class?.name }} • Semester {{ activeSemester === 'genap' ? 'Genap' : 'Ganjil' }}</p>
-            </div>
-          </div>
-          <button @click="showRankModal = false" class="w-8 h-8 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 cursor-pointer transition-colors">
-            <X class="w-4 h-4" />
-          </button>
-        </div>
-
-        <!-- Modal Body: Rank List -->
-        <div class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
-          <!-- Petunjuk Ramah Guru -->
-          <div class="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50/50 rounded-2xl border border-amber-200/80 text-xs text-amber-950 space-y-2">
-            <div class="flex items-start gap-2.5">
-              <div class="w-5 h-5 rounded-full bg-amber-200/70 text-amber-800 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-xs">
-                💡
-              </div>
-              <div class="leading-relaxed space-y-1">
-                <p class="font-bold text-slate-900">Panduan Mudah Mengatur Posisi Juara:</p>
-                <p class="text-slate-600 text-[11px]">
-                  Gunakan tombol panah <strong>⬆ (Naik)</strong> atau <strong>⬇ (Turun)</strong> untuk menukar posisi ranking siswa dengan cepat dan rapi. Sistem akan otomatis memastikan <strong>tidak ada nomor peringkat yang kembar</strong>.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Alert Peringatan Jika Ada Peringkat Kembar -->
-          <div v-if="hasDuplicateRank" class="p-3.5 bg-rose-50 rounded-2xl border border-rose-200 text-xs text-rose-800 flex items-start gap-3 shadow-xs animate-shake">
-            <AlertTriangle class="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
-            <div class="flex-1">
-              <span class="font-black block">Perhatian: Ditemukan Nomor Peringkat Kembar!</span>
-              <p class="text-[11px] text-rose-700 mt-0.5 leading-relaxed">
-                Nomor peringkat <strong>#{{ duplicateRanks.join(', #') }}</strong> digunakan oleh lebih dari satu siswa. Setiap siswa wajib memiliki peringkat unik.
-              </p>
-              <button
-                type="button"
-                @click="autoSequenceRanks"
-                class="mt-2 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-[10px] transition-colors inline-flex items-center gap-1 cursor-pointer"
-              >
-                <Sparkles class="w-3 h-3" />
-                <span>Rapikan Otomatis (1 s/d {{ rankEditList.length }})</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Tabel Peringkat Siswa Interaktif -->
-          <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b border-slate-200">
-                <tr>
-                  <th class="p-3 w-16 text-center">Urutan</th>
-                  <th class="p-3 w-20 text-center">Tukar Posisi</th>
-                  <th class="p-3">Nama Lengkap Siswa</th>
-                  <th class="p-3 w-24 text-center bg-blue-50/50 text-blue-900 border-x border-slate-200/60">Total Nilai</th>
-                  <th class="p-3 w-24 text-center bg-emerald-50/50 text-emerald-900 border-r border-slate-200/60">Rata-Rata</th>
-                  <th class="p-3 w-28 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr
-                  v-for="(item, idx) in rankEditList"
-                  :key="'rank-item-'+item.student_id"
-                  class="transition-colors hover:bg-slate-50/80"
-                  :class="{
-                    'bg-amber-50/60': item.rank === 1 && item.rank === item.calculated_rank,
-                    'bg-slate-50/60': item.rank === 2 && item.rank === item.calculated_rank,
-                    'bg-orange-50/40': item.rank === 3 && item.rank === item.calculated_rank,
-                    'bg-emerald-50/40': typeof item.calculated_rank === 'number' && item.rank < item.calculated_rank,
-                    'bg-rose-50/40': typeof item.calculated_rank === 'number' && item.rank > item.calculated_rank,
-                    'ring-2 ring-rose-400 bg-rose-50/70': duplicateRanks.includes(parseInt(item.rank))
-                  }"
-                >
-                  <!-- Badge & Input Nomor Peringkat -->
-                  <td class="p-2.5 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                      <!-- Medal Emoji for Top 3 -->
-                      <span v-if="item.rank === 1" class="text-sm" title="Juara 1">🥇</span>
-                      <span v-else-if="item.rank === 2" class="text-sm" title="Juara 2">🥈</span>
-                      <span v-else-if="item.rank === 3" class="text-sm" title="Juara 3">🥉</span>
-                      
-                      <input
-                        v-model.number="item.rank"
-                        type="number"
-                        min="1"
-                        :max="rankEditList.length"
-                        class="w-12 text-center py-1 px-1 bg-white border rounded-lg font-black font-mono text-xs shadow-2xs focus:ring-2"
-                        :class="duplicateRanks.includes(parseInt(item.rank)) 
-                          ? 'border-rose-400 text-rose-700 focus:ring-rose-400 bg-rose-50/50' 
-                          : 'border-slate-300 text-slate-800 focus:ring-amber-400'"
-                      />
-                    </div>
-                  </td>
-
-                  <!-- Tombol Naikkan / Turunkan Posisi -->
-                  <td class="p-2 text-center">
-                    <div class="inline-flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                      <button
-                        type="button"
-                        @click="moveStudentRank(idx, -1)"
-                        :disabled="idx === 0"
-                        title="Naikkan 1 posisi ke atas"
-                        class="w-6 h-6 flex items-center justify-center rounded bg-white hover:bg-amber-50 text-slate-600 hover:text-amber-700 disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-slate-600 cursor-pointer transition-all shadow-2xs"
-                      >
-                        <ArrowUp class="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        @click="moveStudentRank(idx, 1)"
-                        :disabled="idx === rankEditList.length - 1"
-                        title="Turunkan 1 posisi ke bawah"
-                        class="w-6 h-6 flex items-center justify-center rounded bg-white hover:bg-amber-50 text-slate-600 hover:text-amber-700 disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-slate-600 cursor-pointer transition-all shadow-2xs"
-                      >
-                        <ArrowDown class="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-
-                  <!-- Nama & Identitas Siswa -->
-                  <td class="p-3">
-                    <div class="flex items-center gap-2">
-                      <span class="font-bold text-slate-800 font-lexend">{{ item.full_name }}</span>
-                    </div>
-                    <div class="text-[10px] text-slate-400 font-mono">NISN: {{ item.nisn || '-' }}</div>
-                  </td>
-
-                  <!-- Total Nilai Keseluruhan -->
-                  <td class="p-3 text-center font-black font-mono text-slate-800 bg-blue-50/20 border-x border-slate-100">
-                    {{ item.total_score !== undefined ? Math.round(Number(item.total_score)) : '-' }}
-                  </td>
-
-                  <!-- Rata-rata Nilai -->
-                  <td class="p-3 text-center font-bold font-mono text-emerald-700 bg-emerald-50/20 border-r border-slate-100">
-                    {{ Number(item.average_score || 0).toFixed(2) }}
-                  </td>
-
-                  <!-- Status Peringkat (Hijau jika Naik, Merah jika Turun) -->
-                  <td class="p-3 text-center">
-                    <!-- Kasus 1: Peringkat Naik (Angka rank lebih kecil dari murni) -> HIJAU -->
-                    <span
-                      v-if="typeof item.calculated_rank === 'number' && item.rank < item.calculated_rank"
-                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs whitespace-nowrap"
-                      title="Siswa dinaikkan posisinya lebih tinggi dari ranking aslinya"
-                    >
-                      <span>▲ Naik {{ item.calculated_rank - item.rank }}</span>
-                      <span class="text-emerald-600 font-semibold">(Murni: #{{ item.calculated_rank }})</span>
-                    </span>
-
-                    <!-- Kasus 2: Peringkat Turun (Angka rank lebih besar dari murni) -> MERAH -->
-                    <span
-                      v-else-if="typeof item.calculated_rank === 'number' && item.rank > item.calculated_rank"
-                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300 shadow-2xs whitespace-nowrap"
-                      title="Siswa diturunkan posisinya lebih rendah dari ranking aslinya"
-                    >
-                      <span>▼ Turun {{ item.rank - item.calculated_rank }}</span>
-                      <span class="text-rose-600 font-semibold">(Murni: #{{ item.calculated_rank }})</span>
-                    </span>
-
-                    <!-- Kasus 3: Tetap / Sesuai Nilai Murni -> Netral Abu-abu -->
-                    <span v-else class="text-slate-400 text-[10.5px] font-medium whitespace-nowrap">
-                      Sesuai Nilai {{ item.calculated_rank !== '-' ? '(#' + item.calculated_rank + ')' : '' }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Peringatan Cerdas Jika Urutan Peringkat Berlawanan dengan Rata-Rata tapi Nilai Tidak Diselaraskan -->
-          <div
-            v-if="hasInvertedRank && !adjustScoresWithRank"
-            class="p-3.5 bg-amber-50 rounded-2xl border border-amber-300 text-xs text-amber-900 flex items-start gap-3 shadow-xs animate-in fade-in"
-          >
-            <AlertTriangle class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div class="space-y-1">
-              <span class="font-black block">💡 Rekomendasi: Urutan Ranking Belum Sejalan dengan Rata-Rata</span>
-              <p class="text-[11px] text-amber-800 leading-relaxed">
-                Anda menempatkan siswa pada ranking lebih tinggi padahal nilai rata-ratanya lebih rendah. Agar tidak tampak janggal di cetakan rapor resmi siswa, disarankan <strong>mencentang opsi "Selaraskan Nilai Siswa"</strong> di bawah agar nilai mapel disesuaikan secara proporsional.
-              </p>
-            </div>
-          </div>
-
-          <!-- Opsi Tambahan: Selaraskan Nilai Siswa -->
-          <div class="p-4 bg-slate-50/90 rounded-2xl border border-slate-200 flex items-start gap-3">
-            <input
-              id="adjust-scores-checkbox"
-              v-model="adjustScoresWithRank"
-              type="checkbox"
-              class="mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer flex-shrink-0"
-            />
-            <label for="adjust-scores-checkbox" class="text-xs cursor-pointer select-none">
-              <span class="font-black text-slate-900 block">⚡ Opsional: Selaraskan nilai rata-rata secara wajar & bertahap (kisaran 78 - 81)</span>
-              <span class="text-slate-500 text-[11px] block mt-0.5 leading-relaxed">
-                Jika dicentang, nilai disesuaikan secara proporsional dan alami mengikuti peringkat (juara teratas berkisar 79–81, tanpa lonjakan ekstrem ke 90-an). Jika tidak dicentang, nilai rapor siswa tetap apa adanya (hanya nomor ranking yang berubah).
-              </span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Modal Footer -->
-        <div class="p-4 sm:p-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-slate-50/50">
-          <div class="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              @click="resetRanksToDefault"
-              :disabled="savingRanks"
-              class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-              title="Hapus pengaturan manual dan kembalikan urutan ranking murni 100% otomatis sesuai rata-rata rapor"
-            >
-              <RotateCcw class="w-3.5 h-3.5 text-slate-700" />
-              <span>Reset ke Peringkat Otomatis</span>
-            </button>
-            <button
-              type="button"
-              @click="autoSequenceRanks"
-              :disabled="savingRanks"
-              class="px-3 py-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-              title="Rapikan urutan nomor 1 sampai selesai tanpa ada nomor loncat"
-            >
-              <Sparkles class="w-3.5 h-3.5 text-amber-500" />
-              <span class="hidden sm:inline">Rapikan Nomor (1 s/d N)</span>
-            </button>
-
-            <!-- Cetak Peringkat Langsung dari Modal -->
-            <button
-              type="button"
-              @click="printRankingSheet('adjusted')"
-              class="px-3 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
-              title="Cetak lembar resmi daftar peringkat hasil atur ini"
-            >
-              <Printer class="w-3.5 h-3.5 text-amber-700" />
-              <span>Cetak Hasil Atur</span>
-            </button>
-          </div>
-
-          <div class="grid grid-cols-2 sm:flex items-center gap-2">
-            <button
-              type="button"
-              @click="showRankModal = false"
-              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer text-center"
-            >
-              Batal
-            </button>
-            <button
-              type="button"
-              @click="saveRanksSubmit"
-              :disabled="savingRanks || hasDuplicateRank"
-              class="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 text-center"
-            >
-              <Check class="w-4 h-4" />
-              <span>{{ savingRanks ? 'Menyimpan...' : 'Simpan Peringkat' }}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- MODAL ATUR PERINGKAT SISWA (MODULAR COMPONENT) -->
+    <AstsRankAdjustModal
+      :show="showRankModal"
+      :class-name="ledgerData?.class?.name || ''"
+      :semester="activeSemester"
+      :students="ledgerStudents"
+      :saving="savingRanks"
+      @close="showRankModal = false"
+      @save="onSaveRankAdjust"
+      @reset-default="resetRanksToDefault"
+    />
 
     <!-- MODAL CATATAN WALI KELAS & PRESENSI -->
     <div v-if="showNotesModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 no-print">
@@ -1310,229 +1050,20 @@
       </div>
     </div>
 
-    <!-- MODAL CATATAN WALI KELAS & PRESENSI 1 KELAS SEKALIGUS -->
-    <div v-if="showBulkNotesModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 no-print">
-      <div class="bg-white rounded-2xl sm:rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100 transform transition-all animate-in fade-in zoom-in-95 duration-200">
-        
-        <!-- Header Modal -->
-        <div class="px-5 py-4 sm:px-6 sm:py-4 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-purple-500/10 via-indigo-50 to-transparent flex-shrink-0">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-600/20">
-              <ClipboardList class="w-5 h-5" />
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h2 class="text-sm sm:text-base font-black text-slate-800 font-lexend uppercase tracking-wider">
-                  Catatan Wali Kelas & Presensi 1 Kelas
-                </h2>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800">
-                  {{ bulkNotesList.length }} Siswa
-                </span>
-              </div>
-              <p class="text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5">
-                Kelas {{ ledgerData?.class?.name }} • Semester {{ activeSemester === 'ganjil' ? 'Ganjil' : 'Genap' }} • TA {{ activeYear?.name || '-' }}
-              </p>
-            </div>
-          </div>
-          <button @click="showBulkNotesModal = false" class="w-8 h-8 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 cursor-pointer transition-colors">
-            <X class="w-4 h-4" />
-          </button>
-        </div>
-
-        <!-- Toolbar: Quick Bulk Template Motivasi & Search -->
-        <div class="p-3 sm:p-4 bg-slate-50/80 border-b border-slate-100 space-y-3 flex-shrink-0">
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            
-            <!-- Quick Template Selector & Bulk Apply -->
-            <div class="space-y-1.5 flex-1">
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] font-black uppercase tracking-wider text-purple-900 bg-purple-100/70 px-2 py-0.5 rounded">
-                  ⚡ Opsi Template Cepat
-                </span>
-                <span class="text-[11px] text-slate-500 font-medium">Pilih kalimat motivasi di bawah:</span>
-              </div>
-              
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                <button
-                  type="button"
-                  v-for="(tip, tIdx) in motivationTemplates"
-                  :key="'bulk-tip-'+tIdx"
-                  @click="selectedBulkTemplate = tip"
-                  :class="selectedBulkTemplate === tip ? 'bg-purple-600 text-white border-purple-600 shadow-xs' : 'bg-white text-slate-700 hover:bg-purple-50 border-slate-200'"
-                  class="px-2.5 py-1.5 rounded-xl border text-[11px] font-medium transition-all text-left cursor-pointer flex items-start gap-1.5"
-                >
-                  <span class="text-xs mt-0.5" :class="selectedBulkTemplate === tip ? 'text-amber-200' : 'text-purple-600'">💬</span>
-                  <span class="leading-tight truncate">{{ tip }}</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Action Buttons for Template Fill & Search -->
-            <div class="flex flex-col sm:flex-row lg:flex-col justify-end gap-2 lg:min-w-[240px]">
-              <div class="flex items-center gap-2">
-                <button
-                  type="button"
-                  @click="applyBulkTemplateToAll(true)"
-                  class="flex-1 px-3 py-1.5 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-xl text-[11px] transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
-                  title="Terapkan kalimat motivasi terpilih ke seluruh siswa di kelas ini"
-                >
-                  <Check class="w-3.5 h-3.5 text-purple-200" />
-                  <span>Terapkan ke Semua</span>
-                </button>
-
-                <button
-                  type="button"
-                  @click="applyBulkTemplateOnlyEmpty()"
-                  class="px-2.5 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold rounded-xl text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer"
-                  title="Hanya isi siswa yang catatannya masih kosong"
-                >
-                  <span>Hanya yg Kosong</span>
-                </button>
-              </div>
-
-              <!-- Search filter inside modal -->
-              <div class="relative">
-                <Search class="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
-                <input
-                  v-model="bulkNotesSearch"
-                  type="text"
-                  placeholder="Cari siswa dalam kelas..."
-                  class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Body: Scrollable Table of Students -->
-        <div class="overflow-y-auto flex-1 p-3 sm:p-5">
-          <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
-            <table class="w-full text-left text-xs border-collapse">
-              <thead class="bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-500 border-b border-slate-200 sticky top-0 z-10">
-                <tr>
-                  <th class="px-3 py-3 w-10 text-center">No</th>
-                  <th class="px-3 py-3 min-w-[160px] sm:min-w-[180px]">Nama Siswa</th>
-                  <th class="px-2 py-3 w-16 text-center" title="Sakit (S)">Sakit (S)</th>
-                  <th class="px-2 py-3 w-16 text-center" title="Izin (I)">Izin (I)</th>
-                  <th class="px-2 py-3 w-16 text-center" title="Alpa (A)">Alpa (A)</th>
-                  <th class="px-3 py-3 min-w-[260px]">Catatan Perkembangan & Motivasi</th>
-                  <th class="px-2 py-3 w-28 text-center">Pilihan Cepat</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr
-                  v-for="(st, idx) in filteredBulkNotesList"
-                  :key="'bulk-row-'+st.student_id"
-                  class="hover:bg-purple-50/30 transition-colors"
-                >
-                  <td class="px-3 py-2.5 text-center font-bold text-slate-400">{{ idx + 1 }}</td>
-                  <td class="px-3 py-2.5">
-                    <div class="font-bold text-slate-900 leading-tight">{{ st.full_name }}</div>
-                    <div class="text-[10px] text-slate-400 font-mono mt-0.5">NISN: {{ st.nisn || '-' }}</div>
-                  </td>
-                  
-                  <!-- Kehadiran: Sakit -->
-                  <td class="px-2 py-2 text-center">
-                    <input
-                      v-model.number="st.sick_count"
-                      type="number"
-                      min="0"
-                      class="w-14 text-center text-xs font-black text-slate-800 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg py-1 focus:ring-2 focus:ring-purple-400 font-mono"
-                    />
-                  </td>
-
-                  <!-- Kehadiran: Izin -->
-                  <td class="px-2 py-2 text-center">
-                    <input
-                      v-model.number="st.permission_count"
-                      type="number"
-                      min="0"
-                      class="w-14 text-center text-xs font-black text-slate-800 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg py-1 focus:ring-2 focus:ring-purple-400 font-mono"
-                    />
-                  </td>
-
-                  <!-- Kehadiran: Alpa -->
-                  <td class="px-2 py-2 text-center">
-                    <input
-                      v-model.number="st.unexcused_count"
-                      type="number"
-                      min="0"
-                      class="w-14 text-center text-xs font-black text-slate-800 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg py-1 focus:ring-2 focus:ring-purple-400 font-mono"
-                    />
-                  </td>
-
-                  <!-- Catatan Motivasi -->
-                  <td class="px-3 py-2">
-                    <textarea
-                      v-model="st.homeroom_notes"
-                      rows="2"
-                      placeholder="Ketik atau pilih kalimat motivasi..."
-                      class="w-full bg-slate-50 focus:bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-purple-400 focus:outline-none transition-all"
-                    ></textarea>
-                  </td>
-
-                  <!-- Tombol Pilihan Template Cepat Per Baris -->
-                  <td class="px-2 py-2 text-center align-middle">
-                    <div class="flex flex-col gap-1">
-                      <button
-                        type="button"
-                        @click="applyTemplateToSingleItem(st, selectedBulkTemplate)"
-                        class="px-2 py-1 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 font-bold rounded-lg text-[10px] transition-colors cursor-pointer text-center"
-                        title="Terapkan template yang sedang terpilih"
-                      >
-                        Pakai Terpilih
-                      </button>
-                      <button
-                        type="button"
-                        @click="st.homeroom_notes = ''"
-                        v-if="st.homeroom_notes"
-                        class="px-2 py-0.5 text-slate-400 hover:text-rose-600 text-[9px] font-medium transition-colors"
-                      >
-                        Kosongkan
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-
-                <tr v-if="filteredBulkNotesList.length === 0">
-                  <td colspan="7" class="px-4 py-8 text-center text-slate-400 font-medium">
-                    Tidak ditemukan siswa yang cocok dengan pencarian.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Footer Modal -->
-        <div class="px-5 py-3.5 sm:px-6 sm:py-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50/70 flex-shrink-0">
-          <div class="text-[11px] text-slate-500 font-medium flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-            <span>Total <strong>{{ bulkNotesList.length }}</strong> siswa akan diperbarui secara bersamaan.</span>
-          </div>
-
-          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <button
-              type="button"
-              @click="showBulkNotesModal = false"
-              class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-xs border border-slate-200 transition-colors cursor-pointer"
-            >
-              Batal
-            </button>
-            <button
-              type="button"
-              @click="saveBulkNotesSubmit"
-              :disabled="savingBulkNotes || !bulkNotesList.length"
-              class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
-            >
-              <Check v-if="!savingBulkNotes" class="w-4 h-4" />
-              <span>{{ savingBulkNotes ? 'Menyimpan Catatan...' : 'Simpan Catatan Semua Siswa' }}</span>
-            </button>
-          </div>
-        </div>
-
-      </div>
-    </div>
+    <!-- MODAL CATATAN WALI KELAS & PRESENSI 1 KELAS SEKALIGUS (MODULAR COMPONENT) -->
+    <AstsBulkNotesModal
+      :show="showBulkNotesModal"
+      :class-name="ledgerData?.class?.name || ''"
+      :semester="activeSemester"
+      :academic-year-name="activeYear?.name || '-'"
+      :students="ledgerStudents"
+      :templates="motivationTemplates"
+      :initial-search="bulkNotesInitialSearch"
+      :saving="savingBulkNotes"
+      @close="showBulkNotesModal = false"
+      @save="onSaveBulkNotes"
+      @toast-success="toast.success"
+    />
 
     <!-- MODAL PILIH SUMBER TARIK NILAI (NILAI JADI VS NILAI ASLI) -->
     <div v-if="showPullModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 no-print">
@@ -1884,6 +1415,8 @@ import { useToast } from '../composables/useToast';
 import AstsReportSheet from '../components/AstsReportSheet.vue';
 import AstsRankSheet from '../components/AstsRankSheet.vue';
 import AstsLedgerSheet from '../components/AstsLedgerSheet.vue';
+import AstsRankAdjustModal from '../components/AstsRankAdjustModal.vue';
+import AstsBulkNotesModal from '../components/AstsBulkNotesModal.vue';
 import {
   BookOpenCheck,
   GraduationCap,
@@ -1976,18 +1509,7 @@ const notesForm = reactive({
 // Modal Bulk Notes (1 Kelas Sekaligus)
 const showBulkNotesModal = ref(false);
 const savingBulkNotes = ref(false);
-const bulkNotesList = ref([]);
-const bulkNotesSearch = ref('');
-const selectedBulkTemplate = ref(motivationTemplates[0]);
-
-const filteredBulkNotesList = computed(() => {
-  const query = bulkNotesSearch.value.trim().toLowerCase();
-  if (!query) return bulkNotesList.value;
-  return bulkNotesList.value.filter(st =>
-    st.full_name?.toLowerCase().includes(query) ||
-    st.nisn?.toLowerCase().includes(query)
-  );
-});
+const bulkNotesInitialSearch = ref('');
 
 // Modal Pull Scores
 const showPullModal = ref(false);
@@ -2031,8 +1553,6 @@ const currentTitimangsaSummary = computed(() => {
 
 // Modal Rank Adjuster
 const showRankModal = ref(false);
-const adjustScoresWithRank = ref(false);
-const rankEditList = ref([]);
 
 const subjectsList = computed(() => ledgerData.value?.subjects || []);
 const subjectStatuses = computed(() => ledgerData.value?.subject_statuses || []);
@@ -2266,101 +1786,14 @@ async function executeResetScores() {
 }
 
 function openRankModal() {
-  // Populate rankEditList ordered by current rank / average
-  const sorted = [...ledgerStudents.value].sort((a, b) => {
-    const rankA = typeof a.rank === 'number' ? a.rank : 9999;
-    const rankB = typeof b.rank === 'number' ? b.rank : 9999;
-    if (rankA !== rankB) return rankA - rankB;
-    const avgA = Number(a.average_score) || 0;
-    const avgB = Number(b.average_score) || 0;
-    if (avgB !== avgA) return avgB - avgA;
-    return (a.full_name || '').localeCompare(b.full_name || '');
-  });
-
-  // Always ensure ranks are sequential 1 to N (1, 2, 3... total siswa)
-  rankEditList.value = sorted.map((st, idx) => ({
-    student_id: st.student_id,
-    full_name: st.full_name,
-    nisn: st.nisn,
-    total_score: st.total_score || 0,
-    average_score: st.average_score,
-    calculated_rank: st.calculated_rank || (idx + 1),
-    rank: idx + 1,
-  }));
-
-  adjustScoresWithRank.value = false;
+  if (!selectedClassId.value || !ledgerStudents.value.length) {
+    toast.error('Silakan pilih kelas yang memiliki data siswa terlebih dahulu.');
+    return;
+  }
   showRankModal.value = true;
 }
 
-// Move student up in the rank list (swaps position and re-indexes sequentially)
-function moveStudentRank(index, direction) {
-  const targetIndex = index + direction;
-  if (targetIndex < 0 || targetIndex >= rankEditList.value.length) return;
-
-  const currentList = [...rankEditList.value];
-  const itemToMove = currentList[index];
-  currentList.splice(index, 1);
-  currentList.splice(targetIndex, 0, itemToMove);
-
-  // Auto-assign clean sequential ranks (1, 2, 3...) so duplicates are impossible
-  currentList.forEach((item, idx) => {
-    item.rank = idx + 1;
-  });
-
-  rankEditList.value = currentList;
-}
-
-// Check for duplicate ranks
-const duplicateRanks = computed(() => {
-  const counts = {};
-  const duplicates = new Set();
-  rankEditList.value.forEach(item => {
-    const r = parseInt(item.rank);
-    if (!isNaN(r)) {
-      counts[r] = (counts[r] || 0) + 1;
-      if (counts[r] > 1) {
-        duplicates.add(r);
-      }
-    }
-  });
-  return Array.from(duplicates);
-});
-
-const hasDuplicateRank = computed(() => duplicateRanks.value.length > 0);
-
-// Check if any student with higher rank (smaller number) has lower average than a student below them
-const hasInvertedRank = computed(() => {
-  if (rankEditList.value.length < 2) return false;
-  // Sort list by assigned rank
-  const sorted = [...rankEditList.value].sort((a, b) => (parseInt(a.rank) || 9999) - (parseInt(b.rank) || 9999));
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const avgCurrent = Number(sorted[i].average_score) || 0;
-    const avgNext = Number(sorted[i + 1].average_score) || 0;
-    if (avgCurrent < avgNext) {
-      return true;
-    }
-  }
-  return false;
-});
-
-// Auto re-sequence ranks sequentially based on current list order
-function autoSequenceRanks() {
-  rankEditList.value.forEach((item, idx) => {
-    item.rank = idx + 1;
-  });
-  toast.success('Peringkat berhasil dirapikan berurutan 1 sampai ' + rankEditList.value.length);
-}
-
-// Sort list according to the manual rank input values
-function sortListByRankInputs() {
-  rankEditList.value = [...rankEditList.value].sort((a, b) => {
-    const rA = parseInt(a.rank) || 9999;
-    const rB = parseInt(b.rank) || 9999;
-    return rA - rB;
-  });
-}
-
-async function saveRanksSubmit() {
+async function onSaveRankAdjust({ ranks, adjust_scores }) {
   if (!selectedClassId.value) return;
   savingRanks.value = true;
   try {
@@ -2368,11 +1801,8 @@ async function saveRanksSubmit() {
       class_id: selectedClassId.value,
       semester: activeSemester.value,
       academic_year_id: activeYear.value?.id,
-      ranks: rankEditList.value.map(item => ({
-        student_id: item.student_id,
-        rank: parseInt(item.rank) || 1,
-      })),
-      adjust_scores: adjustScoresWithRank.value,
+      ranks,
+      adjust_scores,
     };
 
     const res = await api.post('/teacher/asts-reports/adjust-ranks', payload);
@@ -2433,10 +1863,7 @@ function openNotesModalForCurrentStudent() {
   if (!selectedStudentId.value && !singleReportData.value) return;
   const sId = selectedStudentId.value || singleReportData.value?.student?.id;
   const found = ledgerStudents.value.find(s => s.student_id == sId);
-  openBulkNotesModal();
-  if (found?.full_name) {
-    bulkNotesSearch.value = found.full_name;
-  }
+  openBulkNotesModal(found?.full_name || '');
 }
 
 async function saveNotesSubmit() {
@@ -2456,61 +1883,16 @@ async function saveNotesSubmit() {
   }
 }
 
-function openBulkNotesModal() {
+function openBulkNotesModal(initialSearchText = '') {
   if (!selectedClassId.value || !ledgerStudents.value.length) {
     toast.error('Silakan pilih kelas yang memiliki data siswa terlebih dahulu.');
     return;
   }
-
-  // Clone current students into editable bulk list
-  bulkNotesList.value = ledgerStudents.value.map(st => ({
-    student_id: st.student_id,
-    full_name: st.full_name,
-    nisn: st.nisn,
-    gender: st.gender,
-    sick_count: st.sick_count !== undefined ? Number(st.sick_count) : (st.attendance?.sick || 0),
-    permission_count: st.permission_count !== undefined ? Number(st.permission_count) : (st.attendance?.permission || 0),
-    unexcused_count: st.unexcused_count !== undefined ? Number(st.unexcused_count) : (st.attendance?.unexcused || 0),
-    homeroom_notes: st.homeroom_notes || '',
-  }));
-
-  bulkNotesSearch.value = '';
+  bulkNotesInitialSearch.value = initialSearchText;
   showBulkNotesModal.value = true;
 }
 
-function applyBulkTemplateToAll(overrideExisting = true) {
-  if (!selectedBulkTemplate.value) return;
-  bulkNotesList.value.forEach(st => {
-    if (overrideExisting || !st.homeroom_notes) {
-      st.homeroom_notes = selectedBulkTemplate.value;
-    }
-  });
-  toast.success('Kalimat motivasi berhasil diterapkan ke seluruh siswa!');
-}
-
-function applyBulkTemplateOnlyEmpty() {
-  let count = 0;
-  bulkNotesList.value.forEach(st => {
-    if (!st.homeroom_notes || !st.homeroom_notes.trim()) {
-      st.homeroom_notes = selectedBulkTemplate.value;
-      count++;
-    }
-  });
-  toast.success(`Kalimat motivasi diterapkan ke ${count} siswa yang catatannya masih kosong.`);
-}
-
-function clearAllBulkNotes() {
-  bulkNotesList.value.forEach(st => {
-    st.homeroom_notes = '';
-  });
-  toast.info('Catatan seluruh siswa telah dikosongkan.');
-}
-
-function applyTemplateToSingleItem(item, templateText) {
-  item.homeroom_notes = templateText;
-}
-
-async function saveBulkNotesSubmit() {
+async function onSaveBulkNotes(items) {
   if (!selectedClassId.value) return;
   savingBulkNotes.value = true;
   try {
@@ -2518,13 +1900,7 @@ async function saveBulkNotesSubmit() {
       class_id: selectedClassId.value,
       semester: activeSemester.value,
       academic_year_id: activeYear.value?.id,
-      items: bulkNotesList.value.map(st => ({
-        student_id: st.student_id,
-        sick_count: Number(st.sick_count) || 0,
-        permission_count: Number(st.permission_count) || 0,
-        unexcused_count: Number(st.unexcused_count) || 0,
-        homeroom_notes: st.homeroom_notes || '',
-      })),
+      items,
     };
 
     const res = await api.post('/teacher/asts-reports/save-bulk-notes', payload);
