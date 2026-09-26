@@ -24,40 +24,40 @@
       </div>
 
       <!-- 2. Main Headline with Animated Shimmer Gradient Typography -->
-      <div class="space-y-4 max-w-4xl mx-auto relative">
+      <div class="space-y-3.5 sm:space-y-4 max-w-4xl mx-auto relative px-2">
         
         <!-- Subtle Glow Layer Behind Headline -->
         <div class="absolute inset-0 blur-2xl bg-emerald-500/10 pointer-events-none rounded-full"></div>
 
-        <h1 class="relative text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.12] sm:leading-[1.15]">
-          <span class="block text-slate-100 font-extrabold uppercase tracking-tight text-xl sm:text-3xl lg:text-4xl text-slate-200/90 mb-1">
+        <h1 class="relative text-2xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.18] sm:leading-[1.15]">
+          <span class="block text-slate-100 font-extrabold uppercase tracking-tight text-base sm:text-2xl lg:text-3xl text-slate-200/90 mb-1">
             SISTEM INFORMASI & MANAJEMEN DIGITAL
           </span>
-          <span class="shimmer-text bg-gradient-to-r from-emerald-300 via-teal-100 to-emerald-400 bg-clip-text text-transparent inline-block">
+          <span class="shimmer-text bg-gradient-to-r from-emerald-300 via-teal-100 to-emerald-400 bg-clip-text text-transparent inline-block font-lexend">
             {{ settings.app_name || 'MTs AL - HASANAH' }}
           </span>
         </h1>
 
         <!-- Morphing Interactive Subtitle with Animated Rotating Highlights -->
-        <div class="flex items-center justify-center min-h-[32px] pt-1">
+        <div class="flex items-center justify-center min-h-[28px] sm:min-h-[32px] pt-0.5">
           <Transition name="slide-fade" mode="out-in">
-            <p :key="activeHighlightIndex" class="text-sm sm:text-base text-emerald-200/90 font-medium tracking-wide flex items-center gap-2">
-              <Sparkles class="w-4 h-4 text-emerald-400 flex-shrink-0 animate-spin-slow" />
+            <p :key="activeHighlightIndex" class="text-xs sm:text-base text-emerald-200/90 font-medium tracking-wide flex items-center gap-2">
+              <Sparkles class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0 animate-spin-slow" />
               <span>{{ rotatingFeatures[activeHighlightIndex] }}</span>
             </p>
           </Transition>
         </div>
 
-        <p class="text-xs sm:text-sm text-emerald-100/70 max-w-xl mx-auto font-normal leading-relaxed">
+        <p class="text-xs sm:text-sm text-emerald-100/80 max-w-xl mx-auto font-normal leading-relaxed">
           {{ settings.app_tagline || 'Pusat layanan akademik terpadu, presensi GPS realtime, dan pendaftaran siswa baru online.' }}
         </p>
       </div>
 
       <!-- 3. Minimalist High-Interaction Action Buttons -->
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 pt-2 px-3 sm:px-0">
         <RouterLink
           to="/ppdb"
-          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl text-xs font-black bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg shadow-amber-400/25 transition-all duration-200 hover:-translate-y-0.5 active:scale-95 cursor-pointer"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3 sm:py-3.5 rounded-2xl text-xs sm:text-xs font-black bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-slate-950 shadow-lg shadow-amber-400/25 transition-all duration-200 hover:-translate-y-0.5 active:scale-95 cursor-pointer"
         >
           <UserPlus class="w-4 h-4 text-slate-950" />
           <span>Daftar Siswa Baru (PPDB)</span>
@@ -66,7 +66,7 @@
 
         <a
           href="#profil"
-          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl text-xs font-semibold bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 active:scale-95 cursor-pointer"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3 sm:py-3.5 rounded-2xl text-xs font-semibold bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 active:scale-95 cursor-pointer"
         >
           <span>Jelajahi Profil Madrasah</span>
           <ChevronRight class="w-4 h-4 text-emerald-400" />

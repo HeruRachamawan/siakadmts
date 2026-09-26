@@ -96,8 +96,29 @@
       </Transition>
     </nav>
 
+    <!-- Breaking News / Running Announcement Bar -->
+    <div class="fixed top-16 sm:top-20 inset-x-0 z-40 bg-emerald-950/95 border-b border-emerald-800/80 backdrop-blur-md text-emerald-200 py-1.5 px-4 text-xs overflow-hidden">
+      <div class="max-w-7xl mx-auto flex items-center gap-3">
+        <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-600/30 border border-emerald-500/50 text-[10px] font-black text-emerald-300 uppercase tracking-wider flex-shrink-0 animate-pulse">
+          <Sparkles class="w-3 h-3 text-amber-300" />
+          <span>Warta Terkini</span>
+        </div>
+        <div class="overflow-hidden whitespace-nowrap w-full">
+          <div class="inline-block animate-marquee font-medium text-emerald-100 text-[11px] sm:text-xs">
+            <span class="mr-8">📢 Penerimaan Peserta Didik Baru (PPDB Online) Tahun Ajaran 2026/2027 telah dibuka! Klik menu PPDB untuk mendaftar secara online.</span>
+            <span class="mr-8">&bull;</span>
+            <span class="mr-8">✨ Layanan Rapor Digital & Leger Nilai ASTS Semester kini terintegrasi langsung dengan modul koreksi ujian CBT.</span>
+            <span class="mr-8">&bull;</span>
+            <span>💬 Butuh bantuan atau informasi pendaftaran? Hubungi layanan WhatsApp resmi kami di pojok kanan bawah.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 1. Hero Section (Deep Emerald Dark Luxury with Animated Stats) -->
-    <EtherealBeamsHero :settings="settings" :stats="stats" />
+    <div class="pt-6 sm:pt-7">
+      <EtherealBeamsHero :settings="settings" :stats="stats" />
+    </div>
 
     <!-- 2. Profil & Visi Misi Section (Pristine White Slate) -->
     <section id="profil" class="py-20 relative bg-slate-50/60 border-t border-slate-200/80 overflow-hidden font-inter">
@@ -662,16 +683,23 @@
 
     <!-- Interactive Floating Quick Actions (WhatsApp & Scroll Top) -->
     <div class="fixed bottom-6 right-6 z-40 flex flex-col items-center gap-3">
-      <!-- WhatsApp Floating Action -->
+      <!-- WhatsApp Floating Action with Interactive Helpdesk Pill -->
       <a
         v-if="settings.school_phone"
         :href="`https://wa.me/${cleanPhoneForWa(settings.school_phone)}?text=Halo%20Admin%20SIAKAD%20MTs%20Al-Hasanah,%20saya%20ingin%20bertanya%20informasi.`"
         target="_blank"
         rel="noopener noreferrer"
-        class="w-12 h-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-xl shadow-emerald-600/40 hover:scale-110 active:scale-95 transition-all duration-200 group cursor-pointer"
-        title="Hubungi Kami via WhatsApp"
+        class="flex items-center gap-2 pl-3 pr-4 py-2.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-2xl shadow-emerald-600/50 hover:scale-105 active:scale-95 transition-all duration-300 group cursor-pointer border border-emerald-400/40"
+        title="Hubungi Layanan Informasi via WhatsApp"
       >
-        <Phone class="w-5 h-5" />
+        <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 relative">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-60"></span>
+          <MessageCircle class="w-4 h-4 text-white relative z-10" />
+        </div>
+        <div class="flex flex-col text-left">
+          <span class="text-[9px] font-bold text-emerald-200 uppercase tracking-wider leading-none">Bantuan Cepat</span>
+          <span class="text-xs font-black text-white leading-tight font-lexend">Chat WhatsApp</span>
+        </div>
       </a>
 
       <!-- Back to Top Button -->
@@ -873,7 +901,8 @@ import {
   GraduationCap,
   Award,
   Globe,
-  UserPlus
+  UserPlus,
+  MessageCircle
 } from 'lucide-vue-next';
 
 // Logo fallback state
@@ -1202,5 +1231,20 @@ onUnmounted(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 35s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
 }
 </style>
