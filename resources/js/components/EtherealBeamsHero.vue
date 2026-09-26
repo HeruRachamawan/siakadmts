@@ -1,136 +1,146 @@
 <template>
-  <div class="relative w-full bg-gradient-to-b from-[#021811] via-[#04281e] to-[#02150f] border-b border-emerald-900/60 pt-24 pb-16 sm:pt-32 sm:pb-24 overflow-hidden font-outfit text-white">
+  <div class="relative w-full bg-[#032218] border-b border-emerald-900/60 pt-24 pb-14 sm:pt-32 sm:pb-20 overflow-hidden font-inter text-white">
     
-    <!-- Subtle Modern Dot Matrix Background -->
-    <div class="absolute inset-0 bg-[radial-gradient(rgba(16,185,129,0.15)_1px,transparent_1px)] [background-size:24px_24px] opacity-60 pointer-events-none"></div>
+    <!-- Subtle Elegant Grid Pattern (Warm & Academic, Not Sci-Fi) -->
+    <div class="absolute inset-0 bg-[linear-gradient(to_right,#064e3b15_1px,transparent_1px),linear-gradient(to_bottom,#064e3b15_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-70"></div>
     
-    <!-- Ambient Floating Aurora Orbs (Soft Luxury Emerald & Cyan Glow) -->
-    <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-emerald-500/15 rounded-full blur-[120px] pointer-events-none animate-pulse-slow"></div>
-    <div class="absolute top-1/4 left-10 w-80 h-80 bg-teal-400/10 rounded-full blur-3xl pointer-events-none animate-float-slow"></div>
-    <div class="absolute top-1/3 right-10 w-96 h-96 bg-emerald-600/12 rounded-full blur-3xl pointer-events-none animate-float-reverse"></div>
+    <!-- Soft Organic Gradient Wash -->
+    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-600/10 rounded-full blur-[140px] pointer-events-none"></div>
+    <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-teal-500/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-    <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-7">
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
-      <!-- 1. Top Modern Pill Badge (Interactive Pulsing Status) -->
-      <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-700/50 text-emerald-200 text-xs font-semibold shadow-lg shadow-emerald-950/60 backdrop-blur-md transition-all hover:bg-emerald-900/80 hover:border-emerald-500 hover:scale-105 duration-300">
-        <span class="flex h-2 w-2 relative">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-        </span>
-        <span class="tracking-wide text-emerald-100 uppercase text-[11px]">{{ accreditationText }}</span>
-        <span class="text-emerald-600">&bull;</span>
-        <span class="text-emerald-300 font-normal">Tahun Ajaran 2026/2027</span>
-        <ArrowRight class="w-3.5 h-3.5 text-emerald-400" />
-      </div>
-
-      <!-- 2. Main Headline with Animated Shimmer Gradient Typography -->
-      <div class="space-y-3.5 sm:space-y-4 max-w-4xl mx-auto relative px-2">
+      <!-- Split Layout: Left Content & Right Academy Card -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
         
-        <!-- Subtle Glow Layer Behind Headline -->
-        <div class="absolute inset-0 blur-2xl bg-emerald-500/10 pointer-events-none rounded-full"></div>
+        <!-- LEFT COLUMN: Authentic School Proposition & CTA -->
+        <div class="lg:col-span-7 text-left space-y-6">
+          
+          <!-- Official Accreditation & Academic Year Badge -->
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-900/70 border border-emerald-700/60 text-emerald-200 text-xs font-semibold shadow-xs">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="tracking-wider uppercase text-[11px] font-bold text-white">{{ accreditationText }}</span>
+            <span class="text-emerald-500">&bull;</span>
+            <span class="text-emerald-300 font-medium">T.A. 2026/2027</span>
+          </div>
 
-        <h1 class="relative text-2xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.18] sm:leading-[1.15]">
-          <span class="block text-slate-100 font-extrabold uppercase tracking-tight text-base sm:text-2xl lg:text-3xl text-slate-200/90 mb-1">
-            SISTEM INFORMASI & MANAJEMEN DIGITAL
-          </span>
-          <span class="shimmer-text bg-gradient-to-r from-emerald-300 via-teal-100 to-emerald-400 bg-clip-text text-transparent inline-block font-lexend">
-            {{ settings.app_name || 'MTs AL - HASANAH' }}
-          </span>
-        </h1>
-
-        <!-- Morphing Interactive Subtitle with Animated Rotating Highlights -->
-        <div class="flex items-center justify-center min-h-[28px] sm:min-h-[32px] pt-0.5">
-          <Transition name="slide-fade" mode="out-in">
-            <p :key="activeHighlightIndex" class="text-xs sm:text-base text-emerald-200/90 font-medium tracking-wide flex items-center gap-2">
-              <Sparkles class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0 animate-spin-slow" />
-              <span>{{ rotatingFeatures[activeHighlightIndex] }}</span>
+          <!-- Main Human-Centered Headline -->
+          <div class="space-y-3">
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.18] font-lexend">
+              Mendidik Generasi Qur'ani, <br class="hidden sm:inline" />
+              <span class="text-emerald-300 font-extrabold">Berakhlak Mulia & Unggul</span> di Era Digital.
+            </h1>
+            <p class="text-xs sm:text-base text-emerald-100/80 max-w-2xl font-normal leading-relaxed">
+              Selamat datang di portal resmi <strong>{{ settings.app_name || 'MTs Al - Hasanah' }}</strong>. Lembaga pendidikan madrasah terpadu yang memadukan penguatan karakter keislaman, tahfidzul qur'an, dan sains teknologi modern.
             </p>
-          </Transition>
+          </div>
+
+          <!-- 3 Key Value Pills (Human & Tangible) -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+            <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-800/60 text-emerald-100 text-xs">
+              <BookOpen class="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <span class="font-medium">Tahfidz & Bimbingan Ibadah</span>
+            </div>
+            <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-800/60 text-emerald-100 text-xs">
+              <GraduationCap class="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <span class="font-medium">Kurikulum Merdeka & Kemenag</span>
+            </div>
+            <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-800/60 text-emerald-100 text-xs">
+              <Sparkles class="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <span class="font-medium">Ujian CBT & Rapor Digital</span>
+            </div>
+          </div>
+
+          <!-- Action Buttons (Clear & Purposeful) -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+            <RouterLink
+              to="/ppdb"
+              class="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl text-xs sm:text-sm font-black bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-slate-950 shadow-md shadow-amber-400/20 transition-all duration-200 active:scale-95 cursor-pointer"
+            >
+              <UserPlus class="w-4 h-4 text-slate-950" />
+              <span>Daftar Siswa Baru (PPDB Online)</span>
+              <ArrowRight class="w-4 h-4 text-slate-950" />
+            </RouterLink>
+
+            <a
+              href="#profil"
+              class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-900/60 hover:bg-emerald-900/90 text-white border border-emerald-700/60 transition-all duration-200 active:scale-95 cursor-pointer"
+            >
+              <span>Profil & Visi Misi</span>
+              <ChevronRight class="w-4 h-4 text-emerald-300" />
+            </a>
+          </div>
+
         </div>
 
-        <p class="text-xs sm:text-sm text-emerald-100/80 max-w-xl mx-auto font-normal leading-relaxed">
-          {{ settings.app_tagline || 'Pusat layanan akademik terpadu, presensi GPS realtime, dan pendaftaran siswa baru online.' }}
-        </p>
-      </div>
+        <!-- RIGHT COLUMN: Prestigious Academic Card with Real Metrics -->
+        <div class="lg:col-span-5">
+          <div class="bg-gradient-to-b from-emerald-900/40 to-emerald-950/80 rounded-3xl border border-emerald-700/60 p-5 sm:p-7 shadow-2xl relative space-y-6">
+            
+            <!-- Card Header: Madrasah Identity -->
+            <div class="flex items-center justify-between border-b border-emerald-800/80 pb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-white p-2 flex items-center justify-center shadow-md">
+                  <img v-if="settings.app_logo" :src="getStorageUrl(settings.app_logo)" class="w-full h-full object-contain" alt="Logo Madrasah" />
+                  <School v-else class="w-6 h-6 text-emerald-800" />
+                </div>
+                <div>
+                  <h3 class="text-sm font-black text-white uppercase tracking-wider font-lexend">{{ settings.app_name || 'MTs Al - Hasanah' }}</h3>
+                  <p class="text-[11px] text-emerald-300 font-medium">NSM / NPSN Resmi Kemenag</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase">
+                Aktif
+              </span>
+            </div>
 
-      <!-- 3. Minimalist High-Interaction Action Buttons -->
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 pt-2 px-3 sm:px-0">
-        <RouterLink
-          to="/ppdb"
-          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3 sm:py-3.5 rounded-2xl text-xs sm:text-xs font-black bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-slate-950 shadow-lg shadow-amber-400/25 transition-all duration-200 hover:-translate-y-0.5 active:scale-95 cursor-pointer"
-        >
-          <UserPlus class="w-4 h-4 text-slate-950" />
-          <span>Daftar Siswa Baru (PPDB)</span>
-          <ArrowRight class="w-4 h-4 text-slate-950" />
-        </RouterLink>
+            <!-- Stats Showcase in Clean Academic Grid -->
+            <div class="grid grid-cols-3 gap-3">
+              <div class="bg-emerald-950/80 rounded-2xl border border-emerald-800/60 p-3.5 text-center">
+                <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Siswa Aktif</p>
+                <p class="text-2xl font-black text-white font-lexend mt-1">{{ animatedStats.students }}</p>
+                <p class="text-[9px] text-emerald-300/60 mt-0.5">Peserta Didik</p>
+              </div>
 
-        <a
-          href="#profil"
-          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3 sm:py-3.5 rounded-2xl text-xs font-semibold bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 active:scale-95 cursor-pointer"
-        >
-          <span>Jelajahi Profil Madrasah</span>
-          <ChevronRight class="w-4 h-4 text-emerald-400" />
-        </a>
-      </div>
+              <div class="bg-emerald-950/80 rounded-2xl border border-emerald-800/60 p-3.5 text-center">
+                <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Dewan Guru</p>
+                <p class="text-2xl font-black text-white font-lexend mt-1">{{ animatedStats.teachers }}</p>
+                <p class="text-[9px] text-emerald-300/60 mt-0.5">Pendidik & Staf</p>
+              </div>
 
-      <!-- 4. Interactive Minimalist Glass Bento Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-6 max-w-3xl mx-auto">
-        
-        <!-- Card 1: Siswa -->
-        <div class="bg-emerald-950/60 backdrop-blur-xl border border-emerald-800/50 hover:border-emerald-400 rounded-2xl p-4 sm:p-5 text-left flex items-center justify-between group hover:shadow-xl hover:shadow-emerald-950/60 transition-all duration-300 cursor-pointer">
-          <div class="space-y-0.5">
-            <p class="text-[11px] font-semibold text-emerald-300/80 uppercase tracking-wider">Siswa Terdaftar</p>
-            <p class="text-2xl sm:text-3xl font-black tracking-tight text-white group-hover:text-emerald-300 transition-colors">
-              {{ animatedStats.students }}
-            </p>
-            <p class="text-[10px] text-emerald-200/60 font-normal">Siswa aktif terdaftar</p>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-emerald-900/60 text-emerald-300 border border-emerald-700/60 flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-inner">
-            <Users class="w-4 h-4" />
-          </div>
-        </div>
+              <div class="bg-emerald-950/80 rounded-2xl border border-emerald-800/60 p-3.5 text-center">
+                <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Rombel</p>
+                <p class="text-2xl font-black text-white font-lexend mt-1">{{ animatedStats.classes }}</p>
+                <p class="text-[9px] text-emerald-300/60 mt-0.5">Ruang Kelas</p>
+              </div>
+            </div>
 
-        <!-- Card 2: Guru -->
-        <div class="bg-emerald-950/60 backdrop-blur-xl border border-emerald-800/50 hover:border-emerald-400 rounded-2xl p-4 sm:p-5 text-left flex items-center justify-between group hover:shadow-xl hover:shadow-emerald-950/60 transition-all duration-300 cursor-pointer">
-          <div class="space-y-0.5">
-            <p class="text-[11px] font-semibold text-emerald-300/80 uppercase tracking-wider">Dewan Guru</p>
-            <p class="text-2xl sm:text-3xl font-black tracking-tight text-white group-hover:text-emerald-300 transition-colors">
-              {{ animatedStats.teachers }}
-            </p>
-            <p class="text-[10px] text-emerald-200/60 font-normal">Pendidik & staf</p>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-emerald-900/60 text-emerald-300 border border-emerald-700/60 flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-inner">
-            <UserCheck class="w-4 h-4" />
-          </div>
-        </div>
+            <!-- Operational & Location Detail -->
+            <div class="space-y-2.5 text-xs text-emerald-100/90 bg-emerald-950/60 rounded-2xl border border-emerald-800/60 p-4">
+              <div class="flex items-start gap-2.5">
+                <MapPin class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                <span class="leading-relaxed">{{ currentAddress }}</span>
+              </div>
+              <div class="flex items-center gap-2.5 pt-1 border-t border-emerald-900/80">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="font-medium text-[11px] text-emerald-200">KBM Reguler: Senin &ndash; Sabtu | Pukul 07.00 &ndash; 15.00 WIB</span>
+              </div>
+            </div>
 
-        <!-- Card 3: Kelas -->
-        <div class="bg-emerald-950/60 backdrop-blur-xl border border-emerald-800/50 hover:border-emerald-400 rounded-2xl p-4 sm:p-5 text-left flex items-center justify-between group hover:shadow-xl hover:shadow-emerald-950/60 transition-all duration-300 cursor-pointer">
-          <div class="space-y-0.5">
-            <p class="text-[11px] font-semibold text-emerald-300/80 uppercase tracking-wider">Rombel Kelas</p>
-            <p class="text-2xl sm:text-3xl font-black tracking-tight text-white group-hover:text-emerald-300 transition-colors">
-              {{ animatedStats.classes }}
-            </p>
-            <p class="text-[10px] text-emerald-200/60 font-normal">Ruang belajar aktif</p>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-emerald-900/60 text-emerald-300 border border-emerald-700/60 flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-inner">
-            <Building2 class="w-4 h-4" />
+            <!-- Portal Login Quick Access for Teachers & Students -->
+            <div class="pt-1">
+              <RouterLink
+                to="/login"
+                class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-700/80 hover:bg-emerald-600 text-white font-bold text-xs transition-colors shadow-sm cursor-pointer"
+              >
+                <span>Masuk ke Portal Akademik (Siswa & Guru)</span>
+                <ArrowRight class="w-3.5 h-3.5" />
+              </RouterLink>
+            </div>
+
           </div>
         </div>
 
-      </div>
-
-      <!-- 5. Running Marquee Address Line -->
-      <div class="max-w-4xl mx-auto mt-6 border border-emerald-800/60 bg-emerald-950/70 backdrop-blur-md rounded-full py-2 px-4 flex items-center gap-3 overflow-hidden shadow-lg shadow-emerald-950/40">
-        <div class="flex items-center gap-1 px-3 py-0.5 bg-emerald-600 text-white rounded-full text-[10px] font-bold flex-shrink-0 shadow-2xs">
-          <MapPin class="w-3 h-3 text-emerald-200" />
-          <span>Lokasi</span>
-        </div>
-        <div class="overflow-hidden whitespace-nowrap w-full relative">
-          <div class="inline-block animate-marquee text-emerald-100/90 text-xs font-medium tracking-wide">
-            {{ currentAddress }} &nbsp;&bull;&nbsp; {{ currentAddress }}
-          </div>
-        </div>
       </div>
 
     </div>
@@ -138,15 +148,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted, onUnmounted, computed } from 'vue';
-import { RouterLink } from 'vue-router';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 import {
+  Users,
+  Award,
+  BookOpen,
   ArrowRight,
   ChevronRight,
-  LogIn,
-  Users,
-  UserCheck,
-  Building2,
+  School,
+  GraduationCap,
   MapPin,
   Sparkles,
   UserPlus
@@ -163,15 +173,6 @@ const props = defineProps({
   }
 });
 
-const rotatingFeatures = [
-  'Presensi Realtime GPS & Pemindai QR Code Guru',
-  'Penerimaan Peserta Didik Baru (PPDB) Online',
-  'Transkrip & Rekap Nilai Akademik Terpadu',
-  'Portal Pembelajaran Interaktif & Mutu Madrasah'
-];
-const activeHighlightIndex = ref(0);
-let highlightTimer = null;
-
 const accreditationText = computed(() => {
   const acc = props.settings.school_accreditation || 'Terakreditasi A';
   if (acc.toLowerCase().startsWith('akreditasi')) {
@@ -183,6 +184,15 @@ const accreditationText = computed(() => {
 const currentAddress = computed(() => {
   return props.settings.school_address || 'Jl. Raya Ciomas No. 123, Kabupaten Bogor, Jawa Barat 16610';
 });
+
+function getStorageUrl(path) {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+    return path;
+  }
+  const cleanPath = path.replace(/^\/?storage\//, '').replace(/^\//, '');
+  return `/storage/${cleanPath}`;
+}
 
 const animatedStats = reactive({
   students: 0,
@@ -223,13 +233,6 @@ function runCountUp() {
 
 onMounted(() => {
   runCountUp();
-  highlightTimer = setInterval(() => {
-    activeHighlightIndex.value = (activeHighlightIndex.value + 1) % rotatingFeatures.length;
-  }, 3200);
-});
-
-onUnmounted(() => {
-  if (highlightTimer) clearInterval(highlightTimer);
 });
 
 watch(
@@ -240,79 +243,3 @@ watch(
   { deep: true }
 );
 </script>
-
-<style scoped>
-@keyframes marquee {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(-50%); }
-}
-
-.animate-marquee {
-  display: inline-block;
-  white-space: nowrap;
-  animation: marquee 25s linear infinite;
-}
-.animate-marquee:hover {
-  animation-play-state: paused;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.shimmer-text {
-  background-size: 200% auto;
-  animation: shimmer 5s linear infinite;
-}
-
-@keyframes spinSlow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin-slow {
-  animation: spinSlow 12s linear infinite;
-}
-
-@keyframes pulseSlow {
-  0%, 100% { opacity: 0.2; transform: scale(1); }
-  50% { opacity: 0.35; transform: scale(1.08); }
-}
-
-.animate-pulse-slow {
-  animation: pulseSlow 6s ease-in-out infinite;
-}
-
-@keyframes floatSlow {
-  0%, 100% { transform: translateY(0px) scale(1); }
-  50% { transform: translateY(-12px) scale(1.03); }
-}
-
-@keyframes floatReverse {
-  0%, 100% { transform: translateY(0px) scale(1); }
-  50% { transform: translateY(12px) scale(0.97); }
-}
-
-.animate-float-slow {
-  animation: floatSlow 8s ease-in-out infinite;
-}
-.animate-float-reverse {
-  animation: floatReverse 10s ease-in-out infinite;
-}
-
-.slide-fade-enter-active {
-  transition: all 0.35s ease-out;
-}
-.slide-fade-leave-active {
-  transition: all 0.25s cubic-bezier(1, 0.5, 0.8, 1);
-}
-.slide-fade-enter-from {
-  transform: translateY(10px);
-  opacity: 0;
-}
-.slide-fade-leave-to {
-  transform: translateY(-10px);
-  opacity: 0;
-}
-</style>

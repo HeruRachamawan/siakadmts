@@ -42,8 +42,17 @@
             <a href="#galeri" class="nav-item" :class="scrolled ? 'nav-scrolled' : 'nav-top'">Galeri</a>
           </div>
 
-          <!-- Right side: Login & Mobile Toggle -->
-          <div class="flex items-center gap-3">
+          <!-- Right side: PPDB, Login & Mobile Toggle -->
+          <div class="flex items-center gap-2.5">
+            <RouterLink
+              to="/ppdb"
+              class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer"
+              :class="scrolled ? 'bg-emerald-50 text-emerald-800 border border-emerald-300/90 hover:bg-emerald-100' : 'bg-emerald-900/80 text-emerald-200 border border-emerald-600/60 hover:bg-emerald-800 hover:text-white'"
+            >
+              <UserPlus class="w-3.5 h-3.5 text-emerald-400" />
+              <span>PPDB Online</span>
+            </RouterLink>
+
             <RouterLink
               to="/login"
               class="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
@@ -96,20 +105,20 @@
       </Transition>
     </nav>
 
-    <!-- Breaking News / Running Announcement Bar -->
-    <div class="fixed top-16 sm:top-20 inset-x-0 z-40 bg-emerald-950/95 border-b border-emerald-800/80 backdrop-blur-md text-emerald-200 py-1.5 px-4 text-xs overflow-hidden">
+    <!-- Breaking News / Running Announcement Bar (Clean Academic Marquee) -->
+    <div class="fixed top-16 sm:top-20 inset-x-0 z-40 bg-[#021811] border-b border-emerald-900/80 backdrop-blur-md text-emerald-200 py-2 px-4 text-xs overflow-hidden">
       <div class="max-w-7xl mx-auto flex items-center gap-3">
-        <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-600/30 border border-emerald-500/50 text-[10px] font-black text-emerald-300 uppercase tracking-wider flex-shrink-0 animate-pulse">
-          <Sparkles class="w-3 h-3 text-amber-300" />
-          <span>Warta Terkini</span>
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-900/80 border border-emerald-700/60 text-[10px] font-bold text-emerald-300 uppercase tracking-wider flex-shrink-0">
+          <Megaphone class="w-3.5 h-3.5 text-amber-400" />
+          <span>Pengumuman</span>
         </div>
         <div class="overflow-hidden whitespace-nowrap w-full">
           <div class="inline-block animate-marquee font-medium text-emerald-100 text-[11px] sm:text-xs">
-            <span class="mr-8">📢 Penerimaan Peserta Didik Baru (PPDB Online) Tahun Ajaran 2026/2027 telah dibuka! Klik menu PPDB untuk mendaftar secara online.</span>
+            <span class="mr-8">📌 <strong>PPDB Online 2026/2027</strong>: Pendaftaran Peserta Didik Baru telah dibuka. Silakan mengisi formulir melalui menu PPDB Online.</span>
             <span class="mr-8">&bull;</span>
-            <span class="mr-8">✨ Layanan Rapor Digital & Leger Nilai ASTS Semester kini terintegrasi langsung dengan modul koreksi ujian CBT.</span>
+            <span class="mr-8">📖 <strong>Jadwal Pembelajaran</strong>: KBM Semester Aktif berjalan normal setiap Senin &ndash; Sabtu pukul 07.00 &ndash; 15.00 WIB.</span>
             <span class="mr-8">&bull;</span>
-            <span>💬 Butuh bantuan atau informasi pendaftaran? Hubungi layanan WhatsApp resmi kami di pojok kanan bawah.</span>
+            <span>💬 <strong>Informasi & Konsultasi</strong>: Hubungi staf madrasah via layanan WhatsApp resmi di sudut kanan bawah.</span>
           </div>
         </div>
       </div>
@@ -552,7 +561,77 @@
       </div>
     </section>
 
-    <!-- 9. Lokasi & Kontak Google Maps (White Canvas) -->
+    <!-- 9. Section PPDB Online Call-to-Action (Editorial Academic Card) -->
+    <section id="ppdb-cta" class="py-16 bg-slate-50/90 relative border-t border-slate-200/80 font-inter">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#032218] via-[#053224] to-[#041d15] text-white p-8 sm:p-12 lg:p-14 border border-emerald-800/80 shadow-2xl">
+          <!-- Subtle ambient watermark -->
+          <div class="absolute -right-12 -bottom-12 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+          <div class="absolute top-0 right-0 p-8 opacity-5 pointer-events-none hidden lg:block">
+            <GraduationCap class="w-64 h-64 text-emerald-300" />
+          </div>
+
+          <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <!-- Left Info -->
+            <div class="lg:col-span-7 space-y-5">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/80 border border-emerald-700/60 text-emerald-300 text-xs font-bold uppercase tracking-wider">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Penerimaan Santri / Peserta Didik Baru (PPDB)</span>
+              </div>
+
+              <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
+                Bergabunglah Bersama Keluarga Besar {{ settings.app_name || 'MTs Al - Hasanah' }}
+              </h2>
+
+              <p class="text-emerald-100/90 text-xs sm:text-sm leading-relaxed max-w-2xl font-normal">
+                Wujudkan masa depan ananda yang berakhlak mulia, hafidz Qur'an, dan berprestasi unggul dengan kurikulum terpadu Kemenag & penguasaan sains teknologi. Pendaftaran tahun ajaran baru telah dibuka secara daring (online).
+              </p>
+
+              <!-- PPDB Key Benefits / Highlights -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                <div class="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-950/60 border border-emerald-800/60 text-xs">
+                  <Check class="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span class="text-emerald-100 font-medium">Proses 100% Online</span>
+                </div>
+                <div class="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-950/60 border border-emerald-800/60 text-xs">
+                  <Check class="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span class="text-emerald-100 font-medium">Beasiswa Prestasi & Tahfidz</span>
+                </div>
+                <div class="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-950/60 border border-emerald-800/60 text-xs">
+                  <Check class="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span class="text-emerald-100 font-medium">Bimbingan Karakter Intensif</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right CTA Action Box -->
+            <div class="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-3.5 lg:items-end justify-center">
+              <RouterLink
+                to="/ppdb"
+                class="w-full sm:w-auto lg:w-full inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm shadow-xl shadow-emerald-950/40 transition-all duration-200 hover:scale-102 active:scale-98 cursor-pointer"
+              >
+                <UserPlus class="w-4 h-4" />
+                <span>Isi Formulir Pendaftaran Online</span>
+                <ArrowRight class="w-4 h-4" />
+              </RouterLink>
+
+              <a
+                v-if="settings.school_phone"
+                :href="`https://wa.me/${cleanPhoneForWa(settings.school_phone)}?text=Halo%20Panitia%20PPDB%20MTs%20Al-Hasanah,%20saya%20ingin%20konsultasi%20pendaftaran%20siswa%20baru.`"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="w-full sm:w-auto lg:w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-emerald-900/80 hover:bg-emerald-900 text-emerald-200 hover:text-white border border-emerald-700/60 font-bold text-xs transition-all duration-200 cursor-pointer"
+              >
+                <MessageCircle class="w-4 h-4 text-emerald-400" />
+                <span>Konsultasi Panitia PPDB (WhatsApp)</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. Lokasi & Kontak Google Maps (White Canvas) -->
     <section id="lokasi" class="py-20 bg-slate-50/60 text-slate-900 border-t border-slate-200/80 relative overflow-hidden font-inter">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-12">
         
@@ -658,24 +737,101 @@
       </div>
     </section>
 
-    <!-- 11. Deep Emerald Footer -->
-    <footer class="relative bg-gradient-to-b from-[#032218] via-[#052e20] to-[#02150f] text-emerald-200 py-16 border-t border-emerald-900/70 overflow-hidden font-inter">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-10">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-8">
-          <div class="flex items-center gap-4 group cursor-pointer">
-            <div class="w-13 h-13 flex items-center justify-center flex-shrink-0 bg-emerald-900/80 rounded-2xl border border-emerald-700/60 shadow-lg p-2 group-hover:scale-105 transition-transform duration-300">
-              <img v-if="settings.app_logo && !logoErr" :src="getStorageUrl(settings.app_logo)" @error="logoErr = true" class="w-full h-full object-contain" alt="Logo" />
-              <School v-else class="w-7 h-7 text-emerald-400" />
+    <!-- 11. Deep Emerald Institutional Footer -->
+    <footer class="relative bg-gradient-to-b from-[#032218] via-[#052e20] to-[#02150f] text-emerald-200 pt-16 pb-12 border-t border-emerald-900/80 overflow-hidden font-inter">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-12">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10">
+          
+          <!-- Col 1: Brand & Identity (lg:col-span-5) -->
+          <div class="lg:col-span-5 space-y-4">
+            <div class="flex items-center gap-3.5">
+              <div class="w-12 h-12 flex items-center justify-center flex-shrink-0 bg-emerald-900/90 rounded-2xl border border-emerald-700/60 shadow-lg p-2">
+                <img v-if="settings.app_logo && !logoErr" :src="getStorageUrl(settings.app_logo)" @error="logoErr = true" class="w-full h-full object-contain" alt="Logo" />
+                <School v-else class="w-6 h-6 text-emerald-300" />
+              </div>
+              <div>
+                <h3 class="font-extrabold text-lg text-white uppercase tracking-wider">{{ settings.app_name || 'MTs AL - HASANAH' }}</h3>
+                <p class="text-xs text-emerald-400 font-medium">{{ settings.app_tagline || 'Sistem Informasi Manajemen Madrasah Terpadu' }}</p>
+              </div>
             </div>
-            <div>
-              <h3 class="font-bold text-xl text-white uppercase tracking-wider mb-0.5 group-hover:text-emerald-300 transition-colors">{{ settings.app_name || 'MTs AL - HASANAH' }}</h3>
-              <p class="text-xs text-emerald-300/80">{{ settings.app_tagline || 'Sistem Informasi Manajemen Madrasah Terpadu' }}</p>
+
+            <p class="text-xs text-emerald-200/80 leading-relaxed max-w-sm">
+              Lembaga pendidikan Islam tingkat menengah pertama di bawah naungan Kementerian Agama Republik Indonesia, berdedikasi melahirkan kader umat berakhlak Qur'ani dan berwawasan teknologi.
+            </p>
+
+            <div class="pt-1 text-[11px] text-emerald-300/70 space-y-1">
+              <div>📍 {{ settings.school_address || 'Jl. Raya Ciomas No. 123, Kabupaten Bogor' }}</div>
+              <div>📞 {{ settings.school_phone || '(0251) 1234567' }} &bull; ✉️ {{ settings.school_email || 'info@sekolahdigital.sch.id' }}</div>
             </div>
           </div>
-          <div class="flex flex-col items-center md:items-end gap-2">
-            <div class="text-xs text-emerald-400/80 font-normal">
-              &copy; {{ new Date().getFullYear() }} {{ settings.app_name || 'MTs Al - Hasanah' }}. Hak Cipta Dilindungi.
+
+          <!-- Col 2: Navigasi Website (lg:col-span-2) -->
+          <div class="lg:col-span-2 space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-white border-b border-emerald-800/80 pb-2">Halaman</h4>
+            <ul class="space-y-2 text-xs text-emerald-200/80">
+              <li><a href="#beranda" class="hover:text-white transition-colors">Beranda Utama</a></li>
+              <li><a href="#profil" class="hover:text-white transition-colors">Profil & Visi Misi</a></li>
+              <li><a href="#guru" class="hover:text-white transition-colors">Dewan Guru</a></li>
+              <li><a href="#wali-kelas" class="hover:text-white transition-colors">Wali Kelas</a></li>
+              <li><a href="#prestasi" class="hover:text-white transition-colors">Prestasi Siswa</a></li>
+              <li><a href="#fasilitas" class="hover:text-white transition-colors">Sarana & Prasarana</a></li>
+            </ul>
+          </div>
+
+          <!-- Col 3: Layanan Digital & PPDB (lg:col-span-2) -->
+          <div class="lg:col-span-2 space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-white border-b border-emerald-800/80 pb-2">Layanan</h4>
+            <ul class="space-y-2 text-xs text-emerald-200/80">
+              <li>
+                <RouterLink to="/ppdb" class="text-amber-300 hover:text-amber-200 font-bold flex items-center gap-1.5">
+                  <UserPlus class="w-3.5 h-3.5" />
+                  <span>PPDB Online</span>
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink to="/login" class="hover:text-white transition-colors flex items-center gap-1.5">
+                  <LogIn class="w-3.5 h-3.5" />
+                  <span>Portal SIAKAD</span>
+                </RouterLink>
+              </li>
+              <li><a href="#berita" class="hover:text-white transition-colors">Warta & Pengumuman</a></li>
+              <li><a href="#lokasi" class="hover:text-white transition-colors">Peta Lokasi & Kontak</a></li>
+            </ul>
+          </div>
+
+          <!-- Col 4: Jam Kerja Tata Usaha (lg:col-span-3) -->
+          <div class="lg:col-span-3 space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-white border-b border-emerald-800/80 pb-2">Jam Layanan TU</h4>
+            <div class="space-y-2 text-xs text-emerald-200/80">
+              <div class="flex justify-between py-1 border-b border-emerald-900/50">
+                <span>Senin &ndash; Kamis</span>
+                <span class="font-semibold text-emerald-300">07:00 &ndash; 15:00 WIB</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-emerald-900/50">
+                <span>Jumat</span>
+                <span class="font-semibold text-emerald-300">07:00 &ndash; 11:30 WIB</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-emerald-900/50">
+                <span>Sabtu</span>
+                <span class="font-semibold text-emerald-300">07:00 &ndash; 14:00 WIB</span>
+              </div>
+              <div class="flex justify-between py-1 text-emerald-400/60">
+                <span>Ahad & Libur Nasional</span>
+                <span class="font-semibold">Tutup</span>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Bottom Copyright -->
+        <div class="pt-8 border-t border-emerald-900/60 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-emerald-400/80">
+          <div>
+            &copy; {{ new Date().getFullYear() }} {{ settings.app_name || 'MTs Al - Hasanah' }}. Seluruh hak cipta dilindungi undang-undang.
+          </div>
+          <div class="flex items-center gap-2 text-[11px] text-emerald-400/60">
+            <span>SIAKAD Madrasah Terpadu</span>
+            <span>&bull;</span>
+            <span>Kementerian Agama RI</span>
           </div>
         </div>
       </div>
@@ -902,7 +1058,8 @@ import {
   Award,
   Globe,
   UserPlus,
-  MessageCircle
+  MessageCircle,
+  Megaphone
 } from 'lucide-vue-next';
 
 // Logo fallback state
