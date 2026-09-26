@@ -111,7 +111,7 @@
               <div class="bg-emerald-950/80 rounded-2xl border border-emerald-800/60 p-3.5 text-center">
                 <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Rombel</p>
                 <p class="text-2xl font-black text-white font-lexend mt-1">{{ animatedStats.classes }}</p>
-                <p class="text-[9px] text-emerald-300/60 mt-0.5">Ruang Kelas</p>
+                <p class="text-[9px] text-emerald-300/60 mt-0.5">Rombel Utama</p>
               </div>
             </div>
 

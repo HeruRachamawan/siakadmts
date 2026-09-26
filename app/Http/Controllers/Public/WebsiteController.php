@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Models\Teacher;
 use App\Models\Student;
 use App\Models\ClassRoom;
+use App\Models\AcademicYear;
 
 class WebsiteController extends Controller
 {
@@ -33,14 +34,31 @@ class WebsiteController extends Controller
             }
         }
 
+        // Ambil data Rombel Utama (Kelas Reguler Induk) pada Tahun Ajaran Aktif
+        $activeYearId = AcademicYear::where('is_active', true)->value('id');
+
+        $classesQuery = ClassRoom::query();
+        if ($activeYearId && ClassRoom::where('academic_year_id', $activeYearId)->exists()) {
+            $classesQuery->where('academic_year_id', $activeYearId);
+        }
+
+        // Filter: Rombel Utama adalah kelas induk reguler (mengecualikan kelas kelompok jadwal lokal khusus standalone '7' dan '8')
+        $allClasses = $classesQuery->get();
+        $utamaClasses = $allClasses->filter(function ($c) {
+            $clean = strtolower(trim(preg_replace('/^(kelas|kls)\s*/i', '', (string)$c->name)));
+            return !in_array($clean, ['7', '8']);
+        })->values();
+
         $stats = [
             'students' => Student::count(),
             'teachers' => Teacher::count(),
-            'classes' => ClassRoom::count(),
+            'classes' => $utamaClasses->count(),
         ];
 
         $teachers = Teacher::with('subjects')->get();
-        $classrooms = ClassRoom::with('homeroomTeacher.subjects')->whereNotNull('homeroom_teacher_id')->get();
+        $classrooms = $utamaClasses->filter(function ($c) {
+            return !empty($c->homeroom_teacher_id);
+        })->load('homeroomTeacher.subjects')->values();
         $achievements = \App\Models\Achievement::where('status', 'published')->latest()->get();
 
         $data = [
