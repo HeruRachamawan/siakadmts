@@ -230,11 +230,11 @@
             <div class="mt-3.5 py-2 px-3 bg-slate-50/80 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
               <div class="flex items-center gap-2 min-w-0">
                 <div class="w-6 h-6 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
-                  {{ exam.teacher?.name?.charAt(0) || 'G' }}
+                  {{ (exam.teacher?.full_name || exam.teacher?.name)?.charAt(0) || 'G' }}
                 </div>
                 <div class="min-w-0">
                   <span class="text-[9px] text-slate-400 block leading-none font-medium">Guru Pengampu</span>
-                  <span class="font-semibold text-slate-800 truncate block text-xs mt-0.5">{{ exam.teacher?.name || 'Belum Ditentukan' }}</span>
+                  <span class="font-semibold text-slate-800 truncate block text-xs mt-0.5">{{ exam.teacher?.full_name || exam.teacher?.name || 'Belum Ditentukan' }}</span>
                 </div>
               </div>
               <span v-if="exam.teacher?.nip" class="text-[9px] font-mono text-slate-400 flex-shrink-0">NIP: {{ exam.teacher.nip }}</span>
@@ -354,7 +354,7 @@
                 </span>
               </td>
               <td class="px-4 py-3.5">
-                <div class="font-semibold text-slate-800">{{ exam.teacher?.name || '-' }}</div>
+                <div class="font-semibold text-slate-800">{{ exam.teacher?.full_name || exam.teacher?.name || '-' }}</div>
                 <div v-if="exam.teacher?.nip" class="text-[10px] text-slate-400 font-mono">NIP: {{ exam.teacher?.nip }}</div>
               </td>
               <td class="px-4 py-3.5 text-center font-bold text-slate-700 font-mono tabular-nums">
@@ -429,7 +429,7 @@
               </span>
             </div>
             <p class="text-xs text-slate-400 font-medium mt-0.5">
-              Guru: <strong>{{ selectedExamDetail?.teacher?.name }}</strong> • Mapel: <strong>{{ selectedExamDetail?.subject?.name }}</strong> • Kelas: <strong>{{ selectedExamDetail?.class_room?.name }}</strong>
+              Guru: <strong>{{ selectedExamDetail?.teacher?.full_name || selectedExamDetail?.teacher?.name || '-' }}</strong> • Mapel: <strong>{{ selectedExamDetail?.subject?.name }}</strong> • Kelas: <strong>{{ selectedExamDetail?.class_room?.name }}</strong>
             </p>
           </div>
           <button @click="showDetailModal = false" class="w-9 h-9 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors border border-slate-100 shadow-sm cursor-pointer">
@@ -890,7 +890,8 @@ const filteredExams = computed(() => {
       const q = searchQuery.value.toLowerCase();
       const matchTitle = e.title?.toLowerCase().includes(q);
       const matchSbj = e.subject?.name?.toLowerCase().includes(q);
-      const matchTeacher = e.teacher?.name?.toLowerCase().includes(q);
+      const teacherName = (e.teacher?.full_name || e.teacher?.name || '').toLowerCase();
+      const matchTeacher = teacherName.includes(q) || (e.teacher?.nip && e.teacher.nip.includes(q));
       if (!matchTitle && !matchSbj && !matchTeacher) return false;
     }
     return true;

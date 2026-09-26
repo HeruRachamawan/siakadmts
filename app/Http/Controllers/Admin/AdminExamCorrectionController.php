@@ -44,7 +44,7 @@ class AdminExamCorrectionController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                   ->orWhereHas('subject', fn($sq) => $sq->where('name', 'like', "%{$search}%"))
-                  ->orWhereHas('teacher', fn($tq) => $tq->where('name', 'like', "%{$search}%"));
+                  ->orWhereHas('teacher', fn($tq) => $tq->where('full_name', 'like', "%{$search}%")->orWhere('nip', 'like', "%{$search}%"));
             });
         }
 

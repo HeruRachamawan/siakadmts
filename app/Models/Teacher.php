@@ -14,7 +14,12 @@ class Teacher extends Model
         'is_ppdb_committee' => 'boolean',
     ];
 
-    protected $appends = ['photo_url', 'qr_card_payload'];
+    protected $appends = ['photo_url', 'qr_card_payload', 'name'];
+
+    public function getNameAttribute(): ?string
+    {
+        return $this->full_name;
+    }
 
     public function getPhotoUrlAttribute(): ?string
     {
