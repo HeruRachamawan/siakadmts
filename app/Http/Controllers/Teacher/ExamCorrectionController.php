@@ -61,6 +61,10 @@ class ExamCorrectionController extends Controller
                 ];
             });
 
+        $activeYear = AcademicYear::where('is_active', true)->first()
+            ?? AcademicYear::orderBy('id', 'desc')->first();
+        $activeYearId = $activeYear?->id;
+
         // Get subjects: teacher subjects or all subjects
         if ($teacher && $teacher->subjects()->exists()) {
             $subjects = $teacher->subjects()->orderBy('name')->get();
@@ -68,18 +72,23 @@ class ExamCorrectionController extends Controller
             $subjects = \App\Models\Subject::orderBy('name')->get();
         }
 
-        $subjects->load('gradeKkms');
-        $subjects->transform(function ($sbj) {
+        $subjects->load(['gradeKkms' => function ($q) use ($activeYearId) {
+            $q->orderByRaw('CASE WHEN academic_year_id = ? THEN 1 WHEN academic_year_id IS NULL THEN 2 ELSE 3 END', [$activeYearId ?? 0]);
+        }]);
+
+        $subjects->transform(function ($sbj) use ($activeYearId) {
             $kkmMap = [];
+            // Sort by priority so that activeYearId overwrites null, or null overwrites other years
             foreach ($sbj->gradeKkms as $gk) {
-                $kkmMap[(string)$gk->grade_level] = floatval($gk->kkm);
+                $lvl = (string)$gk->grade_level;
+                // If not set yet, or if current $gk belongs to activeYearId, set it
+                if (!isset($kkmMap[$lvl]) || $gk->academic_year_id == $activeYearId) {
+                    $kkmMap[$lvl] = floatval($gk->kkm);
+                }
             }
             $sbj->grade_kkms = $kkmMap;
             return $sbj;
         });
-
-        $activeYear = AcademicYear::where('is_active', true)->first()
-            ?? AcademicYear::orderBy('id', 'desc')->first();
 
         // Settings
         $rawSettings = \App\Models\Setting::where('key', 'exam_correction_settings')->value('value');

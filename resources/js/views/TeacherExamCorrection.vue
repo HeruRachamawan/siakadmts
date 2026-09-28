@@ -1654,7 +1654,7 @@
               <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">Mata Pelajaran *</label>
               <select v-model="examForm.subject_id" @change="onExamSubjectChange" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-400">
                 <option value="">-- Pilih Mata Pelajaran --</option>
-                <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }} (KKM: {{ s.passing_grade || 75 }})</option>
+                <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }} (KKM{{ selectedGradeKey ? ' Tkt ' + selectedGradeKey : '' }}: {{ getSubjectKkmForSelectedClass(s) }})</option>
               </select>
             </div>
           </div>
@@ -3242,17 +3242,46 @@ const subjects = ref([]);
 const activeAcademicYear = ref(null);
 const examCorrectionSettings = ref(null);
 
+const selectedGradeKey = computed(() => {
+  const foundClass = classes.value.find(c => c.id == examForm.class_room_id);
+  if (!foundClass) return null;
+  const rawGrade = String(foundClass.grade_level || '').trim();
+  if (/7|VII/i.test(rawGrade)) return '7';
+  if (/8|VIII/i.test(rawGrade)) return '8';
+  if (/9|IX/i.test(rawGrade)) return '9';
+  return null;
+});
+
+function getSubjectKkmForSelectedClass(subject) {
+  if (!subject) return 75;
+  const gradeKey = selectedGradeKey.value;
+  // 1. KKM spesifik mapel untuk tingkatan kelas tersebut
+  if (gradeKey && subject.grade_kkms && subject.grade_kkms[gradeKey] !== undefined) {
+    return Number(subject.grade_kkms[gradeKey]);
+  }
+  // 2. Standar KKM tingkatan kelas dari pengaturan kurikulum
+  if (gradeKey && examCorrectionSettings.value) {
+    const gradeSettingKey = `default_kkm_${gradeKey}`;
+    if (examCorrectionSettings.value[gradeSettingKey] !== undefined) {
+      return Number(examCorrectionSettings.value[gradeSettingKey]);
+    }
+  }
+  // 3. Passing grade bawaan mapel
+  if (subject.passing_grade) {
+    return Number(subject.passing_grade);
+  }
+  // 4. Default global atau 75
+  if (examCorrectionSettings.value?.default_kkm) {
+    return Number(examCorrectionSettings.value.default_kkm);
+  }
+  return 75;
+}
+
 const detectedKkmInfo = computed(() => {
   const foundClass = classes.value.find(c => c.id == examForm.class_room_id);
   const found = subjects.value.find(s => s.id == examForm.subject_id);
 
-  let gradeKey = null;
-  if (foundClass) {
-    const rawGrade = String(foundClass.grade_level || '').trim();
-    if (/7|VII/i.test(rawGrade)) gradeKey = '7';
-    else if (/8|VIII/i.test(rawGrade)) gradeKey = '8';
-    else if (/9|IX/i.test(rawGrade)) gradeKey = '9';
-  }
+  let gradeKey = selectedGradeKey.value;
 
   if (gradeKey) {
     if (found && found.grade_kkms && found.grade_kkms[gradeKey] !== undefined) {
@@ -4278,44 +4307,8 @@ function examTypeLabel(type) {
 }
 
 function onExamSubjectChange() {
-  const foundClass = classes.value.find(c => c.id == examForm.class_room_id);
   const found = subjects.value.find(s => s.id == examForm.subject_id);
-
-  let gradeKey = null;
-  if (foundClass) {
-    const rawGrade = String(foundClass.grade_level || '').trim();
-    if (/7|VII/i.test(rawGrade)) gradeKey = '7';
-    else if (/8|VIII/i.test(rawGrade)) gradeKey = '8';
-    else if (/9|IX/i.test(rawGrade)) gradeKey = '9';
-  }
-
-  // 1. Prioritas 1: KKM spesifik mapel untuk tingkatan kelas tersebut (dari Kurikulum / SubjectGradeKkm)
-  if (found && found.grade_kkms && gradeKey && found.grade_kkms[gradeKey] !== undefined) {
-    examForm.kkm = Number(found.grade_kkms[gradeKey]);
-    return;
-  }
-
-  // 2. Prioritas 2: Standar KKM tingkatan kelas dari pengaturan asesmen kurikulum (default_kkm_7, default_kkm_8, default_kkm_9)
-  if (gradeKey && examCorrectionSettings.value) {
-    const gradeSettingKey = `default_kkm_${gradeKey}`;
-    if (examCorrectionSettings.value[gradeSettingKey] !== undefined) {
-      examForm.kkm = Number(examCorrectionSettings.value[gradeSettingKey]);
-      return;
-    }
-  }
-
-  // 3. Prioritas 3: Standar passing grade mata pelajaran
-  if (found && found.passing_grade) {
-    examForm.kkm = Number(found.passing_grade);
-    return;
-  }
-
-  // 4. Fallback: Default KKM global asesmen atau 75
-  if (examCorrectionSettings.value?.default_kkm) {
-    examForm.kkm = Number(examCorrectionSettings.value.default_kkm);
-    return;
-  }
-  examForm.kkm = 75;
+  examForm.kkm = getSubjectKkmForSelectedClass(found);
 }
 
 function openCreateModal() {
