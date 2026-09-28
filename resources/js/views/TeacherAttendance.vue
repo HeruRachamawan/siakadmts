@@ -151,24 +151,55 @@
           </button>
         </div>
 
-        <!-- Filter Tab Kelas Cepat (Separated by Class) -->
-        <div v-if="historyClassTabs.length > 1" class="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin">
-          <button
-            type="button"
-            v-for="tab in historyClassTabs"
-            :key="'tab-' + tab.value"
-            @click="selectedHistoryClassTab = tab.value"
-            class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shadow-2xs"
-            :class="selectedHistoryClassTab === tab.value ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20' : 'bg-slate-100/80 hover:bg-slate-200/80 text-slate-600'"
-          >
-            <span>{{ tab.label }}</span>
-            <span
-              class="px-1.5 py-0.2 rounded-full text-[10px] font-black"
-              :class="selectedHistoryClassTab === tab.value ? 'bg-white/20 text-white' : 'bg-white text-slate-600'"
-            >
-              {{ tab.count }}
+        <!-- Filter Bertingkat: Kelas Utama & Lokal -->
+        <div v-if="attendanceHistory.length > 0" class="space-y-2.5 bg-slate-50/70 p-3.5 rounded-2xl border border-slate-200/80">
+          <!-- 1. Kelas Utama / Tingkatan Tab -->
+          <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            <span class="text-[11px] font-black uppercase tracking-wider text-slate-500 shrink-0 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+              Kelas Utama:
             </span>
-          </button>
+            <button
+              type="button"
+              v-for="gradeTab in historyGradeTabs"
+              :key="'grade-' + gradeTab.value"
+              @click="setHistoryGradeLevel(gradeTab.value)"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              :class="selectedHistoryGradeLevel === gradeTab.value ? 'bg-slate-900 text-white shadow-md shadow-slate-900/20' : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200'"
+            >
+              <span>{{ gradeTab.label }}</span>
+              <span
+                class="px-1.5 py-0.2 rounded-full text-[10px] font-black"
+                :class="selectedHistoryGradeLevel === gradeTab.value ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'"
+              >
+                {{ gradeTab.count }}
+              </span>
+            </button>
+          </div>
+
+          <!-- 2. Lokal / Rombel Tab (Dinamis sesuai tingkat yang dipilih) -->
+          <div v-if="historyLocalTabs.length > 1" class="flex items-center gap-1.5 overflow-x-auto pt-1 pb-1 scrollbar-thin border-t border-slate-200/60">
+            <span class="text-[11px] font-black uppercase tracking-wider text-slate-500 shrink-0 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              Lokal:
+            </span>
+            <button
+              type="button"
+              v-for="tab in historyLocalTabs"
+              :key="'local-' + tab.value"
+              @click="selectedHistoryClassTab = tab.value"
+              class="px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              :class="selectedHistoryClassTab === tab.value ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20' : 'bg-white hover:bg-emerald-50/60 text-slate-600 border border-slate-200'"
+            >
+              <span>{{ tab.label }}</span>
+              <span
+                class="px-1.5 py-0.2 rounded-full text-[10px] font-black"
+                :class="selectedHistoryClassTab === tab.value ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'"
+              >
+                {{ tab.count }}
+              </span>
+            </button>
+          </div>
         </div>
 
         <!-- History Loading -->
@@ -446,19 +477,57 @@ const selectedDate = ref(new Date().toISOString().substring(0, 10)); // YYYY-MM-
 
 const attendanceHistory = ref([]);
 const loadingHistory = ref(false);
-const selectedHistoryClassTab = ref('all');
+const selectedHistoryGradeLevel = ref('all'); // Filter Kelas Utama (Tingkat: 7, 8, 9)
+const selectedHistoryClassTab = ref('all');    // Filter Lokal / Rombel (8A, 8B, dsb.)
 
-// Tab kategori kelas & jumlah sesi di riwayat
-const historyClassTabs = computed(() => {
+// Helper fungsi ganti tingkat utama
+const setHistoryGradeLevel = (grade) => {
+  selectedHistoryGradeLevel.value = grade;
+  selectedHistoryClassTab.value = 'all'; // reset filter lokal saat tingkat berubah
+};
+
+// 1. Tab Kelas Utama (Tingkatan / Grade Level: Semua, Tingkat 7, Tingkat 8, Tingkat 9)
+const historyGradeTabs = computed(() => {
   if (!attendanceHistory.value.length) return [];
 
-  const classMap = new Map();
+  const gradeMap = new Map();
   attendanceHistory.value.forEach(item => {
+    const grade = item.grade_level ? String(item.grade_level) : 'Lainnya';
+    if (!gradeMap.has(grade)) {
+      gradeMap.set(grade, {
+        value: grade,
+        label: grade === 'Lainnya' ? 'Lainnya' : `Tingkat ${grade}`,
+        count: 0
+      });
+    }
+    gradeMap.get(grade).count += 1;
+  });
+
+  const list = Array.from(gradeMap.values());
+  list.sort((a, b) => a.value.localeCompare(b.value, undefined, { numeric: true }));
+
+  return [
+    { value: 'all', label: 'Semua Tingkat', count: attendanceHistory.value.length },
+    ...list
+  ];
+});
+
+// 2. Tab Lokal / Rombel (Berdasarkan Tingkat yang aktif)
+const historyLocalTabs = computed(() => {
+  if (!attendanceHistory.value.length) return [];
+
+  // Ambil history yang sesuai dengan tingkat kelas utama yang dipilih
+  const baseList = selectedHistoryGradeLevel.value === 'all'
+    ? attendanceHistory.value
+    : attendanceHistory.value.filter(item => String(item.grade_level) === String(selectedHistoryGradeLevel.value));
+
+  const classMap = new Map();
+  baseList.forEach(item => {
     const key = String(item.class_id);
     if (!classMap.has(key)) {
       classMap.set(key, {
         value: key,
-        label: `Kelas ${item.class_name}`,
+        label: `Lokal ${item.class_name}`,
         count: 0
       });
     }
@@ -466,23 +535,30 @@ const historyClassTabs = computed(() => {
   });
 
   const list = Array.from(classMap.values());
-  // Urutkan berdasarkan nama kelas
   list.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
 
+  // Label semua lokal dinamis mengikuti tingkat
+  const allLabel = selectedHistoryGradeLevel.value === 'all'
+    ? 'Semua Lokal'
+    : `Semua Lokal (Tkt ${selectedHistoryGradeLevel.value})`;
+
   return [
-    { value: 'all', label: 'Semua Kelas', count: attendanceHistory.value.length },
+    { value: 'all', label: allLabel, count: baseList.length },
     ...list
   ];
 });
 
-// Filter riwayat mengabsen berdasarkan tab kelas yang dipilih
+// 3. Filter riwayat mengabsen berdasarkan Kelas Utama & Lokal
 const filteredHistory = computed(() => {
-  if (selectedHistoryClassTab.value === 'all') {
-    return attendanceHistory.value;
-  }
-  return attendanceHistory.value.filter(
-    item => String(item.class_id) === String(selectedHistoryClassTab.value)
-  );
+  return attendanceHistory.value.filter(item => {
+    const matchGrade = selectedHistoryGradeLevel.value === 'all' ||
+      String(item.grade_level) === String(selectedHistoryGradeLevel.value);
+
+    const matchClass = selectedHistoryClassTab.value === 'all' ||
+      String(item.class_id) === String(selectedHistoryClassTab.value);
+
+    return matchGrade && matchClass;
+  });
 });
 
 function getInitials(name) {
