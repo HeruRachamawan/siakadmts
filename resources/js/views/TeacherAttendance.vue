@@ -121,19 +121,25 @@
         Memuat lembar presensi siswa...
       </div>
 
-      <!-- No Class Selected State -> Display Teacher Attendance History -->
+      <!-- No Class Selected State -> Display Teacher Attendance History (Grid Cards Per Kelas) -->
       <div v-else-if="!selectedClass" class="p-6 sm:p-8 space-y-6">
-        <!-- Banner Info & Prompt -->
+        <!-- Top Toolbar Header -->
         <div class="p-6 bg-gradient-to-r from-emerald-50 via-teal-50/60 to-white rounded-3xl border border-emerald-100/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div class="flex items-center gap-4">
             <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/20 flex-shrink-0">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
             </div>
             <div>
-              <h2 class="text-sm font-black text-slate-800 font-lexend uppercase tracking-wider">Riwayat Sesi Mengabsen Anda</h2>
-              <p class="text-xs text-slate-500 mt-0.5 font-medium">Pilih salah satu sesi di bawah untuk membuka & mengedit presensi, atau pilih filter di atas untuk menginput kelas baru.</p>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-sm font-black text-slate-800 font-lexend uppercase tracking-wider">Riwayat Sesi Mengabsen Berdasarkan Kelas</h2>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  {{ filteredHistory.length }} Sesi Terdata
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5 font-medium">Klik pada kartu sesi untuk membuka & mengubah presensi, atau pilih filter kelas di bawah untuk melihat per rombel.</p>
             </div>
           </div>
+
           <button
             type="button"
             @click="fetchHistory"
@@ -145,91 +151,143 @@
           </button>
         </div>
 
+        <!-- Filter Tab Kelas Cepat (Separated by Class) -->
+        <div v-if="historyClassTabs.length > 1" class="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin">
+          <button
+            type="button"
+            v-for="tab in historyClassTabs"
+            :key="'tab-' + tab.value"
+            @click="selectedHistoryClassTab = tab.value"
+            class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            :class="selectedHistoryClassTab === tab.value ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20' : 'bg-slate-100/80 hover:bg-slate-200/80 text-slate-600'"
+          >
+            <span>{{ tab.label }}</span>
+            <span
+              class="px-1.5 py-0.2 rounded-full text-[10px] font-black"
+              :class="selectedHistoryClassTab === tab.value ? 'bg-white/20 text-white' : 'bg-white text-slate-600'"
+            >
+              {{ tab.count }}
+            </span>
+          </button>
+        </div>
+
         <!-- History Loading -->
-        <div v-if="loadingHistory" class="text-center py-12 text-slate-400 text-xs font-medium">
-          <svg class="animate-spin h-6 w-6 text-emerald-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" stroke="currentColor" stroke-width="4" d="M4 12a8 8 0 1116 0 8 8 0 01-16 0m8-4v4l3 3m0-7l-3 3"></circle></svg>
-          Memuat riwayat sesi mengabsen...
+        <div v-if="loadingHistory" class="text-center py-16 text-slate-400 text-xs font-medium">
+          <svg class="animate-spin h-7 w-7 text-emerald-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" stroke="currentColor" stroke-width="4" d="M4 12a8 8 0 1116 0 8 8 0 01-16 0m8-4v4l3 3m0-7l-3 3"></circle></svg>
+          Memuat kartu riwayat mengabsen...
         </div>
 
         <!-- Empty History State -->
-        <div v-else-if="!attendanceHistory.length" class="text-center py-12 text-slate-400">
+        <div v-else-if="!filteredHistory.length" class="text-center py-16 text-slate-400">
           <div class="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto mb-3 border border-slate-200">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
           </div>
-          <p class="text-xs font-bold text-slate-700">Belum Ada Riwayat Mengabsen</p>
-          <p class="text-[11px] text-slate-400 mt-0.5">Silakan pilih Mata Pelajaran dan Kelas di atas untuk mulai melakukan presensi kehadiran siswa.</p>
+          <p class="text-xs font-bold text-slate-700">Tidak Ada Riwayat Pada Filter Ini</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Pilih tab kelas lain atau isi form presensi di atas untuk kelas ini.</p>
         </div>
 
-        <!-- History Table Grid -->
-        <div v-else class="overflow-x-auto rounded-2xl border border-slate-200/80 shadow-2xs">
-          <table class="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr class="bg-slate-100/70 text-[10px] font-black uppercase tracking-wider text-slate-600 border-b border-slate-200">
-                <th class="px-5 py-3.5 w-12 text-center">No</th>
-                <th class="px-5 py-3.5">Tanggal Presensi</th>
-                <th class="px-5 py-3.5">Mata Pelajaran & Kelas</th>
-                <th class="px-5 py-3.5 text-center">Rincian Siswa (H / S / I / A)</th>
-                <th class="px-5 py-3.5 text-center">Terakhir Diperbarui</th>
-                <th class="px-5 py-3.5 text-right w-28">Aksi</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 bg-white">
-              <tr
-                v-for="(hist, idx) in attendanceHistory"
-                :key="`${hist.class_id}-${hist.subject_id}-${hist.date}`"
-                class="hover:bg-slate-50/80 transition-colors"
+        <!-- Modern Responsive Cards Grid per Kelas -->
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            v-for="hist in filteredHistory"
+            :key="`${hist.class_id}-${hist.subject_id}-${hist.date}`"
+            class="bg-white rounded-2xl border border-slate-200 hover:border-emerald-300 p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group"
+          >
+            <!-- Card Header: Class & Subject Badge -->
+            <div class="space-y-2">
+              <div class="flex items-start justify-between gap-2">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                  Kelas {{ hist.class_name }} (Tkt {{ hist.grade_level }})
+                </span>
+
+                <span
+                  class="px-2 py-0.5 rounded-full text-[10px] font-black"
+                  :class="hist.present_count === hist.total_students ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'"
+                >
+                  {{ hist.present_count === hist.total_students ? '✓ Hadir 100%' : `${Math.round((hist.present_count / (hist.total_students || 1)) * 100)}% Kehadiran` }}
+                </span>
+              </div>
+
+              <!-- Subject & Date -->
+              <div>
+                <h3 class="text-sm font-black text-slate-800 font-lexend group-hover:text-emerald-700 transition-colors">
+                  {{ hist.subject_name }}
+                </h3>
+                <div class="flex items-center gap-1.5 mt-1 text-slate-500 text-xs">
+                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span class="font-bold text-slate-700">{{ formatDateIndo(hist.date) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Attendance Stats Progress Mini Grid -->
+            <div class="my-4 pt-3.5 border-t border-slate-100 space-y-2">
+              <div class="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                <span>Rincian Kehadiran:</span>
+                <span class="font-mono font-black text-slate-700">{{ hist.total_students }} Siswa</span>
+              </div>
+
+              <div class="grid grid-cols-4 gap-1.5 text-center">
+                <div class="p-1.5 rounded-xl bg-emerald-50 border border-emerald-100">
+                  <span class="text-[9px] font-extrabold text-emerald-700 block uppercase">Hadir</span>
+                  <span class="font-black text-xs font-mono text-emerald-800">{{ hist.present_count }}</span>
+                </div>
+                <div class="p-1.5 rounded-xl bg-blue-50 border border-blue-100">
+                  <span class="text-[9px] font-extrabold text-blue-700 block uppercase">Sakit</span>
+                  <span class="font-black text-xs font-mono text-blue-800">{{ hist.sick_count }}</span>
+                </div>
+                <div class="p-1.5 rounded-xl bg-amber-50 border border-amber-100">
+                  <span class="text-[9px] font-extrabold text-amber-700 block uppercase">Izin</span>
+                  <span class="font-black text-xs font-mono text-amber-800">{{ hist.permission_count }}</span>
+                </div>
+                <div class="p-1.5 rounded-xl bg-red-50 border border-red-100">
+                  <span class="text-[9px] font-extrabold text-red-700 block uppercase">Alpa</span>
+                  <span class="font-black text-xs font-mono text-red-800">{{ hist.alpha_count }}</span>
+                </div>
+              </div>
+
+              <!-- Mini Progress Bar -->
+              <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden flex mt-2">
+                <div
+                  :style="{ width: `${(hist.present_count / (hist.total_students || 1)) * 100}%` }"
+                  class="bg-emerald-500 h-full"
+                  title="Hadir"
+                ></div>
+                <div
+                  :style="{ width: `${(hist.sick_count / (hist.total_students || 1)) * 100}%` }"
+                  class="bg-blue-500 h-full"
+                  title="Sakit"
+                ></div>
+                <div
+                  :style="{ width: `${(hist.permission_count / (hist.total_students || 1)) * 100}%` }"
+                  class="bg-amber-500 h-full"
+                  title="Izin"
+                ></div>
+                <div
+                  :style="{ width: `${(hist.alpha_count / (hist.total_students || 1)) * 100}%` }"
+                  class="bg-red-500 h-full"
+                  title="Alpa"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Card Action Footer -->
+            <div class="pt-2 flex items-center justify-between text-xs">
+              <span class="text-[10px] text-slate-400 font-medium">
+                {{ hist.last_updated_at }}
+              </span>
+
+              <button
+                type="button"
+                @click="openSessionFromHistory(hist)"
+                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer"
               >
-                <td class="px-5 py-4 text-center font-bold text-slate-400">{{ idx + 1 }}</td>
-                <td class="px-5 py-4">
-                  <div class="font-bold text-slate-800 text-xs font-mono">{{ formatDateIndo(hist.date) }}</div>
-                  <span class="text-[10px] text-slate-400 font-semibold">{{ hist.date }}</span>
-                </td>
-                <td class="px-5 py-4">
-                  <div class="font-bold text-slate-800 text-sm font-lexend">{{ hist.subject_name }}</div>
-                  <div class="mt-0.5 flex items-center gap-1.5">
-                    <span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Kelas {{ hist.class_name }} (Tkt {{ hist.grade_level }})
-                    </span>
-                    <span v-if="hist.subject_code && hist.subject_code !== '-'" class="text-[10px] font-mono text-slate-400">
-                      [{{ hist.subject_code }}]
-                    </span>
-                  </div>
-                </td>
-                <td class="px-5 py-4 text-center">
-                  <div class="flex items-center justify-center gap-1.5 flex-wrap">
-                    <span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200" title="Hadir">
-                      {{ hist.present_count }} H
-                    </span>
-                    <span v-if="hist.sick_count > 0" class="px-2 py-0.5 rounded-md text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200" title="Sakit">
-                      {{ hist.sick_count }} S
-                    </span>
-                    <span v-if="hist.permission_count > 0" class="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200" title="Izin">
-                      {{ hist.permission_count }} I
-                    </span>
-                    <span v-if="hist.alpha_count > 0" class="px-2 py-0.5 rounded-md text-[10px] font-black bg-red-100 text-red-800 border border-red-200" title="Alpa">
-                      {{ hist.alpha_count }} A
-                    </span>
-                    <span class="text-[10px] text-slate-400 font-bold ml-1">
-                      (Total {{ hist.total_students }} Siswa)
-                    </span>
-                  </div>
-                </td>
-                <td class="px-5 py-4 text-center text-[11px] font-medium text-slate-500">
-                  {{ hist.last_updated_at }}
-                </td>
-                <td class="px-5 py-4 text-right">
-                  <button
-                    type="button"
-                    @click="openSessionFromHistory(hist)"
-                    class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center gap-1.5 ml-auto cursor-pointer"
-                  >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                    <span>Buka / Edit</span>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                <span>Buka & Edit</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -369,7 +427,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { api } from '../api';
 import { useToast } from '../composables/useToast';
 
@@ -385,6 +443,47 @@ const students = ref([]);
 const selectedSubject = ref('');
 const selectedClass = ref('');
 const selectedDate = ref(new Date().toISOString().substring(0, 10)); // YYYY-MM-DD
+
+const attendanceHistory = ref([]);
+const loadingHistory = ref(false);
+const selectedHistoryClassTab = ref('all');
+
+// Tab kategori kelas & jumlah sesi di riwayat
+const historyClassTabs = computed(() => {
+  if (!attendanceHistory.value.length) return [];
+
+  const classMap = new Map();
+  attendanceHistory.value.forEach(item => {
+    const key = String(item.class_id);
+    if (!classMap.has(key)) {
+      classMap.set(key, {
+        value: key,
+        label: `Kelas ${item.class_name}`,
+        count: 0
+      });
+    }
+    classMap.get(key).count += 1;
+  });
+
+  const list = Array.from(classMap.values());
+  // Urutkan berdasarkan nama kelas
+  list.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
+
+  return [
+    { value: 'all', label: 'Semua Kelas', count: attendanceHistory.value.length },
+    ...list
+  ];
+});
+
+// Filter riwayat mengabsen berdasarkan tab kelas yang dipilih
+const filteredHistory = computed(() => {
+  if (selectedHistoryClassTab.value === 'all') {
+    return attendanceHistory.value;
+  }
+  return attendanceHistory.value.filter(
+    item => String(item.class_id) === String(selectedHistoryClassTab.value)
+  );
+});
 
 function getInitials(name) {
   if (!name) return '?';
@@ -467,9 +566,6 @@ const loadStudents = async () => {
     loading.value = false;
   }
 };
-
-const attendanceHistory = ref([]);
-const loadingHistory = ref(false);
 
 const formatDateIndo = (dateStr) => {
   if (!dateStr) return '-';
