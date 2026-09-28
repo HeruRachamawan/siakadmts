@@ -130,7 +130,21 @@ class ExamCorrectionController extends Controller
             $query->where('exam_type', $request->exam_type);
         }
 
-        $exams = $query->orderBy('created_at', 'desc')->paginate($request->get('per_page', 15));
+        $sortBy = $request->get('sort_by', 'oldest');
+        if ($sortBy === 'newest') {
+            $query->orderBy('created_at', 'desc')->orderBy('id', 'desc');
+        } elseif ($sortBy === 'class') {
+            $query->leftJoin('classes', 'exam_packages.class_room_id', '=', 'classes.id')
+                ->select('exam_packages.*')
+                ->orderBy('classes.grade_level', 'asc')
+                ->orderBy('classes.name', 'asc')
+                ->orderBy('exam_packages.created_at', 'asc');
+        } else {
+            // Default: oldest (input terlama dibuat berada di atas)
+            $query->orderBy('created_at', 'asc')->orderBy('id', 'asc');
+        }
+
+        $exams = $query->paginate($request->get('per_page', 25));
 
         $activeYear = AcademicYear::where('is_active', true)->first()
             ?? AcademicYear::orderBy('id', 'desc')->first();

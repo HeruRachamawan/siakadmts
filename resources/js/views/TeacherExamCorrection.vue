@@ -100,6 +100,12 @@
             <option value="am">Asesmen Madrasah (AM)</option>
             <option value="quiz">Kuis / Latihan</option>
           </select>
+
+          <select v-model="sortBy" @change="fetchExams" class="bg-teal-50/70 border border-teal-200 rounded-xl px-3 py-2 text-xs font-bold text-teal-800 focus:ring-2 focus:ring-teal-400 shadow-2xs">
+            <option value="oldest">🔼 Urut: Terlama Dibuat (Awal)</option>
+            <option value="newest">🔽 Urut: Terbaru Dibuat</option>
+            <option value="class">🏫 Urut: Berdasarkan Tingkat Kelas</option>
+          </select>
         </div>
 
         <div class="relative w-full md:w-64">
@@ -3402,6 +3408,7 @@ const filterClass = ref('');
 const filterSubject = ref('');
 const filterType = ref('');
 const searchQuery = ref('');
+const sortBy = ref('oldest'); // 'oldest' (default terlama), 'newest' (terbaru), 'class' (urut kelas)
 
 const showPrintModal = ref(false);
 const schoolProfile = ref(null);
@@ -4253,7 +4260,11 @@ async function fetchMeta() {
 async function fetchExams() {
   loading.value = true;
   try {
-    const res = await api.get('/teacher/exam-corrections');
+    const res = await api.get('/teacher/exam-corrections', {
+      params: {
+        sort_by: sortBy.value
+      }
+    });
     exams.value = res.data?.data?.data || res.data?.data || [];
   } catch (err) {
     toast.error('Gagal memuat daftar ujian.');
@@ -4263,12 +4274,33 @@ async function fetchExams() {
 }
 
 const filteredExams = computed(() => {
-  return exams.value.filter(e => {
+  const list = exams.value.filter(e => {
     if (filterClass.value && e.class_room_id !== filterClass.value) return false;
     if (filterSubject.value && e.subject_id !== filterSubject.value) return false;
     if (filterType.value && e.exam_type !== filterType.value) return false;
     if (searchQuery.value && !e.title.toLowerCase().includes(searchQuery.value.toLowerCase())) return false;
     return true;
+  });
+
+  // Client-side sorting guarantee
+  return [...list].sort((a, b) => {
+    if (sortBy.value === 'newest') {
+      const dateA = new Date(a.created_at || 0).getTime();
+      const dateB = new Date(b.created_at || 0).getTime();
+      return dateB - dateA || (b.id - a.id);
+    } else if (sortBy.value === 'class') {
+      const gradeA = Number(a.class_room?.grade_level || 0);
+      const gradeB = Number(b.class_room?.grade_level || 0);
+      if (gradeA !== gradeB) return gradeA - gradeB;
+      const nameA = String(a.class_room?.name || '');
+      const nameB = String(b.class_room?.name || '');
+      return nameA.localeCompare(nameB, undefined, { numeric: true });
+    } else {
+      // 'oldest' (default: input terlama ke terbaru)
+      const dateA = new Date(a.created_at || 0).getTime();
+      const dateB = new Date(b.created_at || 0).getTime();
+      return dateA - dateB || (a.id - b.id);
+    }
   });
 });
 
