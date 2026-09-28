@@ -117,4 +117,57 @@ class AttendanceController extends TeacherController
 
         return $this->success(null, 'Presensi siswa berhasil disimpan');
     }
+
+    /**
+     * Get recent attendance session history recorded by this teacher.
+     */
+    public function history(Request $request)
+    {
+        $teacher = $this->resolveTeacher($request);
+        $teacherId = $teacher?->id;
+
+        $query = Attendance::with(['classRoom:id,name,grade_level', 'subject:id,name,code']);
+
+        if ($teacherId) {
+            $query->where('teacher_id', $teacherId);
+        }
+
+        // Group by class_id, subject_id, and date
+        $sessions = $query->selectRaw('
+                class_id,
+                subject_id,
+                date,
+                MAX(updated_at) as last_updated_at,
+                COUNT(*) as total_students,
+                SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present_count,
+                SUM(CASE WHEN status = "sick" THEN 1 ELSE 0 END) as sick_count,
+                SUM(CASE WHEN status = "permission" THEN 1 ELSE 0 END) as permission_count,
+                SUM(CASE WHEN status = "alpha" THEN 1 ELSE 0 END) as alpha_count
+            ')
+            ->groupBy('class_id', 'subject_id', 'date')
+            ->orderBy('date', 'desc')
+            ->orderBy('last_updated_at', 'desc')
+            ->limit(15)
+            ->get();
+
+        $result = $sessions->map(function ($s) {
+            return [
+                'class_id' => $s->class_id,
+                'class_name' => $s->classRoom?->name ?? '-',
+                'grade_level' => $s->classRoom?->grade_level ?? '-',
+                'subject_id' => $s->subject_id,
+                'subject_name' => $s->subject?->name ?? 'Presensi Umum (Non-Mapel)',
+                'subject_code' => $s->subject?->code ?? '-',
+                'date' => $s->date ? $s->date->toDateString() : null,
+                'last_updated_at' => $s->last_updated_at ? \Carbon\Carbon::parse($s->last_updated_at)->diffForHumans() : '-',
+                'total_students' => (int)$s->total_students,
+                'present_count' => (int)$s->present_count,
+                'sick_count' => (int)$s->sick_count,
+                'permission_count' => (int)$s->permission_count,
+                'alpha_count' => (int)$s->alpha_count,
+            ];
+        });
+
+        return $this->success($result);
+    }
 }

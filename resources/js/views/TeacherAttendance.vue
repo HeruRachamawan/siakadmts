@@ -16,6 +16,16 @@
 
       <div class="flex items-center gap-2">
         <button
+          v-if="selectedClass"
+          type="button"
+          @click="resetSelection"
+          class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+        >
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          <span>Kembali ke Riwayat</span>
+        </button>
+
+        <button
           v-if="students.length > 0"
           @click="setAllPresent"
           class="px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 font-bold rounded-xl text-xs transition-colors flex items-center gap-2 shadow-sm cursor-pointer"
@@ -111,13 +121,116 @@
         Memuat lembar presensi siswa...
       </div>
 
-      <!-- No Class Selected State -->
-      <div v-else-if="!selectedClass" class="text-center py-16 text-slate-400">
-        <div class="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3 border border-emerald-100">
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <!-- No Class Selected State -> Display Teacher Attendance History -->
+      <div v-else-if="!selectedClass" class="p-6 sm:p-8 space-y-6">
+        <!-- Banner Info & Prompt -->
+        <div class="p-6 bg-gradient-to-r from-emerald-50 via-teal-50/60 to-white rounded-3xl border border-emerald-100/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/20 flex-shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+              <h2 class="text-sm font-black text-slate-800 font-lexend uppercase tracking-wider">Riwayat Sesi Mengabsen Anda</h2>
+              <p class="text-xs text-slate-500 mt-0.5 font-medium">Pilih salah satu sesi di bawah untuk membuka & mengedit presensi, atau pilih filter di atas untuk menginput kelas baru.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="fetchHistory"
+            :disabled="loadingHistory"
+            class="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-2xs self-start md:self-auto cursor-pointer"
+          >
+            <svg class="w-3.5 h-3.5 text-slate-500" :class="{ 'animate-spin': loadingHistory }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span>Segarkan Riwayat</span>
+          </button>
         </div>
-        <p class="text-sm font-bold text-slate-700">Silakan Pilih Kelas & Mata Pelajaran</p>
-        <p class="text-xs text-slate-400 mt-0.5">Pilih kelas di atas untuk mulai mengisi presensi kehadiran siswa.</p>
+
+        <!-- History Loading -->
+        <div v-if="loadingHistory" class="text-center py-12 text-slate-400 text-xs font-medium">
+          <svg class="animate-spin h-6 w-6 text-emerald-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" stroke="currentColor" stroke-width="4" d="M4 12a8 8 0 1116 0 8 8 0 01-16 0m8-4v4l3 3m0-7l-3 3"></circle></svg>
+          Memuat riwayat sesi mengabsen...
+        </div>
+
+        <!-- Empty History State -->
+        <div v-else-if="!attendanceHistory.length" class="text-center py-12 text-slate-400">
+          <div class="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto mb-3 border border-slate-200">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          </div>
+          <p class="text-xs font-bold text-slate-700">Belum Ada Riwayat Mengabsen</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Silakan pilih Mata Pelajaran dan Kelas di atas untuk mulai melakukan presensi kehadiran siswa.</p>
+        </div>
+
+        <!-- History Table Grid -->
+        <div v-else class="overflow-x-auto rounded-2xl border border-slate-200/80 shadow-2xs">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-100/70 text-[10px] font-black uppercase tracking-wider text-slate-600 border-b border-slate-200">
+                <th class="px-5 py-3.5 w-12 text-center">No</th>
+                <th class="px-5 py-3.5">Tanggal Presensi</th>
+                <th class="px-5 py-3.5">Mata Pelajaran & Kelas</th>
+                <th class="px-5 py-3.5 text-center">Rincian Siswa (H / S / I / A)</th>
+                <th class="px-5 py-3.5 text-center">Terakhir Diperbarui</th>
+                <th class="px-5 py-3.5 text-right w-28">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+              <tr
+                v-for="(hist, idx) in attendanceHistory"
+                :key="`${hist.class_id}-${hist.subject_id}-${hist.date}`"
+                class="hover:bg-slate-50/80 transition-colors"
+              >
+                <td class="px-5 py-4 text-center font-bold text-slate-400">{{ idx + 1 }}</td>
+                <td class="px-5 py-4">
+                  <div class="font-bold text-slate-800 text-xs font-mono">{{ formatDateIndo(hist.date) }}</div>
+                  <span class="text-[10px] text-slate-400 font-semibold">{{ hist.date }}</span>
+                </td>
+                <td class="px-5 py-4">
+                  <div class="font-bold text-slate-800 text-sm font-lexend">{{ hist.subject_name }}</div>
+                  <div class="mt-0.5 flex items-center gap-1.5">
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Kelas {{ hist.class_name }} (Tkt {{ hist.grade_level }})
+                    </span>
+                    <span v-if="hist.subject_code && hist.subject_code !== '-'" class="text-[10px] font-mono text-slate-400">
+                      [{{ hist.subject_code }}]
+                    </span>
+                  </div>
+                </td>
+                <td class="px-5 py-4 text-center">
+                  <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200" title="Hadir">
+                      {{ hist.present_count }} H
+                    </span>
+                    <span v-if="hist.sick_count > 0" class="px-2 py-0.5 rounded-md text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200" title="Sakit">
+                      {{ hist.sick_count }} S
+                    </span>
+                    <span v-if="hist.permission_count > 0" class="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200" title="Izin">
+                      {{ hist.permission_count }} I
+                    </span>
+                    <span v-if="hist.alpha_count > 0" class="px-2 py-0.5 rounded-md text-[10px] font-black bg-red-100 text-red-800 border border-red-200" title="Alpa">
+                      {{ hist.alpha_count }} A
+                    </span>
+                    <span class="text-[10px] text-slate-400 font-bold ml-1">
+                      (Total {{ hist.total_students }} Siswa)
+                    </span>
+                  </div>
+                </td>
+                <td class="px-5 py-4 text-center text-[11px] font-medium text-slate-500">
+                  {{ hist.last_updated_at }}
+                </td>
+                <td class="px-5 py-4 text-right">
+                  <button
+                    type="button"
+                    @click="openSessionFromHistory(hist)"
+                    class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center gap-1.5 ml-auto cursor-pointer"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <span>Buka / Edit</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Table Content -->
@@ -355,8 +468,58 @@ const loadStudents = async () => {
   }
 };
 
+const attendanceHistory = ref([]);
+const loadingHistory = ref(false);
+
+const formatDateIndo = (dateStr) => {
+  if (!dateStr) return '-';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('id-ID', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  } catch {
+    return dateStr;
+  }
+};
+
+const fetchHistory = async () => {
+  loadingHistory.value = true;
+  try {
+    const res = await api.get('teacher/attendance/history');
+    attendanceHistory.value = res?.data?.data || res?.data || [];
+  } catch (err) {
+    console.error('Failed to load attendance history:', err);
+  } finally {
+    loadingHistory.value = false;
+  }
+};
+
+const openSessionFromHistory = async (session) => {
+  if (!session) return;
+  selectedClass.value = session.class_id;
+  selectedSubject.value = session.subject_id || '';
+  if (session.date) {
+    selectedDate.value = session.date;
+  }
+  await loadStudents();
+  toast.info(`Membuka sesi presensi ${session.subject_name} - Kelas ${session.class_name} (${session.date})`);
+};
+
+const resetSelection = () => {
+  selectedClass.value = '';
+  students.value = [];
+  fetchHistory();
+};
+
 onMounted(async () => {
-  await fetchOptions();
+  await Promise.all([
+    fetchOptions(),
+    fetchHistory()
+  ]);
 });
 
 const submitAttendance = async () => {
@@ -380,6 +543,7 @@ const submitAttendance = async () => {
 
     await api.post('teacher/attendance', payload);
     toast.success('Presensi siswa berhasil disimpan');
+    fetchHistory();
   } catch (err) {
     console.error('Failed to save attendance:', err);
     toast.error('Gagal menyimpan presensi siswa');

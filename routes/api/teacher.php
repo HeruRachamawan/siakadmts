@@ -22,6 +22,7 @@ Route::middleware(['auth:sanctum', 'role:teacher,admin,operator,kurikulum,kepala
     Route::get('students/{student}/transcript', [TeacherTranscriptController::class, 'transcript'])
         ->name('students.transcript');
     Route::get('attendance-options', [TeacherAttendanceController::class, 'options']);
+    Route::get('attendance/history', [TeacherAttendanceController::class, 'history'])->name('attendance.history');
     Route::get('attendance', [TeacherAttendanceController::class, 'index'])->name('attendance.index');
     Route::post('attendance', [TeacherAttendanceController::class, 'store'])->name('attendance.store');
     Route::get('attendance/{class}', [TeacherAttendanceController::class, 'index']);
