@@ -126,17 +126,27 @@
           <Search class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
         </div>
 
-        <!-- View Mode Switcher: Grid vs Table -->
+        <!-- View Mode Switcher: Per Mapel vs Semua Paket vs Tabel -->
         <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 flex-shrink-0">
+          <button
+            type="button"
+            @click="viewMode = 'subject-grid'"
+            :class="viewMode === 'subject-grid' ? 'bg-white text-emerald-800 font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+            class="px-2.5 py-1.5 rounded-md text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Tampilan Grid Dikelompokkan Per Mata Pelajaran & Guru Pengampu (Rapi & Terstruktur)"
+          >
+            <Layers class="w-3.5 h-3.5" />
+            <span class="hidden sm:inline">Per Mapel</span>
+          </button>
           <button
             type="button"
             @click="viewMode = 'grid'"
             :class="viewMode === 'grid' ? 'bg-white text-emerald-800 font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
             class="px-2.5 py-1.5 rounded-md text-xs flex items-center gap-1.5 transition-all cursor-pointer"
-            title="Tampilan Grid Kartu Asesmen (Modern & Rapi)"
+            title="Tampilan Semua Paket Ujian Terpisah Per Rombel"
           >
             <LayoutGrid class="w-3.5 h-3.5" />
-            <span class="hidden sm:inline">Grid Kartu</span>
+            <span class="hidden sm:inline">Semua Paket</span>
           </button>
           <button
             type="button"
@@ -146,7 +156,7 @@
             title="Tampilan Tabel Master Tunggal Bersih"
           >
             <List class="w-3.5 h-3.5" />
-            <span class="hidden sm:inline">Tabel Master</span>
+            <span class="hidden sm:inline">Tabel</span>
           </button>
         </div>
       </div>
@@ -155,14 +165,14 @@
     <!-- Data Counter & Information Bar -->
     <div v-if="!loading && filteredExams.length > 0" class="flex items-center justify-between text-xs text-slate-500 font-medium px-1">
       <div class="flex items-center gap-2">
-        <span class="font-bold text-slate-800">{{ filteredExams.length }}</span>
-        <span>Paket Ujian Ditemukan</span>
-        <span v-if="filteredExams.length !== exams.length" class="text-slate-400">
-          (Difilter dari total {{ exams.length }} paket)
+        <span class="font-bold text-slate-800">{{ viewMode === 'subject-grid' ? groupedBySubject.length : filteredExams.length }}</span>
+        <span>{{ viewMode === 'subject-grid' ? 'Mata Pelajaran Ditemukan' : 'Paket Ujian Ditemukan' }}</span>
+        <span class="text-slate-400">
+          ({{ filteredExams.length }} total paket ujian)
         </span>
       </div>
       <div class="text-[11px] text-slate-400 font-mono hidden sm:block">
-        Mode Aktif: <strong class="text-emerald-700 capitalize">{{ viewMode === 'grid' ? 'Grid Kartu Asesmen' : 'Tabel Master Tunggal' }}</strong>
+        Mode Aktif: <strong class="text-emerald-700 capitalize">{{ viewMode === 'subject-grid' ? 'Grid Rumpun Mapel & Guru' : (viewMode === 'grid' ? 'Grid Semua Paket' : 'Tabel Master') }}</strong>
       </div>
     </div>
 
@@ -179,7 +189,128 @@
       <p class="text-xs text-slate-400">Tidak ditemukan data ujian yang cocok dengan kriteria filter atau kata kunci pencarian.</p>
     </div>
 
-    <!-- ==================== VIEW MODE 1: GRID KARTU (MODERN & ANTI PUSING - DEFAULT) ==================== -->
+    <!-- ==================== VIEW MODE 0: GRID BERDASARKAN MATA PELAJARAN & GURU PENGAMPU (TERORGANISIR) ==================== -->
+    <div v-else-if="viewMode === 'subject-grid'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+      <div
+        v-for="group in groupedBySubject"
+        :key="'subject-group-' + group.id"
+        @click="openSubjectGroup(group)"
+        class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-lg hover:border-emerald-500/60 transition-all duration-200 flex flex-col justify-between overflow-hidden group cursor-pointer relative"
+      >
+        <!-- Top Emerald Accent Bar -->
+        <div class="h-2 w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700"></div>
+
+        <div class="p-5 flex-1 flex flex-col justify-between">
+          <!-- Card Header: Subject Info & Total Exams Badge -->
+          <div>
+            <div class="flex items-start justify-between gap-2">
+              <span class="px-2.5 py-1 rounded-xl text-[10.5px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200/80 inline-flex items-center gap-1.5 shadow-2xs">
+                <BookOpen class="w-3.5 h-3.5 text-emerald-600" />
+                <span>Mata Pelajaran</span>
+              </span>
+
+              <span class="px-2.5 py-1 rounded-xl text-xs font-black bg-slate-900 text-white shadow-2xs">
+                {{ group.totalExams }} Paket Ujian
+              </span>
+            </div>
+
+            <!-- Subject Name -->
+            <div class="flex items-start gap-3 mt-4">
+              <div class="w-11 h-11 rounded-2xl bg-emerald-100/70 text-emerald-900 border border-emerald-300/60 flex items-center justify-center font-black text-base uppercase flex-shrink-0 shadow-2xs group-hover:scale-105 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                {{ group.name.charAt(0) }}
+              </div>
+              <div class="min-w-0 flex-1">
+                <h3 class="text-base font-black text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-2 leading-tight">
+                  {{ group.name }}
+                </h3>
+                <!-- Rombel / Kelas yang diampu -->
+                <div class="flex items-center gap-1 flex-wrap mt-1.5">
+                  <span
+                    v-for="cls in group.classesList"
+                    :key="'cls-' + cls"
+                    class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 font-mono"
+                  >
+                    Kelas {{ cls }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Guru Pengampu Info -->
+            <div class="mt-4 p-3 bg-slate-50/80 rounded-xl border border-slate-150 space-y-1.5">
+              <div class="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                <span class="flex items-center gap-1">
+                  <User class="w-3 h-3 text-slate-500" />
+                  Guru Pengampu ({{ group.teachersList.length }})
+                </span>
+              </div>
+              <div class="space-y-1">
+                <div
+                  v-for="(t, idx) in group.teachersList"
+                  :key="'teacher-' + idx"
+                  class="flex items-center justify-between text-xs text-slate-800 font-semibold"
+                >
+                  <span class="truncate">{{ t.name }}</span>
+                  <span v-if="t.nip" class="text-[10px] font-mono text-slate-400 flex-shrink-0 ml-2">NIP: {{ t.nip }}</span>
+                </div>
+                <div v-if="!group.teachersList.length" class="text-xs text-slate-400 italic">
+                  Belum ditentukan guru pengampu
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metrics Row (3 Columns) -->
+          <div class="mt-4 pt-3.5 border-t border-slate-100">
+            <div class="grid grid-cols-3 gap-2 text-center">
+              <div class="bg-slate-50/80 rounded-xl p-2 border border-slate-100">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Total Siswa</span>
+                <span class="text-xs font-black text-slate-800 font-mono tabular-nums mt-0.5 block">
+                  {{ group.totalSubmissions }} Siswa
+                </span>
+              </div>
+              <div class="bg-slate-50/80 rounded-xl p-2 border border-slate-100">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Rerata Nilai</span>
+                <span class="text-xs font-black font-mono tabular-nums mt-0.5 block text-slate-800">
+                  {{ group.avgScore }}
+                </span>
+              </div>
+              <div class="bg-slate-50/80 rounded-xl p-2 border border-slate-100">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Ketuntasan</span>
+                <span class="text-xs font-black font-mono tabular-nums mt-0.5 block" :class="group.passRate >= 75 ? 'text-emerald-700' : 'text-amber-700'">
+                  {{ group.passRate }}%
+                </span>
+              </div>
+            </div>
+
+            <!-- Mini Pass Bar -->
+            <div class="mt-2.5">
+              <div class="flex items-center justify-between text-[9px] font-medium text-slate-400 mb-1">
+                <span class="text-emerald-700 font-bold font-mono">{{ group.totalPassed }} Tuntas</span>
+                <span class="text-rose-600 font-bold font-mono">{{ group.totalRemedial }} Remedial</span>
+              </div>
+              <div class="w-full bg-rose-100 h-1.5 rounded-full overflow-hidden flex">
+                <div class="bg-emerald-600 h-full rounded-full transition-all duration-300" :style="{ width: group.passRate + '%' }"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Card Footer -->
+        <div class="px-5 py-3.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between group-hover:bg-emerald-50/40 transition-colors">
+          <span class="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+            <span>Buka Riwayat Paket Ujian</span>
+            <ArrowRight class="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform text-emerald-600" />
+          </span>
+
+          <span class="text-[11px] font-bold text-slate-400 font-mono">
+            {{ group.exams.length }} Kelas
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW MODE 1: GRID KARTU (SEMUA PAKET FLAT) ==================== -->
     <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
       <div
         v-for="exam in filteredExams"
@@ -414,6 +545,149 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- ==================== SUBJECT GROUP EXAM HISTORY MODAL ==================== -->
+    <div v-if="showSubjectGroupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6">
+      <div class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-slate-100 flex flex-col transform transition-all animate-in fade-in duration-200">
+        <!-- Modal Header -->
+        <div class="px-6 sm:px-8 py-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white font-black flex items-center justify-center text-base shadow-sm">
+              {{ selectedSubjectGroup?.name?.charAt(0) }}
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-base sm:text-lg font-black text-slate-800 font-lexend tracking-tight">
+                  {{ selectedSubjectGroup?.name }}
+                </h2>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  {{ selectedSubjectGroup?.exams?.length || 0 }} Paket
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 font-medium mt-0.5">
+                Rombel Terdaftar: <strong class="text-slate-700">{{ selectedSubjectGroup?.classesList?.join(', ') || '-' }}</strong>
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            @click="showSubjectGroupModal = false"
+            class="w-9 h-9 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors border border-slate-200 shadow-2xs cursor-pointer"
+          >
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
+        <!-- Teachers & Summary Bar -->
+        <div class="px-6 sm:px-8 py-3 bg-emerald-950 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div class="flex items-center gap-2">
+            <User class="w-4 h-4 text-emerald-400" />
+            <span class="text-emerald-200 font-semibold">Guru Pengampu:</span>
+            <span class="font-bold text-white">
+              {{ selectedSubjectGroup?.teachersList?.map(t => t.name).join(', ') || 'Belum Ditentukan' }}
+            </span>
+          </div>
+
+          <div class="flex items-center gap-4 text-[11px] font-mono font-bold text-emerald-300">
+            <span>{{ selectedSubjectGroup?.totalSubmissions }} Total Siswa</span>
+            <span>&bull;</span>
+            <span>Rerata {{ selectedSubjectGroup?.avgScore }}</span>
+            <span>&bull;</span>
+            <span class="text-emerald-400">{{ selectedSubjectGroup?.passRate }}% Tuntas</span>
+          </div>
+        </div>
+
+        <!-- Exam History Cards List -->
+        <div class="p-6 sm:p-8 space-y-4 overflow-y-auto flex-1 bg-slate-50/50">
+          <div
+            v-for="exam in selectedSubjectGroup?.exams"
+            :key="'modal-exam-' + exam.id"
+            class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs hover:shadow-md hover:border-emerald-300 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+          >
+            <!-- Exam Info -->
+            <div class="space-y-2 flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border" :class="getExamTypeBadgeClass(exam.exam_type)">
+                  {{ examTypeLabel(exam.exam_type) }}
+                </span>
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-100 text-slate-800 border border-slate-200 font-mono">
+                  Kelas {{ exam.class_room?.name || '-' }}
+                </span>
+                <span class="text-[10px] font-mono text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-150">
+                  KKM {{ exam.kkm }} &bull; {{ exam.total_questions }} Soal
+                </span>
+              </div>
+
+              <div>
+                <h4 class="text-sm font-black text-slate-900 leading-snug">
+                  {{ exam.title }}
+                </h4>
+                <div class="flex items-center gap-3 text-xs text-slate-500 font-medium mt-1">
+                  <span>Guru: <strong class="text-slate-700">{{ exam.teacher?.full_name || exam.teacher?.name || '-' }}</strong></span>
+                  <span v-if="exam.created_at">&bull; Dibuat: {{ exam.created_at ? new Date(exam.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-' }}</span>
+                </div>
+              </div>
+
+              <!-- Mini Stats -->
+              <div class="flex items-center gap-4 pt-1 text-xs font-mono font-semibold">
+                <span class="text-slate-600"><strong>{{ exam.submissions_count || 0 }}</strong> Siswa Ikut</span>
+                <span class="text-emerald-700"><strong>{{ exam.passed_count || 0 }}</strong> Tuntas</span>
+                <span class="text-rose-600"><strong>{{ exam.remedial_count || 0 }}</strong> Remedial</span>
+                <span class="text-slate-700">Rata-rata: <strong>{{ exam.avg_score || '0.00' }}</strong></span>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2 self-end md:self-center shrink-0">
+              <button
+                @click="inspectExam(exam.id)"
+                class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                title="Buka Analisis & Rekap Nilai"
+              >
+                <Eye class="w-3.5 h-3.5" />
+                <span>Detail Koreksi</span>
+              </button>
+
+              <button
+                @click="openRecapPrint(exam.id)"
+                title="Cetak Rekap Nilai Ujian"
+                class="p-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl text-xs transition-colors flex items-center justify-center cursor-pointer border border-slate-200 shadow-2xs"
+              >
+                <Printer class="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                @click="downloadExcel(exam.id)"
+                title="Download Excel (.xlsx)"
+                class="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs transition-colors flex items-center justify-center cursor-pointer border border-emerald-200 shadow-2xs"
+              >
+                <Download class="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                @click="deleteExam(exam)"
+                title="Hapus Paket Ujian"
+                class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs transition-colors flex items-center justify-center cursor-pointer border border-rose-200 shadow-2xs"
+              >
+                <Trash2 class="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 sm:px-8 py-3.5 bg-slate-100 border-t border-slate-200 flex justify-end">
+          <button
+            type="button"
+            @click="showSubjectGroupModal = false"
+            class="px-5 py-2 bg-white hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors border border-slate-200 shadow-2xs cursor-pointer"
+          >
+            Tutup
+          </button>
+        </div>
       </div>
     </div>
 
@@ -785,7 +1059,10 @@ import {
   FolderOpen,
   Layers,
   LayoutGrid,
-  List
+  List,
+  User,
+  GraduationCap,
+  ArrowRight
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -796,7 +1073,7 @@ const summary = ref(null);
 const classes = ref([]);
 const subjects = ref([]);
 
-const viewMode = ref('grid'); // 'grid' (Kartu Modern) | 'table' (Tabel Master Tunggal)
+const viewMode = ref('subject-grid'); // 'subject-grid' (Grid Mapel & Guru) | 'grid' (Kartu Paket) | 'table' (Tabel Master)
 
 const filterClass = ref('');
 const filterSubject = ref('');
@@ -921,6 +1198,15 @@ function collapseAll() {
   });
 }
 
+// State untuk Modal Riwayat Paket per Mapel (Drawer)
+const selectedSubjectGroup = ref(null);
+const showSubjectGroupModal = ref(false);
+
+function openSubjectGroup(group) {
+  selectedSubjectGroup.value = group;
+  showSubjectGroupModal.value = true;
+}
+
 // Mengelompokkan seluruh paket ujian yang difilter ke dalam rumpun Mata Pelajaran
 const groupedBySubject = computed(() => {
   const groups = {};
@@ -934,7 +1220,8 @@ const groupedBySubject = computed(() => {
         id: subjectId,
         name: subjectName,
         exams: [],
-        teachers: new Set(),
+        teachersMap: new Map(),
+        classesSet: new Set(),
         totalSubmissions: 0,
         totalPassed: 0,
         totalRemedial: 0,
@@ -944,9 +1231,23 @@ const groupedBySubject = computed(() => {
     }
 
     groups[subjectId].exams.push(exam);
-    if (exam.teacher?.name) {
-      groups[subjectId].teachers.add(exam.teacher.name);
+
+    // Guru pengampu (full_name / name / nip)
+    const tName = exam.teacher?.full_name || exam.teacher?.name;
+    if (tName) {
+      if (!groups[subjectId].teachersMap.has(tName)) {
+        groups[subjectId].teachersMap.set(tName, {
+          name: tName,
+          nip: exam.teacher?.nip || null
+        });
+      }
     }
+
+    // Kelas yang diampu
+    if (exam.class_room?.name) {
+      groups[subjectId].classesSet.add(exam.class_room.name);
+    }
+
     const subs = Number(exam.submissions_count) || 0;
     const passed = Number(exam.passed_count) || 0;
     const remedial = Number(exam.remedial_count) || 0;
@@ -969,7 +1270,8 @@ const groupedBySubject = computed(() => {
       id: g.id,
       name: g.name,
       exams: g.exams,
-      teachersList: Array.from(g.teachers),
+      teachersList: Array.from(g.teachersMap.values()),
+      classesList: Array.from(g.classesSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
       totalExams: g.exams.length,
       totalSubmissions: totalSubs,
       totalPassed: g.totalPassed,
