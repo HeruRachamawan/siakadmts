@@ -1139,7 +1139,7 @@ async function fetchMeta() {
 async function fetchExams() {
   loading.value = true;
   try {
-    const res = await api.get('/admin/exam-corrections');
+    const res = await api.get('/admin/exam-corrections', { all: true, per_page: 1000 });
     const list = res?.data?.data || res?.data || res || [];
     exams.value = Array.isArray(list) ? list : (list.data || []);
   } catch (err) {

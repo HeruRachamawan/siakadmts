@@ -48,7 +48,25 @@ class AdminExamCorrectionController extends Controller
             });
         }
 
-        $exams = $query->orderBy('created_at', 'desc')->paginate($request->get('per_page', 15));
+        if ($request->boolean('all') || $request->get('per_page') === 'all' || $request->has('all')) {
+            $collection = $query->orderBy('created_at', 'asc')->get();
+            $collection->transform(function ($exam) {
+                $subs = ExamSubmission::where('exam_package_id', $exam->id)->get();
+                $exam->avg_score = $subs->count() > 0 ? round($subs->avg('total_score'), 2) : 0;
+                $exam->passed_count = $subs->where('is_passed', true)->count();
+                $exam->remedial_count = $subs->where('is_passed', false)->count();
+                $exam->total_students = $subs->count();
+                return $exam;
+            });
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $collection
+            ]);
+        }
+
+        $perPage = min(1000, max(1, (int) $request->get('per_page', 500)));
+        $exams = $query->orderBy('created_at', 'asc')->paginate($perPage);
 
         $exams->getCollection()->transform(function ($exam) {
             $subs = ExamSubmission::where('exam_package_id', $exam->id)->get();
