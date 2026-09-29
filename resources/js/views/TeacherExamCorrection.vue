@@ -108,19 +108,192 @@
           </select>
         </div>
 
-        <div class="relative w-full md:w-64">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Cari judul ujian..."
-            class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-teal-400"
-          />
-          <Search class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+        <div class="flex items-center gap-3">
+          <div class="relative w-full md:w-56">
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Cari judul ujian..."
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-teal-400"
+            />
+            <Search class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          </div>
+
+          <!-- View Mode Switcher: Grid Kartu vs Tabel -->
+          <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 flex-shrink-0">
+            <button
+              type="button"
+              @click="viewMode = 'grid'"
+              :class="viewMode === 'grid' ? 'bg-white text-teal-800 font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+              class="px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+              title="Tampilan Grid Kartu Asesmen per Kelas (Modern & Nyaman)"
+            >
+              <LayoutGrid class="w-3.5 h-3.5" />
+              <span class="hidden sm:inline">Grid Kartu</span>
+            </button>
+            <button
+              type="button"
+              @click="viewMode = 'table'"
+              :class="viewMode === 'table' ? 'bg-white text-teal-800 font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+              class="px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+              title="Tampilan Tabel Klasik"
+            >
+              <List class="w-3.5 h-3.5" />
+              <span class="hidden sm:inline">Tabel</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Exams Table -->
-      <div class="overflow-x-auto">
+      <!-- Quick Filter Tabs per Kelas -->
+      <div v-if="classTabs.length > 2" class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+        <button
+          type="button"
+          v-for="tab in classTabs"
+          :key="'class-tab-' + tab.id"
+          @click="filterClass = tab.id"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shadow-2xs"
+          :class="filterClass === tab.id ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20' : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'"
+        >
+          <span>{{ tab.name }}</span>
+          <span
+            class="px-1.5 py-0.2 rounded-full text-[10px] font-black"
+            :class="filterClass === tab.id ? 'bg-white/20 text-white' : 'bg-white text-slate-600'"
+          >
+            {{ tab.count }}
+          </span>
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div v-if="filteredExams.length === 0" class="py-16 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto mb-3 border border-slate-200">
+          <BookOpen class="w-7 h-7 text-slate-400" />
+        </div>
+        <h3 class="text-sm font-bold text-slate-700">Tidak Ada Paket Ujian</h3>
+        <p class="text-xs text-slate-400 mt-1">Tidak ditemukan paket ujian yang cocok dengan kriteria filter.</p>
+      </div>
+
+      <!-- VIEW 1: GRID KARTU BERKELOMPOK PER KELAS (DEFAULT - MODERN & ANTI PUSING) -->
+      <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div
+          v-for="exam in filteredExams"
+          :key="'grid-exam-' + exam.id"
+          class="bg-white rounded-2xl border border-slate-200 hover:border-teal-400 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group"
+        >
+          <!-- Top Accent Bar -->
+          <div
+            class="h-1.5 w-full"
+            :class="[
+              exam.exam_type === 'sts' || exam.exam_type === 'asts' ? 'bg-emerald-500' :
+              exam.exam_type === 'sas' || exam.exam_type === 'asas' ? 'bg-blue-500' :
+              exam.exam_type === 'am' ? 'bg-purple-500' : 'bg-teal-500'
+            ]"
+          ></div>
+
+          <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+            <!-- Header Badges -->
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide bg-teal-50 text-teal-700 border border-teal-100">
+                    {{ examTypeLabel(exam.exam_type) }}
+                  </span>
+                  <span v-if="isLokalClassName(exam.class_room?.name)" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    📍 Kelas {{ exam.class_room?.name }} (Lokal)
+                  </span>
+                  <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    🏫 Kelas {{ exam.class_room?.name || '-' }}
+                  </span>
+                </div>
+
+                <span class="text-[10px] font-mono text-slate-400 font-semibold bg-slate-50 px-2 py-0.5 rounded border border-slate-150">
+                  KKM {{ exam.kkm }}
+                </span>
+              </div>
+
+              <!-- Exam Title & Subject -->
+              <div class="mt-3">
+                <span class="text-[10px] font-black uppercase tracking-wider text-teal-700 block truncate">
+                  {{ exam.subject?.name || 'Mata Pelajaran' }} &bull; Sem {{ exam.semester }}
+                </span>
+                <h3 class="text-sm font-black text-slate-900 group-hover:text-teal-700 transition-colors line-clamp-2 leading-snug mt-0.5 font-lexend">
+                  {{ exam.title }}
+                </h3>
+              </div>
+            </div>
+
+            <!-- Stats & Progress -->
+            <div class="pt-3 border-t border-slate-100 space-y-2.5">
+              <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Soal</span>
+                  <span class="text-xs font-black text-slate-800 font-mono">{{ exam.total_questions }}</span>
+                </div>
+                <div class="p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Siswa Ikut</span>
+                  <span class="text-xs font-black text-slate-800 font-mono">{{ exam.submissions_count || 0 }}</span>
+                </div>
+                <div class="p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Rata-rata</span>
+                  <span class="text-xs font-black font-mono" :class="Number(exam.avg_score) >= Number(exam.kkm) ? 'text-emerald-600' : 'text-amber-600'">
+                    {{ exam.avg_score || '0.00' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Input Status Badge -->
+              <div class="flex items-center justify-between text-[11px] font-semibold">
+                <span class="text-slate-500">Status Koreksi:</span>
+                <span
+                  class="px-2 py-0.5 rounded-full text-[10px] font-black"
+                  :class="exam.submissions_count > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'"
+                >
+                  {{ exam.submissions_count > 0 ? `✓ ${exam.submissions_count} Lembar Terisi` : 'Belum Ada Jawaban' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Actions Footer -->
+          <div class="px-5 py-3.5 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-2">
+            <button
+              @click="openExamDetail(exam.id)"
+              class="flex-1 py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            >
+              <Sliders class="w-3.5 h-3.5" />
+              <span>Buka & Koreksi</span>
+            </button>
+
+            <button
+              @click="openEditExam(exam)"
+              title="Edit Informasi Paket Ujian"
+              class="p-2 bg-white hover:bg-amber-50 text-amber-600 rounded-xl text-xs transition-colors flex items-center justify-center cursor-pointer border border-slate-200 shadow-2xs"
+            >
+              <Pencil class="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              @click="downloadExcel(exam.id)"
+              title="Export Rekap Nilai Excel"
+              class="p-2 bg-white hover:bg-slate-100 text-slate-600 rounded-xl text-xs transition-colors flex items-center justify-center cursor-pointer border border-slate-200 shadow-2xs"
+            >
+              <Download class="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              @click="confirmDelete(exam)"
+              title="Hapus Paket Ujian"
+              class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs transition-colors flex items-center justify-center cursor-pointer border border-rose-200 shadow-2xs"
+            >
+              <Trash2 class="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: TABEL KLASIK -->
+      <div v-else class="overflow-x-auto">
         <table class="w-full text-left text-xs text-slate-600">
           <thead class="bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100">
             <tr>
@@ -206,12 +379,6 @@
                     <Trash2 class="w-4 h-4" />
                   </button>
                 </div>
-              </td>
-            </tr>
-
-            <tr v-if="filteredExams.length === 0">
-              <td colspan="7" class="px-4 py-12 text-center text-slate-400 font-medium">
-                Belum ada paket ujian yang dibuat. Silakan klik tombol "Buat Paket Ujian Baru" di atas.
               </td>
             </tr>
           </tbody>
@@ -3235,7 +3402,9 @@ import {
   Copy,
   RotateCcw,
   Pencil,
-  Info
+  Info,
+  LayoutGrid,
+  List
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -3404,11 +3573,42 @@ function formatSemester(sem) {
   return s.toUpperCase();
 }
 
+const viewMode = ref('grid'); // 'grid' (Kartu Asesmen per Kelas) | 'table' (Tabel Ringkas)
 const filterClass = ref('');
 const filterSubject = ref('');
 const filterType = ref('');
 const searchQuery = ref('');
 const sortBy = ref('oldest'); // 'oldest' (default terlama), 'newest' (terbaru), 'class' (urut kelas)
+
+// Tab filter kelas cepat dari seluruh ujian guru
+const classTabs = computed(() => {
+  if (!exams.value.length) return [];
+
+  const map = new Map();
+  exams.value.forEach(item => {
+    const cId = item.class_room_id ? String(item.class_room_id) : 'other';
+    const cName = item.class_room?.name ? `Kelas ${item.class_room.name}` : 'Kelas Lainnya';
+    if (!map.has(cId)) {
+      map.set(cId, {
+        id: cId,
+        name: cName,
+        gradeLevel: item.class_room?.grade_level || 0,
+        count: 0
+      });
+    }
+    map.get(cId).count++;
+  });
+
+  const list = Array.from(map.values()).sort((a, b) => {
+    if (a.gradeLevel !== b.gradeLevel) return a.gradeLevel - b.gradeLevel;
+    return a.name.localeCompare(b.name, undefined, { numeric: true });
+  });
+
+  return [
+    { id: '', name: 'Semua Kelas', count: exams.value.length },
+    ...list
+  ];
+});
 
 const showPrintModal = ref(false);
 const schoolProfile = ref(null);
