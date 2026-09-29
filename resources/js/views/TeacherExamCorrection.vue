@@ -151,14 +151,14 @@
           type="button"
           v-for="tab in classTabs"
           :key="'class-tab-' + tab.id"
-          @click="filterClass = tab.id"
+          @click="selectClassTab(tab)"
           class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shadow-2xs"
-          :class="filterClass === tab.id ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20' : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'"
+          :class="String(filterClass) === String(tab.id) ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20' : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'"
         >
           <span>{{ tab.name }}</span>
           <span
             class="px-1.5 py-0.2 rounded-full text-[10px] font-black"
-            :class="filterClass === tab.id ? 'bg-white/20 text-white' : 'bg-white text-slate-600'"
+            :class="String(filterClass) === String(tab.id) ? 'bg-white/20 text-white' : 'bg-white text-slate-600'"
           >
             {{ tab.count }}
           </span>
@@ -172,6 +172,15 @@
         </div>
         <h3 class="text-sm font-bold text-slate-700">Tidak Ada Paket Ujian</h3>
         <p class="text-xs text-slate-400 mt-1">Tidak ditemukan paket ujian yang cocok dengan kriteria filter.</p>
+        <button
+          v-if="filterClass || filterSubject || filterType || searchQuery"
+          type="button"
+          @click="resetFilters"
+          class="mt-3.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 cursor-pointer transition-colors shadow-2xs"
+        >
+          <RotateCcw class="w-3.5 h-3.5" />
+          <span>Reset Semua Filter</span>
+        </button>
       </div>
 
       <!-- VIEW 1: GRID KARTU BERKELOMPOK PER KELAS (DEFAULT - MODERN & ANTI PUSING) -->
@@ -4475,10 +4484,25 @@ async function fetchExams() {
 
 const filteredExams = computed(() => {
   const list = exams.value.filter(e => {
-    if (filterClass.value && e.class_room_id !== filterClass.value) return false;
-    if (filterSubject.value && e.subject_id !== filterSubject.value) return false;
+    if (filterClass.value !== '' && filterClass.value !== null && filterClass.value !== undefined) {
+      const selected = String(filterClass.value).trim();
+      const examClassId = e.class_room_id !== null && e.class_room_id !== undefined ? String(e.class_room_id).trim() : '';
+      const examClassName = e.class_room?.name ? String(e.class_room.name).trim() : '';
+      
+      const isIdMatch = examClassId !== '' && examClassId === selected;
+      const isNameMatch = examClassName !== '' && (
+        examClassName.toLowerCase() === selected.toLowerCase() ||
+        `kelas ${examClassName}`.toLowerCase() === selected.toLowerCase() ||
+        (selected.toLowerCase() === 'kelas lainnya' && !e.class_room_id)
+      );
+
+      if (!isIdMatch && !isNameMatch) return false;
+    }
+    if (filterSubject.value !== '' && filterSubject.value !== null && filterSubject.value !== undefined) {
+      if (String(e.subject_id) !== String(filterSubject.value)) return false;
+    }
     if (filterType.value && e.exam_type !== filterType.value) return false;
-    if (searchQuery.value && !e.title.toLowerCase().includes(searchQuery.value.toLowerCase())) return false;
+    if (searchQuery.value && !e.title?.toLowerCase().includes(searchQuery.value.toLowerCase())) return false;
     return true;
   });
 
@@ -4503,6 +4527,36 @@ const filteredExams = computed(() => {
     }
   });
 });
+
+function selectClassTab(tab) {
+  filterClass.value = tab.id;
+  // Jika tab kelas tertentu dipilih tapi terhalang filter mapel/pencarian yang menghasilkan 0, otomatis bersihkan sub-filter
+  if (tab.id !== '') {
+    const hasMatchingExamsWithCurrentFilters = exams.value.some(e => {
+      const matchesClass = String(e.class_room_id) === String(tab.id) ||
+        (e.class_room?.name && String(e.class_room.name).toLowerCase() === String(tab.name).replace(/^kelas\s*/i, '').toLowerCase());
+      if (!matchesClass) return false;
+      if (filterSubject.value && String(e.subject_id) !== String(filterSubject.value)) return false;
+      if (filterType.value && e.exam_type !== filterType.value) return false;
+      if (searchQuery.value && !e.title?.toLowerCase().includes(searchQuery.value.toLowerCase())) return false;
+      return true;
+    });
+
+    // Jika filter subyektif (mapel / jenis ujian / search) menghalangi data kelas ini tampil, reset sub-filter
+    if (!hasMatchingExamsWithCurrentFilters) {
+      filterSubject.value = '';
+      filterType.value = '';
+      searchQuery.value = '';
+    }
+  }
+}
+
+function resetFilters() {
+  filterClass.value = '';
+  filterSubject.value = '';
+  filterType.value = '';
+  searchQuery.value = '';
+}
 
 const overallAvgScore = computed(() => {
   if (!exams.value.length) return '0.0';
