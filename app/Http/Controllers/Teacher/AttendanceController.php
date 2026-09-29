@@ -21,8 +21,32 @@ class AttendanceController extends TeacherController
             $teacherSubjects = Subject::orderBy('name')->get();
         }
 
-        // Return all classes so teacher can select any class
-        $classes = ClassRoom::orderBy('name')->get();
+        // Return all classes with categorization for Utama (7A, 7B, 8A, 8B, 9A, 9B) & Lokal (7, 8, 9A, 9B)
+        $classes = ClassRoom::withCount('students')
+            ->orderBy('grade_level')
+            ->orderBy('name')
+            ->get()
+            ->map(function ($c) {
+                $name = trim($c->name);
+                $lower = strtolower($name);
+                $isClass9A = in_array($name, ['9A', '9a', '9-A', '9-a']) || in_array($lower, ['kelas 9a', 'kelas 9-a', 'ix-a', 'ix a']);
+                $isClass9B = in_array($name, ['9B', '9b', '9-B', '9-b']) || in_array($lower, ['kelas 9b', 'kelas 9-b', 'ix-b', 'ix b']);
+                $isLokal = in_array($name, ['7', '8']) || in_array($lower, ['kelas 7', 'kelas 8']) ||
+                    $isClass9A || $isClass9B ||
+                    str_contains($lower, 'lokal') || str_starts_with($lower, 'l-') || str_starts_with($lower, 'lok-');
+
+                $lokalCount = Student::where('lokal_class_id', $c->id)->count();
+                $isLokalTingkat = in_array($name, ['7', '8']) || in_array($lower, ['kelas 7', 'kelas 8']);
+
+                return [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'grade_level' => $c->grade_level,
+                    'students_count' => ($lokalCount > 0 && $isLokalTingkat) ? $lokalCount : $c->students_count,
+                    'lokal_students_count' => $lokalCount > 0 ? $lokalCount : $c->students_count,
+                    'is_lokal' => $isLokal,
+                ];
+            });
 
         return $this->success([
             'subjects' => $teacherSubjects,
@@ -43,7 +67,25 @@ class AttendanceController extends TeacherController
         $date = $request->input('date', now()->toDateString());
 
         $class = ClassRoom::findOrFail($classId);
-        $students = $class->students()->orderBy('full_name')->get(['id', 'full_name', 'nisn', 'nis', 'gender', 'photo_url']);
+
+        // Check if class is a lokal class tingkat (7 or 8)
+        $className = trim($class->name);
+        $isLokalTingkat = in_array($className, ['7', '8']) || in_array(strtolower($className), ['kelas 7', 'kelas 8']);
+        $hasLokalStudents = Student::where('lokal_class_id', $classId)->exists();
+
+        if ($isLokalTingkat && $hasLokalStudents) {
+            $students = Student::where('lokal_class_id', $classId)
+                ->orderBy('full_name')
+                ->get(['id', 'full_name', 'nisn', 'nis', 'gender', 'photo_url']);
+        } else {
+            $students = $class->students()->orderBy('full_name')->get(['id', 'full_name', 'nisn', 'nis', 'gender', 'photo_url']);
+            // Fallback: if regular students count is 0 but has lokal students
+            if ($students->isEmpty() && $hasLokalStudents) {
+                $students = Student::where('lokal_class_id', $classId)
+                    ->orderBy('full_name')
+                    ->get(['id', 'full_name', 'nisn', 'nis', 'gender', 'photo_url']);
+            }
+        }
 
         $query = Attendance::where('class_id', $classId)
             ->whereDate('date', $date);
