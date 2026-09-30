@@ -3378,22 +3378,41 @@
                         {{ getGradePredicate((student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? student.remedial_score : student.total_score).pred }}
                       </span>
                     </td>
-                    <td class="border border-slate-300 px-3 py-1.5 text-center font-black text-emerald-800">
-                      <span
-                        v-if="student.has_submitted || student.total_score !== null || student.remedial_score !== null"
-                        class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider"
-                      >
-                        TUNTAS
-                      </span>
+                    <td class="border border-slate-300 px-3 py-1.5 text-center font-black">
+                      <template v-if="student.has_submitted || student.total_score !== null || student.remedial_score !== null">
+                        <span
+                          v-if="((student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? Number(student.remedial_score) : Number(student.total_score || 0)) >= activeExam.kkm"
+                          class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider inline-block"
+                        >
+                          TUNTAS
+                        </span>
+                        <span
+                          v-else
+                          class="px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-black uppercase tracking-wider inline-block"
+                        >
+                          BELUM TUNTAS
+                        </span>
+                      </template>
                       <span v-else class="text-slate-400 text-[10px] font-bold">
                         BELUM UJIAN
                       </span>
                     </td>
-                    <td class="border border-slate-300 px-3 py-1.5 text-left text-[10px] text-slate-600">
-                      <span v-if="student.has_submitted || student.total_score !== null">
-                        Memenuhi KKM ({{ activeExam.kkm }})
-                      </span>
-                      <span v-else>-</span>
+                    <td class="border border-slate-300 px-3 py-1.5 text-left text-[10px]">
+                      <template v-if="student.has_submitted || student.total_score !== null || student.remedial_score !== null">
+                        <span
+                          v-if="((student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? Number(student.remedial_score) : Number(student.total_score || 0)) >= activeExam.kkm"
+                          class="text-emerald-700 font-semibold"
+                        >
+                          Memenuhi KKM ({{ activeExam.kkm }})
+                        </span>
+                        <span
+                          v-else
+                          class="text-rose-600 font-semibold"
+                        >
+                          Di Bawah KKM ({{ activeExam.kkm }})
+                        </span>
+                      </template>
+                      <span v-else class="text-slate-400">-</span>
                     </td>
                   </tr>
                 </tbody>
@@ -3417,8 +3436,10 @@
                   <strong class="text-emerald-700 text-sm">{{ adjustedStats.adjustedPassedCount }} Siswa ({{ adjustedStats.adjustedPassPct }}%)</strong>
                 </div>
                 <div class="p-2 border border-slate-200 rounded bg-white text-center">
-                  <span class="text-slate-500 block text-[10px]">Siswa Remedial:</span>
-                  <strong class="text-slate-700 text-sm">0 Siswa (Tidak Ada)</strong>
+                  <span class="text-slate-500 block text-[10px]">Siswa Belum Tuntas:</span>
+                  <strong :class="adjustedStats.adjustedRemCount > 0 ? 'text-rose-600' : 'text-slate-700'" class="text-sm">
+                    {{ adjustedStats.adjustedRemCount > 0 ? `${adjustedStats.adjustedRemCount} Siswa` : '0 Siswa (Tidak Ada)' }}
+                  </strong>
                 </div>
               </div>
             </div>
@@ -6056,6 +6077,7 @@ function printAdjustedDocument() {
     .text-amber-800 { color: #92400e; }
     .text-amber-900 { color: #78350f; }
     .text-rose-600 { color: #e11d48; }
+    .text-rose-700 { color: #be123c; }
     
     .text-xs { font-size: 10px; }
     .text-sm { font-size: 11px; }
