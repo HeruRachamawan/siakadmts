@@ -4876,8 +4876,12 @@ async function openExamDetail(id) {
 
       const rawInitial = (s.total_score !== null && s.total_score !== undefined) ? Number(s.total_score) : null;
       let remScore = (s.remedial_score !== null && s.remedial_score !== undefined) ? Number(s.remedial_score) : null;
-      if (remScore === null && rawInitial !== null && rawInitial >= Number(activeExam.value?.kkm || 75)) {
-        remScore = rawInitial;
+
+      // Jika nilai asli ujian sudah tuntas (>= KKM) dan remScore kosong atau remScore lebih kecil dari nilai aslinya, sinkronkan ke nilai asli
+      if (rawInitial !== null && rawInitial >= Number(activeExam.value?.kkm || 75)) {
+        if (remScore === null || remScore < rawInitial) {
+          remScore = rawInitial;
+        }
       }
 
       return {

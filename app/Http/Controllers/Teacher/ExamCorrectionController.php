@@ -730,6 +730,11 @@ class ExamCorrectionController extends Controller
                     ? floatval($subData['remedial_score'])
                     : null;
 
+                // Jika nilai asli ujian ($totalScore) sudah tuntas >= KKM dan lebih tinggi dari remedialScore lama, otomatis naikkan remedialScore
+                if ($totalScore >= $exam->kkm && $remedialScore !== null && $totalScore > $remedialScore) {
+                    $remedialScore = $totalScore;
+                }
+
                 $isPassed = ($totalScore >= $exam->kkm) || ($remedialScore !== null && $remedialScore >= $exam->kkm);
 
                 // Save or update submission
@@ -1227,12 +1232,19 @@ class ExamCorrectionController extends Controller
 
             $isPassed = ($totalScore >= $exam->kkm) || ($sub->remedial_score !== null && $sub->remedial_score >= $exam->kkm);
 
+            // Jika nilai ujian asli ($totalScore) naik dan melebihi remedial_score lama, sinkronkan remedial_score
+            $updatedRemedial = $sub->remedial_score;
+            if ($totalScore >= $exam->kkm && $updatedRemedial !== null && $totalScore > $updatedRemedial) {
+                $updatedRemedial = $totalScore;
+            }
+
             $sub->update([
                 'correct_pg_count' => $correctPgCount,
                 'wrong_pg_count' => $wrongPgCount,
                 'pg_score' => $pgScore,
                 'essay_score' => $essayScore,
                 'total_score' => $totalScore,
+                'remedial_score' => $updatedRemedial,
                 'is_passed' => $isPassed,
             ]);
         }
