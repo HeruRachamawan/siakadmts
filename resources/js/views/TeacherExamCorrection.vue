@@ -1865,10 +1865,27 @@
           </div>
 
           <!-- Question Composition Breakdown (Custom per Tipe Soal) -->
-          <div v-if="isEditingExam" class="p-4 bg-teal-50/70 border border-teal-200 rounded-3xl flex items-start gap-3">
-            <Sliders class="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-            <div class="text-xs text-teal-800 font-medium leading-relaxed">
-              Paket ujian ini saat ini memiliki <strong>{{ examForm.total_questions }} butir soal</strong>. Untuk menambah atau mengubah butir soal, kunci jawaban, dan skor, silakan gunakan tab <strong>Kunci Jawaban & Bobot</strong> di dalam menu <em>Buka & Koreksi</em>.
+          <div v-if="isEditingExam" class="p-4 bg-teal-50/70 border border-teal-200 rounded-3xl space-y-2.5">
+            <div class="flex items-start gap-3">
+              <Sliders class="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+              <div class="text-xs text-teal-900 font-medium leading-relaxed">
+                Paket ujian ini memiliki total <strong>{{ examForm.total_questions }} butir soal</strong>
+                ({{ (examForm.total_questions - (examForm.essay_count || 0)) }} Butir Objektif + {{ examForm.essay_count || 0 }} Butir Uraian).
+              </div>
+            </div>
+
+            <!-- Warning jika tidak ada butir uraian tapi bobot uraian diset > 0 -->
+            <div v-if="(examForm.essay_count || 0) === 0" class="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5">
+              <Info class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div class="text-[11px] text-amber-800 leading-snug font-medium">
+                <strong>Catatan Penting:</strong> Paket ujian ini <strong>belum memiliki butir soal Uraian/Essay</strong>. Seluruh nilai siswa saat ini dihitung <strong>100% dari Soal Objektif</strong> agar nilai tidak berkurang. Bobot uraian akan aktif otomatis jika guru menambahkan nomor bertipe uraian di tab <em>Kunci Jawaban</em>.
+              </div>
+            </div>
+            <div v-else class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-2.5">
+              <CheckCircle2 class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <div class="text-[11px] text-emerald-800 leading-snug font-medium">
+                Paket memiliki <strong>{{ examForm.essay_count }} butir soal uraian</strong>. Pembagian bobot <strong>Objektif {{ examForm.pg_weight }}% : Uraian {{ examForm.essay_weight }}%</strong> akan langsung menghitung ulang nilai seluruh siswa saat disimpan.
+              </div>
             </div>
           </div>
           <div v-else class="p-5 bg-slate-50/80 border border-slate-200 rounded-3xl space-y-4">
@@ -2198,6 +2215,64 @@
                 class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500 text-center cursor-not-allowed"
               />
               <p class="text-[10px] text-slate-500 font-medium">Otomatis (100% dikurangi Bobot Objektif)</p>
+            </div>
+          </div>
+
+          <!-- Quick Presets Bobot Populer Pilihan Bebas Guru -->
+          <div class="p-3 bg-slate-50/80 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+              ⚡ Pilihan Cepat Bobot (atau ketik bebas):
+            </span>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                @click="setBobotPreset(100, 0)"
+                class="px-2 py-1 text-[10px] font-bold rounded-lg border cursor-pointer transition-all"
+                :class="examForm.pg_weight === 100 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+                title="100% Objektif murni tanpa uraian"
+              >
+                100 : 0
+              </button>
+              <button
+                type="button"
+                @click="setBobotPreset(80, 20)"
+                class="px-2 py-1 text-[10px] font-bold rounded-lg border cursor-pointer transition-all"
+                :class="examForm.pg_weight === 80 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+              >
+                80 : 20
+              </button>
+              <button
+                type="button"
+                @click="setBobotPreset(70, 30)"
+                class="px-2 py-1 text-[10px] font-bold rounded-lg border cursor-pointer transition-all"
+                :class="examForm.pg_weight === 70 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+              >
+                70 : 30
+              </button>
+              <button
+                type="button"
+                @click="setBobotPreset(60, 40)"
+                class="px-2 py-1 text-[10px] font-bold rounded-lg border cursor-pointer transition-all"
+                :class="examForm.pg_weight === 60 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+              >
+                60 : 40
+              </button>
+              <button
+                type="button"
+                @click="setBobotPreset(50, 50)"
+                class="px-2 py-1 text-[10px] font-bold rounded-lg border cursor-pointer transition-all"
+                :class="examForm.pg_weight === 50 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+              >
+                50 : 50
+              </button>
+              <button
+                type="button"
+                @click="setBobotPreset(40, 60)"
+                class="px-2 py-1 text-[10px] font-bold rounded-lg border cursor-pointer transition-all"
+                :class="examForm.pg_weight === 40 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+              >
+                40 : 60
+              </button>
             </div>
           </div>
 
@@ -3756,8 +3831,14 @@ function applyModalPreset(preset) {
 }
 
 function onPgWeightInput() {
-  const pg = Number(examForm.pg_weight) || 0;
+  const pg = Math.min(100, Math.max(0, Number(examForm.pg_weight) || 0));
+  examForm.pg_weight = pg;
   examForm.essay_weight = Math.max(0, 100 - pg);
+}
+
+function setBobotPreset(pg, essay) {
+  examForm.pg_weight = pg;
+  examForm.essay_weight = essay !== undefined ? essay : Math.max(0, 100 - pg);
 }
 
 // Active Exam Workspace States
@@ -4629,7 +4710,7 @@ function openCreateModal() {
   showCreateModal.value = true;
 }
 
-function openEditExam(exam) {
+async function openEditExam(exam) {
   if (!exam) return;
   editingExamId.value = exam.id;
   examForm.title = exam.title || '';
@@ -4643,7 +4724,66 @@ function openEditExam(exam) {
   examForm.total_questions = exam.total_questions || 0;
   examForm.description = exam.description || '';
   examForm.status = exam.status || 'draft';
+
+  // Default counts
+  examForm.pg_count = 0;
+  examForm.pg_complex_count = 0;
+  examForm.true_false_count = 0;
+  examForm.agree_disagree_count = 0;
+  examForm.matching_count = 0;
+  examForm.short_answer_count = 0;
+  examForm.essay_count = 0;
+
+  // Jika paket ujian memiliki daftar questions yang sudah dimuat
+  if (Array.isArray(exam.questions) && exam.questions.length > 0) {
+    populateExamFormCountsFromQuestions(exam.questions);
+  } else if (activeExam.value && activeExam.value.id === exam.id && activeQuestions.value.length > 0) {
+    populateExamFormCountsFromQuestions(activeQuestions.value);
+  } else {
+    // Ambil detail soal dari server secara cepat untuk mengetahui komposisi tipe soal
+    try {
+      const res = await api.get(`/teacher/exam-corrections/${exam.id}`);
+      const qs = res?.data?.questions || res?.questions || [];
+      populateExamFormCountsFromQuestions(qs);
+    } catch (e) {
+      console.warn('Gagal memuat komposisi soal untuk modal edit:', e);
+    }
+  }
+
   showCreateModal.value = true;
+}
+
+function populateExamFormCountsFromQuestions(questions) {
+  if (!Array.isArray(questions)) return;
+  let pg = 0, pgc = 0, tf = 0, ad = 0, m = 0, sa = 0, es = 0;
+  let pgPt = 1, pgcPt = 2, tfPt = 1, adPt = 1, mPt = 2, saPt = 2, esPt = 10;
+
+  questions.forEach(q => {
+    const t = q.question_type;
+    const w = Number(q.score_weight) || 1;
+    if (t === 'pg') { pg++; pgPt = w; }
+    else if (t === 'pg_complex') { pgc++; pgcPt = w; }
+    else if (t === 'true_false') { tf++; tfPt = w; }
+    else if (t === 'agree_disagree') { ad++; adPt = w; }
+    else if (t === 'matching') { m++; mPt = w; }
+    else if (t === 'short_answer') { sa++; saPt = w; }
+    else if (t === 'essay') { es++; esPt = w; }
+  });
+
+  examForm.pg_count = pg;
+  examForm.pg_point = pgPt;
+  examForm.pg_complex_count = pgc;
+  examForm.pg_complex_point = pgcPt;
+  examForm.true_false_count = tf;
+  examForm.true_false_point = tfPt;
+  examForm.agree_disagree_count = ad;
+  examForm.agree_disagree_point = adPt;
+  examForm.matching_count = m;
+  examForm.matching_point = mPt;
+  examForm.short_answer_count = sa;
+  examForm.short_answer_point = saPt;
+  examForm.essay_count = es;
+  examForm.essay_point = esPt;
 }
 
 async function handleExamFormSubmit() {

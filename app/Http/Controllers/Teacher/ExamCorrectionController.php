@@ -448,9 +448,9 @@ class ExamCorrectionController extends Controller
             if ($validated['exam_type'] === 'asas') $validated['exam_type'] = 'sas';
         }
 
-        $weightsOrKkmChanged = ($exam->kkm != $validated['kkm']) ||
-                               ($exam->pg_weight != $validated['pg_weight']) ||
-                               ($exam->essay_weight != $validated['essay_weight']);
+        $weightsOrKkmChanged = abs(floatval($exam->kkm) - floatval($validated['kkm'])) > 0.001 ||
+                               abs(floatval($exam->pg_weight) - floatval($validated['pg_weight'])) > 0.001 ||
+                               abs(floatval($exam->essay_weight) - floatval($validated['essay_weight'])) > 0.001;
 
         $exam->update($validated);
 
@@ -460,7 +460,7 @@ class ExamCorrectionController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Informasi paket ujian berhasil diperbarui!',
+            'message' => 'Informasi paket ujian dan perhitungan nilai berhasil diperbarui!',
             'data' => $exam->fresh(['classRoom', 'subject', 'teacher', 'academicYear'])
         ]);
     }
@@ -1157,6 +1157,9 @@ class ExamCorrectionController extends Controller
      */
     private function regradeAllSubmissions(ExamPackage $exam)
     {
+        $exam->refresh();
+        $exam->load('questions');
+
         $submissions = ExamSubmission::where('exam_package_id', $exam->id)->get();
         if ($submissions->isEmpty()) return;
 
