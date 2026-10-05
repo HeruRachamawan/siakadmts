@@ -1067,6 +1067,38 @@
             </tbody>
           </table>
         </div>
+
+        <!-- FLOATING STICKY ACTION BAR UNTUK MOBILE / DESKTOP (JIKA ADA PERUBAHAN DRAFT) -->
+        <transition
+          enter-active-class="transition duration-300 ease-out transform"
+          enter-from-class="translate-y-full opacity-0"
+          enter-to-class="translate-y-0 opacity-100"
+          leave-active-class="transition duration-200 ease-in transform"
+          leave-from-class="translate-y-0 opacity-100"
+          leave-to-class="translate-y-full opacity-0"
+        >
+          <div
+            v-if="activeTab === 'grading' && !showStudentModal && hasUnsavedTableChanges"
+            class="fixed bottom-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:max-w-md z-40 bg-slate-950/95 backdrop-blur-md text-white p-3 sm:px-4 sm:py-3 rounded-2xl shadow-2xl border border-teal-500/50 flex items-center justify-between gap-3 animate-pulse-subtle"
+          >
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping flex-shrink-0"></span>
+              <div class="text-xs truncate">
+                <span class="font-bold text-amber-300 block">Ada draft belum tersimpan!</span>
+                <span class="text-slate-300 text-[10px]">Klik simpan untuk memproses nilai</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="submitAllGrades"
+              :disabled="gradingProcessing"
+              class="px-3.5 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 active:scale-95 text-slate-950 font-black rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-lg disabled:opacity-50 flex-shrink-0"
+            >
+              <Zap class="w-3.5 h-3.5 fill-slate-950" />
+              <span>{{ gradingProcessing ? 'Menyimpan...' : 'Simpan Semua' }}</span>
+            </button>
+          </div>
+        </transition>
       </div>
 
       <!-- SUB-TAB 2.5: PENGOLAHAN NILAI JADI (STANDAR RAPOR BEBAS REMEDIAL) -->
@@ -2527,45 +2559,90 @@
         </div>
 
         <!-- Modal Footer -->
-        <div class="px-4 sm:px-8 py-3.5 sm:py-4 border-t border-slate-100 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 bg-slate-50/50 flex-shrink-0">
-          <span class="text-[11px] sm:text-xs text-slate-400 font-medium text-center md:text-left">
-            Jawaban otomatis tersimpan ke draft. Klik "Simpan & Hitung Koreksi" di tabel utama untuk memproses nilai.
-          </span>
-          <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full md:w-auto">
-            <button
-              type="button"
-              @click="fillStudentWithKKM(selectedStudent)"
-              class="px-3 sm:px-4 py-2 sm:py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
-              :title="`Isi jawaban siswa ini otomatis pas dengan batas KKM (${activeExam?.kkm || 75})`"
-            >
-              <Target class="w-3.5 h-3.5 text-amber-600" />
-              <span>Pas KKM ({{ activeExam?.kkm || 75 }})</span>
-            </button>
-            <button
-              type="button"
-              @click="fillStudentWithAnswerKeys(selectedStudent)"
-              class="px-3 sm:px-4 py-2 sm:py-2.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
-              title="Salin 100% kunci jawaban lengkap (PG, PG Kompleks, Menjodohkan, Uraian) ke siswa ini"
-            >
-              <Sparkles class="w-3.5 h-3.5 text-teal-600" />
-              <span class="truncate">Salin Kunci</span>
-            </button>
-            <button
-              type="button"
-              @click="resetStudentCorrection(selectedStudent)"
-              class="px-3 sm:px-4 py-2 sm:py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
-              title="Kosongkan seluruh koreksi dan nilai siswa ini"
-            >
-              <RotateCcw class="w-3.5 h-3.5 text-rose-600" />
-              <span>Reset Siswa</span>
-            </button>
+        <div class="px-4 sm:px-8 py-3.5 sm:py-4 border-t border-slate-100 flex flex-col gap-3 bg-slate-50/80 flex-shrink-0">
+          <!-- Baris 1: Status Sinkronisasi & Opsi Bantuan Cepat -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2">
+              <span
+                v-if="isCurrentStudentDirty"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 text-[11px] font-bold"
+              >
+                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                Ada perubahan belum disimpan ke database
+              </span>
+              <span
+                v-else
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-200/70 text-slate-600 text-[11px] font-medium"
+              >
+                <Check class="w-3.5 h-3.5 text-emerald-600" />
+                Data siswa ini tersimpan aman
+              </span>
+            </div>
+
+            <!-- Bantuan Cepat (Pas KKM, Salin Kunci, Reset) -->
+            <div class="grid grid-cols-3 sm:flex sm:items-center gap-1.5 w-full sm:w-auto">
+              <button
+                type="button"
+                @click="fillStudentWithKKM(selectedStudent)"
+                class="px-2.5 sm:px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold rounded-xl text-[11px] sm:text-xs transition-all flex items-center justify-center gap-1 cursor-pointer shadow-2xs active:scale-95"
+                :title="`Isi jawaban siswa ini otomatis pas dengan batas KKM (${activeExam?.kkm || 75})`"
+              >
+                <Target class="w-3.5 h-3.5 text-amber-600" />
+                <span class="truncate">Pas KKM ({{ activeExam?.kkm || 75 }})</span>
+              </button>
+              <button
+                type="button"
+                @click="fillStudentWithAnswerKeys(selectedStudent)"
+                class="px-2.5 sm:px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold rounded-xl text-[11px] sm:text-xs transition-all flex items-center justify-center gap-1 cursor-pointer shadow-2xs active:scale-95"
+                title="Salin 100% kunci jawaban lengkap ke siswa ini"
+              >
+                <Sparkles class="w-3.5 h-3.5 text-teal-600" />
+                <span class="truncate">Salin Kunci</span>
+              </button>
+              <button
+                type="button"
+                @click="resetStudentCorrection(selectedStudent)"
+                class="px-2.5 sm:px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-[11px] sm:text-xs transition-all flex items-center justify-center gap-1 cursor-pointer shadow-2xs active:scale-95"
+                title="Kosongkan seluruh koreksi dan nilai siswa ini"
+              >
+                <RotateCcw class="w-3.5 h-3.5 text-rose-600" />
+                <span>Reset</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Baris 2: Aksi Simpan Utama & Navigasi (Mudah Dijangkau Jempol di HP) -->
+          <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/70">
             <button
               type="button"
               @click="closeStudentModal"
-              class="px-4 sm:px-5 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center active:scale-95"
+              class="px-4 py-2 sm:py-2.5 bg-white hover:bg-slate-100 active:scale-95 text-slate-700 border border-slate-200 font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-2xs flex-shrink-0"
             >
               Tutup
             </button>
+
+            <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end w-full sm:w-auto">
+              <button
+                type="button"
+                @click="saveCurrentStudentCorrection(false)"
+                :disabled="savingSingleStudent"
+                class="px-4 sm:px-5 py-2 sm:py-2.5 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-black rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-teal-600/25 disabled:opacity-50 flex-1 sm:flex-initial"
+              >
+                <Zap class="w-4 h-4 fill-white" />
+                <span>{{ savingSingleStudent ? 'Menyimpan...' : 'Simpan Nilai' }}</span>
+              </button>
+
+              <button
+                type="button"
+                @click="saveCurrentStudentCorrection(true)"
+                :disabled="savingSingleStudent"
+                class="px-4 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white font-black rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-600/25 disabled:opacity-50 flex-1 sm:flex-initial"
+                title="Simpan nilai siswa ini dan langsung buka form siswa berikutnya"
+              >
+                <span>Simpan &amp; Lanjut</span>
+                <ChevronRight class="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -4179,6 +4256,39 @@ function setSplitFormat(pgCount, essayCount) {
 const showStudentModal = ref(false);
 const selectedStudent = ref(null);
 const selectedStudentIndex = ref(0);
+const studentInitialSnapshot = ref('');
+const savingSingleStudent = ref(false);
+const initialStudentsSnapshot = ref('');
+
+function getStudentsDataSnapshot() {
+  if (!activeStudents.value || !activeStudents.value.length) return '';
+  return JSON.stringify(activeStudents.value.map(s => ({
+    id: s.id,
+    ans: s.student_answers ? { ...s.student_answers } : {},
+    str: s.answer_string || '',
+    essay: s.essay_scores ? { ...s.essay_scores } : {},
+    rem: s.remedial_score
+  })));
+}
+
+const hasUnsavedTableChanges = computed(() => {
+  if (!activeStudents.value.length || !initialStudentsSnapshot.value) return false;
+  return getStudentsDataSnapshot() !== initialStudentsSnapshot.value;
+});
+
+function takeStudentSnapshot(student) {
+  if (!student) return '';
+  return JSON.stringify({
+    answers: student.student_answers ? { ...student.student_answers } : {},
+    essay: student.essay_scores ? { ...student.essay_scores } : {},
+    rem: student.remedial_score
+  });
+}
+
+const isCurrentStudentDirty = computed(() => {
+  if (!selectedStudent.value || !studentInitialSnapshot.value) return false;
+  return takeStudentSnapshot(selectedStudent.value) !== studentInitialSnapshot.value;
+});
 
 function openStudentModal(student, idx) {
   selectedStudent.value = student;
@@ -4186,15 +4296,34 @@ function openStudentModal(student, idx) {
   if (!student.student_answers) {
     student.student_answers = {};
   }
+  if (!student.essay_scores) {
+    student.essay_scores = {};
+  }
+  studentInitialSnapshot.value = takeStudentSnapshot(student);
   showStudentModal.value = true;
 }
 
-function closeStudentModal() {
+async function closeStudentModal() {
+  if (isCurrentStudentDirty.value) {
+    const isSave = await confirm({
+      title: 'Simpan Perubahan Jawaban?',
+      message: `Jawaban/nilai siswa "${selectedStudent.value?.name}" telah diubah namun belum disimpan ke database. Apakah Anda ingin menyimpannya sekarang?`,
+      type: 'warning',
+      confirmText: 'Simpan Sekarang',
+      cancelText: 'Tutup Tanpa Simpan'
+    });
+    if (isSave) {
+      await saveCurrentStudentCorrection(false);
+      return;
+    }
+  }
   if (selectedStudent.value) {
     syncStudentAnswerString(selectedStudent.value);
   }
   showStudentModal.value = false;
   selectedStudent.value = null;
+  selectedStudentIndex.value = -1;
+  studentInitialSnapshot.value = '';
 }
 
 function prevStudent() {
@@ -4203,6 +4332,8 @@ function prevStudent() {
     selectedStudentIndex.value--;
     selectedStudent.value = activeStudents.value[selectedStudentIndex.value];
     if (!selectedStudent.value.student_answers) selectedStudent.value.student_answers = {};
+    if (!selectedStudent.value.essay_scores) selectedStudent.value.essay_scores = {};
+    studentInitialSnapshot.value = takeStudentSnapshot(selectedStudent.value);
   }
 }
 
@@ -4212,6 +4343,68 @@ function nextStudent() {
     selectedStudentIndex.value++;
     selectedStudent.value = activeStudents.value[selectedStudentIndex.value];
     if (!selectedStudent.value.student_answers) selectedStudent.value.student_answers = {};
+    if (!selectedStudent.value.essay_scores) selectedStudent.value.essay_scores = {};
+    studentInitialSnapshot.value = takeStudentSnapshot(selectedStudent.value);
+  }
+}
+
+async function saveCurrentStudentCorrection(andNext = false) {
+  if (!selectedStudent.value || !activeExam.value) return;
+
+  const s = selectedStudent.value;
+  syncStudentAnswerString(s);
+  savingSingleStudent.value = true;
+
+  try {
+    const hasAnswersObj = s.student_answers && Object.keys(s.student_answers).length > 0;
+    const submission = {
+      student_id: s.id,
+      answers: hasAnswersObj ? s.student_answers : (s.answer_string || ''),
+      essay_scores: s.essay_scores || {},
+      remedial_score: (s.remedial_score !== null && s.remedial_score !== undefined && s.remedial_score !== '') ? Number(s.remedial_score) : null
+    };
+
+    const res = await api.post(`/teacher/exam-corrections/${activeExam.value.id}/grade`, {
+      submissions: [submission]
+    });
+
+    toast.success(`Nilai ${s.name} berhasil disimpan & dihitung!`);
+
+    if (res?.data?.data && Array.isArray(res.data.data)) {
+      const updatedSub = res.data.data.find(r => r.student_id === s.id);
+      if (updatedSub) {
+        s.correct_pg_count = updatedSub.correct_pg_count;
+        s.wrong_pg_count = updatedSub.wrong_pg_count;
+        s.pg_score = updatedSub.pg_score;
+        s.essay_score = updatedSub.essay_score;
+        s.total_score = updatedSub.total_score;
+        s.remedial_score = updatedSub.remedial_score;
+        s.is_passed = updatedSub.is_passed;
+        s.has_submitted = true;
+      }
+    }
+
+    studentInitialSnapshot.value = takeStudentSnapshot(s);
+    initialStudentsSnapshot.value = getStudentsDataSnapshot();
+
+    if (andNext) {
+      if (selectedStudentIndex.value < activeStudents.value.length - 1) {
+        nextStudent();
+      } else {
+        toast.info('Semua siswa pada kelas ini telah selesai dikoreksi.');
+        showStudentModal.value = false;
+        selectedStudent.value = null;
+        selectedStudentIndex.value = -1;
+      }
+    } else {
+      showStudentModal.value = false;
+      selectedStudent.value = null;
+      selectedStudentIndex.value = -1;
+    }
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal menyimpan nilai siswa.');
+  } finally {
+    savingSingleStudent.value = false;
   }
 }
 
@@ -4925,6 +5118,8 @@ async function openExamDetail(id) {
       }
     });
     quickKeyInput.value = keysStr;
+
+    initialStudentsSnapshot.value = getStudentsDataSnapshot();
 
     activeTab.value = 'keys';
   } catch (err) {
