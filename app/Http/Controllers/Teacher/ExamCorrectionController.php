@@ -401,7 +401,7 @@ class ExamCorrectionController extends Controller
         $schoolProfile = [
             'school_name' => $settings['app_name'] ?? 'MADRASAH TSANAWIYAH AL - HASANAH',
             'school_foundation' => $settings['school_foundation'] ?? 'YAYASAN PENDIDIKAN ISLAM AL-HASANAH',
-            'school_tagline' => $settings['app_tagline'] ?? 'Madrasah Tsanawiyah Al - Hasanah Ciomas',
+            'school_tagline' => preg_replace('/^portal\s+/i', '', $settings['app_tagline'] ?? 'Madrasah Tsanawiyah Al - Hasanah Ciomas'),
             'school_address' => $settings['school_address'] ?? 'Jl. Ciapus Sukamakmur No.05, Desa Sukamakmur, Kec. Ciomas, Kab. Bogor, Prov. Jawa Barat 16610',
             'school_phone' => $settings['school_phone'] ?? '081617666017',
             'school_email' => $settings['school_email'] ?? 'mtsalhasanah.ciomas@gmail.com',

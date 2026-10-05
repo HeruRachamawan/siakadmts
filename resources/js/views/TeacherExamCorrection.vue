@@ -2678,7 +2678,7 @@
                   {{ schoolProfile?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH' }}
                 </h1>
                 <div class="text-[11px] sm:text-xs font-semibold text-slate-600 mt-0.5">
-                  {{ schoolProfile?.school_tagline || 'Madrasah Tsanawiyah Al - Hasanah Ciomas' }} • Status: {{ schoolProfile?.school_accreditation || 'TERAKREDITASI A' }}
+                  {{ cleanKopTagline(schoolProfile?.school_tagline) }} • Status: {{ schoolProfile?.school_accreditation || 'TERAKREDITASI A' }}
                 </div>
                 <div class="text-[10px] sm:text-[11px] text-slate-600 mt-0.5">
                   {{ schoolProfile?.school_address || 'Jl. Ciapus Sukamakmur No.05, Ciomas, Bogor' }}
@@ -2850,11 +2850,9 @@
 
             <!-- 6. LEMBAR TANDA TANGAN RESMI -->
             <div class="pt-6 text-xs text-slate-800">
-              <div class="flex justify-end mb-4">
-                <div>Ciomas, {{ getPrintDateFormatted() }}</div>
-              </div>
               <div class="grid grid-cols-2 gap-8 text-center">
                 <div>
+                  <div class="invisible select-none mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Mengetahui,</div>
                   <div>Kepala MTs Al - Hasanah</div>
                   <div class="h-20 flex items-center justify-center">
@@ -2864,6 +2862,7 @@
                 </div>
 
                 <div>
+                  <div class="font-medium mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Guru Pengampu,</div>
                   <div>Mata Pelajaran {{ activeExam.subject?.name || '' }}</div>
                   <div class="h-20 flex items-center justify-center">
@@ -2976,7 +2975,7 @@
                   {{ schoolProfile?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH' }}
                 </div>
                 <div class="text-[11px] sm:text-xs font-semibold text-slate-600">
-                  {{ schoolProfile?.school_tagline || 'Madrasah Tsanawiyah Al - Hasanah Ciomas' }} • Status: {{ schoolProfile?.school_accreditation || 'TERAKREDITASI A' }}
+                  {{ cleanKopTagline(schoolProfile?.school_tagline) }} • Status: {{ schoolProfile?.school_accreditation || 'TERAKREDITASI A' }}
                 </div>
                 <div class="text-[10px] sm:text-[11px] text-slate-500">
                   {{ schoolProfile?.school_address || 'Jl. Ciapus Sukamakmur No.05, Ciomas, Bogor' }}
@@ -3162,12 +3161,9 @@
 
             <!-- 7. TANDA TANGAN RESMI -->
             <div class="pt-4 text-xs text-slate-800 break-inside-avoid">
-              <div class="flex justify-end mb-4 font-medium">
-                Ciomas, {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}
-              </div>
-
               <div class="grid grid-cols-2 gap-8 text-center">
                 <div>
+                  <div class="invisible select-none mb-1">Ciomas, {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</div>
                   <div class="font-bold">Mengetahui,</div>
                   <div>Kepala MTs Al - Hasanah</div>
                   <div class="h-20 flex items-center justify-center"></div>
@@ -3175,6 +3171,7 @@
                 </div>
 
                 <div>
+                  <div class="font-medium mb-1">Ciomas, {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</div>
                   <div class="font-bold">Guru Pengampu,</div>
                   <div>Mata Pelajaran {{ activeExam.subject?.name || '' }}</div>
                   <div class="h-20 flex items-center justify-center"></div>
@@ -3200,7 +3197,7 @@
             <div>
               <div class="flex items-center gap-2 flex-wrap">
                 <h3 class="text-sm font-black text-slate-800 font-lexend uppercase tracking-wider">
-                  Pratinjau Lembar Nilai Jadi (Standar Rapor Bebas Remedial)
+                  Pratinjau Lembar Rekapitulasi Nilai Jadi
                 </h3>
                 <span
                   :class="selectedAdjustedPaperSize === 'f4' ? 'bg-teal-100 text-teal-800 border-teal-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'"
@@ -3308,7 +3305,7 @@
                   {{ schoolProfile?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH' }}
                 </div>
                 <div class="text-[11px] sm:text-xs font-semibold text-slate-600">
-                  {{ schoolProfile?.school_tagline || 'Madrasah Tsanawiyah Al - Hasanah Ciomas' }} • Status: {{ schoolProfile?.school_accreditation || 'TERAKREDITASI A' }}
+                  {{ cleanKopTagline(schoolProfile?.school_tagline) }} • Status: {{ schoolProfile?.school_accreditation || 'TERAKREDITASI A' }}
                 </div>
                 <div class="text-[10px] sm:text-[11px] text-slate-500">
                   {{ schoolProfile?.school_address || 'Jl. Ciapus Sukamakmur No.05, Ciomas, Bogor' }}
@@ -3322,7 +3319,7 @@
             <!-- 2. JUDUL LEMBAR NILAI JADI -->
             <div class="text-center space-y-1">
               <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-wide uppercase underline">
-                Daftar Rekapitulasi Nilai Asesmen (Standar Rapor Bebas Remedial)
+                Daftar Rekapitulasi Nilai Asesmen
               </h2>
               <p class="text-xs sm:text-sm font-bold text-slate-700 uppercase">
                 {{ getExamTypeFullName(activeExam.exam_type) }} • SEMESTER {{ formatSemester(activeExam.semester || activeExam.academic_year?.semester) }} • TAHUN PELAJARAN {{ formatAcademicYear(activeExam) }}
@@ -3446,12 +3443,9 @@
 
             <!-- 6. TANDA TANGAN RESMI -->
             <div class="pt-4 text-xs text-slate-800 break-inside-avoid">
-              <div class="flex justify-end mb-4 font-medium">
-                Ciomas, {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}
-              </div>
-
               <div class="grid grid-cols-2 gap-8 text-center">
                 <div>
+                  <div class="invisible select-none mb-1">Ciomas, {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</div>
                   <div class="font-bold">Mengetahui,</div>
                   <div>Kepala MTs Al - Hasanah</div>
                   <div class="h-20 flex items-center justify-center"></div>
@@ -3459,6 +3453,7 @@
                 </div>
 
                 <div>
+                  <div class="font-medium mb-1">Ciomas, {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</div>
                   <div class="font-bold">Guru Pengampu,</div>
                   <div>Mata Pelajaran {{ activeExam.subject?.name || '' }}</div>
                   <div class="h-20 flex items-center justify-center"></div>
@@ -3724,6 +3719,11 @@ const analysisDifficultyFilter = ref('all'); // 'all', 'Mudah', 'Sedang', 'Sukar
 const showAdjustedPrintModal = ref(false);
 const selectedAdjustedPaperSize = ref('f4'); // 'f4' (rekomendasi folio) atau 'a4'
 const selectedAdjustedOrientation = ref('portrait'); // 'portrait' (rekomendasi daftar nilai) atau 'landscape'
+
+function cleanKopTagline(tagline) {
+  if (!tagline) return 'Madrasah Tsanawiyah Al - Hasanah Ciomas';
+  return String(tagline).replace(/^portal\s+/i, '').trim();
+}
 
 const showCreateModal = ref(false);
 const editingExamId = ref(null);
@@ -6334,7 +6334,7 @@ async function exportToWord() {
             ${schoolProfile.value?.school_name || 'MADRASAH TSANAWIYAH AL - HASANAH'}
           </div>
           <div style="font-size: 9pt; font-weight: bold; color: #000000;">
-            ${schoolProfile.value?.school_tagline || 'Madrasah Tsanawiyah Al - Hasanah Ciomas'} • Status: ${schoolProfile.value?.school_accreditation || 'TERAKREDITASI A'}
+            ${cleanKopTagline(schoolProfile.value?.school_tagline)} • Status: ${schoolProfile.value?.school_accreditation || 'TERAKREDITASI A'}
           </div>
           <div style="font-size: 8.5pt; color: #000000; margin-top: 2pt;">
             ${schoolProfile.value?.school_address || 'Jl. Ciapus Sukamakmur No.05, Ciomas, Bogor'}
@@ -6426,17 +6426,14 @@ async function exportToWord() {
     <!-- 6. LEMBAR TANDA TANGAN RESMI -->
     <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: none; margin-top: 10pt; width: 100%;">
       <tr>
-        <td colspan="2" align="right" style="border: none; padding-bottom: 8pt; font-size: 9pt; font-weight: bold; color: #000000;">
-          Ciomas, ${getPrintDateFormatted()}
-        </td>
-      </tr>
-      <tr>
         <td width="50%" align="center" valign="top" style="border: none; font-size: 9pt; color: #000000;">
+          <div style="visibility: hidden; font-size: 9pt; margin-bottom: 2pt;">Ciomas, ${getPrintDateFormatted()}</div>
           <b style="color: #000000;">Mengetahui,</b><br>
           <span style="font-weight: bold; color: #000000;">Kepala MTs Al - Hasanah</span><br><br><br><br><br>
           <b style="text-decoration: underline; font-size: 10pt; color: #000000; font-weight: 900;">${schoolProfile.value?.principal_name || 'Kepala Madrasah'}</b>
         </td>
         <td width="50%" align="center" valign="top" style="border: none; font-size: 9pt; color: #000000;">
+          <div style="font-size: 9pt; font-weight: bold; margin-bottom: 2pt; color: #000000;">Ciomas, ${getPrintDateFormatted()}</div>
           <b style="color: #000000;">Guru Pengampu,</b><br>
           <span style="font-weight: bold; color: #000000;">Mata Pelajaran ${activeExam.value.subject?.name || ''}</span><br><br><br><br><br>
           <b style="text-decoration: underline; font-size: 10pt; color: #000000; font-weight: 900;">${activeExam.value.teacher?.full_name || activeExam.value.teacher?.name || 'Guru Mata Pelajaran'}</b>
