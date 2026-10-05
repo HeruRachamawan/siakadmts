@@ -441,7 +441,7 @@
                     <th class="border border-slate-400 px-3 py-2 text-left">Nama Lengkap Siswa</th>
                     <th class="border border-slate-400 px-2 py-2 w-12">L/P</th>
                     <th class="border border-slate-400 px-3 py-2 w-28 bg-amber-50 text-amber-900 font-black">Nilai Akhir (Rapor)</th>
-                    <th class="border border-slate-400 px-2 py-2 w-16">Predikat</th>
+                    <th class="border border-slate-400 px-2 py-2 w-28">Predikat</th>
                     <th class="border border-slate-400 px-3 py-2 w-24">Status</th>
                     <th class="border border-slate-400 px-3 py-2 text-left">Keterangan</th>
                   </tr>
@@ -459,27 +459,49 @@
                     <td class="border border-slate-400 px-3 py-1.5 text-center font-black text-sm bg-amber-50/50 text-slate-900">
                       {{ (student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? student.remedial_score : (student.total_score !== null ? student.total_score : '-') }}
                     </td>
-                    <td class="border border-slate-300 px-2 py-1.5 text-center font-bold">
-                      <span class="font-black text-slate-800">
+                    <td class="border border-slate-300 px-2 py-1.5 text-center font-bold whitespace-nowrap">
+                      <span class="font-black text-slate-900">
                         {{ getGradePredicate((student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? student.remedial_score : student.total_score).pred }}
                       </span>
-                    </td>
-                    <td class="border border-slate-300 px-3 py-1.5 text-center font-black text-emerald-800">
-                      <span
-                        v-if="student.has_submitted || student.total_score !== null || student.remedial_score !== null"
-                        class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider"
-                      >
-                        TUNTAS
+                      <span class="text-[10px] text-slate-600 font-semibold">
+                        ({{ getGradePredicate((student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? student.remedial_score : student.total_score).label }})
                       </span>
+                    </td>
+                    <td class="border border-slate-300 px-3 py-1.5 text-center font-black">
+                      <template v-if="student.has_submitted || student.total_score !== null || student.remedial_score !== null">
+                        <span
+                          v-if="((student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? Number(student.remedial_score) : Number(student.total_score || 0)) >= exam.kkm"
+                          class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider inline-block"
+                        >
+                          TUNTAS
+                        </span>
+                        <span
+                          v-else
+                          class="px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-black uppercase tracking-wider inline-block"
+                        >
+                          BELUM TUNTAS
+                        </span>
+                      </template>
                       <span v-else class="text-slate-400 text-[10px] font-bold">
                         BELUM UJIAN
                       </span>
                     </td>
-                    <td class="border border-slate-300 px-3 py-1.5 text-left text-[10px] text-slate-600">
-                      <span v-if="student.has_submitted || student.total_score !== null">
-                        Memenuhi KKM ({{ exam.kkm }})
-                      </span>
-                      <span v-else>-</span>
+                    <td class="border border-slate-300 px-3 py-1.5 text-left text-[10px]">
+                      <template v-if="student.has_submitted || student.total_score !== null || student.remedial_score !== null">
+                        <span
+                          v-if="((student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? Number(student.remedial_score) : Number(student.total_score || 0)) >= exam.kkm"
+                          class="text-emerald-700 font-semibold"
+                        >
+                          Memenuhi KKM ({{ exam.kkm }})
+                        </span>
+                        <span
+                          v-else
+                          class="text-rose-600 font-semibold"
+                        >
+                          Di Bawah KKM ({{ exam.kkm }})
+                        </span>
+                      </template>
+                      <span v-else class="text-slate-400">-</span>
                     </td>
                   </tr>
                 </tbody>
@@ -500,11 +522,13 @@
                 </div>
                 <div class="p-2 border border-slate-200 rounded bg-white text-center">
                   <span class="text-slate-500 block text-[10px]">Siswa Tuntas:</span>
-                  <strong class="text-emerald-700 text-sm">{{ adjustedStats.adjustedPassedCount }} Siswa ({{ adjustedStats.adjustedPassedPct }}%)</strong>
+                  <strong class="text-emerald-700 text-sm">{{ adjustedStats.adjustedPassedCount }} Siswa ({{ adjustedStats.adjustedPassPct }}%)</strong>
                 </div>
                 <div class="p-2 border border-slate-200 rounded bg-white text-center">
-                  <span class="text-slate-500 block text-[10px]">Siswa Remedial:</span>
-                  <strong class="text-slate-700 text-sm">0 Siswa (Tidak Ada)</strong>
+                  <span class="text-slate-500 block text-[10px]">Siswa Belum Tuntas:</span>
+                  <strong :class="adjustedStats.adjustedRemCount > 0 ? 'text-rose-600' : 'text-slate-700'" class="text-sm">
+                    {{ adjustedStats.adjustedRemCount > 0 ? `${adjustedStats.adjustedRemCount} Siswa` : '0 Siswa (Tidak Ada)' }}
+                  </strong>
                 </div>
               </div>
             </div>

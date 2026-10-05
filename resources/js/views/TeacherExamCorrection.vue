@@ -3352,7 +3352,7 @@
                     <th class="border border-slate-400 px-3 py-2 text-left">Nama Lengkap Siswa</th>
                     <th class="border border-slate-400 px-2 py-2 w-12">L/P</th>
                     <th class="border border-slate-400 px-3 py-2 w-28 bg-amber-50 text-amber-900 font-black">Nilai Akhir (Rapor)</th>
-                    <th class="border border-slate-400 px-2 py-2 w-16">Predikat</th>
+                    <th class="border border-slate-400 px-2 py-2 w-28">Predikat</th>
                     <th class="border border-slate-400 px-3 py-2 w-24">Status</th>
                     <th class="border border-slate-400 px-3 py-2 text-left">Keterangan</th>
                   </tr>
@@ -3370,9 +3370,12 @@
                     <td class="border border-slate-400 px-3 py-1.5 text-center font-black text-sm bg-amber-50/50 text-slate-900">
                       {{ (student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? student.remedial_score : (student.total_score !== null ? student.total_score : '-') }}
                     </td>
-                    <td class="border border-slate-300 px-2 py-1.5 text-center font-bold">
-                      <span class="font-black text-slate-800">
+                    <td class="border border-slate-300 px-2 py-1.5 text-center font-bold whitespace-nowrap">
+                      <span class="font-black text-slate-900">
                         {{ getGradePredicate((student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? student.remedial_score : student.total_score).pred }}
+                      </span>
+                      <span class="text-[10px] text-slate-600 font-semibold">
+                        ({{ getGradePredicate((student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? student.remedial_score : student.total_score).label }})
                       </span>
                     </td>
                     <td class="border border-slate-300 px-3 py-1.5 text-center font-black">
