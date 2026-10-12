@@ -76,34 +76,38 @@ class GraduationGrade extends Model
             $this->avg_semester = null;
         }
 
-        // 2. Determine if subject has practical exam
-        $practicalIds = is_array($setting->practical_subject_ids) ? $setting->practical_subject_ids : [];
-        $isPractical = in_array((int)$this->subject_id, array_map('intval', $practicalIds));
-
+        // 2. Determine exam score (pertahankan jika diisi manual, atau hitung otomatis jika ada teori/praktik)
         $theory = $this->exam_theory !== null ? floatval($this->exam_theory) : null;
         $practice = $this->exam_practice !== null ? floatval($this->exam_practice) : null;
 
-        if ($isPractical) {
-            $theoryWeight = floatval($setting->theory_weight_default ?? 50);
-            $practiceWeight = floatval($setting->practice_weight_default ?? 50);
+        if ($this->final_exam_score === null || $this->final_exam_score === '') {
+            $practicalIds = is_array($setting->practical_subject_ids) ? $setting->practical_subject_ids : [];
+            $isPractical = in_array((int)$this->subject_id, array_map('intval', $practicalIds));
 
-            // Check custom weights for this subject if configured
-            if (is_array($setting->custom_subject_weights) && isset($setting->custom_subject_weights[$this->subject_id])) {
-                $c = $setting->custom_subject_weights[$this->subject_id];
-                $theoryWeight = floatval($c['theory_weight'] ?? $theoryWeight);
-                $practiceWeight = floatval($c['practice_weight'] ?? $practiceWeight);
-            }
+            if ($isPractical) {
+                $theoryWeight = floatval($setting->theory_weight_default ?? 50);
+                $practiceWeight = floatval($setting->practice_weight_default ?? 50);
 
-            $totalWeight = $theoryWeight + $practiceWeight;
-            if ($totalWeight > 0 && ($theory !== null || $practice !== null)) {
-                $tVal = ($theory ?? 0) * ($theoryWeight / $totalWeight);
-                $pVal = ($practice ?? 0) * ($practiceWeight / $totalWeight);
-                $this->final_exam_score = round($tVal + $pVal, 2);
+                // Check custom weights for this subject if configured
+                if (is_array($setting->custom_subject_weights) && isset($setting->custom_subject_weights[$this->subject_id])) {
+                    $c = $setting->custom_subject_weights[$this->subject_id];
+                    $theoryWeight = floatval($c['theory_weight'] ?? $theoryWeight);
+                    $practiceWeight = floatval($c['practice_weight'] ?? $practiceWeight);
+                }
+
+                $totalWeight = $theoryWeight + $practiceWeight;
+                if ($totalWeight > 0 && ($theory !== null || $practice !== null)) {
+                    $tVal = ($theory ?? 0) * ($theoryWeight / $totalWeight);
+                    $pVal = ($practice ?? 0) * ($practiceWeight / $totalWeight);
+                    $this->final_exam_score = round($tVal + $pVal, 2);
+                } else {
+                    $this->final_exam_score = null;
+                }
             } else {
-                $this->final_exam_score = null;
+                $this->final_exam_score = $theory !== null ? round($theory, 2) : null;
             }
         } else {
-            $this->final_exam_score = $theory !== null ? round($theory, 2) : null;
+            $this->final_exam_score = round(floatval($this->final_exam_score), 2);
         }
 
         // 3. Final Graduation / Ijazah Score

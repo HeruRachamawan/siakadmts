@@ -150,6 +150,7 @@ class GraduationGradeController extends BaseController
             'grades.*.sem_6' => 'nullable|numeric|min:0|max:100',
             'grades.*.exam_theory' => 'nullable|numeric|min:0|max:100',
             'grades.*.exam_practice' => 'nullable|numeric|min:0|max:100',
+            'grades.*.final_exam_score' => 'nullable|numeric|min:0|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -176,6 +177,10 @@ class GraduationGradeController extends BaseController
                 $record->sem_6 = isset($item['sem_6']) && $item['sem_6'] !== '' ? floatval($item['sem_6']) : null;
                 $record->exam_theory = isset($item['exam_theory']) && $item['exam_theory'] !== '' ? floatval($item['exam_theory']) : null;
                 $record->exam_practice = isset($item['exam_practice']) && $item['exam_practice'] !== '' ? floatval($item['exam_practice']) : null;
+
+                if (array_key_exists('final_exam_score', $item)) {
+                    $record->final_exam_score = ($item['final_exam_score'] !== '' && $item['final_exam_score'] !== null) ? floatval($item['final_exam_score']) : null;
+                }
 
                 $record->recalculateScores($setting);
                 $record->save();

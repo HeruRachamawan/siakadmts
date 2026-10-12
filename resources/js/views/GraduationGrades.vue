@@ -338,9 +338,19 @@
                 />
               </td>
 
-              <!-- Nilai Ujian (Calculated) -->
-              <td class="py-2.5 px-2 text-center font-black font-mono text-indigo-800 bg-indigo-50/40 border-r border-slate-100">
-                {{ formatScore(getStudentRecord(stu.id).final_exam_score) }}
+              <!-- Nilai Ujian (N-Ujian Bisa Diketik Bebas) -->
+              <td class="p-1 bg-indigo-50/20 border-r border-slate-100">
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  v-model.number="getStudentRecord(stu.id).final_exam_score"
+                  @input="onFinalExamScoreInput(stu.id)"
+                  class="w-full text-center py-1.5 px-1 bg-white border border-indigo-200 rounded text-xs font-bold text-indigo-900 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none"
+                  placeholder="-"
+                  title="Nilai Ujian Madrasah (Bisa diisi langsung atau otomatis dari Tulis/Praktik)"
+                />
               </td>
 
               <!-- Nilai Ijazah (Calculated) -->
@@ -747,6 +757,7 @@
               @change="loadSemesterFormScores"
               class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 cursor-pointer"
             >
+              <option value="final_exam_score">Nilai Ujian Madrasah (N-Ujian Langsung)</option>
               <option value="sem_1">Semester 1 (Kls 7 Ganjil)</option>
               <option value="sem_2">Semester 2 (Kls 7 Genap)</option>
               <option value="sem_3">Semester 3 (Kls 8 Ganjil)</option>
@@ -1077,7 +1088,7 @@ function recalculateStudent(studentId) {
     rec.avg_semester = null;
   }
 
-  // 2. Exam score
+  // 2. Exam score (hanya auto-hitung jika ada input di Tulis atau Praktik)
   const isPrac = isCurrentSubjectPractical.value;
   const theory = (rec.exam_theory !== null && rec.exam_theory !== '') ? parseFloat(rec.exam_theory) : null;
   const prac = (rec.exam_practice !== null && rec.exam_practice !== '') ? parseFloat(rec.exam_practice) : null;
@@ -1090,21 +1101,34 @@ function recalculateStudent(studentId) {
       const tVal = (theory || 0) * (tWeight / totW);
       const pVal = (prac || 0) * (pWeight / totW);
       rec.final_exam_score = Number((tVal + pVal).toFixed(2));
-    } else {
-      rec.final_exam_score = null;
     }
-  } else {
-    rec.final_exam_score = theory !== null ? Number(theory.toFixed(2)) : null;
+  } else if (theory !== null) {
+    rec.final_exam_score = Number(theory.toFixed(2));
   }
 
   // 3. Final grade
+  calculateFinalGrade(rec, st);
+}
+
+function onFinalExamScoreInput(studentId) {
+  hasUnsavedChanges.value = true;
+  const rec = getStudentRecord(studentId);
+  const st = settings.value || { report_weight: 60, exam_weight: 40 };
+  calculateFinalGrade(rec, st);
+}
+
+function calculateFinalGrade(rec, st) {
   const rWeight = parseFloat(st.report_weight || 60);
   const eWeight = parseFloat(st.exam_weight || 40);
   const totFW = rWeight + eWeight;
 
-  if (totFW > 0 && (rec.avg_semester !== null || rec.final_exam_score !== null)) {
+  const examVal = (rec.final_exam_score !== null && rec.final_exam_score !== '' && !isNaN(rec.final_exam_score))
+    ? parseFloat(rec.final_exam_score)
+    : null;
+
+  if (totFW > 0 && (rec.avg_semester !== null || examVal !== null)) {
     const rPart = (rec.avg_semester || 0) * (rWeight / totFW);
-    const ePart = (rec.final_exam_score || 0) * (eWeight / totFW);
+    const ePart = (examVal || 0) * (eWeight / totFW);
     rec.final_grade = Number((rPart + ePart).toFixed(2));
   } else {
     rec.final_grade = null;
@@ -1136,6 +1160,7 @@ async function saveCurrentGrades() {
         sem_6: rec.sem_6,
         exam_theory: rec.exam_theory,
         exam_practice: rec.exam_practice,
+        final_exam_score: rec.final_exam_score,
       });
     }
 
@@ -1239,6 +1264,7 @@ async function saveSemesterGrades() {
         sem_6: target === 'sem_6' ? numVal : (existing.sem_6 ?? null),
         exam_theory: target === 'exam_theory' ? numVal : (existing.exam_theory ?? null),
         exam_practice: target === 'exam_practice' ? numVal : (existing.exam_practice ?? null),
+        final_exam_score: target === 'final_exam_score' ? numVal : (existing.final_exam_score ?? null),
       });
     }
 
