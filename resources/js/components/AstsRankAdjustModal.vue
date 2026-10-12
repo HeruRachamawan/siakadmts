@@ -184,34 +184,15 @@
           </table>
         </div>
 
-        <!-- Peringatan Cerdas Jika Urutan Peringkat Berlawanan dengan Rata-Rata -->
-        <div
-          v-if="hasInvertedRank && !adjustScores"
-          class="p-3.5 bg-amber-50 rounded-2xl border border-amber-300 text-xs text-amber-900 flex items-start gap-3 shadow-xs"
-        >
-          <AlertTriangle class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-          <div class="space-y-1">
-            <span class="font-black block">💡 Rekomendasi: Urutan Ranking Belum Sejalan dengan Rata-Rata</span>
-            <p class="text-[11px] text-amber-800 leading-relaxed">
-              Anda menempatkan siswa pada ranking lebih tinggi padahal nilai rata-ratanya lebih rendah. Agar tidak tampak janggal di cetakan rapor resmi siswa, disarankan <strong>mencentang opsi "Selaraskan Nilai Siswa"</strong> di bawah agar nilai mapel disesuaikan secara proporsional.
+        <!-- Jaminan Keamanan Nilai Murni -->
+        <div class="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-950 flex items-start gap-3 shadow-xs">
+          <ShieldCheck class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+          <div class="leading-relaxed">
+            <span class="font-black text-emerald-900 block">🛡️ Nilai Asli Rapor 100% Aman & Terjaga</span>
+            <p class="text-[11px] text-emerald-800 mt-0.5">
+              Fitur atur peringkat ini murni menetapkan nomor urutan juara siswa pada lembar rapor dan buku leger. <strong>Nilai seluruh mata pelajaran yang sudah ditarik sebelumnya tidak akan diubah atau dirusak sedikitpun</strong>.
             </p>
           </div>
-        </div>
-
-        <!-- Opsi Tambahan: Selaraskan Nilai Siswa -->
-        <div class="p-4 bg-slate-50/90 rounded-2xl border border-slate-200 flex items-start gap-3">
-          <input
-            id="adjust-scores-checkbox"
-            v-model="adjustScores"
-            type="checkbox"
-            class="mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer flex-shrink-0"
-          />
-          <label for="adjust-scores-checkbox" class="text-xs cursor-pointer select-none">
-            <span class="font-black text-slate-900 block">⚡ Opsional: Selaraskan nilai rata-rata secara wajar & bertahap (kisaran 78 - 81)</span>
-            <span class="text-slate-500 text-[11px] block mt-0.5 leading-relaxed">
-              Jika dicentang, nilai disesuaikan secara proporsional dan alami mengikuti peringkat (juara teratas berkisar 79–81, tanpa lonjakan ekstrem ke 90-an). Jika tidak dicentang, nilai rapor siswa tetap apa adanya (hanya nomor ranking yang berubah).
-            </span>
-          </label>
         </div>
       </div>
 
@@ -254,7 +235,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { Trophy, X, ArrowUp, ArrowDown, AlertTriangle, Sparkles, RotateCcw, Check } from 'lucide-vue-next';
+import { Trophy, X, ArrowUp, ArrowDown, AlertTriangle, Sparkles, RotateCcw, Check, ShieldCheck } from 'lucide-vue-next';
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -267,7 +248,6 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save', 'reset-default']);
 
 const localRankList = ref([]);
-const adjustScores = ref(false);
 
 watch(
   () => props.show,
@@ -369,7 +349,6 @@ function handleSave() {
       student_id: item.student_id,
       rank: parseInt(item.rank) || 1,
     })),
-    adjust_scores: adjustScores.value,
   });
 }
 </script>

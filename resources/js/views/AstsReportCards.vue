@@ -1793,7 +1793,7 @@ function openRankModal() {
   showRankModal.value = true;
 }
 
-async function onSaveRankAdjust({ ranks, adjust_scores }) {
+async function onSaveRankAdjust({ ranks }) {
   if (!selectedClassId.value) return;
   savingRanks.value = true;
   try {
@@ -1802,7 +1802,6 @@ async function onSaveRankAdjust({ ranks, adjust_scores }) {
       semester: activeSemester.value,
       academic_year_id: activeYear.value?.id,
       ranks,
-      adjust_scores,
     };
 
     const res = await api.post('/teacher/asts-reports/adjust-ranks', payload);

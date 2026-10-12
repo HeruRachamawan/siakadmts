@@ -913,7 +913,7 @@ class AstsReportController extends Controller
 
         DB::beginTransaction();
         try {
-            // 1. Update manual_rank on asts_reports
+            // Update manual_rank on asts_reports strictly without altering pulled subject scores
             foreach ($rankList as $item) {
                 AstsReport::updateOrCreate(
                     [
@@ -927,68 +927,11 @@ class AstsReportController extends Controller
                 );
             }
 
-            // 2. If smart score adjustment is requested:
-            // Adjust subject scores proportionally so that higher ranked students maintain higher or equal averages
-            if ($shouldAdjustScores) {
-                // Fetch all scores for this class, year, and semester
-                $studentIds = array_column($rankList, 'student_id');
-                $scores = AstsSubjectScore::whereIn('student_id', $studentIds)
-                    ->where('academic_year_id', $academicYearId)
-                    ->where('semester', $semester)
-                    ->get()
-                    ->groupBy('student_id');
-
-                // Sort rankList ascending by desired rank: 1, 2, 3...
-                usort($rankList, function ($a, $b) {
-                    return $a['rank'] <=> $b['rank'];
-                });
-
-                $totalRanks = count($rankList);
-                
-                // Hitung rata-rata nilai riil kelas saat ini
-                $allCurrentScores = $scores->flatten();
-                $actualClassAvg = $allCurrentScores->isNotEmpty() ? $allCurrentScores->avg('score') : 76.0;
-
-                // Rentang wajar dan realistis (Juara 1 kisaran 80-81, peringkat bawah kisaran 75-76)
-                // Nilai tetap natural (78, 79, 80) dan tidak melonjak drastis ke 90-an
-                $topTarget = min(82.0, max(79.0, round($actualClassAvg + 3.0, 1)));
-                $bottomTarget = max(74.5, min(76.0, round($topTarget - 5.0, 1)));
-                $step = $totalRanks > 1 ? ($topTarget - $bottomTarget) / ($totalRanks - 1) : 0;
-
-                foreach ($rankList as $idx => $rItem) {
-                    $sId = $rItem['student_id'];
-                    $sScores = $scores->get($sId, collect());
-
-                    if ($sScores->isEmpty()) {
-                        continue;
-                    }
-
-                    $currentAvg = $sScores->avg('score') ?: 75.0;
-                    $targetAvg = round($topTarget - ($idx * $step), 1);
-                    $factor = $currentAvg > 0 ? ($targetAvg / $currentAvg) : 1.0;
-
-                    foreach ($sScores as $sc) {
-                        $newScore = (int) round(max(60, min(85, $sc->score * $factor)));
-                        $kkm = $sc->kkm ?? 75;
-                        $predicate = $newScore >= 90 ? 'A' : ($newScore >= 80 ? 'B' : ($newScore >= $kkm ? 'C' : 'D'));
-                        $description = $newScore >= $kkm ? 'Tercapai dengan sangat memuaskan.' : 'Perlu bimbingan dan peningkatan ketekunan.';
-
-                        $sc->update([
-                            'score' => $newScore,
-                            'predicate' => $predicate,
-                            'description' => $description,
-                        ]);
-                    }
-                }
-            }
-
             DB::commit();
 
             return response()->json([
                 'status' => 'success',
-                'message' => $shouldAdjustScores 
-                    ? 'Peringkat siswa dan nilai mata pelajaran berhasil diselaraskan!' 
-                    : 'Peringkat manual siswa berhasil diperbarui!',
+                'message' => 'Peringkat siswa berhasil diperbarui tanpa mengubah nilai mata pelajaran yang sudah ditarik!',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
