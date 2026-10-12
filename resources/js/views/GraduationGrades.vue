@@ -888,7 +888,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import axios from 'axios';
+import { api } from '../api';
+import { useToast } from '../composables/useToast';
 import {
   GraduationCap,
   Sliders,
@@ -906,6 +907,7 @@ import {
 } from 'lucide-vue-next';
 
 // State
+const toast = useToast();
 const activeTab = ref('subject'); // 'subject' or 'transcripts'
 const isLoading = ref(false);
 const isSaving = ref(false);
@@ -987,9 +989,9 @@ async function fetchData() {
     const params = {};
     if (selectedClassId.value) params.class_id = selectedClassId.value;
 
-    const res = await axios.get('/api/admin/graduation-grades', { params });
-    if (res.data?.success) {
-      const d = res.data.data;
+    const res = await api.get('/admin/graduation-grades', { params });
+    if (res?.success) {
+      const d = res.data;
       classes.value = d.classes || [];
       subjects.value = d.subjects || [];
       students.value = d.students || [];
@@ -1011,6 +1013,7 @@ async function fetchData() {
     }
   } catch (err) {
     console.error('Gagal mengambil data rekap ijazah:', err);
+    toast.error('Gagal memuat data rekap ijazah: ' + (err.response?.data?.message || err.message));
   } finally {
     isLoading.value = false;
   }
@@ -1136,14 +1139,16 @@ async function saveCurrentGrades() {
       });
     }
 
-    const res = await axios.post('/api/admin/graduation-grades/save', { grades: payload });
-    if (res.data?.success) {
+    const res = await api.post('/admin/graduation-grades/save', { grades: payload });
+    if (res?.success) {
       hasUnsavedChanges.value = false;
+      toast.success(res.message || 'Nilai mata pelajaran berhasil disimpan');
       // Refresh
       await fetchData();
     }
   } catch (err) {
     console.error('Gagal menyimpan nilai:', err);
+    toast.error('Gagal menyimpan nilai: ' + (err.response?.data?.message || err.message));
   } finally {
     isSaving.value = false;
   }
@@ -1154,15 +1159,17 @@ async function handleAutoPull() {
   if (isPulling.value) return;
   isPulling.value = true;
   try {
-    const res = await axios.post('/api/admin/graduation-grades/auto-pull', {
+    const res = await api.post('/admin/graduation-grades/auto-pull', {
       class_id: selectedClassId.value || null,
       subject_id: selectedSubjectId.value || null,
     });
-    if (res.data?.success) {
+    if (res?.success) {
+      toast.success(res.message || 'Berhasil menarik nilai otomatis');
       await fetchData();
     }
   } catch (err) {
     console.error('Gagal menarik nilai otomatis:', err);
+    toast.error('Gagal menarik nilai otomatis: ' + (err.response?.data?.message || err.message));
   } finally {
     isPulling.value = false;
   }
@@ -1170,6 +1177,16 @@ async function handleAutoPull() {
 
 // Input & Tambah Nilai Semester Modal Methods
 function openAddSemesterGradesModal() {
+  if (students.value.length === 0 && !isLoading.value) {
+    fetchData().then(() => {
+      setupAndOpenModal();
+    });
+    return;
+  }
+  setupAndOpenModal();
+}
+
+function setupAndOpenModal() {
   semesterForm.value.class_id = selectedClassId.value || '';
   if (!semesterForm.value.subject_id || !subjects.value.some(s => s.id === Number(semesterForm.value.subject_id))) {
     semesterForm.value.subject_id = selectedSubjectId.value || (subjects.value[0]?.id || '');
@@ -1225,14 +1242,15 @@ async function saveSemesterGrades() {
       });
     }
 
-    const res = await axios.post('/api/admin/graduation-grades/save', { grades: payload });
-    if (res.data?.success) {
+    const res = await api.post('/admin/graduation-grades/save', { grades: payload });
+    if (res?.success) {
       showAddSemesterModal.value = false;
+      toast.success(res.message || 'Nilai semester berhasil disimpan');
       await fetchData();
     }
   } catch (err) {
     console.error('Gagal menyimpan nilai semester:', err);
-    alert('Gagal menyimpan nilai semester: ' + (err.response?.data?.message || err.message));
+    toast.error('Gagal menyimpan nilai semester: ' + (err.response?.data?.message || err.message));
   } finally {
     isSavingSemesterGrades.value = false;
   }
@@ -1269,13 +1287,15 @@ async function saveSettings() {
   if (isSavingSettings.value) return;
   isSavingSettings.value = true;
   try {
-    const res = await axios.post('/api/admin/graduation-grades/settings', tempSettings.value);
-    if (res.data?.success) {
+    const res = await api.post('/admin/graduation-grades/settings', tempSettings.value);
+    if (res?.success) {
       showSettingsModal.value = false;
+      toast.success(res.message || 'Pengaturan bobot berhasil diperbarui');
       await fetchData();
     }
   } catch (err) {
     console.error('Gagal menyimpan pengaturan bobot:', err);
+    toast.error('Gagal menyimpan pengaturan bobot: ' + (err.response?.data?.message || err.message));
   } finally {
     isSavingSettings.value = false;
   }
