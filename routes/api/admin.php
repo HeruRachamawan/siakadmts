@@ -153,6 +153,14 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::post('extracurriculars/{id}/grades', [\App\Http\Controllers\ExtracurricularController::class, 'saveGrades']);
     Route::post('extracurriculars/{id}/members', [\App\Http\Controllers\ExtracurricularController::class, 'addMembers']);
     Route::delete('extracurriculars/{id}/members/{studentId}', [\App\Http\Controllers\ExtracurricularController::class, 'removeMember']);
+
+    // Rekap Nilai Ijazah Kelas 9 (PDUM Kemenag)
+    Route::get('graduation-grades/settings', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'getSettings']);
+    Route::post('graduation-grades/settings', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'saveSettings']);
+    Route::get('graduation-grades', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'index']);
+    Route::post('graduation-grades/save', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'saveGrades']);
+    Route::post('graduation-grades/auto-pull', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'autoPull']);
+    Route::get('graduation-grades/export-pdum', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'exportPdum']);
 });
 
 

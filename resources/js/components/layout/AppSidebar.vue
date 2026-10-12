@@ -124,6 +124,20 @@
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Pusat Cetak Dokumen</span>
             </Transition>
           </RouterLink>
+
+          <!-- Rekap Nilai Ijazah (PDUM) Khusus Kelas 9 -->
+          <RouterLink
+            to="/admin/graduation-grades"
+            :title="isCollapsed ? 'Rekap Nilai Ijazah (PDUM)' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <GraduationCap class="w-4 h-4 flex-shrink-0 text-emerald-400" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rekap Ijazah (PDUM)</span>
+            </Transition>
+          </RouterLink>
         </template>
 
         <!-- 3. KURIKULUM & AKADEMIK (Admin & Kurikulum) -->
@@ -224,6 +238,20 @@
             <Sliders class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
               <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring & KKTP</span>
+            </Transition>
+          </RouterLink>
+
+          <!-- Rekap Nilai Ijazah (PDUM) -->
+          <RouterLink
+            to="/admin/graduation-grades"
+            :title="isCollapsed ? 'Rekap Nilai Ijazah (PDUM)' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <GraduationCap class="w-4 h-4 flex-shrink-0 text-emerald-400" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rekap Ijazah (PDUM)</span>
             </Transition>
           </RouterLink>
 
