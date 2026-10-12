@@ -154,16 +154,23 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::post('extracurriculars/{id}/members', [\App\Http\Controllers\ExtracurricularController::class, 'addMembers']);
     Route::delete('extracurriculars/{id}/members/{studentId}', [\App\Http\Controllers\ExtracurricularController::class, 'removeMember']);
 
-    // Rekap Nilai Ijazah Kelas 9 (PDUM Kemenag)
-    Route::get('graduation-grades/settings', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'getSettings']);
-    Route::post('graduation-grades/settings', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'saveSettings']);
-    Route::get('graduation-grades', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'index']);
-    Route::post('graduation-grades/save', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'saveGrades']);
-    Route::post('graduation-grades/auto-pull', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'autoPull']);
-    Route::get('graduation-grades/export-pdum', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'exportPdum']);
-    Route::post('graduation-grades/students', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'storeStudent']);
-    Route::delete('graduation-grades/students/{id}', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'deleteStudent']);
 });
+
+// Rekap Nilai Ijazah Kelas 9 (PDUM Kemenag) - Dapat diakses oleh Admin, Operator, Kurikulum, Kepala Sekolah, dan Guru/Wali Kelas
+Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah,teacher'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('graduation-grades/settings', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'getSettings']);
+        Route::post('graduation-grades/settings', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'saveSettings']);
+        Route::get('graduation-grades', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'index']);
+        Route::post('graduation-grades/save', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'saveGrades']);
+        Route::post('graduation-grades/auto-pull', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'autoPull']);
+        Route::get('graduation-grades/export-pdum', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'exportPdum']);
+        Route::post('graduation-grades/students', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'storeStudent']);
+        Route::delete('graduation-grades/students/{id}', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'deleteStudent']);
+    });
+
 
 
 

@@ -786,6 +786,7 @@
               @change="loadSemesterFormScores"
               class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 cursor-pointer"
             >
+              <option value="" disabled>-- Pilih Mata Pelajaran --</option>
               <option v-for="sub in subjects" :key="sub.id" :value="sub.id">
                 {{ sub.name }} ({{ sub.code || '-' }}) {{ isSubjectPractical(sub.id) ? '🔬 (Ada Praktik)' : '' }}
               </option>
@@ -1170,7 +1171,9 @@ async function handleAutoPull() {
 // Input & Tambah Nilai Semester Modal Methods
 function openAddSemesterGradesModal() {
   semesterForm.value.class_id = selectedClassId.value || '';
-  semesterForm.value.subject_id = selectedSubjectId.value || (subjects.value[0]?.id || '');
+  if (!semesterForm.value.subject_id || !subjects.value.some(s => s.id === Number(semesterForm.value.subject_id))) {
+    semesterForm.value.subject_id = selectedSubjectId.value || (subjects.value[0]?.id || '');
+  }
   semesterForm.value.quick_score = '';
   loadSemesterFormScores();
   showAddSemesterModal.value = true;
