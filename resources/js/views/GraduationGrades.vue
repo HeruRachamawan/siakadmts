@@ -36,12 +36,12 @@
 
         <button
           type="button"
-          @click="openAddStudentModal"
+          @click="openAddSemesterGradesModal"
           class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
-          title="Tambah Siswa Baru Kelas 9"
+          title="Input & Tambah Nilai Semester 1 s.d. 6 atau Ujian"
         >
-          <UserPlus class="w-4 h-4" />
-          <span>+ Tambah Siswa</span>
+          <PlusCircle class="w-4 h-4" />
+          <span>+ Tambah Nilai Semester</span>
         </button>
 
         <button
@@ -174,20 +174,12 @@
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="students.length === 0" class="p-12 text-center text-slate-400 space-y-3">
+      <div v-else-if="students.length === 0" class="p-12 text-center text-slate-400 space-y-2">
         <Users class="w-10 h-10 mx-auto text-slate-300" />
         <p class="font-bold text-slate-600">Belum Ada Siswa di Kelas 9</p>
         <p class="text-xs max-w-md mx-auto text-slate-400">
-          Saat ini belum ada data siswa yang terdaftar di rombel kelas 9. Silakan klik tombol di bawah untuk mendaftarkan siswa kelas 9 secara langsung.
+          Saat ini belum ada data siswa yang terdaftar di rombel kelas 9. Silakan tetapkan siswa ke kelas 9 di menu Data Master Siswa.
         </p>
-        <button
-          type="button"
-          @click="openAddStudentModal"
-          class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-md cursor-pointer transition-colors"
-        >
-          <UserPlus class="w-4 h-4" />
-          <span>Tambah Siswa Kelas 9 Sekarang</span>
-        </button>
       </div>
 
       <!-- Table Matrix -->
@@ -204,11 +196,8 @@
               <th :colspan="isCurrentSubjectPractical ? 3 : 2" class="py-2 px-2 bg-indigo-50/60 text-indigo-800 border-r border-slate-200/60">
                 Nilai Ujian Madrasah
               </th>
-              <th rowspan="2" class="py-3 px-3 w-24 bg-amber-50/80 text-amber-900 border-r border-amber-200">
+              <th rowspan="2" class="py-3 px-3 w-24 bg-amber-50/80 text-amber-900 border-l border-amber-200">
                 Nilai Ijazah (PDUM)
-              </th>
-              <th rowspan="2" class="py-3 px-2 w-12 text-center text-slate-500">
-                Aksi
               </th>
             </tr>
             <tr class="bg-slate-50 text-[10px] font-bold text-slate-500 text-center border-b border-slate-200/80">
@@ -355,22 +344,10 @@
               </td>
 
               <!-- Nilai Ijazah (Calculated) -->
-              <td class="py-2.5 px-2 text-center font-black font-mono text-amber-900 bg-amber-50/70 border-r border-amber-100">
+              <td class="py-2.5 px-2 text-center font-black font-mono text-amber-900 bg-amber-50/70 border-l border-amber-100">
                 <span class="px-2 py-0.5 rounded bg-amber-100/80 border border-amber-200">
                   {{ formatScore(getStudentRecord(stu.id).final_grade) }}
                 </span>
-              </td>
-
-              <!-- Aksi Hapus -->
-              <td class="py-2.5 px-2 text-center">
-                <button
-                  type="button"
-                  @click="handleDeleteStudent(stu)"
-                  class="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                  title="Hapus Siswa dari Kelas 9"
-                >
-                  <Trash2 class="w-3.5 h-3.5" />
-                </button>
               </td>
             </tr>
           </tbody>
@@ -431,22 +408,14 @@
             </div>
           </div>
 
-          <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
             <button
               type="button"
               @click="openPrintModal(stu)"
-              class="flex-1 py-1.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              class="w-full py-1.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Printer class="w-3.5 h-3.5 text-emerald-600" />
               <span>Cetak Transkrip / SKL</span>
-            </button>
-            <button
-              type="button"
-              @click="handleDeleteStudent(stu)"
-              class="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl border border-slate-200 transition-colors cursor-pointer"
-              title="Hapus Siswa dari Kelas 9"
-            >
-              <Trash2 class="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -735,111 +704,182 @@
       </div>
     </div>
 
-    <!-- MODAL 3: TAMBAH SISWA KELAS 9 -->
+    <!-- MODAL 3: INPUT / TAMBAH NILAI SEMESTER & MAPEL -->
     <div
-      v-if="showAddStudentModal"
-      class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto no-print"
+      v-if="showAddSemesterModal"
+      class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto no-print"
     >
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-150">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+      <div class="bg-white rounded-3xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 flex-shrink-0">
           <div class="flex items-center gap-2.5">
             <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-              <UserPlus class="w-5 h-5" />
+              <PlusCircle class="w-5 h-5" />
             </div>
             <div>
-              <h3 class="text-base font-black text-slate-800">Tambah Siswa Kelas 9</h3>
-              <p class="text-xs text-slate-400">Pendaftaran siswa khusus jenjang akhir / ijazah.</p>
+              <h3 class="text-base font-black text-slate-800">Tambah & Input Nilai Semester</h3>
+              <p class="text-xs text-slate-400">Pilih tahun ajaran, semester, dan mata pelajaran yang akan diberi nilai.</p>
             </div>
           </div>
-          <button @click="showAddStudentModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer p-1">
+          <button @click="showAddSemesterModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer p-1">
             <X class="w-5 h-5" />
           </button>
         </div>
 
-        <form @submit.prevent="submitAddStudent" class="space-y-4">
-          <div v-if="addStudentError" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium">
-            {{ addStudentError }}
-          </div>
-
+        <!-- Form Parameter -->
+        <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3 flex-shrink-0">
+          <!-- 1. Tahun Pelajaran -->
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Lengkap Siswa <span class="text-rose-500">*</span></label>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Tahun Pelajaran</label>
             <input
               type="text"
-              v-model="newStudent.full_name"
-              required
-              class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500"
-              placeholder="Contoh: Ahmad Fauzan"
+              v-model="semesterForm.academic_year"
+              placeholder="Contoh: 2024/2025"
+              class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 font-mono"
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">NISN <span class="text-rose-500">*</span></label>
-              <input
-                type="text"
-                v-model="newStudent.nisn"
-                required
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 font-mono"
-                placeholder="10 Digit NISN"
-              />
-            </div>
-            <div>
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">NIS / No. Induk <span class="text-rose-500">*</span></label>
-              <input
-                type="text"
-                v-model="newStudent.nis"
-                required
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 font-mono"
-                placeholder="Nomor Induk"
-              />
-            </div>
+          <!-- 2. Target Semester / Ujian -->
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Target Semester / Ujian</label>
+            <select
+              v-model="semesterForm.semester_target"
+              @change="loadSemesterFormScores"
+              class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 cursor-pointer"
+            >
+              <option value="sem_1">Semester 1 (Kls 7 Ganjil)</option>
+              <option value="sem_2">Semester 2 (Kls 7 Genap)</option>
+              <option value="sem_3">Semester 3 (Kls 8 Ganjil)</option>
+              <option value="sem_4">Semester 4 (Kls 8 Genap)</option>
+              <option value="sem_5">Semester 5 (Kls 9 Ganjil)</option>
+              <option value="sem_6">Semester 6 (Kls 9 Genap)</option>
+              <option value="exam_theory">Ujian Madrasah (Tulis)</option>
+              <option value="exam_practice">Ujian Madrasah (Praktik)</option>
+            </select>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">Jenis Kelamin <span class="text-rose-500">*</span></label>
-              <select
-                v-model="newStudent.gender"
-                required
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500"
-              >
-                <option value="L">Laki-laki (L)</option>
-                <option value="P">Perempuan (P)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">Pilihan Rombel <span class="text-rose-500">*</span></label>
-              <select
-                v-model="newStudent.class_id"
-                required
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500"
-              >
-                <option value="" disabled>Pilih Rombel</option>
-                <option v-for="cls in classes" :key="cls.id" :value="cls.id">
-                  Kelas {{ cls.name }}
-                </option>
-              </select>
-            </div>
+          <!-- 3. Rombel -->
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Rombel Kelas 9</label>
+            <select
+              v-model="semesterForm.class_id"
+              @change="loadSemesterFormScores"
+              class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 cursor-pointer"
+            >
+              <option value="">Semua Rombel ({{ students.length }} Siswa)</option>
+              <option v-for="cls in classes" :key="cls.id" :value="cls.id">
+                Kelas {{ cls.name }}
+              </option>
+            </select>
           </div>
 
-          <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <!-- 4. Pilihan Mata Pelajaran (Full Row) -->
+          <div class="sm:col-span-3">
+            <label class="block text-[11px] font-bold text-slate-600 mb-1 flex items-center justify-between">
+              <span>Mata Pelajaran yang Dimunculkan & Dinilai:</span>
+              <span v-if="isModalSubjectPractical" class="text-[10px] text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                🔬 Mapel memiliki Ujian Praktik
+              </span>
+            </label>
+            <select
+              v-model="semesterForm.subject_id"
+              @change="loadSemesterFormScores"
+              class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 cursor-pointer"
+            >
+              <option v-for="sub in subjects" :key="sub.id" :value="sub.id">
+                {{ sub.name }} ({{ sub.code || '-' }}) {{ isSubjectPractical(sub.id) ? '🔬 (Ada Praktik)' : '' }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Quick Fill Toolbar -->
+        <div class="flex items-center justify-between gap-2 p-2 bg-emerald-50/50 border border-emerald-100 rounded-xl text-xs flex-shrink-0">
+          <span class="text-[11px] font-bold text-emerald-900">
+            Daftar Siswa: <strong>{{ modalStudentList.length }}</strong> siswa
+          </span>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] font-bold text-slate-500">Isi Serentak:</span>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              v-model="semesterForm.quick_score"
+              placeholder="0-100"
+              class="w-16 px-2 py-1 bg-white border border-slate-200 rounded text-center text-xs font-bold text-slate-800"
+            />
             <button
               type="button"
-              @click="showAddStudentModal = false"
+              @click="applyQuickScore"
+              class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-[11px] cursor-pointer transition-colors"
+            >
+              Terapkan
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Input Siswa (Scrollable) -->
+        <div class="overflow-y-auto flex-1 border border-slate-200 rounded-2xl">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead class="sticky top-0 bg-slate-100 border-b border-slate-200 text-[11px] font-black text-slate-600 uppercase">
+              <tr>
+                <th class="py-2 px-3 w-10 text-center">No</th>
+                <th class="py-2 px-3 text-left">Nama Siswa</th>
+                <th class="py-2 px-2 text-center w-20">Kelas</th>
+                <th class="py-2 px-3 text-center w-28 bg-emerald-100/70 text-emerald-900">
+                  Nilai (0-100)
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+              <tr v-for="(stu, idx) in modalStudentList" :key="stu.id" class="hover:bg-slate-50/80">
+                <td class="py-2 px-3 text-center text-slate-400 font-mono font-bold">{{ idx + 1 }}</td>
+                <td class="py-2 px-3">
+                  <div class="font-bold text-slate-800">{{ stu.full_name }}</div>
+                  <div class="text-[10px] text-slate-400 font-mono">NISN: {{ stu.nisn || '-' }}</div>
+                </td>
+                <td class="py-2 px-2 text-center font-bold text-slate-600">{{ stu.class_name }}</td>
+                <td class="p-1.5 bg-emerald-50/20 text-center">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    v-model.number="semesterForm.scores[stu.id]"
+                    class="w-full py-1 px-2 text-center bg-white border border-slate-200 rounded text-xs font-bold text-slate-800 focus:border-emerald-500 focus:outline-none"
+                    placeholder="-"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between flex-shrink-0">
+          <p class="text-[11px] text-slate-400">
+            Nilai akan langsung masuk ke tabel rekap ijazah utama dan dihitung otomatis.
+          </p>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="showAddSemesterModal = false"
               class="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-200 transition-colors cursor-pointer"
             >
               Batal
             </button>
             <button
-              type="submit"
-              :disabled="isSubmittingStudent"
-              class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 shadow-md transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
+              type="button"
+              @click="saveSemesterGrades"
+              :disabled="isSavingSemesterGrades"
+              class="px-5 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 shadow-md transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
             >
-              <UserPlus class="w-3.5 h-3.5" />
-              <span>{{ isSubmittingStudent ? 'Menyimpan...' : 'Simpan Siswa' }}</span>
+              <Save class="w-3.5 h-3.5" />
+              <span>{{ isSavingSemesterGrades ? 'Menyimpan Nilai...' : 'Simpan Nilai Semester' }}</span>
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   </div>
@@ -861,8 +901,7 @@ import {
   Users,
   AlertCircle,
   X,
-  UserPlus,
-  Trash2
+  PlusCircle
 } from 'lucide-vue-next';
 
 // State
@@ -882,16 +921,25 @@ const schoolSetting = ref(null);
 const selectedClassId = ref('');
 const selectedSubjectId = ref('');
 
-// Add Student Modal State
-const showAddStudentModal = ref(false);
-const isSubmittingStudent = ref(false);
-const addStudentError = ref('');
-const newStudent = ref({
-  full_name: '',
-  nisn: '',
-  nis: '',
-  gender: 'L',
+// Add Semester Grades Modal State
+const showAddSemesterModal = ref(false);
+const isSavingSemesterGrades = ref(false);
+const semesterForm = ref({
+  academic_year: '2026/2027',
+  semester_target: 'sem_1',
   class_id: '',
+  subject_id: '',
+  quick_score: '',
+  scores: {},
+});
+
+const modalStudentList = computed(() => {
+  if (!semesterForm.value.class_id) return students.value;
+  return students.value.filter(s => s.class_id === Number(semesterForm.value.class_id) || s.lokal_class_id === Number(semesterForm.value.class_id));
+});
+
+const isModalSubjectPractical = computed(() => {
+  return isSubjectPractical(semesterForm.value.subject_id);
 });
 
 // Grade matrix in memory: studentGradeMap[student_id][subject_id] = record
@@ -915,7 +963,10 @@ const showPrintModal = ref(false);
 const activePrintStudent = ref(null);
 
 const currentSubject = computed(() => {
-  return subjects.value.find(s => s.id === Number(selectedSubjectId.value));
+  if (!selectedSubjectId.value && subjects.value.length > 0) {
+    return subjects.value[0];
+  }
+  return subjects.value.find(s => s.id === Number(selectedSubjectId.value)) || subjects.value[0] || null;
 });
 
 const isCurrentSubjectPractical = computed(() => {
@@ -945,9 +996,12 @@ async function fetchData() {
       settings.value = d.setting || null;
       schoolSetting.value = d.school_setting || null;
 
-      // Select first subject if not set
-      if (!selectedSubjectId.value && subjects.value.length > 0) {
-        selectedSubjectId.value = subjects.value[0].id;
+      // Select first subject if not set or invalid
+      if (subjects.value.length > 0) {
+        const hasMatch = subjects.value.some(s => s.id === Number(selectedSubjectId.value));
+        if (!hasMatch) {
+          selectedSubjectId.value = subjects.value[0].id;
+        }
       }
 
       // Populate matrix
@@ -1113,49 +1167,71 @@ async function handleAutoPull() {
   }
 }
 
-// Student Management (Kelas 9)
-function openAddStudentModal() {
-  addStudentError.value = '';
-  newStudent.value = {
-    full_name: '',
-    nisn: '',
-    nis: '',
-    gender: 'L',
-    class_id: selectedClassId.value || (classes.value[0]?.id || ''),
-  };
-  showAddStudentModal.value = true;
+// Input & Tambah Nilai Semester Modal Methods
+function openAddSemesterGradesModal() {
+  semesterForm.value.class_id = selectedClassId.value || '';
+  semesterForm.value.subject_id = selectedSubjectId.value || (subjects.value[0]?.id || '');
+  semesterForm.value.quick_score = '';
+  loadSemesterFormScores();
+  showAddSemesterModal.value = true;
 }
 
-async function submitAddStudent() {
-  if (isSubmittingStudent.value) return;
-  isSubmittingStudent.value = true;
-  addStudentError.value = '';
+function loadSemesterFormScores() {
+  const subId = Number(semesterForm.value.subject_id);
+  const target = semesterForm.value.semester_target;
+  const map = {};
+  for (const stu of modalStudentList.value) {
+    const rec = gradeMatrix.value[stu.id]?.[subId];
+    map[stu.id] = rec && rec[target] !== null && rec[target] !== undefined ? rec[target] : '';
+  }
+  semesterForm.value.scores = map;
+}
+
+function applyQuickScore() {
+  if (semesterForm.value.quick_score === '' || isNaN(semesterForm.value.quick_score)) return;
+  const val = parseFloat(semesterForm.value.quick_score);
+  for (const stu of modalStudentList.value) {
+    semesterForm.value.scores[stu.id] = val;
+  }
+}
+
+async function saveSemesterGrades() {
+  if (isSavingSemesterGrades.value) return;
+  isSavingSemesterGrades.value = true;
   try {
-    const res = await axios.post('/api/admin/graduation-grades/students', newStudent.value);
+    const subId = Number(semesterForm.value.subject_id);
+    const target = semesterForm.value.semester_target;
+    const payload = [];
+
+    for (const stu of modalStudentList.value) {
+      const scoreVal = semesterForm.value.scores[stu.id];
+      const numVal = (scoreVal !== '' && scoreVal !== null && !isNaN(scoreVal)) ? parseFloat(scoreVal) : null;
+      
+      const existing = getStudentGradeRecord(stu.id, subId) || {};
+      payload.push({
+        student_id: stu.id,
+        subject_id: subId,
+        sem_1: target === 'sem_1' ? numVal : (existing.sem_1 ?? null),
+        sem_2: target === 'sem_2' ? numVal : (existing.sem_2 ?? null),
+        sem_3: target === 'sem_3' ? numVal : (existing.sem_3 ?? null),
+        sem_4: target === 'sem_4' ? numVal : (existing.sem_4 ?? null),
+        sem_5: target === 'sem_5' ? numVal : (existing.sem_5 ?? null),
+        sem_6: target === 'sem_6' ? numVal : (existing.sem_6 ?? null),
+        exam_theory: target === 'exam_theory' ? numVal : (existing.exam_theory ?? null),
+        exam_practice: target === 'exam_practice' ? numVal : (existing.exam_practice ?? null),
+      });
+    }
+
+    const res = await axios.post('/api/admin/graduation-grades/save', { grades: payload });
     if (res.data?.success) {
-      showAddStudentModal.value = false;
+      showAddSemesterModal.value = false;
       await fetchData();
-    } else {
-      addStudentError.value = res.data?.message || 'Gagal menambahkan siswa';
     }
   } catch (err) {
-    addStudentError.value = err.response?.data?.message || 'Terjadi kesalahan saat menambahkan data siswa.';
+    console.error('Gagal menyimpan nilai semester:', err);
+    alert('Gagal menyimpan nilai semester: ' + (err.response?.data?.message || err.message));
   } finally {
-    isSubmittingStudent.value = false;
-  }
-}
-
-async function handleDeleteStudent(stu) {
-  if (!confirm(`Apakah Anda yakin ingin menghapus siswa "${stu.full_name}" dari daftar Kelas 9? Seluruh nilai ijazah siswa ini akan ikut terhapus.`)) {
-    return;
-  }
-  try {
-    const res = await axios.delete(`/api/admin/graduation-grades/students/${stu.id}`);
-    if (res.data?.success) {
-      await fetchData();
-    }
-  } catch (err) {
-    alert(err.response?.data?.message || 'Gagal menghapus data siswa');
+    isSavingSemesterGrades.value = false;
   }
 }
 
