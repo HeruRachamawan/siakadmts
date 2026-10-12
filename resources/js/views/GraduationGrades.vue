@@ -36,13 +36,12 @@
 
         <button
           type="button"
-          @click="handleAutoPull"
-          :disabled="isPulling"
-          class="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-60"
-          title="Tarik Nilai yang Tersimpan di SIAKAD"
+          @click="openAddStudentModal"
+          class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
+          title="Tambah Siswa Baru Kelas 9"
         >
-          <RefreshCw class="w-4 h-4 text-emerald-600" :class="{ 'animate-spin': isPulling }" />
-          <span>{{ isPulling ? 'Menarik...' : 'Tarik Otomatis' }}</span>
+          <UserPlus class="w-4 h-4" />
+          <span>+ Tambah Siswa</span>
         </button>
 
         <button
@@ -175,10 +174,20 @@
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="students.length === 0" class="p-12 text-center text-slate-400 space-y-2">
+      <div v-else-if="students.length === 0" class="p-12 text-center text-slate-400 space-y-3">
         <Users class="w-10 h-10 mx-auto text-slate-300" />
-        <p class="font-bold text-slate-600">Tidak ada siswa kelas 9 yang ditemukan</p>
-        <p class="text-xs">Pastikan data rombel kelas 9 sudah terdaftar di Data Master Kelas & Siswa.</p>
+        <p class="font-bold text-slate-600">Belum Ada Siswa di Kelas 9</p>
+        <p class="text-xs max-w-md mx-auto text-slate-400">
+          Saat ini belum ada data siswa yang terdaftar di rombel kelas 9. Silakan klik tombol di bawah untuk mendaftarkan siswa kelas 9 secara langsung.
+        </p>
+        <button
+          type="button"
+          @click="openAddStudentModal"
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-md cursor-pointer transition-colors"
+        >
+          <UserPlus class="w-4 h-4" />
+          <span>Tambah Siswa Kelas 9 Sekarang</span>
+        </button>
       </div>
 
       <!-- Table Matrix -->
@@ -195,8 +204,11 @@
               <th :colspan="isCurrentSubjectPractical ? 3 : 2" class="py-2 px-2 bg-indigo-50/60 text-indigo-800 border-r border-slate-200/60">
                 Nilai Ujian Madrasah
               </th>
-              <th rowspan="2" class="py-3 px-3 w-24 bg-amber-50/80 text-amber-900 border-l border-amber-200">
+              <th rowspan="2" class="py-3 px-3 w-24 bg-amber-50/80 text-amber-900 border-r border-amber-200">
                 Nilai Ijazah (PDUM)
+              </th>
+              <th rowspan="2" class="py-3 px-2 w-12 text-center text-slate-500">
+                Aksi
               </th>
             </tr>
             <tr class="bg-slate-50 text-[10px] font-bold text-slate-500 text-center border-b border-slate-200/80">
@@ -343,10 +355,22 @@
               </td>
 
               <!-- Nilai Ijazah (Calculated) -->
-              <td class="py-2.5 px-2 text-center font-black font-mono text-amber-900 bg-amber-50/70 border-l border-amber-100">
+              <td class="py-2.5 px-2 text-center font-black font-mono text-amber-900 bg-amber-50/70 border-r border-amber-100">
                 <span class="px-2 py-0.5 rounded bg-amber-100/80 border border-amber-200">
                   {{ formatScore(getStudentRecord(stu.id).final_grade) }}
                 </span>
+              </td>
+
+              <!-- Aksi Hapus -->
+              <td class="py-2.5 px-2 text-center">
+                <button
+                  type="button"
+                  @click="handleDeleteStudent(stu)"
+                  class="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                  title="Hapus Siswa dari Kelas 9"
+                >
+                  <Trash2 class="w-3.5 h-3.5" />
+                </button>
               </td>
             </tr>
           </tbody>
@@ -407,14 +431,22 @@
             </div>
           </div>
 
-          <div class="pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
             <button
               type="button"
               @click="openPrintModal(stu)"
-              class="w-full py-1.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              class="flex-1 py-1.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Printer class="w-3.5 h-3.5 text-emerald-600" />
               <span>Cetak Transkrip / SKL</span>
+            </button>
+            <button
+              type="button"
+              @click="handleDeleteStudent(stu)"
+              class="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl border border-slate-200 transition-colors cursor-pointer"
+              title="Hapus Siswa dari Kelas 9"
+            >
+              <Trash2 class="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -702,6 +734,114 @@
         </div>
       </div>
     </div>
+
+    <!-- MODAL 3: TAMBAH SISWA KELAS 9 -->
+    <div
+      v-if="showAddStudentModal"
+      class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto no-print"
+    >
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <UserPlus class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="text-base font-black text-slate-800">Tambah Siswa Kelas 9</h3>
+              <p class="text-xs text-slate-400">Pendaftaran siswa khusus jenjang akhir / ijazah.</p>
+            </div>
+          </div>
+          <button @click="showAddStudentModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer p-1">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <form @submit.prevent="submitAddStudent" class="space-y-4">
+          <div v-if="addStudentError" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium">
+            {{ addStudentError }}
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Lengkap Siswa <span class="text-rose-500">*</span></label>
+            <input
+              type="text"
+              v-model="newStudent.full_name"
+              required
+              class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500"
+              placeholder="Contoh: Ahmad Fauzan"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">NISN <span class="text-rose-500">*</span></label>
+              <input
+                type="text"
+                v-model="newStudent.nisn"
+                required
+                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 font-mono"
+                placeholder="10 Digit NISN"
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">NIS / No. Induk <span class="text-rose-500">*</span></label>
+              <input
+                type="text"
+                v-model="newStudent.nis"
+                required
+                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 font-mono"
+                placeholder="Nomor Induk"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Jenis Kelamin <span class="text-rose-500">*</span></label>
+              <select
+                v-model="newStudent.gender"
+                required
+                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500"
+              >
+                <option value="L">Laki-laki (L)</option>
+                <option value="P">Perempuan (P)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Pilihan Rombel <span class="text-rose-500">*</span></label>
+              <select
+                v-model="newStudent.class_id"
+                required
+                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500"
+              >
+                <option value="" disabled>Pilih Rombel</option>
+                <option v-for="cls in classes" :key="cls.id" :value="cls.id">
+                  Kelas {{ cls.name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              @click="showAddStudentModal = false"
+              class="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-200 transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              :disabled="isSubmittingStudent"
+              class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 shadow-md transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
+            >
+              <UserPlus class="w-3.5 h-3.5" />
+              <span>{{ isSubmittingStudent ? 'Menyimpan...' : 'Simpan Siswa' }}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -720,7 +860,9 @@ import {
   Printer,
   Users,
   AlertCircle,
-  X
+  X,
+  UserPlus,
+  Trash2
 } from 'lucide-vue-next';
 
 // State
@@ -739,6 +881,18 @@ const schoolSetting = ref(null);
 
 const selectedClassId = ref('');
 const selectedSubjectId = ref('');
+
+// Add Student Modal State
+const showAddStudentModal = ref(false);
+const isSubmittingStudent = ref(false);
+const addStudentError = ref('');
+const newStudent = ref({
+  full_name: '',
+  nisn: '',
+  nis: '',
+  gender: 'L',
+  class_id: '',
+});
 
 // Grade matrix in memory: studentGradeMap[student_id][subject_id] = record
 const gradeMatrix = ref({});
@@ -956,6 +1110,52 @@ async function handleAutoPull() {
     console.error('Gagal menarik nilai otomatis:', err);
   } finally {
     isPulling.value = false;
+  }
+}
+
+// Student Management (Kelas 9)
+function openAddStudentModal() {
+  addStudentError.value = '';
+  newStudent.value = {
+    full_name: '',
+    nisn: '',
+    nis: '',
+    gender: 'L',
+    class_id: selectedClassId.value || (classes.value[0]?.id || ''),
+  };
+  showAddStudentModal.value = true;
+}
+
+async function submitAddStudent() {
+  if (isSubmittingStudent.value) return;
+  isSubmittingStudent.value = true;
+  addStudentError.value = '';
+  try {
+    const res = await axios.post('/api/admin/graduation-grades/students', newStudent.value);
+    if (res.data?.success) {
+      showAddStudentModal.value = false;
+      await fetchData();
+    } else {
+      addStudentError.value = res.data?.message || 'Gagal menambahkan siswa';
+    }
+  } catch (err) {
+    addStudentError.value = err.response?.data?.message || 'Terjadi kesalahan saat menambahkan data siswa.';
+  } finally {
+    isSubmittingStudent.value = false;
+  }
+}
+
+async function handleDeleteStudent(stu) {
+  if (!confirm(`Apakah Anda yakin ingin menghapus siswa "${stu.full_name}" dari daftar Kelas 9? Seluruh nilai ijazah siswa ini akan ikut terhapus.`)) {
+    return;
+  }
+  try {
+    const res = await axios.delete(`/api/admin/graduation-grades/students/${stu.id}`);
+    if (res.data?.success) {
+      await fetchData();
+    }
+  } catch (err) {
+    alert(err.response?.data?.message || 'Gagal menghapus data siswa');
   }
 }
 

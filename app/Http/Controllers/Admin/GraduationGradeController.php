@@ -9,9 +9,11 @@ use App\Models\GraduationSetting;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Grade;
+use App\Models\User;
 use App\Http\Controllers\AstsReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class GraduationGradeController extends BaseController
@@ -22,7 +24,7 @@ class GraduationGradeController extends BaseController
     public function getSettings()
     {
         $setting = GraduationSetting::getActiveSettings();
-        $subjects = Subject::orderBy('name')->get(['id', 'name', 'code']);
+        $subjects = $this->sortSubjectsAccordingToStructure(Subject::all(['id', 'name', 'code']));
 
         return $this->success([
             'setting' => $setting,
@@ -107,8 +109,8 @@ class GraduationGradeController extends BaseController
         $students = $studentsQuery->get();
         $studentIds = $students->pluck('id')->toArray();
 
-        // 3. Subjects list
-        $subjects = Subject::orderBy('name')->get(['id', 'name', 'code']);
+        // 3. Subjects list (Diurutkan sesuai standar Kurikulum MTs Kemenag)
+        $subjects = $this->sortSubjectsAccordingToStructure(Subject::all(['id', 'name', 'code']));
 
         // 4. Grades
         $gradesQuery = GraduationGrade::whereIn('student_id', $studentIds);
@@ -302,7 +304,7 @@ class GraduationGradeController extends BaseController
 
         $students = $studentsQuery->orderBy('full_name')->get();
         $studentIds = $students->pluck('id')->toArray();
-        $subjects = Subject::orderBy('name')->get();
+        $subjects = $this->sortSubjectsAccordingToStructure(Subject::all());
         $grades = GraduationGrade::whereIn('student_id', $studentIds)->get();
 
         $setting = GraduationSetting::getActiveSettings();
@@ -382,5 +384,147 @@ class GraduationGradeController extends BaseController
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Tambah data siswa khusus jenjang Kelas 9.
+     */
+    public function storeStudent(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'full_name' => 'required|string|max:255',
+            'nisn' => 'required|string|max:50|unique:students,nisn',
+            'nis' => 'required|string|max:50|unique:students,nis',
+            'gender' => 'required|in:L,P',
+            'class_id' => 'required|integer|exists:classes,id',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error('Validasi data siswa gagal', 422, $validator->errors());
+        }
+
+        $cls = ClassRoom::find($request->class_id);
+        if (!$cls || ($cls->grade_level !== '9' && !str_starts_with($cls->name, '9') && !str_starts_with($cls->name, 'IX'))) {
+            return $this->error('Rombel yang dipilih harus jenjang Kelas 9.', 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Auto generate user account for student
+            $username = $request->nisn;
+            $originalUsername = $username;
+            $i = 1;
+            while (User::where('username', $username)->exists()) {
+                $username = $originalUsername . '_' . $i++;
+            }
+
+            $email = $request->nisn . '@student.example.com';
+            $originalEmail = $email;
+            $j = 1;
+            while (User::where('email', $email)->exists()) {
+                $email = $originalEmail . '_' . $j++;
+            }
+
+            $user = User::create([
+                'name' => $request->full_name,
+                'username' => $username,
+                'email' => $email,
+                'password' => Hash::make($request->nisn),
+                'role' => 'student',
+            ]);
+
+            $student = Student::create([
+                'user_id' => $user->id,
+                'class_id' => $cls->id,
+                'nisn' => $request->nisn,
+                'nis' => $request->nis,
+                'full_name' => $request->full_name,
+                'gender' => $request->gender,
+            ]);
+
+            DB::commit();
+
+            $student->load(['classRoom:id,name', 'lokalClassRoom:id,name']);
+
+            return $this->success($student, "Siswa {$student->full_name} berhasil ditambahkan ke {$cls->name}.");
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return $this->error('Gagal menambahkan siswa: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Hapus data siswa kelas 9 dari sistem.
+     */
+    public function deleteStudent($id)
+    {
+        $student = Student::find($id);
+        if (!$student) {
+            return $this->error('Data siswa tidak ditemukan.', 404);
+        }
+
+        DB::beginTransaction();
+        try {
+            GraduationGrade::where('student_id', $student->id)->delete();
+            if ($student->user) {
+                $student->user->delete();
+            }
+            $student->delete();
+            DB::commit();
+
+            return $this->success(null, "Data siswa berhasil dihapus.");
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return $this->error('Gagal menghapus siswa: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Helper to classify and sort subjects according to official Madrasah Tsanawiyah curriculum structure.
+     */
+    private function sortSubjectsAccordingToStructure($subjects)
+    {
+        return $subjects->sort(function ($a, $b) {
+            $weightA = $this->getSubjectWeight($a->name);
+            $weightB = $this->getSubjectWeight($b->name);
+            if ($weightA === $weightB) {
+                return strcmp($a->name, $b->name);
+            }
+            return $weightA <=> $weightB;
+        })->values();
+    }
+
+    /**
+     * Helper to compute order weight for subjects.
+     */
+    private function getSubjectWeight(string $name): int
+    {
+        $lower = strtolower($name);
+
+        // 3. Muatan Lokal (Mulok) - Prioritaskan cek BTQ / Baca Tulis Al-Qur'an lebih dulu
+        if (str_contains($lower, 'baca tulis') || str_contains($lower, 'btq') || str_contains($lower, 'bta') || str_contains($lower, 'tahfidz')) return 220;
+        if (str_contains($lower, 'sunda') || str_contains($lower, 'jawa') || str_contains($lower, 'daerah') || str_contains($lower, 'mulok')) return 210;
+
+        // 1. Kelompok Wajib A - Pendidikan Agama Islam (PAI)
+        if (str_contains($lower, 'hadis') || str_contains($lower, 'hadits') || (str_contains($lower, 'qur') && !str_contains($lower, 'baca'))) return 10;
+        if (str_contains($lower, 'akidah') || str_contains($lower, 'akhlak')) return 11;
+        if (str_contains($lower, 'fikih') || str_contains($lower, 'fiqih')) return 12;
+        if (str_contains($lower, 'sejarah kebudayaan') || str_contains($lower, 'ski')) return 13;
+
+        // Kelompok Wajib A - Mata Pelajaran Umum
+        if (str_contains($lower, 'pancasila') || str_contains($lower, 'pkn') || str_contains($lower, 'kewarganegaraan')) return 20;
+        if (str_contains($lower, 'bahasa indonesia') || $lower === 'indonesia') return 30;
+        if (str_contains($lower, 'bahasa arab') || $lower === 'arab') return 40;
+        if (str_contains($lower, 'matematika') || str_contains($lower, 'mtk')) return 50;
+        if (str_contains($lower, 'alam') || str_contains($lower, 'ipa')) return 60;
+        if (str_contains($lower, 'sosial') || str_contains($lower, 'ips')) return 70;
+        if (str_contains($lower, 'inggris') || str_contains($lower, 'english')) return 80;
+
+        // 2. Kelompok Wajib B
+        if (str_contains($lower, 'seni') || str_contains($lower, 'prakarya') || str_contains($lower, 'sbdp')) return 110;
+        if (str_contains($lower, 'jasmani') || str_contains($lower, 'olahraga') || str_contains($lower, 'pjok') || str_contains($lower, 'penjas')) return 120;
+        if (str_contains($lower, 'informatika') || str_contains($lower, 'komputer') || str_contains($lower, 'tik')) return 130;
+
+        return 300;
     }
 }
