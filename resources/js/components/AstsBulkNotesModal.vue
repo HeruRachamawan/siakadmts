@@ -270,7 +270,7 @@ watch(
         unexcused_count: st.unexcused_count !== undefined ? Number(st.unexcused_count) : (st.attendance?.unexcused || 0),
         homeroom_notes: st.homeroom_notes || '',
       }));
-      searchQuery.value = props.initialSearch || '';
+      searchQuery.value = typeof props.initialSearch === 'string' ? props.initialSearch : '';
       selectedTemplate.value = props.templates[0];
     }
   },
@@ -278,7 +278,7 @@ watch(
 );
 
 const filteredStudents = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase();
+  const q = (typeof searchQuery.value === 'string' ? searchQuery.value : '').trim().toLowerCase();
   if (!q) return localStudents.value;
   return localStudents.value.filter(st =>
     st.full_name?.toLowerCase().includes(q) ||
@@ -290,7 +290,7 @@ function applyBulkTemplate(overrideExisting = true) {
   if (!selectedTemplate.value) return;
   let count = 0;
   localStudents.value.forEach(st => {
-    if (overrideExisting || !st.homeroom_notes || !st.homeroom_notes.trim()) {
+    if (overrideExisting || !st.homeroom_notes || !String(st.homeroom_notes).trim()) {
       st.homeroom_notes = selectedTemplate.value;
       count++;
     }

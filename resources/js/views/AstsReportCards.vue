@@ -511,7 +511,7 @@
                     <th class="px-3 py-3 text-center w-20 bg-emerald-50/70 font-black text-emerald-900">Rata-rata</th>
                     <th class="px-2 py-3 text-center w-20 font-black text-amber-800 bg-amber-50/70">Peringkat</th>
                     <th class="px-3 py-3 text-center w-28">
-                      <div class="flex items-center justify-center gap-1 cursor-pointer hover:text-purple-700" @click="openBulkNotesModal" title="Klik untuk edit catatan & presensi 1 kelas sekaligus">
+                      <div class="flex items-center justify-center gap-1 cursor-pointer hover:text-purple-700" @click="openBulkNotesModal()" title="Klik untuk edit catatan & presensi 1 kelas sekaligus">
                         <span>Catatan Wali</span>
                         <Pencil class="w-2.5 h-2.5 text-purple-500" />
                       </div>
@@ -689,7 +689,7 @@
             <!-- Edit Bulk Notes (1 Kelas Sekaligus) -->
             <button
               type="button"
-              @click="openBulkNotesModal"
+              @click="openBulkNotesModal()"
               :disabled="!ledgerStudents.length"
               class="px-3 py-2 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
               title="Isi catatan wali kelas & kehadiran untuk seluruh siswa sekaligus"
@@ -1559,7 +1559,7 @@ const subjectStatuses = computed(() => ledgerData.value?.subject_statuses || [])
 const ledgerStudents = computed(() => ledgerData.value?.students || []);
 
 const filteredLedgerStudents = computed(() => {
-  const query = studentSearchQuery.value.trim().toLowerCase();
+  const query = (typeof studentSearchQuery.value === 'string' ? studentSearchQuery.value : '').trim().toLowerCase();
   if (!query) return ledgerStudents.value;
   return ledgerStudents.value.filter(s => 
     s.full_name?.toLowerCase().includes(query) || 
@@ -1888,7 +1888,7 @@ function openBulkNotesModal(initialSearchText = '') {
     toast.error('Silakan pilih kelas yang memiliki data siswa terlebih dahulu.');
     return;
   }
-  bulkNotesInitialSearch.value = initialSearchText;
+  bulkNotesInitialSearch.value = typeof initialSearchText === 'string' ? initialSearchText : '';
   showBulkNotesModal.value = true;
 }
 
