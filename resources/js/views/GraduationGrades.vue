@@ -531,24 +531,80 @@
             </div>
           </div>
 
-          <!-- Checklist Mapel yang Memiliki Praktik -->
+          <!-- 3. Checklist Mapel yang Digunakan (Aktif) untuk Ijazah & PDUM -->
           <div class="space-y-2">
-            <label class="block text-[11px] font-black text-slate-700 uppercase tracking-wider">
-              3. Mata Pelajaran yang Ada Ujian Praktik
-            </label>
-            <div class="max-h-48 overflow-y-auto p-2 border border-slate-200 rounded-xl grid grid-cols-2 gap-2 bg-slate-50/50">
+            <div class="flex items-center justify-between">
+              <label class="block text-[11px] font-black text-slate-700 uppercase tracking-wider">
+                3. Mata Pelajaran yang Digunakan (Ijazah & PDUM)
+              </label>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  {{ tempSettings.active_subject_ids.length }} dari {{ allSubjects.length }} Aktif
+                </span>
+                <button
+                  type="button"
+                  @click="selectAllActiveSubjects"
+                  class="text-[11px] font-bold text-indigo-600 hover:underline cursor-pointer"
+                >
+                  Pilih Semua
+                </button>
+                <span class="text-slate-300">&bull;</span>
+                <button
+                  type="button"
+                  @click="deselectAllActiveSubjects"
+                  class="text-[11px] font-bold text-slate-500 hover:underline cursor-pointer"
+                >
+                  Batal Semua
+                </button>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              Hilangkan centang jika mata pelajaran tidak diajarkan atau tidak diikutsertakan ke dalam transkrip nilai ijazah.
+            </p>
+            <div class="max-h-48 overflow-y-auto p-2 border border-slate-200 rounded-xl grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50/50">
               <label
-                v-for="sub in subjects"
-                :key="sub.id"
+                v-for="sub in allSubjects"
+                :key="'active-' + sub.id"
+                class="flex items-center gap-2 p-1.5 bg-white rounded-lg border border-slate-100 text-xs font-medium cursor-pointer hover:bg-slate-50 transition-colors"
+                :class="tempSettings.active_subject_ids.includes(sub.id) ? 'border-emerald-200 bg-emerald-50/20' : 'opacity-60'"
+              >
+                <input
+                  type="checkbox"
+                  :value="sub.id"
+                  v-model="tempSettings.active_subject_ids"
+                  class="rounded text-emerald-600 focus:ring-emerald-500"
+                />
+                <span class="truncate font-semibold text-slate-800">{{ sub.name }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 4. Checklist Mapel yang Memiliki Praktik -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="block text-[11px] font-black text-slate-700 uppercase tracking-wider">
+                4. Mata Pelajaran yang Ada Ujian Praktik
+              </label>
+              <span class="text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+                {{ tempSettings.practical_subject_ids.length }} Mapel Praktik
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              Hanya menampilkan mapel yang aktif digunakan di atas.
+            </p>
+            <div class="max-h-44 overflow-y-auto p-2 border border-slate-200 rounded-xl grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50/50">
+              <label
+                v-for="sub in allSubjects.filter(s => tempSettings.active_subject_ids.includes(s.id))"
+                :key="'prac-' + sub.id"
                 class="flex items-center gap-2 p-1.5 bg-white rounded-lg border border-slate-100 text-xs font-medium cursor-pointer hover:bg-slate-50"
               >
                 <input
                   type="checkbox"
                   :value="sub.id"
                   v-model="tempSettings.practical_subject_ids"
-                  class="rounded text-emerald-600 focus:ring-emerald-500"
+                  class="rounded text-purple-600 focus:ring-purple-500"
                 />
-                <span class="truncate">{{ sub.name }}</span>
+                <span class="truncate font-semibold text-slate-700">{{ sub.name }}</span>
               </label>
             </div>
           </div>
@@ -927,6 +983,7 @@ const hasUnsavedChanges = ref(false);
 
 const classes = ref([]);
 const subjects = ref([]);
+const allSubjects = ref([]);
 const students = ref([]);
 const grades = ref([]);
 const settings = ref(null);
@@ -967,6 +1024,7 @@ const tempSettings = ref({
   exam_weight: 40,
   theory_weight_default: 50,
   practice_weight_default: 50,
+  active_subject_ids: [],
   practical_subject_ids: [],
   date_place: 'Bogor',
   graduation_date: '',
@@ -1005,6 +1063,7 @@ async function fetchData() {
       const d = res.data;
       classes.value = d.classes || [];
       subjects.value = d.subjects || [];
+      allSubjects.value = d.all_subjects || d.subjects || [];
       students.value = d.students || [];
       grades.value = d.grades || [];
       settings.value = d.setting || null;
@@ -1299,6 +1358,9 @@ function openSettingsModal() {
       exam_weight: settings.value.exam_weight || 40,
       theory_weight_default: settings.value.theory_weight_default || 50,
       practice_weight_default: settings.value.practice_weight_default || 50,
+      active_subject_ids: Array.isArray(settings.value.active_subject_ids)
+        ? [...settings.value.active_subject_ids]
+        : allSubjects.value.map(s => s.id),
       practical_subject_ids: Array.isArray(settings.value.practical_subject_ids)
         ? [...settings.value.practical_subject_ids]
         : [],
@@ -1307,6 +1369,14 @@ function openSettingsModal() {
     };
   }
   showSettingsModal.value = true;
+}
+
+function selectAllActiveSubjects() {
+  tempSettings.value.active_subject_ids = allSubjects.value.map(s => s.id);
+}
+
+function deselectAllActiveSubjects() {
+  tempSettings.value.active_subject_ids = [];
 }
 
 async function saveSettings() {

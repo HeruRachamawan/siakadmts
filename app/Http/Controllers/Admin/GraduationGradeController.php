@@ -24,11 +24,17 @@ class GraduationGradeController extends BaseController
     public function getSettings()
     {
         $setting = GraduationSetting::getActiveSettings();
-        $subjects = $this->sortSubjectsAccordingToStructure(Subject::all(['id', 'name', 'code']));
+        $allSubjects = $this->sortSubjectsAccordingToStructure(Subject::all(['id', 'name', 'code']));
+
+        $activeSubjectIds = is_array($setting->active_subject_ids) ? array_map('intval', $setting->active_subject_ids) : null;
+        $activeSubjects = $activeSubjectIds !== null
+            ? $allSubjects->filter(fn($s) => in_array((int)$s->id, $activeSubjectIds))->values()
+            : $allSubjects;
 
         return $this->success([
             'setting' => $setting,
-            'subjects' => $subjects,
+            'subjects' => $activeSubjects,
+            'all_subjects' => $allSubjects,
         ]);
     }
 
@@ -42,6 +48,8 @@ class GraduationGradeController extends BaseController
             'exam_weight' => 'required|numeric|min:0|max:100',
             'theory_weight_default' => 'required|numeric|min:0|max:100',
             'practice_weight_default' => 'required|numeric|min:0|max:100',
+            'active_subject_ids' => 'nullable|array',
+            'active_subject_ids.*' => 'integer|exists:subjects,id',
             'practical_subject_ids' => 'nullable|array',
             'practical_subject_ids.*' => 'integer|exists:subjects,id',
             'custom_subject_weights' => 'nullable|array',
@@ -61,6 +69,7 @@ class GraduationGradeController extends BaseController
             'exam_weight' => $validated['exam_weight'],
             'theory_weight_default' => $validated['theory_weight_default'],
             'practice_weight_default' => $validated['practice_weight_default'],
+            'active_subject_ids' => $validated['active_subject_ids'] ?? null,
             'practical_subject_ids' => $validated['practical_subject_ids'] ?? [],
             'custom_subject_weights' => $validated['custom_subject_weights'] ?? [],
             'date_place' => $validated['date_place'] ?? 'Bogor',
@@ -74,7 +83,7 @@ class GraduationGradeController extends BaseController
             $g->save();
         }
 
-        return $this->success($setting, 'Pengaturan bobot kelulusan & ijazah berhasil diperbarui.');
+        return $this->success($setting, 'Pengaturan bobot & mapel aktif kelulusan berhasil diperbarui.');
     }
 
     /**
@@ -109,8 +118,14 @@ class GraduationGradeController extends BaseController
         $students = $studentsQuery->get();
         $studentIds = $students->pluck('id')->toArray();
 
-        // 3. Subjects list (Diurutkan sesuai standar Kurikulum MTs Kemenag)
-        $subjects = $this->sortSubjectsAccordingToStructure(Subject::all(['id', 'name', 'code']));
+        // 3. Settings & Active Subjects list (Diurutkan sesuai standar Kurikulum MTs Kemenag)
+        $setting = GraduationSetting::getActiveSettings();
+        $allSubjects = $this->sortSubjectsAccordingToStructure(Subject::all(['id', 'name', 'code']));
+
+        $activeSubjectIds = is_array($setting->active_subject_ids) ? array_map('intval', $setting->active_subject_ids) : null;
+        $activeSubjects = $activeSubjectIds !== null
+            ? $allSubjects->filter(fn($s) => in_array((int)$s->id, $activeSubjectIds))->values()
+            : $allSubjects;
 
         // 4. Grades
         $gradesQuery = GraduationGrade::whereIn('student_id', $studentIds);
@@ -119,13 +134,13 @@ class GraduationGradeController extends BaseController
         }
         $grades = $gradesQuery->get();
 
-        // 5. Settings & School Identity
-        $setting = GraduationSetting::getActiveSettings();
+        // 5. School Identity
         $schoolSetting = AstsReportController::getOfficialSchoolSetting();
 
         return $this->success([
             'classes' => $grade9Classes,
-            'subjects' => $subjects,
+            'subjects' => $activeSubjects,
+            'all_subjects' => $allSubjects,
             'students' => $students,
             'grades' => $grades,
             'setting' => $setting,
@@ -308,11 +323,13 @@ class GraduationGradeController extends BaseController
         }
 
         $students = $studentsQuery->orderBy('full_name')->get();
-        $studentIds = $students->pluck('id')->toArray();
-        $subjects = $this->sortSubjectsAccordingToStructure(Subject::all());
-        $grades = GraduationGrade::whereIn('student_id', $studentIds)->get();
-
         $setting = GraduationSetting::getActiveSettings();
+        $allSubjects = $this->sortSubjectsAccordingToStructure(Subject::all());
+        $activeSubjectIds = is_array($setting->active_subject_ids) ? array_map('intval', $setting->active_subject_ids) : null;
+        $subjects = $activeSubjectIds !== null
+            ? $allSubjects->filter(fn($s) => in_array((int)$s->id, $activeSubjectIds))->values()
+            : $allSubjects;
+        $grades = GraduationGrade::whereIn('student_id', $studentIds)->get();
 
         // Organize grades map: [student_id][subject_id] => GraduationGrade
         $gradeMap = [];
