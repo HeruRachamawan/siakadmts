@@ -28,10 +28,10 @@
           type="button"
           @click="openSettingsModal"
           class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
-          title="Pengaturan Bobot Rapor, Ujian, & Mapel Praktik"
+          title="Pengaturan Bobot Rapor, Ujian, & Blanko Ijazah"
         >
           <Sliders class="w-4 h-4 text-slate-500" />
-          <span>Atur Bobot</span>
+          <span>Atur Bobot & Titimangsa</span>
         </button>
 
         <button
@@ -42,6 +42,16 @@
         >
           <PlusCircle class="w-4 h-4" />
           <span>+ Tambah Nilai Semester</span>
+        </button>
+
+        <button
+          type="button"
+          @click="activeTab = 'transcripts'"
+          class="px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-black rounded-xl shadow-md shadow-purple-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
+          title="Buka Menu Cetak Ijazah & Transkrip Nilai Siswa (2 Lembar Standar Kemenag)"
+        >
+          <Printer class="w-4 h-4" />
+          <span>Cetak Ijazah & Transkrip</span>
         </button>
 
         <button
@@ -113,11 +123,11 @@
           <button
             type="button"
             @click="activeTab = 'transcripts'"
-            :class="activeTab === 'transcripts' ? 'bg-white text-purple-800 font-black shadow-xs' : 'text-slate-500 hover:text-slate-800 font-bold'"
+            :class="activeTab === 'transcripts' ? 'bg-white text-purple-900 font-black shadow-xs ring-1 ring-purple-200' : 'text-slate-600 hover:text-slate-900 font-bold'"
             class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
           >
-            <BookOpen class="w-3.5 h-3.5 text-purple-600" />
-            <span>Buku Transkrip Siswa</span>
+            <GraduationCap class="w-3.5 h-3.5 text-purple-600" />
+            <span>Cetak Ijazah & Transkrip</span>
           </button>
         </div>
       </div>
@@ -925,69 +935,256 @@
       </div>
     </div>
 
-    <!-- TAB 3: TRANSKRIP SISWA (BUKU NILAI KOLEKTIF) -->
+    <!-- TAB 4: PUSAT CETAK IJAZAH & TRANSKRIP NILAI RESMI KEMENAG RI -->
     <div v-if="activeTab === 'transcripts'" class="space-y-4 no-print">
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 class="text-sm sm:text-base font-black text-slate-800">Daftar Transkrip Nilai Siswa Kelas 9</h2>
-          <p class="text-[11px] text-slate-500">
-            Klik tombol "Lihat Transkrip" untuk melihat rincian seluruh mata pelajaran dan mencetak lembar nilai ijazah/SKL resmi.
+      <!-- Banner Header -->
+      <div class="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-3xl p-5 sm:p-6 text-white shadow-lg border border-purple-800/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="space-y-1.5 max-w-2xl">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-200 border border-purple-400/30">
+              Format Resmi Kemenag RI
+            </span>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+              2 Lembar: Muka & Belakang
+            </span>
+          </div>
+          <h2 class="text-base sm:text-xl font-black font-lexend tracking-wide flex items-center gap-2">
+            <GraduationCap class="w-6 h-6 text-purple-400 flex-shrink-0" />
+            <span>Pusat Cetak Ijazah & Transkrip Nilai (Kelas 9)</span>
+          </h2>
+          <p class="text-xs text-purple-200/80 leading-relaxed">
+            Cetak Ijazah Madrasah Tsanawiyah resmi 2 lembar: <strong>Lembar 1 (Muka)</strong> berisi sertifikat kelulusan & pas foto 3x4, dan <strong>Lembar 2 (Belakang)</strong> berisi daftar transkrip nilai resmi (Angka & Terbilang).
           </p>
+        </div>
+
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <button
+            type="button"
+            @click="openSettingsModal"
+            class="px-4 py-2 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white text-xs font-bold rounded-xl border border-white/20 transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+          >
+            <Sliders class="w-4 h-4 text-purple-300" />
+            <span>Atur Titimangsa & Blanko</span>
+          </button>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Filter & Search Toolbar -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-2 flex-1 max-w-md">
+          <div class="relative w-full">
+            <Search class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              v-model="transcriptSearch"
+              placeholder="Cari siswa berdasarkan nama, NISN, atau NIS..."
+              class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-purple-500"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-bold text-slate-500">
+            Ditemukan: <strong class="text-purple-700">{{ filteredTranscriptStudents.length }}</strong> siswa
+          </span>
+
+          <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/60 text-xs">
+            <button
+              type="button"
+              @click="transcriptViewMode = 'cards'"
+              class="px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer"
+              :class="transcriptViewMode === 'cards' ? 'bg-white text-purple-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+            >
+              Kartu
+            </button>
+            <button
+              type="button"
+              @click="transcriptViewMode = 'table'"
+              class="px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer"
+              :class="transcriptViewMode === 'table' ? 'bg-white text-purple-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+            >
+              Tabel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW MODE 1: KARTU SISWA (CARDS) -->
+      <div v-if="transcriptViewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div
-          v-for="stu in students"
-          :key="stu.id"
-          class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+          v-for="stu in filteredTranscriptStudents"
+          :key="'card-' + stu.id"
+          class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
         >
           <div>
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <h3 class="font-bold text-slate-800 text-sm leading-snug">{{ stu.full_name }}</h3>
-                <p class="text-[10px] text-slate-400 font-mono mt-0.5">
-                  NISN: {{ stu.nisn || '-' }} &bull; Kelas: {{ stu.class_name }}
-                </p>
+            <!-- Header Siswa -->
+            <div class="flex items-start gap-3">
+              <div class="w-12 h-14 rounded-lg bg-slate-100 border border-slate-200 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                <img
+                  v-if="stu.photo_url"
+                  :src="stu.photo_url"
+                  :alt="stu.full_name"
+                  class="w-full h-full object-cover"
+                />
+                <span v-else class="text-[9px] font-bold text-slate-400 text-center leading-tight">
+                  FOTO<br/>3x4
+                </span>
               </div>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">
-                {{ getStudentCompletedSubjectCount(stu.id) }}/{{ subjects.length }} Mapel
-              </span>
+              <div class="min-w-0 flex-1">
+                <h3 class="font-bold text-slate-800 text-sm leading-snug truncate" :title="stu.full_name">
+                  {{ stu.full_name }}
+                </h3>
+                <p class="text-[11px] text-slate-500 font-mono mt-0.5">
+                  NISN: <span class="font-bold text-slate-700">{{ stu.nisn || '-' }}</span> &bull; NIS: {{ stu.nis || '-' }}
+                </p>
+                <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700">
+                    Kelas {{ stu.class_name }}
+                  </span>
+                  <span
+                    class="px-2 py-0.5 rounded-md text-[10px] font-bold"
+                    :class="getStudentCompletedSubjectCount(stu.id) === subjects.length ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'"
+                  >
+                    {{ getStudentCompletedSubjectCount(stu.id) }}/{{ subjects.length }} Mapel
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <!-- Quick score indicators -->
-            <div class="grid grid-cols-3 gap-2 my-3 p-2 bg-slate-50 rounded-xl text-center border border-slate-100">
+            <!-- Ringkasan Nilai Siswa -->
+            <div class="grid grid-cols-3 gap-2 mt-4 p-2.5 bg-slate-50 rounded-xl text-center border border-slate-100">
               <div>
-                <span class="block text-[9px] font-bold text-slate-400 uppercase">Rata Rapor</span>
+                <span class="block text-[9px] font-bold text-slate-400 uppercase">R-Rapor</span>
                 <span class="text-xs font-black font-mono text-emerald-700">
                   {{ formatScore(getStudentOverallAverage(stu.id, 'avg_semester')) }}
                 </span>
               </div>
               <div>
-                <span class="block text-[9px] font-bold text-slate-400 uppercase">Rata Ujian</span>
+                <span class="block text-[9px] font-bold text-slate-400 uppercase">N-Ujian</span>
                 <span class="text-xs font-black font-mono text-indigo-700">
                   {{ formatScore(getStudentOverallAverage(stu.id, 'final_exam_score')) }}
                 </span>
               </div>
               <div>
-                <span class="block text-[9px] font-bold text-slate-400 uppercase">Rata Ijazah</span>
-                <span class="text-xs font-black font-mono text-amber-800">
+                <span class="block text-[9px] font-bold text-slate-400 uppercase">Nilai Ijazah</span>
+                <span class="text-xs font-black font-mono text-purple-800">
                   {{ formatScore(getStudentOverallAverage(stu.id, 'final_grade')) }}
                 </span>
               </div>
             </div>
           </div>
 
-          <div class="pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
+          <!-- Tombol Aksi Cetak Ijazah -->
+          <div class="pt-3 border-t border-slate-100 space-y-2">
+            <!-- Tombol Utama: Cetak 2 Lembar -->
             <button
               type="button"
-              @click="openPrintModal(stu)"
-              class="w-full py-1.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              @click="openPrintModal(stu, 'both')"
+              class="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              title="Cetak Ijazah Lengkap Bolak-Balik (Lembar 1 & Lembar 2)"
             >
-              <Printer class="w-3.5 h-3.5 text-emerald-600" />
-              <span>Cetak Transkrip / SKL</span>
+              <Printer class="w-4 h-4" />
+              <span>Cetak Ijazah & Transkrip (2 Lembar)</span>
             </button>
+
+            <!-- Tombol Pilihan Per Lembar -->
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                @click="openPrintModal(stu, 'page1')"
+                class="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold rounded-lg border border-slate-200 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                title="Cetak Lembar Muka (Identitas Siswa) Saja"
+              >
+                <span>📄 Lembar 1 (Muka)</span>
+              </button>
+              <button
+                type="button"
+                @click="openPrintModal(stu, 'page2')"
+                class="py-1.5 px-2 bg-purple-50 hover:bg-purple-100 text-purple-800 text-[11px] font-bold rounded-lg border border-purple-200 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                title="Cetak Lembar Belakang (Daftar Nilai) Saja"
+              >
+                <span>📊 Lembar 2 (Nilai)</span>
+              </button>
+            </div>
           </div>
+        </div>
+      </div>
+
+      <!-- VIEW MODE 2: TABEL SISWA (TABLE) -->
+      <div v-else class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead class="bg-slate-100/80 border-b border-slate-200 text-[11px] font-black text-slate-600 uppercase">
+              <tr>
+                <th class="py-3 px-3 text-center w-10">No</th>
+                <th class="py-3 px-3 text-left">Nama Siswa</th>
+                <th class="py-3 px-2 text-center w-28">NISN / NIS</th>
+                <th class="py-3 px-2 text-center w-20">Kelas</th>
+                <th class="py-3 px-2 text-center w-24">R-Rapor</th>
+                <th class="py-3 px-2 text-center w-24">N-Ujian</th>
+                <th class="py-3 px-2 text-center w-24 bg-purple-50 text-purple-900">Nilai Ijazah</th>
+                <th class="py-3 px-3 text-center w-64">Aksi Cetak Ijazah</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr
+                v-for="(stu, idx) in filteredTranscriptStudents"
+                :key="'tbl-' + stu.id"
+                class="hover:bg-slate-50 transition-colors"
+              >
+                <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-400">{{ idx + 1 }}</td>
+                <td class="py-2.5 px-3">
+                  <div class="font-bold text-slate-800">{{ stu.full_name }}</div>
+                  <div class="text-[10px] text-slate-400 font-medium">
+                    {{ getStudentCompletedSubjectCount(stu.id) }}/{{ subjects.length }} Mapel Terisi
+                  </div>
+                </td>
+                <td class="py-2.5 px-2 text-center font-mono text-slate-600">
+                  <div>{{ stu.nisn || '-' }}</div>
+                  <div class="text-[10px] text-slate-400">{{ stu.nis || '-' }}</div>
+                </td>
+                <td class="py-2.5 px-2 text-center font-bold text-slate-700">{{ stu.class_name }}</td>
+                <td class="py-2.5 px-2 text-center font-mono font-bold text-emerald-700">
+                  {{ formatScore(getStudentOverallAverage(stu.id, 'avg_semester')) }}
+                </td>
+                <td class="py-2.5 px-2 text-center font-mono font-bold text-indigo-700">
+                  {{ formatScore(getStudentOverallAverage(stu.id, 'final_exam_score')) }}
+                </td>
+                <td class="py-2.5 px-2 text-center font-mono font-black text-purple-900 bg-purple-50/40">
+                  {{ formatScore(getStudentOverallAverage(stu.id, 'final_grade')) }}
+                </td>
+                <td class="py-2.5 px-3 text-center">
+                  <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      @click="openPrintModal(stu, 'both')"
+                      class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[11px] transition-colors flex items-center gap-1 cursor-pointer shadow-xs"
+                      title="Cetak 2 Lembar Lengkap"
+                    >
+                      <Printer class="w-3 h-3" />
+                      <span>2 Lembar</span>
+                    </button>
+                    <button
+                      type="button"
+                      @click="openPrintModal(stu, 'page1')"
+                      class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[10px] transition-colors cursor-pointer"
+                      title="Cetak Lembar 1 Muka"
+                    >
+                      Muka
+                    </button>
+                    <button
+                      type="button"
+                      @click="openPrintModal(stu, 'page2')"
+                      class="px-2 py-1 bg-purple-50 hover:bg-purple-100 text-purple-800 font-bold rounded-lg text-[10px] transition-colors cursor-pointer"
+                      title="Cetak Lembar 2 Nilai"
+                    >
+                      Nilai
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -1965,6 +2162,20 @@ const filteredLedgerStudents = computed(() => {
   );
 });
 
+// Cetak Ijazah & Transkrip Tab State
+const transcriptSearch = ref('');
+const transcriptViewMode = ref('cards'); // 'cards' or 'table'
+const filteredTranscriptStudents = computed(() => {
+  if (!transcriptSearch.value.trim()) return students.value;
+  const q = transcriptSearch.value.toLowerCase().trim();
+  return students.value.filter(s =>
+    (s.full_name && s.full_name.toLowerCase().includes(q)) ||
+    (s.nisn && s.nisn.toLowerCase().includes(q)) ||
+    (s.nis && s.nis.toLowerCase().includes(q)) ||
+    (s.class_name && s.class_name.toLowerCase().includes(q))
+  );
+});
+
 // Grade matrix in memory: studentGradeMap[student_id][subject_id] = record
 const gradeMatrix = ref({});
 
@@ -2538,8 +2749,9 @@ async function saveSettings() {
 }
 
 // Print Modal
-function openPrintModal(student) {
+function openPrintModal(student, mode = 'both') {
   activePrintStudent.value = student;
+  printMode.value = mode;
   showPrintModal.value = true;
 }
 
