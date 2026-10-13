@@ -56,6 +56,17 @@
 
         <button
           type="button"
+          v-if="activeTab === 'semester'"
+          @click="saveSemesterTabGrades"
+          :disabled="isSaving || !hasUnsavedChanges"
+          class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/30 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:shadow-none"
+        >
+          <Save class="w-4 h-4" />
+          <span>{{ isSaving ? 'Menyimpan...' : (hasUnsavedChanges ? `Simpan Nilai ${currentInputSemester.label}` : 'Tersimpan') }}</span>
+        </button>
+
+        <button
+          type="button"
           v-if="activeTab === 'subject'"
           @click="saveCurrentGrades"
           :disabled="isSaving || !hasUnsavedChanges"
@@ -71,32 +82,41 @@
     <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 no-print">
       <!-- Mode Tabs -->
       <div class="flex items-center gap-2">
-        <div class="grid grid-cols-3 p-1 bg-slate-100 rounded-xl border border-slate-200/60 shadow-2xs">
+        <div class="grid grid-cols-2 sm:grid-cols-4 p-1 bg-slate-100 rounded-xl border border-slate-200/60 shadow-2xs gap-1 sm:gap-0">
+          <button
+            type="button"
+            @click="activeTab = 'semester'"
+            :class="activeTab === 'semester' ? 'bg-white text-emerald-800 font-black shadow-xs' : 'text-slate-500 hover:text-slate-800 font-bold'"
+            class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <Calendar class="w-3.5 h-3.5 text-emerald-600" />
+            <span>Input Per Semester</span>
+          </button>
           <button
             type="button"
             @click="activeTab = 'subject'"
-            :class="activeTab === 'subject' ? 'bg-white text-emerald-800 font-black shadow-xs' : 'text-slate-500 hover:text-slate-800 font-bold'"
-            class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            :class="activeTab === 'subject' ? 'bg-white text-teal-800 font-black shadow-xs' : 'text-slate-500 hover:text-slate-800 font-bold'"
+            class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
           >
-            <Table class="w-3.5 h-3.5" />
+            <Table class="w-3.5 h-3.5 text-teal-600" />
             <span>Input Per Mapel</span>
           </button>
           <button
             type="button"
             @click="activeTab = 'ledger'"
-            :class="activeTab === 'ledger' ? 'bg-white text-teal-800 font-black shadow-xs' : 'text-slate-500 hover:text-slate-800 font-bold'"
-            class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            :class="activeTab === 'ledger' ? 'bg-white text-indigo-800 font-black shadow-xs' : 'text-slate-500 hover:text-slate-800 font-bold'"
+            class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
           >
-            <FileSpreadsheet class="w-3.5 h-3.5" />
+            <FileSpreadsheet class="w-3.5 h-3.5 text-indigo-600" />
             <span>Leger Semua Mapel</span>
           </button>
           <button
             type="button"
             @click="activeTab = 'transcripts'"
-            :class="activeTab === 'transcripts' ? 'bg-white text-indigo-800 font-black shadow-xs' : 'text-slate-500 hover:text-slate-800 font-bold'"
-            class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            :class="activeTab === 'transcripts' ? 'bg-white text-purple-800 font-black shadow-xs' : 'text-slate-500 hover:text-slate-800 font-bold'"
+            class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
           >
-            <BookOpen class="w-3.5 h-3.5" />
+            <BookOpen class="w-3.5 h-3.5 text-purple-600" />
             <span>Buku Transkrip Siswa</span>
           </button>
         </div>
@@ -143,7 +163,253 @@
       </div>
     </div>
 
-    <!-- TAB 1: SPREADSHEET INPUT PER MAPEL -->
+    <!-- TAB 1: SPREADSHEET INPUT PER SEMESTER (SEMUA MAPEL) -->
+    <div v-if="activeTab === 'semester'" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden no-print">
+      <!-- Semester Header Card -->
+      <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold flex-shrink-0">
+            <Calendar class="w-5 h-5 text-emerald-700" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-sm sm:text-base font-black text-slate-800 font-lexend uppercase tracking-wider">
+                Input Nilai {{ currentInputSemester.label }}
+              </h2>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                {{ currentInputSemester.kls }} &bull; TP {{ currentInputSemester.tp }}
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
+                {{ subjects.length }} Mapel Aktif
+              </span>
+              <span v-if="inputSemesterKey === 'exam'" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                🔬 {{ practicalSubjectCount }} Mapel Praktik
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-500 font-medium mt-0.5">
+              Input nilai siswa kelas 9 untuk seluruh mata pelajaran pada {{ currentInputSemester.label }}. Nilai terakumulasi otomatis ke Leger dan Transkrip.
+            </p>
+          </div>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="flex items-center gap-2 flex-wrap flex-shrink-0">
+          <div v-if="hasUnsavedChanges" class="px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-bold flex items-center gap-1.5 animate-pulse">
+            <AlertCircle class="w-3.5 h-3.5 text-amber-600" />
+            <span>Ada perubahan belum disimpan!</span>
+          </div>
+
+          <!-- Quick Fill -->
+          <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1">
+            <span class="text-[11px] font-bold text-slate-500 hidden sm:inline">Isi Cepat:</span>
+            <input
+              type="number"
+              v-model="semesterQuickScore"
+              placeholder="KKM/Nilai"
+              class="w-20 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-center focus:outline-emerald-500"
+            />
+            <button
+              type="button"
+              @click="applySemesterQuickFill()"
+              class="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-lg transition-colors cursor-pointer"
+              title="Isi nilai ke seluruh kolom mapel yang masih kosong"
+            >
+              Isi Kosong
+            </button>
+          </div>
+
+          <!-- Save Button -->
+          <button
+            type="button"
+            @click="saveSemesterTabGrades"
+            :disabled="isSaving || !hasUnsavedChanges"
+            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/30 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:shadow-none"
+          >
+            <Save class="w-4 h-4" />
+            <span>{{ isSaving ? 'Menyimpan...' : (hasUnsavedChanges ? `Simpan Nilai ${currentInputSemester.label}` : 'Tersimpan') }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Semester Selector Pills Strip -->
+      <div class="px-4 py-2.5 bg-slate-50/80 border-b border-slate-100 flex items-center gap-2 overflow-x-auto">
+        <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex-shrink-0 mr-1 flex items-center gap-1">
+          <Calendar class="w-3.5 h-3.5 text-slate-400" />
+          Pilih Semester:
+        </span>
+        <button
+          v-for="sem in inputSemesterList"
+          :key="'input-sem-' + sem.key"
+          type="button"
+          @click="inputSemesterKey = sem.key"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer flex-shrink-0 border"
+          :class="inputSemesterKey === sem.key
+            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'"
+        >
+          <span>{{ sem.icon }}</span>
+          <span>{{ sem.label }}</span>
+          <span class="text-[10px] opacity-75">({{ sem.kls }})</span>
+        </button>
+      </div>
+
+      <!-- Loading / Empty / Table -->
+      <div v-if="isLoading" class="p-12 text-center text-slate-500 font-medium space-y-2">
+        <RefreshCw class="w-8 h-8 animate-spin mx-auto text-emerald-600 mb-2" />
+        <p>Memuat data nilai...</p>
+      </div>
+      <div v-else-if="students.length === 0" class="p-12 text-center text-slate-400 space-y-2">
+        <Users class="w-10 h-10 mx-auto text-slate-300" />
+        <p class="font-bold text-slate-600">Belum Ada Siswa di Kelas 9</p>
+      </div>
+      <div v-else class="overflow-x-auto max-h-[72vh]">
+        <table class="w-full text-xs text-left border-collapse">
+          <thead class="sticky top-0 z-20 bg-slate-100/95 backdrop-blur-xs border-b border-slate-200 text-[11px] font-black text-slate-600 uppercase tracking-wider text-center">
+            <tr>
+              <th rowspan="2" class="py-3 px-3 w-10 text-center border-r border-slate-200/80 sticky left-0 z-30 bg-slate-100">No</th>
+              <th rowspan="2" class="py-3 px-3 text-left min-w-[200px] border-r border-slate-200/80 sticky left-10 z-30 bg-slate-100">Nama Siswa & NISN</th>
+              <th rowspan="2" class="py-3 px-2 w-14 border-r border-slate-200/80 sticky left-[240px] z-30 bg-slate-100">Kelas</th>
+              <th :colspan="subjects.length" class="py-2.5 px-2 bg-emerald-50 text-emerald-900 border-r border-slate-200/80 font-black">
+                NILAI {{ currentInputSemester.label.toUpperCase() }} (SELURUH MATA PELAJARAN)
+              </th>
+              <th rowspan="2" class="py-3 px-2 w-20 bg-indigo-50 text-indigo-900 border-r border-slate-200/80">Total</th>
+              <th rowspan="2" class="py-3 px-2 w-20 bg-amber-50 text-amber-900 border-r border-slate-200/80">Rata-Rata</th>
+              <th rowspan="2" class="py-3 px-2 w-24 bg-slate-100">Kelengkapan</th>
+            </tr>
+            <tr class="text-[10px] font-bold text-slate-600 bg-slate-50 border-b border-slate-200">
+              <th
+                v-for="sub in subjects"
+                :key="'th-input-sub-' + sub.id"
+                class="py-2 px-1 min-w-[68px] border-r border-slate-200/60"
+                :title="sub.name"
+              >
+                <div class="font-bold truncate max-w-[85px] mx-auto">{{ sub.code || sub.name.substring(0, 8) }}</div>
+                <div v-if="inputSemesterKey === 'exam' && isSubjectPractical(sub.id)" class="text-[9px] text-purple-700 font-normal">
+                  🔬 T/P/Akhir
+                </div>
+                <div v-else-if="isSubjectPractical(sub.id)" class="text-[9px] text-purple-700 font-normal">🔬 Praktik</div>
+                <div v-else class="text-[9px] text-slate-400 font-normal">📝 Teori</div>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 bg-white">
+            <tr
+              v-for="(stu, idx) in students"
+              :key="'input-sem-row-' + stu.id"
+              class="hover:bg-slate-50/80 transition-colors"
+            >
+              <td class="py-2 px-3 text-center text-slate-400 font-mono font-bold border-r border-slate-100 sticky left-0 bg-white z-10">
+                {{ idx + 1 }}
+              </td>
+              <td class="py-2 px-3 border-r border-slate-100 sticky left-10 bg-white z-10">
+                <div class="font-bold text-slate-800 text-[13px] leading-tight truncate max-w-[200px]">{{ stu.full_name }}</div>
+                <div class="text-[10px] text-slate-400 font-mono mt-0.5">NISN: {{ stu.nisn || '-' }}</div>
+              </td>
+              <td class="py-2 px-2 text-center font-bold text-slate-600 border-r border-slate-100 sticky left-[240px] bg-white z-10">
+                {{ stu.class_name }}
+              </td>
+
+              <!-- Subject Inputs -->
+              <td
+                v-for="sub in subjects"
+                :key="'input-cell-' + stu.id + '-' + sub.id"
+                class="py-1.5 px-1 text-center border-r border-slate-100"
+              >
+                <!-- IF REGULAR SEMESTER (sem_1 s.d sem_6) -->
+                <template v-if="inputSemesterKey !== 'exam'">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="any"
+                    v-model.number="getStudentRecordBySubject(stu.id, sub.id)[inputSemesterKey]"
+                    @input="onSemesterGradeInput(stu.id, sub.id)"
+                    class="w-14 text-center font-mono font-bold text-xs py-1 px-1 rounded-lg border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition-all"
+                    :class="getStudentRecordBySubject(stu.id, sub.id)[inputSemesterKey] ? 'bg-white text-slate-800 font-bold' : 'bg-slate-50/50 text-slate-400'"
+                    placeholder="-"
+                  />
+                </template>
+
+                <!-- IF EXAM (Ujian Madrasah) -->
+                <template v-else>
+                  <!-- Mapel dengan Praktik -->
+                  <div v-if="isSubjectPractical(sub.id)" class="flex items-center justify-center gap-0.5">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      v-model.number="getStudentRecordBySubject(stu.id, sub.id).exam_theory"
+                      @input="onSemesterGradeInput(stu.id, sub.id)"
+                      placeholder="T"
+                      title="Ujian Tulis (Teori)"
+                      class="w-9 text-center font-mono text-[11px] py-1 px-0.5 rounded border border-slate-200 focus:border-emerald-500 focus:outline-none"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      v-model.number="getStudentRecordBySubject(stu.id, sub.id).exam_practice"
+                      @input="onSemesterGradeInput(stu.id, sub.id)"
+                      placeholder="P"
+                      title="Ujian Praktik"
+                      class="w-9 text-center font-mono text-[11px] py-1 px-0.5 rounded border border-purple-200 bg-purple-50/30 focus:border-purple-500 focus:outline-none"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      v-model.number="getStudentRecordBySubject(stu.id, sub.id).final_exam_score"
+                      @input="onSemesterGradeInput(stu.id, sub.id)"
+                      placeholder="Akhir"
+                      title="N-Ujian (Nilai Akhir Ujian)"
+                      class="w-10 text-center font-mono font-black text-[11px] py-1 px-0.5 rounded border border-indigo-200 bg-indigo-50/60 text-indigo-900 focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                  <!-- Mapel Teori Murni -->
+                  <div v-else>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="any"
+                      v-model.number="getStudentRecordBySubject(stu.id, sub.id).final_exam_score"
+                      @input="onSemesterGradeInput(stu.id, sub.id)"
+                      class="w-14 text-center font-mono font-bold text-xs py-1 px-1 rounded-lg border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition-all"
+                      :class="getStudentRecordBySubject(stu.id, sub.id).final_exam_score ? 'bg-white text-slate-800' : 'bg-slate-50/50 text-slate-400'"
+                      placeholder="-"
+                    />
+                  </div>
+                </template>
+              </td>
+
+              <!-- Total Score for Selected Semester -->
+              <td class="py-2 px-2 text-center font-mono font-black text-indigo-900 bg-indigo-50/40 border-r border-slate-100">
+                {{ formatScore(getStudentSemesterTotal(stu.id, inputSemesterKey)) }}
+              </td>
+
+              <!-- Average Score for Selected Semester -->
+              <td class="py-2 px-2 text-center font-mono font-black text-amber-950 bg-amber-50/60 border-r border-slate-100">
+                <span class="px-2 py-0.5 rounded bg-amber-100/90 text-amber-900">
+                  {{ formatScore(getStudentSemesterAverage(stu.id, inputSemesterKey)) }}
+                </span>
+              </td>
+
+              <!-- Completed Count -->
+              <td class="py-2 px-2 text-center border-r border-slate-100">
+                <span
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                  :class="getStudentCompletedSubjectCount(stu.id, inputSemesterKey === 'exam' ? 'final_exam_score' : inputSemesterKey) === subjects.length ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'"
+                >
+                  {{ getStudentCompletedSubjectCount(stu.id, inputSemesterKey === 'exam' ? 'final_exam_score' : inputSemesterKey) }}/{{ subjects.length }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: SPREADSHEET INPUT PER MAPEL -->
     <div v-if="activeTab === 'subject'" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden no-print">
       <!-- Subject Header Card -->
       <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1233,7 +1499,7 @@
             </button>
             <button
               type="button"
-              @click="saveSemesterGrades"
+              @click="saveModalSemesterGrades"
               :disabled="isSavingSemesterGrades"
               class="px-5 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 shadow-md transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
             >
@@ -1273,7 +1539,7 @@ import {
 
 // State
 const toast = useToast();
-const activeTab = ref('subject'); // 'subject', 'ledger', or 'transcripts'
+const activeTab = ref('semester'); // 'semester', 'subject', 'ledger', or 'transcripts'
 const isLoading = ref(false);
 const isSaving = ref(false);
 const isPulling = ref(false);
@@ -1290,6 +1556,24 @@ const schoolSetting = ref(null);
 const selectedClassId = ref('');
 const selectedSubjectId = ref('');
 const ledgerSearch = ref('');
+
+// Input Per Semester State
+const inputSemesterKey = ref('sem_1');
+const inputSemesterList = [
+  { key: 'sem_1', label: 'Semester 1', kls: 'Kls 7 Ganjil', tp: '2024/2025', icon: '📘' },
+  { key: 'sem_2', label: 'Semester 2', kls: 'Kls 7 Genap', tp: '2024/2025', icon: '📘' },
+  { key: 'sem_3', label: 'Semester 3', kls: 'Kls 8 Ganjil', tp: '2025/2026', icon: '📙' },
+  { key: 'sem_4', label: 'Semester 4', kls: 'Kls 8 Genap', tp: '2025/2026', icon: '📙' },
+  { key: 'sem_5', label: 'Semester 5', kls: 'Kls 9 Ganjil', tp: '2026/2027', icon: '📕' },
+  { key: 'sem_6', label: 'Semester 6', kls: 'Kls 9 Genap', tp: '2026/2027', icon: '📕' },
+  { key: 'exam', label: 'Ujian Madrasah', kls: 'Nilai Ujian', tp: '2026/2027', icon: '📝' },
+];
+
+const currentInputSemester = computed(() => {
+  return inputSemesterList.find(s => s.key === inputSemesterKey.value) || inputSemesterList[0];
+});
+
+const semesterQuickScore = ref('');
 
 // Leger View Mode Selector
 const ledgerMode = ref('final_grade');
@@ -1433,6 +1717,30 @@ function populateMatrix() {
 
 function getStudentRecord(studentId) {
   const subId = selectedSubjectId.value;
+  if (!gradeMatrix.value[studentId]) {
+    gradeMatrix.value[studentId] = {};
+  }
+  if (!gradeMatrix.value[studentId][subId]) {
+    gradeMatrix.value[studentId][subId] = {
+      student_id: studentId,
+      subject_id: subId,
+      sem_1: null,
+      sem_2: null,
+      sem_3: null,
+      sem_4: null,
+      sem_5: null,
+      sem_6: null,
+      avg_semester: null,
+      exam_theory: null,
+      exam_practice: null,
+      final_exam_score: null,
+      final_grade: null,
+    };
+  }
+  return gradeMatrix.value[studentId][subId];
+}
+
+function getStudentRecordBySubject(studentId, subId) {
   if (!gradeMatrix.value[studentId]) {
     gradeMatrix.value[studentId] = {};
   }
@@ -1632,7 +1940,7 @@ function applyQuickScore() {
   }
 }
 
-async function saveSemesterGrades() {
+async function saveModalSemesterGrades() {
   if (isSavingSemesterGrades.value) return;
   isSavingSemesterGrades.value = true;
   try {
@@ -1671,6 +1979,125 @@ async function saveSemesterGrades() {
     toast.error('Gagal menyimpan nilai semester: ' + (err.response?.data?.message || err.message));
   } finally {
     isSavingSemesterGrades.value = false;
+  }
+}
+
+// Input Per Semester Tab Functions
+function onSemesterGradeInput(studentId, subjectId) {
+  hasUnsavedChanges.value = true;
+  const rec = getStudentRecordBySubject(studentId, subjectId);
+  const st = settings.value || { report_weight: 60, exam_weight: 40, theory_weight_default: 50, practice_weight_default: 50 };
+
+  // 1. Avg Semester
+  const semVals = [];
+  ['sem_1', 'sem_2', 'sem_3', 'sem_4', 'sem_5', 'sem_6'].forEach(k => {
+    if (rec[k] !== null && rec[k] !== '' && !isNaN(rec[k])) {
+      semVals.push(parseFloat(rec[k]));
+    }
+  });
+  rec.avg_semester = semVals.length > 0 ? Number((semVals.reduce((a, b) => a + b, 0) / semVals.length).toFixed(2)) : null;
+
+  // 2. Exam score
+  if (inputSemesterKey.value === 'exam') {
+    const isPrac = isSubjectPractical(subjectId);
+    const theory = (rec.exam_theory !== null && rec.exam_theory !== '') ? parseFloat(rec.exam_theory) : null;
+    const prac = (rec.exam_practice !== null && rec.exam_practice !== '') ? parseFloat(rec.exam_practice) : null;
+    if (isPrac) {
+      const tWeight = parseFloat(st.theory_weight_default || 50);
+      const pWeight = parseFloat(st.practice_weight_default || 50);
+      const totW = tWeight + pWeight;
+      if (totW > 0 && (theory !== null || prac !== null)) {
+        rec.final_exam_score = Number(((theory || 0) * (tWeight / totW) + (prac || 0) * (pWeight / totW)).toFixed(2));
+      }
+    } else if (theory !== null) {
+      rec.final_exam_score = Number(theory.toFixed(2));
+    }
+  }
+
+  // 3. Final grade
+  calculateFinalGrade(rec, st);
+}
+
+function getStudentSemesterTotal(studentId, semKey) {
+  const targetField = semKey === 'exam' ? 'final_exam_score' : semKey;
+  return getStudentTotalScore(studentId, targetField);
+}
+
+function getStudentSemesterAverage(studentId, semKey) {
+  const targetField = semKey === 'exam' ? 'final_exam_score' : semKey;
+  return getStudentOverallAverage(studentId, targetField);
+}
+
+function applySemesterQuickFill(studentId = null) {
+  if (!semesterQuickScore.value || isNaN(semesterQuickScore.value)) {
+    toast.error('Masukkan angka nilai yang valid');
+    return;
+  }
+  const val = parseFloat(semesterQuickScore.value);
+  const targetStudents = studentId ? students.value.filter(s => s.id === studentId) : students.value;
+  let filled = 0;
+  const semKey = inputSemesterKey.value;
+
+  targetStudents.forEach(stu => {
+    subjects.value.forEach(sub => {
+      const rec = getStudentRecordBySubject(stu.id, sub.id);
+      if (semKey !== 'exam') {
+        if (rec[semKey] === null || rec[semKey] === '' || rec[semKey] === undefined) {
+          rec[semKey] = val;
+          onSemesterGradeInput(stu.id, sub.id);
+          filled++;
+        }
+      } else {
+        if (rec.final_exam_score === null || rec.final_exam_score === '' || rec.final_exam_score === undefined) {
+          rec.final_exam_score = val;
+          rec.exam_theory = val;
+          if (isSubjectPractical(sub.id)) {
+            rec.exam_practice = val;
+          }
+          onSemesterGradeInput(stu.id, sub.id);
+          filled++;
+        }
+      }
+    });
+  });
+  hasUnsavedChanges.value = true;
+  toast.success(`Berhasil mengisi ${filled} nilai yang kosong dengan ${val}`);
+}
+
+async function saveSemesterTabGrades() {
+  if (isSaving.value) return;
+  isSaving.value = true;
+  try {
+    const payload = [];
+    for (const stu of students.value) {
+      for (const sub of subjects.value) {
+        const rec = getStudentRecordBySubject(stu.id, sub.id);
+        payload.push({
+          student_id: stu.id,
+          subject_id: sub.id,
+          sem_1: rec.sem_1,
+          sem_2: rec.sem_2,
+          sem_3: rec.sem_3,
+          sem_4: rec.sem_4,
+          sem_5: rec.sem_5,
+          sem_6: rec.sem_6,
+          exam_theory: rec.exam_theory,
+          exam_practice: rec.exam_practice,
+          final_exam_score: rec.final_exam_score,
+        });
+      }
+    }
+    const res = await api.post('/admin/graduation-grades/save', { grades: payload });
+    if (res?.success) {
+      hasUnsavedChanges.value = false;
+      toast.success(res.message || `Nilai ${currentInputSemester.value.label} berhasil disimpan`);
+      await fetchData();
+    }
+  } catch (err) {
+    console.error('Gagal menyimpan nilai semester:', err);
+    toast.error('Gagal menyimpan nilai: ' + (err.response?.data?.message || err.message));
+  } finally {
+    isSaving.value = false;
   }
 }
 
