@@ -563,4 +563,105 @@ class GraduationGradeController extends BaseController
 
         return 300;
     }
+
+    /**
+     * Batch generate serial numbers for Certificate (Ijazah) and SKL.
+     */
+    public function generateSerialNumbers(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'class_id' => 'nullable|integer|exists:classes,id',
+            'cert_prefix' => 'nullable|string|max:100',
+            'cert_start_number' => 'required|integer|min:1',
+            'cert_digits' => 'required|integer|min:1|max:8',
+            'skl_prefix' => 'nullable|string|max:100',
+            'skl_start_number' => 'nullable|integer|min:1',
+            'order_by' => 'required|in:full_name,nis,nisn',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 422);
+        }
+
+        $classId = $request->input('class_id');
+        $certPrefix = $request->input('cert_prefix', 'MTs.10.01/PP.01.1/');
+        $certStart = (int) $request->input('cert_start_number', 1);
+        $certDigits = (int) $request->input('cert_digits', 4);
+        $sklPrefix = $request->input('skl_prefix', 'MTs.AH/PP.01.1/SKL/' . date('Y') . '/');
+        $sklStart = (int) $request->input('skl_start_number', 1);
+        $orderBy = $request->input('order_by', 'full_name');
+
+        // Identify Grade 9 classes
+        $grade9Classes = ClassRoom::where(function ($q) {
+            $q->where('grade_level', '9')
+              ->orWhere('name', 'like', '9%')
+              ->orWhere('name', 'like', 'IX%');
+        })->pluck('id')->toArray();
+
+        $query = Student::query();
+        if ($classId) {
+            $query->where(function ($q) use ($classId) {
+                $q->where('class_id', $classId)
+                  ->orWhere('lokal_class_id', $classId);
+            });
+        } else {
+            $query->where(function ($q) use ($grade9Classes) {
+                $q->whereIn('class_id', $grade9Classes)
+                  ->orWhereIn('lokal_class_id', $grade9Classes);
+            });
+        }
+
+        $students = $query->orderBy($orderBy)->get();
+
+        DB::beginTransaction();
+        try {
+            $currentCert = $certStart;
+            $currentSkl = $sklStart;
+
+            foreach ($students as $stu) {
+                $formattedCertNo = $certPrefix . str_pad((string)$currentCert, $certDigits, '0', STR_PAD_LEFT);
+                $formattedSklNo = $sklPrefix . str_pad((string)$currentSkl, 3, '0', STR_PAD_LEFT);
+
+                $stu->certificate_number = $formattedCertNo;
+                $stu->skl_number = $formattedSklNo;
+                $stu->save();
+
+                $currentCert++;
+                $currentSkl++;
+            }
+
+            DB::commit();
+            return $this->success([
+                'updated_count' => $students->count(),
+            ], "Berhasil men-generate nomor seri Ijazah & SKL untuk {$students->count()} siswa.");
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return $this->error('Gagal men-generate nomor seri: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Update individual student certificate serial number.
+     */
+    public function updateStudentSerialNumber(Request $request, $id)
+    {
+        $student = Student::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'certificate_number' => 'nullable|string|max:150',
+            'skl_number' => 'nullable|string|max:150',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 422);
+        }
+
+        $student->certificate_number = $request->input('certificate_number');
+        if ($request->has('skl_number')) {
+            $student->skl_number = $request->input('skl_number');
+        }
+        $student->save();
+
+        return $this->success($student, 'Nomor seri siswa berhasil diperbarui.');
+    }
 }

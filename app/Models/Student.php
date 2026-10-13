@@ -16,6 +16,7 @@ class Student extends Model
         'father_name', 'father_status', 'father_nik', 'father_job', 'father_income',
         'guardian_name', 'guardian_relation', 'guardian_nik', 'guardian_job', 'guardian_phone', 'guardian_income',
         'previous_school', 'photo',
+        'certificate_number', 'skl_number',
     ];
 
     protected $appends = ['photo_url', 'class_name', 'lokal_class_name'];

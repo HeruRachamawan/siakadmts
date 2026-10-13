@@ -169,6 +169,8 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
         Route::get('graduation-grades/export-pdum', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'exportPdum']);
         Route::post('graduation-grades/students', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'storeStudent']);
         Route::delete('graduation-grades/students/{id}', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'deleteStudent']);
+        Route::post('graduation-grades/generate-serial-numbers', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'generateSerialNumbers']);
+        Route::put('graduation-grades/students/{id}/serial-number', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'updateStudentSerialNumber']);
     });
 
 
