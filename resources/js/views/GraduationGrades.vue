@@ -435,25 +435,58 @@
     <!-- TAB 2: LEGER REKAPITULASI SEMUA MAPEL (KOLEKTIF) -->
     <div v-if="activeTab === 'ledger'" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden no-print space-y-0">
       <!-- Ledger Header & Toolbar -->
-      <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div class="flex items-center gap-2 flex-wrap">
             <h2 class="text-sm sm:text-base font-black text-slate-800 font-lexend uppercase tracking-wider">
-              Leger Rekapitulasi Nilai Ijazah Seluruh Mata Pelajaran
+              {{ currentLedgerModeObj.title }}
             </h2>
             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide bg-teal-50 text-teal-800 border border-teal-200">
               {{ subjects.length }} Mapel Aktif
             </span>
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+            <span v-if="ledgerMode === 'final_grade' || ledgerMode.includes('exam')" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
               🔬 {{ practicalSubjectCount }} Mapel Praktik
+            </span>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              Mode: {{ currentLedgerModeObj.shortLabel }}
             </span>
           </div>
           <p class="text-[11px] text-slate-500 font-medium mt-1">
-            Menampilkan rekap Nilai Akhir Ijazah (PDUM) untuk seluruh mata pelajaran siswa kelas 9 secara kolektif.
+            {{ currentLedgerModeObj.sub }} &bull; Total {{ filteredLedgerStudents.length }} siswa kelas 9.
           </p>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap flex-shrink-0">
+          <!-- Dropdown Mode Leger -->
+          <div class="flex items-center gap-1.5">
+            <span class="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+              <Filter class="w-3.5 h-3.5 text-slate-400" />
+              Pilihan Leger:
+            </span>
+            <select
+              v-model="ledgerMode"
+              class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 cursor-pointer shadow-2xs"
+            >
+              <optgroup label="Ijazah & Akumulasi">
+                <option value="final_grade">🎓 Nilai Akhir Ijazah (PDUM)</option>
+                <option value="avg_semester">📊 R-Rapor (Rata-Rata Sem 1-6)</option>
+              </optgroup>
+              <optgroup label="Per Semester Rapor">
+                <option value="sem_1">📘 Semester 1 (Kls 7 Ganjil 2024/2025)</option>
+                <option value="sem_2">📘 Semester 2 (Kls 7 Genap 2024/2025)</option>
+                <option value="sem_3">📙 Semester 3 (Kls 8 Ganjil 2025/2026)</option>
+                <option value="sem_4">📙 Semester 4 (Kls 8 Genap 2025/2026)</option>
+                <option value="sem_5">📕 Semester 5 (Kls 9 Ganjil 2026/2027)</option>
+                <option value="sem_6">📕 Semester 6 (Kls 9 Genap 2026/2027)</option>
+              </optgroup>
+              <optgroup label="Ujian Madrasah">
+                <option value="final_exam_score">📝 Nilai Ujian Madrasah (N-Ujian)</option>
+                <option value="exam_theory">✍️ Nilai Ujian Tulis (Teori)</option>
+                <option value="exam_practice">🔬 Nilai Ujian Praktik</option>
+              </optgroup>
+            </select>
+          </div>
+
           <!-- Search box -->
           <div class="relative">
             <Search class="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
@@ -461,33 +494,61 @@
               type="text"
               v-model="ledgerSearch"
               placeholder="Cari nama / NISN..."
-              class="pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 w-44 sm:w-56"
+              class="pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 w-36 sm:w-48"
             />
           </div>
 
-          <!-- Export PDUM Button -->
+          <!-- Export CSV Leger Button -->
           <button
             type="button"
-            @click="handleExportPdum"
+            @click="exportLedgerCsv"
             class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            title="Unduh data tabel leger yang sedang tampil ke file CSV"
           >
             <Download class="w-3.5 h-3.5" />
-            <span>Ekspor CSV Leger</span>
+            <span>Ekspor CSV</span>
           </button>
         </div>
       </div>
 
-      <!-- Info Strip Bobot & Mapel -->
+      <!-- Quick Semester & Mode Selector Strip (Pills) -->
+      <div class="px-4 py-2.5 bg-slate-50/90 border-b border-slate-200/80 flex items-center gap-1.5 overflow-x-auto">
+        <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex-shrink-0 mr-1 flex items-center gap-1">
+          <Calendar class="w-3.5 h-3.5 text-slate-400" />
+          Pilih Semester / Data:
+        </span>
+        <button
+          v-for="mode in ledgerModes"
+          :key="'ledger-tab-' + mode.id"
+          type="button"
+          @click="ledgerMode = mode.id"
+          class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer flex-shrink-0 border"
+          :class="ledgerMode === mode.id
+            ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
+            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-800'"
+          :title="mode.sub"
+        >
+          <span>{{ mode.shortLabel }}</span>
+        </button>
+      </div>
+
+      <!-- Info Strip Bobot & Keterangan Aktif -->
       <div class="p-3 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
         <div class="flex items-center gap-2 flex-wrap text-slate-600">
-          <span class="font-bold text-slate-700">Formula Nilai Akhir:</span>
-          <span class="px-2 py-0.5 bg-emerald-100/70 text-emerald-900 rounded font-semibold text-[11px]">
-            R-Rapor ({{ settings?.report_weight || 60 }}%) + N-Ujian ({{ settings?.exam_weight || 40 }}%)
+          <span class="font-bold text-slate-700">Data Terpilih:</span>
+          <span class="px-2 py-0.5 bg-emerald-100/90 text-emerald-900 rounded font-bold text-[11px]">
+            {{ currentLedgerModeObj.title }}
           </span>
           <span class="text-slate-300">&bull;</span>
           <span class="text-slate-500 text-[11px]">
-            Mapel bertanda 🔬 memiliki Ujian Praktik ({{ settings?.practice_weight_default || 50 }}%).
+            {{ currentLedgerModeObj.sub }}
           </span>
+          <template v-if="ledgerMode === 'final_grade'">
+            <span class="text-slate-300">&bull;</span>
+            <span class="text-slate-500 text-[11px]">
+              Formula: Rapor ({{ settings?.report_weight || 60 }}%) + Ujian ({{ settings?.exam_weight || 40 }}%)
+            </span>
+          </template>
         </div>
         <div class="text-[11px] font-bold text-slate-500">
           Total: <strong class="text-slate-800">{{ filteredLedgerStudents.length }}</strong> siswa
@@ -504,8 +565,8 @@
                 Nama Siswa & NISN
               </th>
               <th rowspan="2" class="py-3 px-2 w-16 border-r border-slate-200/80 sticky left-[240px] z-30 bg-slate-100">Kelas</th>
-              <th :colspan="subjects.length" class="py-2 px-2 bg-emerald-50 text-emerald-800 border-r border-slate-200/80">
-                Nilai Akhir Ijazah / PDUM Seluruh Mata Pelajaran
+              <th :colspan="subjects.length" class="py-2.5 px-2 bg-emerald-50 text-emerald-900 border-r border-slate-200/80 font-black">
+                {{ currentLedgerModeObj.title.toUpperCase() }} (SELURUH MATA PELAJARAN)
               </th>
               <th rowspan="2" class="py-3 px-2 w-20 bg-indigo-50 text-indigo-900 border-r border-slate-200/80">Total</th>
               <th rowspan="2" class="py-3 px-2 w-20 bg-amber-50 text-amber-900 border-r border-slate-200/80">Rata-Rata</th>
@@ -542,42 +603,42 @@
                 {{ stu.class_name }}
               </td>
 
-              <!-- Subject Grades -->
+              <!-- Subject Grades based on active ledgerMode -->
               <td
                 v-for="sub in subjects"
                 :key="'ledger-cell-' + stu.id + '-' + sub.id"
                 class="py-2 px-1 text-center font-mono font-bold text-xs border-r border-slate-100"
-                :class="getStudentGradeRecord(stu.id, sub.id)?.final_grade ? 'text-slate-800' : 'text-slate-300'"
+                :class="getStudentGradeRecord(stu.id, sub.id)?.[ledgerMode] !== null && getStudentGradeRecord(stu.id, sub.id)?.[ledgerMode] !== undefined && getStudentGradeRecord(stu.id, sub.id)?.[ledgerMode] !== '' ? 'text-slate-800' : 'text-slate-300'"
               >
                 <span
-                  v-if="getStudentGradeRecord(stu.id, sub.id)?.final_grade"
+                  v-if="getStudentGradeRecord(stu.id, sub.id)?.[ledgerMode] !== null && getStudentGradeRecord(stu.id, sub.id)?.[ledgerMode] !== undefined && getStudentGradeRecord(stu.id, sub.id)?.[ledgerMode] !== ''"
                   class="px-1.5 py-0.5 rounded"
-                  :class="getStudentGradeRecord(stu.id, sub.id)?.final_grade >= 75 ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-50 text-slate-700'"
+                  :class="parseFloat(getStudentGradeRecord(stu.id, sub.id)?.[ledgerMode]) >= 75 ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-50 text-slate-700'"
                 >
-                  {{ formatScore(getStudentGradeRecord(stu.id, sub.id)?.final_grade) }}
+                  {{ formatScore(getStudentGradeRecord(stu.id, sub.id)?.[ledgerMode]) }}
                 </span>
                 <span v-else class="text-slate-300">-</span>
               </td>
 
-              <!-- Total -->
+              <!-- Total based on active ledgerMode -->
               <td class="py-2 px-2 text-center font-mono font-black text-indigo-900 bg-indigo-50/40 border-r border-slate-100">
-                {{ formatScore(getStudentTotalScore(stu.id)) }}
+                {{ formatScore(getStudentTotalScore(stu.id, ledgerMode)) }}
               </td>
 
-              <!-- Average -->
+              <!-- Average based on active ledgerMode -->
               <td class="py-2 px-2 text-center font-mono font-black text-amber-950 bg-amber-50/60 border-r border-slate-100">
                 <span class="px-2 py-0.5 rounded bg-amber-100/90 text-amber-900">
-                  {{ formatScore(getStudentOverallAverage(stu.id, 'final_grade')) }}
+                  {{ formatScore(getStudentOverallAverage(stu.id, ledgerMode)) }}
                 </span>
               </td>
 
-              <!-- Kelengkapan -->
+              <!-- Kelengkapan based on active ledgerMode -->
               <td class="py-2 px-2 text-center border-r border-slate-100">
                 <span
                   class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                  :class="getStudentCompletedSubjectCount(stu.id) === subjects.length ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'"
+                  :class="getStudentCompletedSubjectCount(stu.id, ledgerMode) === subjects.length ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'"
                 >
-                  {{ getStudentCompletedSubjectCount(stu.id) }}/{{ subjects.length }}
+                  {{ getStudentCompletedSubjectCount(stu.id, ledgerMode) }}/{{ subjects.length }}
                 </span>
               </td>
 
@@ -1205,12 +1266,14 @@ import {
   X,
   PlusCircle,
   FileSpreadsheet,
-  Search
+  Search,
+  Calendar,
+  Filter
 } from 'lucide-vue-next';
 
 // State
 const toast = useToast();
-const activeTab = ref('subject'); // 'subject' or 'transcripts'
+const activeTab = ref('subject'); // 'subject', 'ledger', or 'transcripts'
 const isLoading = ref(false);
 const isSaving = ref(false);
 const isPulling = ref(false);
@@ -1227,6 +1290,26 @@ const schoolSetting = ref(null);
 const selectedClassId = ref('');
 const selectedSubjectId = ref('');
 const ledgerSearch = ref('');
+
+// Leger View Mode Selector
+const ledgerMode = ref('final_grade');
+const ledgerModes = [
+  { id: 'final_grade', shortLabel: 'Nilai Akhir Ijazah', title: 'Leger Rekapitulasi Nilai Akhir Ijazah (PDUM)', sub: 'Akumulasi Rapor Semester 1 s.d. 6 (60%) + Ujian Madrasah (40%)', group: 'Ijazah & PDUM' },
+  { id: 'avg_semester', shortLabel: 'R-Rapor (Sem 1-6)', title: 'Leger Rata-Rata Rapor 6 Semester', sub: 'Rata-rata Nilai Rapor Semester 1 s.d. Semester 6', group: 'Ijazah & PDUM' },
+  { id: 'sem_1', shortLabel: 'Sem 1', title: 'Leger Nilai Rapor Semester 1', sub: 'Kelas 7 Ganjil - Tahun Pelajaran 2024/2025', group: 'Per Semester' },
+  { id: 'sem_2', shortLabel: 'Sem 2', title: 'Leger Nilai Rapor Semester 2', sub: 'Kelas 7 Genap - Tahun Pelajaran 2024/2025', group: 'Per Semester' },
+  { id: 'sem_3', shortLabel: 'Sem 3', title: 'Leger Nilai Rapor Semester 3', sub: 'Kelas 8 Ganjil - Tahun Pelajaran 2025/2026', group: 'Per Semester' },
+  { id: 'sem_4', shortLabel: 'Sem 4', title: 'Leger Nilai Rapor Semester 4', sub: 'Kelas 8 Genap - Tahun Pelajaran 2025/2026', group: 'Per Semester' },
+  { id: 'sem_5', shortLabel: 'Sem 5', title: 'Leger Nilai Rapor Semester 5', sub: 'Kelas 9 Ganjil - Tahun Pelajaran 2026/2027', group: 'Per Semester' },
+  { id: 'sem_6', shortLabel: 'Sem 6', title: 'Leger Nilai Rapor Semester 6', sub: 'Kelas 9 Genap - Tahun Pelajaran 2026/2027', group: 'Per Semester' },
+  { id: 'final_exam_score', shortLabel: 'N-Ujian', title: 'Leger Nilai Akhir Ujian Madrasah (N-Ujian)', sub: 'Nilai Ujian Madrasah Akhir Jenjang (Teori & Praktik)', group: 'Ujian' },
+  { id: 'exam_theory', shortLabel: 'Ujian Tulis', title: 'Leger Nilai Ujian Madrasah (Teori/Tulis)', sub: 'Nilai Tes Tertulis Ujian Madrasah', group: 'Ujian' },
+  { id: 'exam_practice', shortLabel: 'Ujian Praktik', title: 'Leger Nilai Ujian Madrasah (Praktik)', sub: 'Nilai Ujian Praktik untuk Mapel Terkait', group: 'Ujian' },
+];
+
+const currentLedgerModeObj = computed(() => {
+  return ledgerModes.find(m => m.id === ledgerMode.value) || ledgerModes[0];
+});
 
 // Add Semester Grades Modal State
 const showAddSemesterModal = ref(false);
@@ -1658,36 +1741,93 @@ function triggerPrint() {
 }
 
 // Summary helpers
-function getStudentCompletedSubjectCount(studentId) {
+function getStudentCompletedSubjectCount(studentId, field = 'final_grade') {
   const map = gradeMatrix.value[studentId] || {};
-  return Object.values(map).filter(r => r.final_grade !== null && r.final_grade > 0).length;
+  return Object.values(map).filter(r => r && r[field] !== null && r[field] !== undefined && r[field] !== '' && !isNaN(r[field]) && parseFloat(r[field]) > 0).length;
 }
 
-function getStudentTotalScore(studentId) {
+function getStudentTotalScore(studentId, field = 'final_grade') {
   const map = gradeMatrix.value[studentId] || {};
   let total = 0;
   let count = 0;
   for (const sub of subjects.value) {
     const rec = map[sub.id];
-    if (rec && rec.final_grade !== null && !isNaN(rec.final_grade)) {
-      total += parseFloat(rec.final_grade);
+    if (rec && rec[field] !== null && rec[field] !== undefined && rec[field] !== '' && !isNaN(rec[field])) {
+      total += parseFloat(rec[field]);
       count++;
     }
   }
   return count > 0 ? Number(total.toFixed(2)) : null;
 }
 
-function getStudentOverallAverage(studentId, field) {
+function getStudentOverallAverage(studentId, field = 'final_grade') {
   const map = gradeMatrix.value[studentId] || {};
   const vals = [];
   for (const sub of subjects.value) {
     const rec = map[sub.id];
-    if (rec && rec[field] !== null && !isNaN(rec[field])) {
+    if (rec && rec[field] !== null && rec[field] !== undefined && rec[field] !== '' && !isNaN(rec[field])) {
       vals.push(parseFloat(rec[field]));
     }
   }
   if (vals.length === 0) return null;
   return Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
+}
+
+// Export Leger CSV for active mode
+function exportLedgerCsv() {
+  if (!filteredLedgerStudents.value.length) {
+    toast.error('Tidak ada data siswa untuk diekspor');
+    return;
+  }
+
+  const mode = ledgerMode.value;
+  const modeObj = currentLedgerModeObj.value;
+
+  const headerCols = ['No', 'Nama Siswa', 'NISN', 'Kelas'];
+  subjects.value.forEach(s => {
+    headerCols.push(`"${(s.name || s.code).replace(/"/g, '""')}"`);
+  });
+  headerCols.push('Total Nilai', 'Rata-Rata', 'Kelengkapan');
+
+  const rows = [headerCols.join(',')];
+
+  filteredLedgerStudents.value.forEach((stu, idx) => {
+    const row = [
+      idx + 1,
+      `"${(stu.full_name || '').replace(/"/g, '""')}"`,
+      `"${(stu.nisn || '').replace(/"/g, '""')}"`,
+      `"${(stu.class_name || '').replace(/"/g, '""')}"`
+    ];
+
+    subjects.value.forEach(sub => {
+      const rec = getStudentGradeRecord(stu.id, sub.id);
+      const val = rec && rec[mode] !== null && rec[mode] !== undefined && rec[mode] !== '' ? rec[mode] : '';
+      row.push(val);
+    });
+
+    const tot = getStudentTotalScore(stu.id, mode);
+    const avg = getStudentOverallAverage(stu.id, mode);
+    const comp = `${getStudentCompletedSubjectCount(stu.id, mode)}/${subjects.value.length}`;
+
+    row.push(tot !== null ? tot : '');
+    row.push(avg !== null ? avg : '');
+    row.push(`"${comp}"`);
+
+    rows.push(row.join(','));
+  });
+
+  const csvContent = '\uFEFF' + rows.join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  const cleanName = (modeObj.shortLabel || 'Leger').replace(/[^a-zA-Z0-9_-]/g, '_');
+  link.setAttribute('download', `Leger_${cleanName}_Kelas9.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  toast.success(`Berhasil mengekspor Leger (${modeObj.shortLabel}) ke CSV`);
 }
 
 function formatScore(val) {
