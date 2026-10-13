@@ -71,7 +71,7 @@
     <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 no-print">
       <!-- Mode Tabs -->
       <div class="flex items-center gap-2">
-        <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-xl border border-slate-200/60 shadow-2xs">
+        <div class="grid grid-cols-3 p-1 bg-slate-100 rounded-xl border border-slate-200/60 shadow-2xs">
           <button
             type="button"
             @click="activeTab = 'subject'"
@@ -80,6 +80,15 @@
           >
             <Table class="w-3.5 h-3.5" />
             <span>Input Per Mapel</span>
+          </button>
+          <button
+            type="button"
+            @click="activeTab = 'ledger'"
+            :class="activeTab === 'ledger' ? 'bg-white text-teal-800 font-black shadow-xs' : 'text-slate-500 hover:text-slate-800 font-bold'"
+            class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <FileSpreadsheet class="w-3.5 h-3.5" />
+            <span>Leger Semua Mapel</span>
           </button>
           <button
             type="button"
@@ -139,32 +148,52 @@
       <!-- Subject Header Card -->
       <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold flex-shrink-0">
             <BookOpenCheck class="w-5 h-5 text-emerald-700" />
           </div>
           <div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <h2 class="text-sm sm:text-base font-black text-slate-800">{{ currentSubject?.name || 'Mata Pelajaran' }}</h2>
               <span
                 v-if="isCurrentSubjectPractical"
                 class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200"
               >
-                🔬 Ujian Praktik Aktif ({{ settings?.practice_weight_default || 50 }}%)
+                🔬 Ujian Praktik & Tulis Aktif (Praktik {{ settings?.practice_weight_default || 50 }}% &bull; Tulis {{ settings?.theory_weight_default || 50 }}%)
               </span>
-              <span v-else class="px-2 py-0.5 rounded text-[10px] font-bold text-slate-400 bg-slate-100 border border-slate-200">
-                Ujian Teori Saja
+              <span v-else class="px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200">
+                📝 Ujian Teori Saja (Tulis 100%)
               </span>
             </div>
-            <p class="text-[11px] text-slate-500 font-medium">
-              Total {{ students.length }} siswa kelas 9 &bull; Nilai R-Rapor, Nilai Ujian, dan Nilai Ijazah dihitung otomatis realtime.
+            <p class="text-[11px] text-slate-500 font-medium mt-0.5">
+              Total {{ students.length }} siswa kelas 9 &bull; Rapor 6 Semester + Nilai Ujian &bull; Nilai Ijazah dihitung otomatis realtime.
             </p>
           </div>
         </div>
 
-        <div v-if="hasUnsavedChanges" class="px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-bold flex items-center gap-1.5 animate-pulse">
+        <div v-if="hasUnsavedChanges" class="px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-bold flex items-center gap-1.5 animate-pulse flex-shrink-0">
           <AlertCircle class="w-3.5 h-3.5 text-amber-600" />
           <span>Ada perubahan belum disimpan!</span>
         </div>
+      </div>
+
+      <!-- Quick Subject Switcher Strip -->
+      <div class="px-4 py-2.5 bg-slate-50/80 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto">
+        <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex-shrink-0 mr-1">
+          Pilih Mapel:
+        </span>
+        <button
+          v-for="sub in subjects"
+          :key="'strip-' + sub.id"
+          type="button"
+          @click="selectedSubjectId = sub.id; onSubjectChange()"
+          class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer flex-shrink-0 border"
+          :class="Number(selectedSubjectId) === sub.id 
+            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
+            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'"
+        >
+          <span>{{ sub.name }}</span>
+          <span v-if="isSubjectPractical(sub.id)" class="text-[10px]" title="Ada Ujian Praktik">🔬</span>
+        </button>
       </div>
 
       <!-- Loading State -->
@@ -189,29 +218,67 @@
             <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-black uppercase tracking-wider text-slate-600 text-center">
               <th rowspan="2" class="py-3 px-3 w-10 text-center border-r border-slate-200/60">No</th>
               <th rowspan="2" class="py-3 px-3 text-left min-w-[200px] border-r border-slate-200/60">Nama Siswa & NISN</th>
-              <th rowspan="2" class="py-3 px-2 w-20 border-r border-slate-200/60">Kelas</th>
+              <th rowspan="2" class="py-3 px-2 w-16 border-r border-slate-200/60">Kelas</th>
               <th colspan="7" class="py-2 px-2 bg-emerald-50/60 text-emerald-800 border-r border-slate-200/60">
                 Nilai Rapor (Semester 1 s.d. 6)
               </th>
               <th :colspan="isCurrentSubjectPractical ? 3 : 2" class="py-2 px-2 bg-indigo-50/60 text-indigo-800 border-r border-slate-200/60">
                 Nilai Ujian Madrasah
               </th>
-              <th rowspan="2" class="py-3 px-3 w-24 bg-amber-50/80 text-amber-900 border-l border-amber-200">
-                Nilai Ijazah (PDUM)
+              <th rowspan="2" class="py-3 px-3 w-28 bg-amber-50/80 text-amber-900 border-l border-amber-200">
+                <div>Nilai Ijazah</div>
+                <div class="text-[8px] font-semibold text-amber-700 uppercase tracking-tight">PDUM Kemenag</div>
+                <div class="text-[8px] font-mono text-slate-400 font-normal">R {{ settings?.report_weight || 60 }}% : U {{ settings?.exam_weight || 40 }}%</div>
               </th>
             </tr>
             <tr class="bg-slate-50 text-[10px] font-bold text-slate-500 text-center border-b border-slate-200/80">
-              <th class="py-2 px-1.5 w-14 bg-emerald-50/30">Sem 1</th>
-              <th class="py-2 px-1.5 w-14 bg-emerald-50/30">Sem 2</th>
-              <th class="py-2 px-1.5 w-14 bg-emerald-50/30">Sem 3</th>
-              <th class="py-2 px-1.5 w-14 bg-emerald-50/30">Sem 4</th>
-              <th class="py-2 px-1.5 w-14 bg-emerald-50/30">Sem 5</th>
-              <th class="py-2 px-1.5 w-14 bg-emerald-50/30">Sem 6</th>
-              <th class="py-2 px-1.5 w-16 bg-emerald-100/60 text-emerald-900 font-black border-r border-slate-200/60">R-Rapor</th>
+              <th class="py-2 px-1.5 w-16 bg-emerald-50/40 border-r border-slate-200/40">
+                <div class="font-black text-slate-700">Sem 1</div>
+                <div class="text-[9px] font-medium text-slate-500">Kls 7 Ganjil</div>
+                <div class="text-[8px] font-mono text-emerald-700">2024/2025</div>
+              </th>
+              <th class="py-2 px-1.5 w-16 bg-emerald-50/40 border-r border-slate-200/40">
+                <div class="font-black text-slate-700">Sem 2</div>
+                <div class="text-[9px] font-medium text-slate-500">Kls 7 Genap</div>
+                <div class="text-[8px] font-mono text-emerald-700">2024/2025</div>
+              </th>
+              <th class="py-2 px-1.5 w-16 bg-emerald-50/40 border-r border-slate-200/40">
+                <div class="font-black text-slate-700">Sem 3</div>
+                <div class="text-[9px] font-medium text-slate-500">Kls 8 Ganjil</div>
+                <div class="text-[8px] font-mono text-emerald-700">2025/2026</div>
+              </th>
+              <th class="py-2 px-1.5 w-16 bg-emerald-50/40 border-r border-slate-200/40">
+                <div class="font-black text-slate-700">Sem 4</div>
+                <div class="text-[9px] font-medium text-slate-500">Kls 8 Genap</div>
+                <div class="text-[8px] font-mono text-emerald-700">2025/2026</div>
+              </th>
+              <th class="py-2 px-1.5 w-16 bg-emerald-50/40 border-r border-slate-200/40">
+                <div class="font-black text-slate-700">Sem 5</div>
+                <div class="text-[9px] font-medium text-slate-500">Kls 9 Ganjil</div>
+                <div class="text-[8px] font-mono text-emerald-700">2026/2027</div>
+              </th>
+              <th class="py-2 px-1.5 w-16 bg-emerald-50/40 border-r border-slate-200/40">
+                <div class="font-black text-slate-700">Sem 6</div>
+                <div class="text-[9px] font-medium text-slate-500">Kls 9 Genap</div>
+                <div class="text-[8px] font-mono text-emerald-700">2026/2027</div>
+              </th>
+              <th class="py-2 px-1.5 w-16 bg-emerald-100/60 text-emerald-900 font-black border-r border-slate-200/60">
+                <div>R-Rapor</div>
+                <div class="text-[8px] font-normal text-emerald-700">Rerata S1-6</div>
+              </th>
 
-              <th class="py-2 px-1.5 w-16 bg-indigo-50/30">Tulis</th>
-              <th v-if="isCurrentSubjectPractical" class="py-2 px-1.5 w-16 bg-purple-50/30 text-purple-900">Praktik</th>
-              <th class="py-2 px-1.5 w-16 bg-indigo-100/60 text-indigo-900 font-black border-r border-slate-200/60">N-Ujian</th>
+              <th class="py-2 px-1.5 w-16 bg-indigo-50/30 border-r border-slate-200/40">
+                <div class="font-bold text-slate-700">Tulis</div>
+                <div class="text-[8px] font-normal text-slate-400">Teori</div>
+              </th>
+              <th v-if="isCurrentSubjectPractical" class="py-2 px-1.5 w-16 bg-purple-50/30 text-purple-900 border-r border-slate-200/40">
+                <div class="font-bold text-purple-800">Praktik</div>
+                <div class="text-[8px] font-normal text-purple-600">{{ settings?.practice_weight_default || 50 }}%</div>
+              </th>
+              <th class="py-2 px-1.5 w-16 bg-indigo-100/60 text-indigo-900 font-black border-r border-slate-200/60">
+                <div>N-Ujian</div>
+                <div class="text-[8px] font-normal text-indigo-700">Nilai Akhir</div>
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -365,7 +432,173 @@
       </div>
     </div>
 
-    <!-- TAB 2: TRANSKRIP SISWA (BUKU NILAI KOLEKTIF) -->
+    <!-- TAB 2: LEGER REKAPITULASI SEMUA MAPEL (KOLEKTIF) -->
+    <div v-if="activeTab === 'ledger'" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden no-print space-y-0">
+      <!-- Ledger Header & Toolbar -->
+      <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="text-sm sm:text-base font-black text-slate-800 font-lexend uppercase tracking-wider">
+              Leger Rekapitulasi Nilai Ijazah Seluruh Mata Pelajaran
+            </h2>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide bg-teal-50 text-teal-800 border border-teal-200">
+              {{ subjects.length }} Mapel Aktif
+            </span>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+              🔬 {{ practicalSubjectCount }} Mapel Praktik
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-500 font-medium mt-1">
+            Menampilkan rekap Nilai Akhir Ijazah (PDUM) untuk seluruh mata pelajaran siswa kelas 9 secara kolektif.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap flex-shrink-0">
+          <!-- Search box -->
+          <div class="relative">
+            <Search class="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              v-model="ledgerSearch"
+              placeholder="Cari nama / NISN..."
+              class="pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 w-44 sm:w-56"
+            />
+          </div>
+
+          <!-- Export PDUM Button -->
+          <button
+            type="button"
+            @click="handleExportPdum"
+            class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <Download class="w-3.5 h-3.5" />
+            <span>Ekspor CSV Leger</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Info Strip Bobot & Mapel -->
+      <div class="p-3 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-2 flex-wrap text-slate-600">
+          <span class="font-bold text-slate-700">Formula Nilai Akhir:</span>
+          <span class="px-2 py-0.5 bg-emerald-100/70 text-emerald-900 rounded font-semibold text-[11px]">
+            R-Rapor ({{ settings?.report_weight || 60 }}%) + N-Ujian ({{ settings?.exam_weight || 40 }}%)
+          </span>
+          <span class="text-slate-300">&bull;</span>
+          <span class="text-slate-500 text-[11px]">
+            Mapel bertanda 🔬 memiliki Ujian Praktik ({{ settings?.practice_weight_default || 50 }}%).
+          </span>
+        </div>
+        <div class="text-[11px] font-bold text-slate-500">
+          Total: <strong class="text-slate-800">{{ filteredLedgerStudents.length }}</strong> siswa
+        </div>
+      </div>
+
+      <!-- Table Matrix Leger -->
+      <div class="overflow-x-auto max-h-[70vh]">
+        <table class="w-full text-xs text-left border-collapse">
+          <thead class="sticky top-0 z-20 bg-slate-100/95 backdrop-blur-xs border-b border-slate-200 text-[11px] font-black text-slate-600 uppercase tracking-wider text-center">
+            <tr>
+              <th rowspan="2" class="py-3 px-3 w-10 text-center border-r border-slate-200/80 sticky left-0 z-30 bg-slate-100">No</th>
+              <th rowspan="2" class="py-3 px-3 text-left min-w-[200px] border-r border-slate-200/80 sticky left-10 z-30 bg-slate-100">
+                Nama Siswa & NISN
+              </th>
+              <th rowspan="2" class="py-3 px-2 w-16 border-r border-slate-200/80 sticky left-[240px] z-30 bg-slate-100">Kelas</th>
+              <th :colspan="subjects.length" class="py-2 px-2 bg-emerald-50 text-emerald-800 border-r border-slate-200/80">
+                Nilai Akhir Ijazah / PDUM Seluruh Mata Pelajaran
+              </th>
+              <th rowspan="2" class="py-3 px-2 w-20 bg-indigo-50 text-indigo-900 border-r border-slate-200/80">Total</th>
+              <th rowspan="2" class="py-3 px-2 w-20 bg-amber-50 text-amber-900 border-r border-slate-200/80">Rata-Rata</th>
+              <th rowspan="2" class="py-3 px-2 w-24 bg-slate-100 border-r border-slate-200/80">Kelengkapan</th>
+              <th rowspan="2" class="py-3 px-2 w-16 bg-slate-100">Aksi</th>
+            </tr>
+            <tr class="text-[10px] font-bold text-slate-600 bg-slate-50 border-b border-slate-200">
+              <th
+                v-for="sub in subjects"
+                :key="'th-ledger-' + sub.id"
+                class="py-2 px-2 min-w-[65px] border-r border-slate-200/60"
+                :title="sub.name"
+              >
+                <div class="font-bold truncate max-w-[80px]">{{ sub.code || sub.name.substring(0, 8) }}</div>
+                <div v-if="isSubjectPractical(sub.id)" class="text-[9px] text-purple-700 font-normal">🔬 Praktik</div>
+                <div v-else class="text-[9px] text-slate-400 font-normal">📝 Teori</div>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 bg-white">
+            <tr
+              v-for="(stu, idx) in filteredLedgerStudents"
+              :key="'ledger-row-' + stu.id"
+              class="hover:bg-slate-50/80 transition-colors"
+            >
+              <td class="py-2.5 px-3 text-center text-slate-400 font-mono font-bold border-r border-slate-100 sticky left-0 bg-white z-10">
+                {{ idx + 1 }}
+              </td>
+              <td class="py-2.5 px-3 border-r border-slate-100 sticky left-10 bg-white z-10">
+                <div class="font-bold text-slate-800 text-[13px] leading-tight truncate max-w-[200px]">{{ stu.full_name }}</div>
+                <div class="text-[10px] text-slate-400 font-mono mt-0.5">NISN: {{ stu.nisn || '-' }}</div>
+              </td>
+              <td class="py-2.5 px-2 text-center font-bold text-slate-600 border-r border-slate-100 sticky left-[240px] bg-white z-10">
+                {{ stu.class_name }}
+              </td>
+
+              <!-- Subject Grades -->
+              <td
+                v-for="sub in subjects"
+                :key="'ledger-cell-' + stu.id + '-' + sub.id"
+                class="py-2 px-1 text-center font-mono font-bold text-xs border-r border-slate-100"
+                :class="getStudentGradeRecord(stu.id, sub.id)?.final_grade ? 'text-slate-800' : 'text-slate-300'"
+              >
+                <span
+                  v-if="getStudentGradeRecord(stu.id, sub.id)?.final_grade"
+                  class="px-1.5 py-0.5 rounded"
+                  :class="getStudentGradeRecord(stu.id, sub.id)?.final_grade >= 75 ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-50 text-slate-700'"
+                >
+                  {{ formatScore(getStudentGradeRecord(stu.id, sub.id)?.final_grade) }}
+                </span>
+                <span v-else class="text-slate-300">-</span>
+              </td>
+
+              <!-- Total -->
+              <td class="py-2 px-2 text-center font-mono font-black text-indigo-900 bg-indigo-50/40 border-r border-slate-100">
+                {{ formatScore(getStudentTotalScore(stu.id)) }}
+              </td>
+
+              <!-- Average -->
+              <td class="py-2 px-2 text-center font-mono font-black text-amber-950 bg-amber-50/60 border-r border-slate-100">
+                <span class="px-2 py-0.5 rounded bg-amber-100/90 text-amber-900">
+                  {{ formatScore(getStudentOverallAverage(stu.id, 'final_grade')) }}
+                </span>
+              </td>
+
+              <!-- Kelengkapan -->
+              <td class="py-2 px-2 text-center border-r border-slate-100">
+                <span
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                  :class="getStudentCompletedSubjectCount(stu.id) === subjects.length ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'"
+                >
+                  {{ getStudentCompletedSubjectCount(stu.id) }}/{{ subjects.length }}
+                </span>
+              </td>
+
+              <!-- Action -->
+              <td class="py-2 px-2 text-center">
+                <button
+                  type="button"
+                  @click="openPrintModal(stu)"
+                  class="px-2 py-1 bg-slate-100 hover:bg-indigo-50 text-indigo-700 font-bold rounded text-[11px] transition-colors cursor-pointer"
+                  title="Lihat & Cetak Transkrip Nilai Siswa"
+                >
+                  Cetak
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: TRANSKRIP SISWA (BUKU NILAI KOLEKTIF) -->
     <div v-if="activeTab === 'transcripts'" class="space-y-4 no-print">
       <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -970,7 +1203,9 @@ import {
   Users,
   AlertCircle,
   X,
-  PlusCircle
+  PlusCircle,
+  FileSpreadsheet,
+  Search
 } from 'lucide-vue-next';
 
 // State
@@ -991,6 +1226,7 @@ const schoolSetting = ref(null);
 
 const selectedClassId = ref('');
 const selectedSubjectId = ref('');
+const ledgerSearch = ref('');
 
 // Add Semester Grades Modal State
 const showAddSemesterModal = ref(false);
@@ -1011,6 +1247,20 @@ const modalStudentList = computed(() => {
 
 const isModalSubjectPractical = computed(() => {
   return isSubjectPractical(semesterForm.value.subject_id);
+});
+
+const practicalSubjectCount = computed(() => {
+  return subjects.value.filter(s => isSubjectPractical(s.id)).length;
+});
+
+const filteredLedgerStudents = computed(() => {
+  if (!ledgerSearch.value.trim()) return students.value;
+  const q = ledgerSearch.value.toLowerCase().trim();
+  return students.value.filter(s =>
+    (s.full_name && s.full_name.toLowerCase().includes(q)) ||
+    (s.nisn && s.nisn.toLowerCase().includes(q)) ||
+    (s.class_name && s.class_name.toLowerCase().includes(q))
+  );
 });
 
 // Grade matrix in memory: studentGradeMap[student_id][subject_id] = record
@@ -1411,6 +1661,20 @@ function triggerPrint() {
 function getStudentCompletedSubjectCount(studentId) {
   const map = gradeMatrix.value[studentId] || {};
   return Object.values(map).filter(r => r.final_grade !== null && r.final_grade > 0).length;
+}
+
+function getStudentTotalScore(studentId) {
+  const map = gradeMatrix.value[studentId] || {};
+  let total = 0;
+  let count = 0;
+  for (const sub of subjects.value) {
+    const rec = map[sub.id];
+    if (rec && rec.final_grade !== null && !isNaN(rec.final_grade)) {
+      total += parseFloat(rec.final_grade);
+      count++;
+    }
+  }
+  return count > 0 ? Number(total.toFixed(2)) : null;
 }
 
 function getStudentOverallAverage(studentId, field) {
