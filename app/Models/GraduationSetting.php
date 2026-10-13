@@ -21,6 +21,13 @@ class GraduationSetting extends Model
         'custom_subject_weights',
         'date_place',
         'graduation_date',
+        'certificate_number_prefix',
+        'principal_name',
+        'principal_nip',
+        'nsm',
+        'npsn',
+        'show_student_photo',
+        'academic_year',
     ];
 
     protected $casts = [
@@ -32,6 +39,7 @@ class GraduationSetting extends Model
         'practical_subject_ids' => 'array',
         'custom_subject_weights' => 'array',
         'graduation_date' => 'date:Y-m-d',
+        'show_student_photo' => 'boolean',
     ];
 
     /**

@@ -55,6 +55,13 @@ class GraduationGradeController extends BaseController
             'custom_subject_weights' => 'nullable|array',
             'date_place' => 'nullable|string|max:100',
             'graduation_date' => 'nullable|date',
+            'certificate_number_prefix' => 'nullable|string|max:150',
+            'principal_name' => 'nullable|string|max:150',
+            'principal_nip' => 'nullable|string|max:50',
+            'nsm' => 'nullable|string|max:50',
+            'npsn' => 'nullable|string|max:50',
+            'show_student_photo' => 'nullable|boolean',
+            'academic_year' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -74,6 +81,13 @@ class GraduationGradeController extends BaseController
             'custom_subject_weights' => $validated['custom_subject_weights'] ?? [],
             'date_place' => $validated['date_place'] ?? 'Bogor',
             'graduation_date' => $validated['graduation_date'] ?? now()->toDateString(),
+            'certificate_number_prefix' => $validated['certificate_number_prefix'] ?? 'MTs.10.01/PP.01.1/',
+            'principal_name' => $validated['principal_name'] ?? null,
+            'principal_nip' => $validated['principal_nip'] ?? null,
+            'nsm' => $validated['nsm'] ?? '121232010012',
+            'npsn' => $validated['npsn'] ?? '20277259',
+            'show_student_photo' => isset($validated['show_student_photo']) ? (bool)$validated['show_student_photo'] : true,
+            'academic_year' => $validated['academic_year'] ?? '2026/2027',
         ]);
 
         // Auto-recalculate all existing graduation grades with new weights

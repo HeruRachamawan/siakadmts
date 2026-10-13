@@ -1169,24 +1169,110 @@
             </div>
           </div>
 
-          <!-- Titimangsa -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-[11px] font-bold text-slate-500 mb-1">Kota Titimangsa</label>
-              <input
-                type="text"
-                v-model="tempSettings.date_place"
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500"
-                placeholder="Contoh: Bogor"
-              />
+          <!-- 5. Pengaturan Titimangsa & Format Blanko Ijazah Resmi -->
+          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/60 space-y-3">
+            <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center justify-between">
+              <span>5. Titimangsa & Blanko Ijazah (Standar Kemenag)</span>
+              <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                Format 2 Lembar
+              </span>
+            </h4>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500 mb-1">Prefix / Format No. Seri Ijazah</label>
+                <input
+                  type="text"
+                  v-model="tempSettings.certificate_number_prefix"
+                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 font-mono"
+                  placeholder="Contoh: MTs.10.01/PP.01.1/"
+                />
+                <span class="text-[10px] text-slate-400 mt-0.5 block">Diikuti nomor seri / NISN siswa di belakangnya.</span>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500 mb-1">Tahun Pelajaran</label>
+                <input
+                  type="text"
+                  v-model="tempSettings.academic_year"
+                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 font-mono"
+                  placeholder="Contoh: 2026/2027"
+                />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500 mb-1">Nomor Statistik Madrasah (NSM)</label>
+                <input
+                  type="text"
+                  v-model="tempSettings.nsm"
+                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 font-mono"
+                  placeholder="Contoh: 121232010012"
+                />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500 mb-1">Nomor Pokok Sekolah Nasional (NPSN)</label>
+                <input
+                  type="text"
+                  v-model="tempSettings.npsn"
+                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 font-mono"
+                  placeholder="Contoh: 20277259"
+                />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500 mb-1">Nama Kepala Madrasah</label>
+                <input
+                  type="text"
+                  v-model="tempSettings.principal_name"
+                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500"
+                  placeholder="Nama Lengkap & Gelar Kepala Madrasah"
+                />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500 mb-1">NIP Kepala Madrasah</label>
+                <input
+                  type="text"
+                  v-model="tempSettings.principal_nip"
+                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 font-mono"
+                  placeholder="Isi '-' jika bukan PNS/non-NIP"
+                />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500 mb-1">Kota Titimangsa</label>
+                <input
+                  type="text"
+                  v-model="tempSettings.date_place"
+                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500"
+                  placeholder="Contoh: Bogor"
+                />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500 mb-1">Tanggal Kelulusan / Ijazah</label>
+                <input
+                  type="date"
+                  v-model="tempSettings.graduation_date"
+                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500"
+                />
+              </div>
             </div>
-            <div>
-              <label class="block text-[11px] font-bold text-slate-500 mb-1">Tanggal Kelulusan / Ijazah</label>
-              <input
-                type="date"
-                v-model="tempSettings.graduation_date"
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500"
-              />
+
+            <!-- Toggle Pas Foto Siswa -->
+            <div class="pt-2 border-t border-slate-200/60">
+              <label class="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  v-model="tempSettings.show_student_photo"
+                  class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+                />
+                <span class="text-xs font-bold text-slate-700">Tampilkan Pas Foto Siswa di Lembar 1 Ijazah</span>
+              </label>
+              <p class="text-[11px] text-slate-400 ml-6 mt-0.5">
+                Jika dicentang, foto profil siswa pada sistem akan dimuat di lembar 1. Jika tidak dicentang, akan dicetak kotak pas foto 3x4 kosong bertuliskan cap tiga jari (untuk foto fisik).
+              </p>
             </div>
           </div>
 
@@ -1210,31 +1296,67 @@
       </div>
     </div>
 
-    <!-- MODAL 2: CETAK TRANSKRIP NILAI IJAZAH / SKL (PRINT READY) -->
+    <!-- MODAL 2: CETAK BLANKO IJAZAH 2 LEMBAR RESMI (STANDAR KEMENAG RI) -->
     <div
       v-if="showPrintModal"
       class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto no-print"
     >
-      <div class="bg-white rounded-2xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[95vh] flex flex-col">
+      <div class="bg-white rounded-3xl max-w-5xl w-full p-4 sm:p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[95vh] flex flex-col">
         <!-- Modal Toolbar -->
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3 flex-shrink-0">
-          <div class="flex items-center gap-2">
-            <Printer class="w-5 h-5 text-emerald-600" />
-            <h3 class="font-bold text-slate-800 text-sm">Pratinjau Lembar Nilai Ijazah Resmi</h3>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-3 flex-shrink-0">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+              <Printer class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="font-black text-slate-800 text-sm sm:text-base leading-snug">Pratinjau Cetak Ijazah Madrasah Tsanawiyah (Kemenag RI)</h3>
+              <p class="text-[11px] text-slate-400">Format resmi 2 lembar: Muka (Identitas Siswa) & Belakang (Daftar Nilai Ijazah)</p>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
+
+          <!-- Mode Cetak Tabs & Actions -->
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Mode Switcher -->
+            <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/60 text-xs font-bold">
+              <button
+                type="button"
+                @click="printMode = 'both'"
+                class="px-2.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+                :class="printMode === 'both' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+              >
+                <span>📑 2 Lembar (Lengkap)</span>
+              </button>
+              <button
+                type="button"
+                @click="printMode = 'page1'"
+                class="px-2.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+                :class="printMode === 'page1' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+              >
+                <span>📄 Lembar 1 (Muka)</span>
+              </button>
+              <button
+                type="button"
+                @click="printMode = 'page2'"
+                class="px-2.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+                :class="printMode === 'page2' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+              >
+                <span>📊 Lembar 2 (Nilai)</span>
+              </button>
+            </div>
+
             <button
               type="button"
               @click="triggerPrint"
-              class="px-4 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+              class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-md shadow-emerald-600/20 cursor-pointer"
             >
               <Printer class="w-4 h-4" />
               <span>Cetak Sekarang (Ctrl + P)</span>
             </button>
+
             <button
               type="button"
               @click="showPrintModal = false"
-              class="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+              class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 cursor-pointer"
             >
               <X class="w-5 h-5" />
             </button>
@@ -1242,89 +1364,302 @@
         </div>
 
         <!-- Print Sheet Content Container -->
-        <div class="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-50 border border-slate-200 rounded-xl">
-          <div id="print-area" class="bg-white p-6 sm:p-8 rounded-lg shadow-sm max-w-[210mm] mx-auto text-black font-serif leading-normal">
-            <!-- Kop Madrasah Resmi -->
-            <div class="text-center border-b-2 border-double border-black pb-3 mb-4">
-              <h2 class="text-sm font-bold tracking-wider uppercase leading-tight">{{ schoolSetting?.foundation_name || 'YAYASAN PENDIDIKAN ISLAM AL-HASANAH' }}</h2>
-              <h1 class="text-base sm:text-lg font-black tracking-wider uppercase leading-tight mt-0.5">{{ schoolSetting?.school_name || 'MADRASAH TSANAWIYAH AL-HASANAH' }}</h1>
-              <p class="text-[10px] font-sans text-slate-600 mt-1">
-                Alamat: {{ schoolSetting?.address || 'Jl. Ciapus Sukamakmur No.05, Kec. Ciomas, Kab. Bogor' }} &bull; Telp: {{ schoolSetting?.phone || '081617666017' }} &bull; Email: {{ schoolSetting?.email || 'mtsalhasanah.ciomas@gmail.com' }}
-              </p>
+        <div class="flex-1 overflow-y-auto p-2 sm:p-6 bg-slate-100/70 border border-slate-200 rounded-2xl">
+          <div id="print-area" class="max-w-[210mm] mx-auto space-y-6 text-black">
+
+            <!-- ========================================================================= -->
+            <!-- LEMBAR 1: HALAMAN DEPAN (SERTIFIKAT IJAZAH MADRASAH TSANAWIYAH)           -->
+            <!-- ========================================================================= -->
+            <div
+              v-if="printMode === 'both' || printMode === 'page1'"
+              class="sheet-page bg-white p-8 sm:p-12 shadow-sm rounded-lg border-4 border-slate-800 relative font-serif"
+              style="min-height: 275mm;"
+            >
+              <!-- Inner Ornate Double Border -->
+              <div class="border-2 border-slate-700 p-6 sm:p-8 h-full flex flex-col justify-between relative">
+                
+                <!-- Corner Ornaments (CSS Corners) -->
+                <div class="absolute top-1 left-1 w-4 h-4 border-t-2 border-l-2 border-slate-800"></div>
+                <div class="absolute top-1 right-1 w-4 h-4 border-t-2 border-r-2 border-slate-800"></div>
+                <div class="absolute bottom-1 left-1 w-4 h-4 border-b-2 border-l-2 border-slate-800"></div>
+                <div class="absolute bottom-1 right-1 w-4 h-4 border-b-2 border-r-2 border-slate-800"></div>
+
+                <!-- Bagian Atas: Garuda Pancasila & Kop Surat Ijazah -->
+                <div class="text-center space-y-2">
+                  <!-- Lambang Garuda Pancasila SVG Resmi -->
+                  <div class="flex justify-center mb-1">
+                    <svg class="w-16 h-16 sm:w-20 sm:h-20 text-amber-700" viewBox="0 0 100 100" fill="currentColor">
+                      <!-- Stylized Garuda Pancasila Silhouette / Emblem -->
+                      <path d="M50 4 C48 10 44 14 38 18 C32 10 24 10 14 14 C18 24 22 30 20 42 C14 38 8 36 2 38 C6 48 12 56 22 60 C18 64 12 68 8 74 C16 76 24 74 32 68 C30 76 30 84 34 92 C38 90 42 86 46 80 C48 84 50 88 50 92 C50 88 52 84 54 80 C58 86 62 90 66 92 C70 84 70 76 68 68 C76 74 84 76 92 74 C88 68 82 64 78 60 C88 56 94 48 98 38 C92 36 86 38 80 42 C78 30 82 24 86 14 C76 10 68 10 62 18 C56 14 52 10 50 4 Z" fill="#996515" />
+                      <circle cx="50" cy="46" r="14" fill="#B8860B" />
+                      <path d="M42 46 L58 46 M50 38 L50 54" stroke="#ffffff" stroke-width="2.5" />
+                    </svg>
+                  </div>
+
+                  <h3 class="text-xs sm:text-sm font-bold tracking-[0.2em] uppercase text-slate-800">
+                    KEMENTERIAN AGAMA REPUBLIK INDONESIA
+                  </h3>
+                  <h1 class="text-2xl sm:text-3xl font-black tracking-[0.25em] uppercase text-black font-serif pt-1">
+                    IJAZAH
+                  </h1>
+                  <h2 class="text-sm sm:text-base font-bold tracking-[0.15em] uppercase text-slate-800">
+                    MADRASAH TSANAWIYAH
+                  </h2>
+                  <p class="text-xs sm:text-sm font-bold tracking-wider font-sans">
+                    TAHUN PELAJARAN {{ settings?.academic_year || '2026/2027' }}
+                  </p>
+                  <p class="text-xs font-mono font-bold tracking-wider text-slate-700 pt-1">
+                    Nomor: {{ settings?.certificate_number_prefix || 'MTs.10.01/PP.01.1/' }}{{ activePrintStudent?.nisn || activePrintStudent?.nis || '001' }}
+                  </p>
+                </div>
+
+                <!-- Bagian Tengah: Kalimat Pengantar & Biodata Siswa -->
+                <div class="my-6 space-y-4 text-xs sm:text-[13px] leading-relaxed">
+                  <p class="text-justify indent-8">
+                    Yang bertanda tangan di bawah ini, Kepala Madrasah Tsanawiyah
+                    <strong>{{ schoolSetting?.school_name || 'Al-Hasanah' }}</strong>, menerangkan bahwa:
+                  </p>
+
+                  <!-- Biodata Siswa Table -->
+                  <div class="pl-4 sm:pl-8 space-y-1.5 font-sans">
+                    <div class="flex items-start">
+                      <span class="w-48 sm:w-56 font-serif">nama</span>
+                      <span class="w-4 text-center">:</span>
+                      <span class="flex-1 font-bold font-serif uppercase tracking-wide text-sm sm:text-base">{{ activePrintStudent?.full_name }}</span>
+                    </div>
+                    <div class="flex items-start">
+                      <span class="w-48 sm:w-56 font-serif">tempat dan tanggal lahir</span>
+                      <span class="w-4 text-center">:</span>
+                      <span class="flex-1 font-serif">{{ activePrintStudent?.birth_place || '-' }}, {{ formatDateIndo(activePrintStudent?.birth_date) }}</span>
+                    </div>
+                    <div class="flex items-start">
+                      <span class="w-48 sm:w-56 font-serif">nama orang tua / wali</span>
+                      <span class="w-4 text-center">:</span>
+                      <span class="flex-1 font-serif">{{ activePrintStudent?.father_name || activePrintStudent?.mother_name || '-' }}</span>
+                    </div>
+                    <div class="flex items-start">
+                      <span class="w-48 sm:w-56 font-serif">nomor induk siswa</span>
+                      <span class="w-4 text-center">:</span>
+                      <span class="flex-1 font-mono font-semibold">{{ activePrintStudent?.nis || '-' }}</span>
+                    </div>
+                    <div class="flex items-start">
+                      <span class="w-48 sm:w-56 font-serif">nomor induk siswa nasional</span>
+                      <span class="w-4 text-center">:</span>
+                      <span class="flex-1 font-mono font-semibold">{{ activePrintStudent?.nisn || '-' }}</span>
+                    </div>
+                    <div class="flex items-start">
+                      <span class="w-48 sm:w-56 font-serif">nomor pokok sekolah nasional</span>
+                      <span class="w-4 text-center">:</span>
+                      <span class="flex-1 font-mono font-semibold">{{ settings?.npsn || '20277259' }}</span>
+                    </div>
+                    <div class="flex items-start">
+                      <span class="w-48 sm:w-56 font-serif">nomor statistik madrasah</span>
+                      <span class="w-4 text-center">:</span>
+                      <span class="flex-1 font-mono font-semibold">{{ settings?.nsm || '121232010012' }}</span>
+                    </div>
+                    <div class="flex items-start">
+                      <span class="w-48 sm:w-56 font-serif">madrasah asal</span>
+                      <span class="w-4 text-center">:</span>
+                      <span class="flex-1 font-serif font-semibold">{{ schoolSetting?.school_name || 'MTs Al-Hasanah' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Pernyataan Kelulusan -->
+                  <div class="text-center pt-3 pb-1 space-y-2">
+                    <div class="inline-block px-8 py-1.5 border-2 border-black font-serif font-black text-xl sm:text-2xl tracking-[0.3em] uppercase">
+                      L U L U S
+                    </div>
+                    <p class="text-center text-xs sm:text-[13px] pt-1">
+                      dari Madrasah Tsanawiyah setelah memenuhi seluruh kriteria kelulusan sesuai dengan peraturan perundang-undangan.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Bagian Bawah: Pas Foto & Titimangsa Pengesahan -->
+                <div class="pt-4 flex justify-between items-end text-xs sm:text-[13px]">
+                  <!-- Pas Foto 3x4 Siswa -->
+                  <div class="text-center w-36 sm:w-40 flex flex-col items-center">
+                    <!-- Preview Foto atau Kotak Pas Foto 3x4 -->
+                    <div
+                      v-if="settings?.show_student_photo && activePrintStudent?.photo_url"
+                      class="w-[3cm] h-[4cm] border-2 border-black p-0.5 bg-white shadow-xs overflow-hidden flex items-center justify-center relative"
+                    >
+                      <img
+                        :src="activePrintStudent.photo_url"
+                        :alt="activePrintStudent.full_name"
+                        class="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div
+                      v-else
+                      class="w-[3cm] h-[4cm] border-2 border-dashed border-slate-400 bg-slate-50 flex flex-col items-center justify-center p-2 text-center select-none"
+                    >
+                      <span class="font-bold font-sans text-xs text-slate-700">PAS FOTO</span>
+                      <span class="font-mono text-[11px] text-slate-600 font-bold">3 x 4 cm</span>
+                      <span class="text-[8px] font-sans text-slate-400 mt-2 leading-tight">Cap tiga jari kiri menempel foto</span>
+                    </div>
+                    <p class="text-[9px] font-sans text-slate-500 mt-1 italic text-center">
+                      (Cap Tiga Jari Kiri)
+                    </p>
+                  </div>
+
+                  <!-- Titimangsa & Tanda Tangan Kepala Madrasah -->
+                  <div class="text-center min-w-[220px] sm:min-w-[260px] space-y-1">
+                    <p class="font-serif">
+                      {{ settings?.date_place || 'Bogor' }}, {{ formatDateIndo(settings?.graduation_date) }}
+                    </p>
+                    <p class="font-bold font-serif">Kepala Madrasah,</p>
+                    <div class="h-20 sm:h-24 flex items-center justify-center">
+                      <!-- Ruang tanda tangan & stempel madrasah -->
+                    </div>
+                    <p class="font-bold font-serif underline text-sm sm:text-base leading-snug">
+                      {{ settings?.principal_name || schoolSetting?.principal_name || 'H. Umar Usman Ali, S.Pd, S.Pd.I' }}
+                    </p>
+                    <p class="text-xs font-mono">
+                      NIP. {{ settings?.principal_nip || schoolSetting?.principal_nip || '-' }}
+                    </p>
+                  </div>
+                </div>
+
+              </div>
             </div>
 
-            <!-- Judul Dokumen -->
-            <div class="text-center my-4">
-              <h3 class="text-sm font-bold uppercase tracking-wider underline">TRANSKRIP NILAI REKAPITULASI IJAZAH</h3>
-              <p class="text-[11px] font-sans mt-0.5">Nomor: MTs.AH/PP.01.1/SKL/{{ new Date().getFullYear() }}</p>
+            <!-- Page Break Divider (Hanya Saat Pratinjau 2 Lembar) -->
+            <div
+              v-if="printMode === 'both'"
+              class="page-break my-6 py-2 border-b-2 border-dashed border-slate-300 no-print flex items-center justify-center text-xs font-sans text-slate-400 uppercase tracking-widest font-bold"
+            >
+              --- Halaman 2: Lembar Belakang (Daftar Nilai Ijazah) ---
             </div>
 
-            <!-- Identitas Siswa -->
-            <div class="text-xs font-sans mb-4 grid grid-cols-2 gap-x-6 gap-y-1">
-              <div class="flex"><span class="w-28 font-semibold">Nama Siswa</span><span>: <strong>{{ activePrintStudent?.full_name }}</strong></span></div>
-              <div class="flex"><span class="w-28 font-semibold">NISN</span><span>: {{ activePrintStudent?.nisn || '-' }}</span></div>
-              <div class="flex"><span class="w-28 font-semibold">Tempat, Tgl Lahir</span><span>: {{ activePrintStudent?.birth_place || '-' }}, {{ activePrintStudent?.birth_date || '-' }}</span></div>
-              <div class="flex"><span class="w-28 font-semibold">Nomor Induk (NIS)</span><span>: {{ activePrintStudent?.nis || '-' }}</span></div>
-              <div class="flex"><span class="w-28 font-semibold">Madrasah Asal</span><span>: {{ schoolSetting?.school_name || 'MTs Al-Hasanah' }}</span></div>
-              <div class="flex"><span class="w-28 font-semibold">Tahun Pelajaran</span><span>: 2026/2027</span></div>
-            </div>
-
-            <!-- Tabel Nilai Ijazah -->
-            <table class="w-full text-[11px] font-sans border-collapse border border-black mb-4">
-              <thead>
-                <tr class="bg-slate-100 text-center font-bold">
-                  <th class="border border-black p-1.5 w-8">No</th>
-                  <th class="border border-black p-1.5 text-left">Mata Pelajaran</th>
-                  <th class="border border-black p-1.5 w-24">Rata-rata Rapor<br/><span class="text-[9px] font-normal">(S1 s.d. S6)</span></th>
-                  <th class="border border-black p-1.5 w-24">Ujian Madrasah<br/><span class="text-[9px] font-normal">(UM / AM)</span></th>
-                  <th class="border border-black p-1.5 w-24">Nilai Ijazah<br/><span class="text-[9px] font-normal">(Nilai Akhir)</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(sub, i) in subjects" :key="sub.id">
-                  <td class="border border-black p-1 text-center font-mono">{{ i + 1 }}</td>
-                  <td class="border border-black p-1 font-medium">{{ sub.name }}</td>
-                  <td class="border border-black p-1 text-center font-mono font-semibold">
-                    {{ formatScore(getStudentGradeRecord(activePrintStudent?.id, sub.id)?.avg_semester) }}
-                  </td>
-                  <td class="border border-black p-1 text-center font-mono font-semibold">
-                    {{ formatScore(getStudentGradeRecord(activePrintStudent?.id, sub.id)?.final_exam_score) }}
-                  </td>
-                  <td class="border border-black p-1 text-center font-mono font-bold">
-                    {{ formatScore(getStudentGradeRecord(activePrintStudent?.id, sub.id)?.final_grade) }}
-                  </td>
-                </tr>
-                <!-- Rata-rata Total -->
-                <tr class="bg-slate-100 font-bold">
-                  <td colspan="2" class="border border-black p-1.5 text-center">RATA-RATA KESELURUHAN</td>
-                  <td class="border border-black p-1.5 text-center font-mono">
-                    {{ formatScore(getStudentOverallAverage(activePrintStudent?.id, 'avg_semester')) }}
-                  </td>
-                  <td class="border border-black p-1.5 text-center font-mono">
-                    {{ formatScore(getStudentOverallAverage(activePrintStudent?.id, 'final_exam_score')) }}
-                  </td>
-                  <td class="border border-black p-1.5 text-center font-mono text-black font-black">
-                    {{ formatScore(getStudentOverallAverage(activePrintStudent?.id, 'final_grade')) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-
-            <!-- Titimangsa & Tanda Tangan -->
-            <div class="flex justify-between items-end text-xs font-sans mt-8 pt-4">
-              <div class="text-center w-40 border border-slate-300 p-2 rounded text-[10px] text-slate-500">
-                <p>Pas Foto 3x4</p>
-                <div class="h-24 flex items-center justify-center font-bold text-slate-300">FOTO</div>
+            <!-- ========================================================================= -->
+            <!-- LEMBAR 2: HALAMAN BELAKANG (TRANSKRIP DAFTAR NILAI IJAZAH STANDAR KEMENAG) -->
+            <!-- ========================================================================= -->
+            <div
+              v-if="printMode === 'both' || printMode === 'page2'"
+              class="sheet-page bg-white p-8 sm:p-12 shadow-sm rounded-lg border border-slate-300 relative font-serif"
+              style="min-height: 275mm;"
+            >
+              <!-- Kop Judul Transkrip Nilai -->
+              <div class="text-center border-b-2 border-black pb-3 mb-4 space-y-0.5">
+                <h3 class="text-xs sm:text-sm font-bold tracking-wider uppercase text-slate-800">
+                  KEMENTERIAN AGAMA REPUBLIK INDONESIA
+                </h3>
+                <h1 class="text-lg sm:text-xl font-black tracking-wider uppercase text-black font-serif">
+                  DAFTAR NILAI MADRASAH TSANAWIYAH
+                </h1>
+                <p class="text-xs font-bold tracking-wider font-sans">
+                  TAHUN PELAJARAN {{ settings?.academic_year || '2026/2027' }}
+                </p>
+                <p class="text-[11px] font-mono text-slate-700">
+                  Nomor: {{ settings?.certificate_number_prefix || 'MTs.10.01/PP.01.1/' }}{{ activePrintStudent?.nisn || activePrintStudent?.nis || '001' }}
+                </p>
               </div>
 
-              <div class="text-center min-w-[200px]">
-                <p>{{ settings?.date_place || 'Bogor' }}, {{ formatDateIndo(settings?.graduation_date) }}</p>
-                <p class="font-bold mt-1">Kepala Madrasah,</p>
-                <div class="h-20"></div>
-                <p class="font-bold underline text-sm">{{ schoolSetting?.principal_name || 'H. Umar Usman Ali, S.Pd, S.Pd.I' }}</p>
-                <p class="text-[10px]">NIP. {{ schoolSetting?.principal_nip || '-' }}</p>
+              <!-- Biodata Siswa Singkat -->
+              <div class="text-xs sm:text-[12px] font-sans mb-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
+                <div class="flex">
+                  <span class="w-32 font-serif">Nama Siswa</span>
+                  <span class="w-3 text-center">:</span>
+                  <span class="font-bold uppercase font-serif">{{ activePrintStudent?.full_name }}</span>
+                </div>
+                <div class="flex">
+                  <span class="w-32 font-serif">Nomor Induk Siswa (NIS)</span>
+                  <span class="w-3 text-center">:</span>
+                  <span class="font-mono font-semibold">{{ activePrintStudent?.nis || '-' }}</span>
+                </div>
+                <div class="flex">
+                  <span class="w-32 font-serif">Tempat, Tanggal Lahir</span>
+                  <span class="w-3 text-center">:</span>
+                  <span class="font-serif">{{ activePrintStudent?.birth_place || '-' }}, {{ formatDateIndo(activePrintStudent?.birth_date) }}</span>
+                </div>
+                <div class="flex">
+                  <span class="w-32 font-serif">Nomor Induk Siswa Nasional</span>
+                  <span class="w-3 text-center">:</span>
+                  <span class="font-mono font-semibold">{{ activePrintStudent?.nisn || '-' }}</span>
+                </div>
+                <div class="flex sm:col-span-2">
+                  <span class="w-32 font-serif">Madrasah Asal</span>
+                  <span class="w-3 text-center">:</span>
+                  <span class="font-serif font-semibold">{{ schoolSetting?.school_name || 'MTs Al-Hasanah' }}</span>
+                </div>
               </div>
+
+              <!-- Tabel Transkrip Nilai Ijazah Resmi (Struktur Kurikulum Kemenag) -->
+              <table class="w-full text-xs font-sans border-collapse border border-black mb-4">
+                <thead>
+                  <tr class="bg-slate-100 text-center font-bold">
+                    <th rowspan="2" class="border border-black p-1.5 w-8">No</th>
+                    <th rowspan="2" class="border border-black p-1.5 text-left">Mata Pelajaran</th>
+                    <th rowspan="2" class="border border-black p-1.5 w-24">Rata-rata Rapor<br/><span class="text-[9px] font-normal">(S1 s.d. S6)</span></th>
+                    <th rowspan="2" class="border border-black p-1.5 w-24">Ujian Madrasah<br/><span class="text-[9px] font-normal">(UM / AM)</span></th>
+                    <th colspan="2" class="border border-black p-1.5">Nilai Ijazah</th>
+                  </tr>
+                  <tr class="bg-slate-100 text-center font-bold">
+                    <th class="border border-black p-1 w-16">Angka</th>
+                    <th class="border border-black p-1 text-left px-2">Terbilang (Huruf)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(sub, i) in subjects" :key="'print-sub-' + sub.id">
+                    <td class="border border-black p-1 text-center font-mono">{{ i + 1 }}</td>
+                    <td class="border border-black p-1 font-medium">{{ sub.name }}</td>
+                    <td class="border border-black p-1 text-center font-mono font-semibold">
+                      {{ formatScore(getStudentGradeRecord(activePrintStudent?.id, sub.id)?.avg_semester) }}
+                    </td>
+                    <td class="border border-black p-1 text-center font-mono font-semibold">
+                      {{ formatScore(getStudentGradeRecord(activePrintStudent?.id, sub.id)?.final_exam_score) }}
+                    </td>
+                    <td class="border border-black p-1 text-center font-mono font-bold">
+                      {{ formatScore(getStudentGradeRecord(activePrintStudent?.id, sub.id)?.final_grade) }}
+                    </td>
+                    <td class="border border-black p-1 italic text-[11px] px-2 capitalize">
+                      {{ terbilangScore(getStudentGradeRecord(activePrintStudent?.id, sub.id)?.final_grade) }}
+                    </td>
+                  </tr>
+
+                  <!-- Rata-rata Total Keseluruhan -->
+                  <tr class="bg-slate-100 font-bold border-t-2 border-black">
+                    <td colspan="2" class="border border-black p-2 text-center uppercase tracking-wide">
+                      RATA-RATA KESELURUHAN
+                    </td>
+                    <td class="border border-black p-2 text-center font-mono">
+                      {{ formatScore(getStudentOverallAverage(activePrintStudent?.id, 'avg_semester')) }}
+                    </td>
+                    <td class="border border-black p-2 text-center font-mono">
+                      {{ formatScore(getStudentOverallAverage(activePrintStudent?.id, 'final_exam_score')) }}
+                    </td>
+                    <td class="border border-black p-2 text-center font-mono font-black">
+                      {{ formatScore(getStudentOverallAverage(activePrintStudent?.id, 'final_grade')) }}
+                    </td>
+                    <td class="border border-black p-2 italic text-[11px] px-2 capitalize font-semibold">
+                      {{ terbilangScore(getStudentOverallAverage(activePrintStudent?.id, 'final_grade')) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Titimangsa & Tanda Tangan Pengesahan -->
+              <div class="flex justify-end text-xs sm:text-[12px] font-sans mt-6 pt-2">
+                <div class="text-center min-w-[220px] sm:min-w-[260px] space-y-1">
+                  <p class="font-serif">
+                    {{ settings?.date_place || 'Bogor' }}, {{ formatDateIndo(settings?.graduation_date) }}
+                  </p>
+                  <p class="font-bold font-serif">Kepala Madrasah,</p>
+                  <div class="h-20 sm:h-24 flex items-center justify-center">
+                    <!-- Ruang tanda tangan & cap stempel -->
+                  </div>
+                  <p class="font-bold font-serif underline text-sm sm:text-base leading-snug">
+                    {{ settings?.principal_name || schoolSetting?.principal_name || 'H. Umar Usman Ali, S.Pd, S.Pd.I' }}
+                  </p>
+                  <p class="text-xs font-mono">
+                    NIP. {{ settings?.principal_nip || schoolSetting?.principal_nip || '-' }}
+                  </p>
+                </div>
+              </div>
+
             </div>
+
           </div>
         </div>
       </div>
@@ -1645,11 +1980,49 @@ const tempSettings = ref({
   practical_subject_ids: [],
   date_place: 'Bogor',
   graduation_date: '',
+  certificate_number_prefix: 'MTs.10.01/PP.01.1/',
+  principal_name: '',
+  principal_nip: '',
+  nsm: '121232010012',
+  npsn: '20277259',
+  show_student_photo: true,
+  academic_year: '2026/2027',
 });
 
 // Print Modal State
 const showPrintModal = ref(false);
+const printMode = ref('both'); // 'both' (2 Lembar), 'page1' (Lembar 1 Muka), 'page2' (Lembar 2 Belakang)
 const activePrintStudent = ref(null);
+
+// Terbilang Nilai Helper
+function terbilangAngka(n) {
+  const angka = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'];
+  n = Math.floor(n);
+  if (n < 12) return angka[n];
+  if (n < 20) return terbilangAngka(n - 10) + ' Belas';
+  if (n < 100) return terbilangAngka(Math.floor(n / 10)) + ' Puluh' + (n % 10 !== 0 ? ' ' + angka[n % 10] : '');
+  if (n === 100) return 'Seratus';
+  return String(n);
+}
+
+function terbilangScore(val) {
+  if (val === null || val === undefined || val === '' || isNaN(val)) return '-';
+  const num = parseFloat(val);
+  if (isNaN(num)) return '-';
+
+  const bulat = Math.floor(num);
+  const teksBulat = bulat === 0 ? 'Nol' : terbilangAngka(bulat);
+
+  const str = num.toFixed(2);
+  const parts = str.split('.');
+  if (parts.length > 1 && parseInt(parts[1], 10) > 0) {
+    const digit1 = parseInt(parts[1][0], 10);
+    const digit2 = parseInt(parts[1][1], 10);
+    const satuanArr = ['Nol', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan'];
+    return `${teksBulat} Koma ${satuanArr[digit1]} ${satuanArr[digit2]}`;
+  }
+  return teksBulat;
+}
 
 const currentSubject = computed(() => {
   if (!selectedSubjectId.value && subjects.value.length > 0) {
@@ -2114,10 +2487,10 @@ function handleExportPdum() {
 function openSettingsModal() {
   if (settings.value) {
     tempSettings.value = {
-      report_weight: settings.value.report_weight || 60,
-      exam_weight: settings.value.exam_weight || 40,
-      theory_weight_default: settings.value.theory_weight_default || 50,
-      practice_weight_default: settings.value.practice_weight_default || 50,
+      report_weight: settings.value.report_weight ?? 60,
+      exam_weight: settings.value.exam_weight ?? 40,
+      theory_weight_default: settings.value.theory_weight_default ?? 50,
+      practice_weight_default: settings.value.practice_weight_default ?? 50,
       active_subject_ids: Array.isArray(settings.value.active_subject_ids)
         ? [...settings.value.active_subject_ids]
         : allSubjects.value.map(s => s.id),
@@ -2126,6 +2499,13 @@ function openSettingsModal() {
         : [],
       date_place: settings.value.date_place || 'Bogor',
       graduation_date: settings.value.graduation_date || '',
+      certificate_number_prefix: settings.value.certificate_number_prefix || 'MTs.10.01/PP.01.1/',
+      principal_name: settings.value.principal_name || schoolSetting.value?.principal_name || '',
+      principal_nip: settings.value.principal_nip || schoolSetting.value?.principal_nip || '',
+      nsm: settings.value.nsm || '121232010012',
+      npsn: settings.value.npsn || '20277259',
+      show_student_photo: settings.value.show_student_photo !== undefined ? Boolean(settings.value.show_student_photo) : true,
+      academic_year: settings.value.academic_year || '2026/2027',
     };
   }
   showSettingsModal.value = true;
@@ -2279,6 +2659,10 @@ onMounted(() => {
 
 <style scoped>
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm 10mm 12mm;
+  }
   body * {
     visibility: hidden;
   }
@@ -2289,14 +2673,34 @@ onMounted(() => {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    box-shadow: none;
-    border: none;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
   }
   .no-print {
     display: none !important;
+  }
+  .page-break {
+    page-break-after: always !important;
+    break-after: page !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    display: block !important;
+    visibility: hidden !important;
+  }
+  .sheet-page {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin-bottom: 0 !important;
+    width: 100% !important;
   }
 }
 </style>
