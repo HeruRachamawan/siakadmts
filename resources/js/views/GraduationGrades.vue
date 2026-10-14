@@ -1158,6 +1158,23 @@
                 <p class="text-[11px] text-slate-500 font-mono mt-0.5">
                   NISN: <span class="font-bold text-slate-700">{{ stu.nisn || '-' }}</span> &bull; NIS: {{ stu.nis || '-' }}
                 </p>
+
+                <!-- Nomor Blanko & Quick Edit Button -->
+                <div class="mt-1 flex items-center justify-between gap-1 p-1.5 bg-slate-50 rounded-lg border border-slate-100 text-[10px]">
+                  <div class="font-mono truncate" :title="stu.certificate_number || 'Belum diisi (Otomatis)'">
+                    <span class="text-slate-400">Blanko:</span>
+                    <span class="font-bold text-slate-700 ml-1">{{ stu.certificate_number || 'Otomatis' }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    @click="openEditSerialModal(stu)"
+                    class="p-1 text-slate-400 hover:text-emerald-700 hover:bg-white rounded transition-colors cursor-pointer flex-shrink-0"
+                    title="Edit Nomor Ijazah & SKL Siswa Ini"
+                  >
+                    <Pencil class="w-3 h-3" />
+                  </button>
+                </div>
+
                 <div class="flex items-center gap-2 mt-1.5 flex-wrap">
                   <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700">
                     Kelas {{ stu.class_name }}
@@ -1271,8 +1288,16 @@
                 <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-400">{{ idx + 1 }}</td>
                 <td class="py-2.5 px-3">
                   <div class="font-bold text-slate-800">{{ stu.full_name }}</div>
-                  <div class="text-[10px] text-slate-400 font-mono">
-                    {{ stu.certificate_number || 'No Seri: Otomatis' }}
+                  <div class="text-[10px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
+                    <span>{{ stu.certificate_number || 'No Seri: Otomatis' }}</span>
+                    <button
+                      type="button"
+                      @click="openEditSerialModal(stu)"
+                      class="text-slate-400 hover:text-emerald-700 transition-colors cursor-pointer"
+                      title="Edit Nomor Ijazah & SKL Siswa Ini"
+                    >
+                      <Pencil class="w-3 h-3" />
+                    </button>
                   </div>
                 </td>
                 <td class="py-2.5 px-2 text-center font-mono text-slate-600">
@@ -1802,6 +1827,33 @@
 
         <!-- Print Sheet Content Container -->
         <div class="flex-1 overflow-y-auto p-2 sm:p-6 bg-slate-100/70 border border-slate-200 rounded-2xl">
+          <!-- Panduan Pengaturan Printer di Browser (No-Print) -->
+          <div class="no-print max-w-[210mm] mx-auto mb-4 p-3.5 bg-sky-50 border border-sky-200 rounded-2xl text-xs text-sky-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+            <div class="flex items-start gap-2.5">
+              <div class="w-7 h-7 rounded-xl bg-sky-200/80 text-sky-800 flex items-center justify-center flex-shrink-0 font-bold text-sm">
+                💡
+              </div>
+              <div>
+                <div class="font-black text-sky-950">Tips Pengaturan Dialog Printer (Browser Print Ctrl+P):</div>
+                <div class="text-[11px] text-sky-800 mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <span>&bull; <strong>Ukuran Kertas:</strong> A4</span>
+                  <span>&bull; <strong>Margin:</strong> Minimum / None</span>
+                  <span>&bull; <strong>Skala:</strong> 100% (Default)</span>
+                  <span>&bull; <strong>Centang Opsi:</strong> <span class="font-bold underline">"Background Graphics" / Grafik Latar Belakang</span></span>
+                  <span>&bull; <strong>Hilangkan centang:</strong> "Headers & Footers"</span>
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="triggerPrint"
+              class="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold text-xs flex-shrink-0 shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+            >
+              <Printer class="w-3.5 h-3.5" />
+              <span>Buka Dialog Cetak</span>
+            </button>
+          </div>
+
           <div id="print-area" class="max-w-[210mm] mx-auto space-y-6 text-black">
 
             <!-- Loop Seluruh Siswa yang Dipilih untuk Dicetak (Single atau Batch 1 Rombel) -->
@@ -2526,6 +2578,99 @@
         </div>
       </div>
     </div>
+
+    <!-- MODAL 4: EDIT NOMOR SERI IJAZAH & SKL SISWA TUNGGAL -->
+    <div
+      v-if="showEditSerialModal && editingStudent"
+      class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto no-print"
+    >
+      <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+              <Pencil class="w-4 h-4" />
+            </div>
+            <div>
+              <h3 class="font-bold text-slate-800 text-sm">Edit Nomor Ijazah & SKL</h3>
+              <p class="text-[11px] text-slate-400 truncate max-w-[220px]">{{ editingStudent.full_name }}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="showEditSerialModal = false"
+            class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 cursor-pointer"
+          >
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
+        <div class="space-y-3.5 text-xs">
+          <!-- Info Siswa -->
+          <div class="p-2.5 bg-slate-50 border border-slate-200/60 rounded-xl space-y-1 text-[11px]">
+            <div class="flex justify-between">
+              <span class="text-slate-500">Nama Siswa:</span>
+              <span class="font-bold text-slate-800">{{ editingStudent.full_name }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">NISN / NIS:</span>
+              <span class="font-mono text-slate-700 font-semibold">{{ editingStudent.nisn || '-' }} / {{ editingStudent.nis || '-' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Rombel Kelas:</span>
+              <span class="font-bold text-emerald-700">Kelas {{ editingStudent.class_name }}</span>
+            </div>
+          </div>
+
+          <!-- Input Nomor Blanko Ijazah Fisik -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">
+              Nomor Seri Blanko Ijazah Fisik
+            </label>
+            <input
+              type="text"
+              v-model="editSerialForm.certificate_number"
+              placeholder="Contoh: MTs.10.01/PP.01.1/0001"
+              class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono text-xs font-bold text-slate-800 focus:outline-emerald-500 focus:border-emerald-500"
+            />
+            <p class="text-[10px] text-slate-400 mt-1 leading-tight">
+              Gunakan fitur ini jika terdapat blanko fisik yang rusak/keliru sehingga nomor blanko siswa melompat dari urutan.
+            </p>
+          </div>
+
+          <!-- Input Nomor SKL -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">
+              Nomor Surat Keterangan Lulus (SKL)
+            </label>
+            <input
+              type="text"
+              v-model="editSerialForm.skl_number"
+              placeholder="Contoh: MTs.AH/PP.01.1/SKL/2026/001"
+              class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono text-xs font-bold text-slate-800 focus:outline-emerald-500 focus:border-emerald-500"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button
+            type="button"
+            @click="showEditSerialModal = false"
+            class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            @click="saveStudentSerial"
+            :disabled="isSavingStudentSerial"
+            class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
+          >
+            <Save class="w-3.5 h-3.5" />
+            <span>{{ isSavingStudentSerial ? 'Menyimpan...' : 'Simpan Nomor Seri' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -2551,7 +2696,8 @@ import {
   FileSpreadsheet,
   Search,
   Calendar,
-  Filter
+  Filter,
+  Pencil
 } from 'lucide-vue-next';
 
 // State
@@ -2727,6 +2873,15 @@ const serialForm = ref({
   cert_digits: 4,
   skl_start: 1,
   order_by: 'full_name',
+});
+
+// Single Student Serial Edit Modal State
+const showEditSerialModal = ref(false);
+const editingStudent = ref(null);
+const isSavingStudentSerial = ref(false);
+const editSerialForm = ref({
+  certificate_number: '',
+  skl_number: '',
 });
 
 // Grade matrix in memory: studentGradeMap[student_id][subject_id] = record
@@ -3344,6 +3499,42 @@ async function generateSerialNumbers() {
     toast.error('Gagal generate nomor seri: ' + (err.response?.data?.message || err.message));
   } finally {
     isGeneratingSerial.value = false;
+  }
+}
+
+// Quick Edit Serial Number for Single Student
+function openEditSerialModal(student) {
+  editingStudent.value = student;
+  editSerialForm.value = {
+    certificate_number: student.certificate_number || '',
+    skl_number: student.skl_number || '',
+  };
+  showEditSerialModal.value = true;
+}
+
+async function saveStudentSerial() {
+  if (!editingStudent.value) return;
+  isSavingStudentSerial.value = true;
+  try {
+    const res = await api.put(`/admin/graduation-grades/students/${editingStudent.value.id}/serial-number`, {
+      certificate_number: editSerialForm.value.certificate_number,
+      skl_number: editSerialForm.value.skl_number,
+    });
+    if (res?.success) {
+      toast.success(res.message || 'Nomor seri siswa berhasil diperbarui.');
+      // Update local reactive student state
+      const target = students.value.find(s => s.id === editingStudent.value.id);
+      if (target) {
+        target.certificate_number = editSerialForm.value.certificate_number;
+        target.skl_number = editSerialForm.value.skl_number;
+      }
+      showEditSerialModal.value = false;
+    }
+  } catch (err) {
+    console.error('Gagal memperbarui nomor seri siswa:', err);
+    toast.error('Gagal memperbarui nomor seri: ' + (err.response?.data?.message || err.message));
+  } finally {
+    isSavingStudentSerial.value = false;
   }
 }
 

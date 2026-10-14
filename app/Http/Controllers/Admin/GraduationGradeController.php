@@ -90,12 +90,15 @@ class GraduationGradeController extends BaseController
             'academic_year' => $validated['academic_year'] ?? '2026/2027',
         ]);
 
-        // Auto-recalculate all existing graduation grades with new weights
-        $grades = GraduationGrade::all();
-        foreach ($grades as $g) {
-            $g->recalculateScores($setting);
-            $g->save();
-        }
+        // Auto-recalculate all existing graduation grades with new weights in chunked transaction
+        DB::transaction(function () use ($setting) {
+            GraduationGrade::chunk(200, function ($grades) use ($setting) {
+                foreach ($grades as $g) {
+                    $g->recalculateScores($setting);
+                    $g->save();
+                }
+            });
+        });
 
         return $this->success($setting, 'Pengaturan bobot & mapel aktif kelulusan berhasil diperbarui.');
     }
