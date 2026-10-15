@@ -1569,13 +1569,37 @@
               </div>
 
               <div>
-                <label class="block text-[11px] font-bold text-slate-500 mb-1">Tahun Pelajaran</label>
+                <label class="block text-[11px] font-bold text-slate-500 mb-1 flex items-center justify-between">
+                  <span>Tahun Pelajaran Kelulusan (Kelas 9)</span>
+                  <span class="text-[9px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-bold border border-emerald-200">
+                    Acuan Induk 3 Tahun
+                  </span>
+                </label>
                 <input
                   type="text"
                   v-model="tempSettings.academic_year"
                   class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 font-mono"
                   placeholder="Contoh: 2026/2027"
                 />
+                <!-- Box Preview Kronologi 3 Tahun Belajar -->
+                <div class="mt-2 p-2 bg-white rounded-xl border border-slate-200/80 text-[10px] space-y-1 shadow-2xs">
+                  <div class="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Otomatisasi Kronologi 6 Semester:</span>
+                    <span class="text-[9px] text-slate-400">3 Tahun Tempuh</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-600 border-t border-slate-100 pt-1">
+                    <span>&bull; Kelas 7 (Sem 1 & 2):</span>
+                    <span class="font-mono font-bold text-blue-700">{{ calculateAcademicYearForSemester('sem_1', tempSettings.academic_year) }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-600">
+                    <span>&bull; Kelas 8 (Sem 3 & 4):</span>
+                    <span class="font-mono font-bold text-amber-700">{{ calculateAcademicYearForSemester('sem_3', tempSettings.academic_year) }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-600">
+                    <span>&bull; Kelas 9 (Sem 5, 6, & Ujian):</span>
+                    <span class="font-mono font-bold text-emerald-700">{{ calculateAcademicYearForSemester('sem_5', tempSettings.academic_year) }}</span>
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -2422,35 +2446,79 @@
 
         <!-- Form Parameter -->
         <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3 flex-shrink-0">
-          <!-- 1. Tahun Pelajaran -->
+          <!-- 1. Target Semester / Ujian (Pilihan Utama) -->
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Tahun Pelajaran</label>
-            <input
-              type="text"
-              v-model="semesterForm.academic_year"
-              placeholder="Contoh: 2024/2025"
-              class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 font-mono"
-            />
-          </div>
-
-          <!-- 2. Target Semester / Ujian -->
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Target Semester / Ujian</label>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1 flex items-center justify-between">
+              <span>Target Semester / Ujian</span>
+              <span
+                class="text-[9px] font-bold px-1.5 py-0.5 rounded border"
+                :class="getSemesterCohortInfo(semesterForm.semester_target).badgeClass"
+              >
+                {{ getSemesterCohortInfo(semesterForm.semester_target).level }} &bull; {{ getSemesterCohortInfo(semesterForm.semester_target).offset }}
+              </span>
+            </label>
             <select
               v-model="semesterForm.semester_target"
-              @change="loadSemesterFormScores"
-              class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 cursor-pointer"
+              @change="onSemesterTargetChanged"
+              class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 cursor-pointer shadow-2xs"
             >
-              <option value="final_exam_score">Nilai Ujian Madrasah (N-Ujian Langsung)</option>
               <option value="sem_1">Semester 1 (Kls 7 Ganjil)</option>
               <option value="sem_2">Semester 2 (Kls 7 Genap)</option>
               <option value="sem_3">Semester 3 (Kls 8 Ganjil)</option>
               <option value="sem_4">Semester 4 (Kls 8 Genap)</option>
               <option value="sem_5">Semester 5 (Kls 9 Ganjil)</option>
               <option value="sem_6">Semester 6 (Kls 9 Genap)</option>
+              <option value="final_exam_score">Nilai Ujian Madrasah (N-Ujian Langsung)</option>
               <option value="exam_theory">Ujian Madrasah (Tulis)</option>
               <option value="exam_practice">Ujian Madrasah (Praktik)</option>
             </select>
+          </div>
+
+          <!-- 2. Tahun Pelajaran (Otomatis Terisi & Bebas Ubah) -->
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1 flex items-center justify-between">
+              <span>Tahun Pelajaran</span>
+              <span class="text-[9px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                ✨ Otomatis
+              </span>
+            </label>
+            <input
+              type="text"
+              v-model="semesterForm.academic_year"
+              placeholder="Contoh: 2024/2025"
+              class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 font-mono shadow-2xs"
+            />
+            <!-- Quick Preset Pills Tahun Ajaran -->
+            <div class="flex items-center gap-1 mt-1 text-[9px] font-mono">
+              <span class="text-slate-400 font-sans text-[9px]">Pilihan:</span>
+              <button
+                type="button"
+                @click="semesterForm.academic_year = calculateAcademicYearForSemester('sem_1')"
+                class="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                :class="semesterForm.academic_year === calculateAcademicYearForSemester('sem_1') ? 'bg-blue-100 text-blue-800 font-bold' : ''"
+                title="Tahun Ajaran Kelas 7"
+              >
+                {{ calculateAcademicYearForSemester('sem_1') }}
+              </button>
+              <button
+                type="button"
+                @click="semesterForm.academic_year = calculateAcademicYearForSemester('sem_3')"
+                class="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                :class="semesterForm.academic_year === calculateAcademicYearForSemester('sem_3') ? 'bg-amber-100 text-amber-800 font-bold' : ''"
+                title="Tahun Ajaran Kelas 8"
+              >
+                {{ calculateAcademicYearForSemester('sem_3') }}
+              </button>
+              <button
+                type="button"
+                @click="semesterForm.academic_year = calculateAcademicYearForSemester('sem_5')"
+                class="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                :class="semesterForm.academic_year === calculateAcademicYearForSemester('sem_5') ? 'bg-emerald-100 text-emerald-800 font-bold' : ''"
+                title="Tahun Ajaran Kelas 9"
+              >
+                {{ calculateAcademicYearForSemester('sem_5') }}
+              </button>
+            </div>
           </div>
 
           <!-- 3. Rombel -->
@@ -2758,11 +2826,42 @@ const currentLedgerModeObj = computed(() => {
   return ledgerModes.find(m => m.id === ledgerMode.value) || ledgerModes[0];
 });
 
+// Auto-Calculate Academic Year based on graduation year and semester target
+function calculateAcademicYearForSemester(targetSemester, baseYear) {
+  const defaultYear = baseYear || settings.value?.academic_year || '2026/2027';
+  if (!defaultYear || !defaultYear.includes('/')) return defaultYear;
+  const parts = defaultYear.split('/');
+  const start = parseInt(parts[0], 10);
+  const end = parseInt(parts[1], 10);
+  if (isNaN(start) || isNaN(end)) return defaultYear;
+
+  // Semester 1 & 2 -> Angkatan Kelas 7 (Mundur 2 Tahun)
+  if (targetSemester === 'sem_1' || targetSemester === 'sem_2') {
+    return `${start - 2}/${end - 2}`;
+  }
+  // Semester 3 & 4 -> Angkatan Kelas 8 (Mundur 1 Tahun)
+  if (targetSemester === 'sem_3' || targetSemester === 'sem_4') {
+    return `${start - 1}/${end - 1}`;
+  }
+  // Semester 5, 6, & Ujian -> Angkatan Kelas 9 (Tahun Berjalan Kelulusan)
+  return `${start}/${end}`;
+}
+
+function getSemesterCohortInfo(targetSemester) {
+  if (targetSemester === 'sem_1' || targetSemester === 'sem_2') {
+    return { level: 'Kelas 7', offset: 'Mundur 2 Thn', badgeClass: 'bg-blue-50 text-blue-700 border-blue-200' };
+  }
+  if (targetSemester === 'sem_3' || targetSemester === 'sem_4') {
+    return { level: 'Kelas 8', offset: 'Mundur 1 Thn', badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' };
+  }
+  return { level: 'Kelas 9', offset: 'Thn Berjalan', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+}
+
 // Add Semester Grades Modal State
 const showAddSemesterModal = ref(false);
 const isSavingSemesterGrades = ref(false);
 const semesterForm = ref({
-  academic_year: '2026/2027',
+  academic_year: '2024/2025',
   semester_target: 'sem_1',
   class_id: '',
   subject_id: '',
@@ -3209,8 +3308,22 @@ function setupAndOpenModal() {
     semesterForm.value.subject_id = selectedSubjectId.value || (subjects.value[0]?.id || '');
   }
   semesterForm.value.quick_score = '';
+  // Otomatis sinkronkan tahun pelajaran sesuai target semester
+  semesterForm.value.academic_year = calculateAcademicYearForSemester(
+    semesterForm.value.semester_target,
+    settings.value?.academic_year || '2026/2027'
+  );
   loadSemesterFormScores();
   showAddSemesterModal.value = true;
+}
+
+function onSemesterTargetChanged() {
+  // Otomatis ubah tahun pelajaran saat semester target berganti
+  semesterForm.value.academic_year = calculateAcademicYearForSemester(
+    semesterForm.value.semester_target,
+    settings.value?.academic_year || '2026/2027'
+  );
+  loadSemesterFormScores();
 }
 
 function loadSemesterFormScores() {
