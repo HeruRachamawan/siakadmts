@@ -184,15 +184,67 @@
           </table>
         </div>
 
-        <!-- Jaminan Keamanan Nilai Murni -->
-        <div class="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-950 flex items-start gap-3 shadow-xs">
-          <ShieldCheck class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-          <div class="leading-relaxed">
-            <span class="font-black text-emerald-900 block">🛡️ Nilai Asli Rapor 100% Aman & Terjaga</span>
-            <p class="text-[11px] text-emerald-800 mt-0.5">
-              Fitur atur peringkat ini murni menetapkan nomor urutan juara siswa pada lembar rapor dan buku leger. <strong>Nilai seluruh mata pelajaran yang sudah ditarik sebelumnya tidak akan diubah atau dirusak sedikitpun</strong>.
+        <!-- Peringatan Cerdas Jika Urutan Peringkat Berlawanan dengan Nilai Rata-Rata -->
+        <div
+          v-if="hasInvertedRank && !adjustScores"
+          class="p-3.5 bg-amber-50 rounded-2xl border border-amber-300 text-xs text-amber-900 flex items-start gap-3 shadow-xs"
+        >
+          <AlertTriangle class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div class="space-y-1">
+            <span class="font-black block">💡 Rekomendasi: Urutan Ranking Belum Sejalan dengan Nilai Rapor</span>
+            <p class="text-[11px] text-amber-800 leading-relaxed">
+              Anda menempatkan siswa pada ranking lebih tinggi padahal nilai rata-ratanya saat ini lebih rendah. Agar tidak tampak janggal di lembar rapor & leger, Anda disarankan <strong>mencentang opsi "Selaraskan Nilai Siswa Sesuai Peringkat"</strong> di bawah.
             </p>
           </div>
+        </div>
+
+        <!-- Opsi Penyelarasan Nilai Siswa Sesuai Peringkat -->
+        <div
+          class="p-4 rounded-2xl border transition-all cursor-pointer select-none"
+          :class="adjustScores 
+            ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300 ring-2 ring-amber-400/20 shadow-xs' 
+            : 'bg-slate-50 border-slate-200 hover:bg-slate-100/60'"
+          @click="adjustScores = !adjustScores"
+        >
+          <div class="flex items-start gap-3">
+            <input
+              id="adjust-scores-checkbox"
+              v-model="adjustScores"
+              type="checkbox"
+              @click.stop
+              class="mt-1 w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300 cursor-pointer flex-shrink-0"
+            />
+            <div class="space-y-1.5 flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <label for="adjust-scores-checkbox" class="font-black text-slate-900 text-xs cursor-pointer block">
+                  ⚡ Opsi 1: Selaraskan Nilai Siswa Mengikuti Urutan Peringkat
+                </label>
+                <span
+                  class="text-[10px] font-black px-2 py-0.5 rounded-full border shadow-2xs"
+                  :class="adjustScores ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-slate-200 text-slate-600 border-slate-300'"
+                >
+                  {{ adjustScores ? '✓ Aktif' : 'Nonaktif' }}
+                </span>
+              </div>
+              <p class="text-slate-600 text-[11px] leading-relaxed">
+                Jika dicentang, total dan nilai rata-rata tiap mata pelajaran akan diselaraskan bertahap secara proporsional agar siswa peringkat atas memiliki total nilai yang lebih tinggi secara alami.
+              </p>
+              <div class="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200 text-emerald-900 text-[10.5px] flex items-center gap-2">
+                <ShieldCheck class="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span class="font-bold">
+                  🔒 Jaminan Proteksi: Nilai disesuaikan dalam batas aman & <u>TIDAK AKAN melebihi</u> nilai tertinggi yang sudah ditarik di kelas ini.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Penjelasan Jika Tidak Dicentang -->
+        <div v-if="!adjustScores" class="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-500 flex items-start gap-2.5">
+          <ShieldCheck class="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
+          <p class="text-[11px] leading-relaxed">
+            Opsi selaraskan nilai tidak dicentang: Hanya nomor urutan peringkat (ranking) yang diperbarui di rapor. Seluruh nilai mata pelajaran tetap menggunakan nilai asli apa adanya.
+          </p>
         </div>
       </div>
 
@@ -248,6 +300,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save', 'reset-default']);
 
 const localRankList = ref([]);
+const adjustScores = ref(false);
 
 watch(
   () => props.show,
@@ -349,6 +402,7 @@ function handleSave() {
       student_id: item.student_id,
       rank: parseInt(item.rank) || 1,
     })),
+    adjust_scores: Boolean(adjustScores.value),
   });
 }
 </script>
