@@ -358,7 +358,6 @@
               <div class="sig-space" style="height: 48px;"></div>
               <div>
                 <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0; font-size: 9.5px;">{{ report?.student?.homeroom_teacher_name || '............................................' }}</p>
-                <p v-if="report?.student?.homeroom_teacher_nip && report.student.homeroom_teacher_nip !== '-'" style="font-size: 8.5px; color: #475569; font-family: monospace; margin: 1px 0 0 0;">NIP. {{ report.student.homeroom_teacher_nip }}</p>
               </div>
             </td>
 
@@ -384,7 +383,6 @@
               <div class="sig-space" style="height: 48px;"></div>
               <div>
                 <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0; font-size: 9.5px;">{{ report?.school_setting?.principal_name || '............................................' }}</p>
-                <p v-if="report?.school_setting?.principal_nip && report.school_setting.principal_nip !== '-'" style="font-size: 8.5px; color: #475569; font-family: monospace; margin: 1px 0 0 0;">NIP. {{ report.school_setting.principal_nip }}</p>
               </div>
             </td>
           </tr>
