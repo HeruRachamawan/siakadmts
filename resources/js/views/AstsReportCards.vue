@@ -2200,7 +2200,7 @@ onMounted(() => {
   #app {
     background: #ffffff !important;
     background-image: none !important;
-    color: #0f172a !important;
+    color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
