@@ -229,11 +229,19 @@
               <p class="text-slate-600 text-[11px] leading-relaxed">
                 Jika dicentang, total dan nilai rata-rata tiap mata pelajaran akan diselaraskan bertahap secara proporsional agar siswa peringkat atas memiliki total nilai yang lebih tinggi secara alami.
               </p>
-              <div class="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200 text-emerald-900 text-[10.5px] flex items-center gap-2">
-                <ShieldCheck class="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span class="font-bold">
-                  🔒 Jaminan Proteksi: Nilai disesuaikan dalam batas aman & <u>TIDAK AKAN melebihi</u> nilai tertinggi yang sudah ditarik di kelas ini.
-                </span>
+              <div class="space-y-1.5 pt-1">
+                <div class="p-2 bg-emerald-50/80 rounded-xl border border-emerald-200 text-emerald-900 text-[10.5px] flex items-center gap-2">
+                  <ShieldCheck class="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span class="font-bold">
+                    🔒 Jaminan Batas Atas: Nilai disesuaikan dalam batas aman & <u>TIDAK AKAN melebihi</u> nilai tertinggi yang sudah ditarik di kelas ini.
+                  </span>
+                </div>
+                <div class="p-2 bg-amber-50/80 rounded-xl border border-amber-200 text-amber-950 text-[10.5px] flex items-center gap-2">
+                  <Trophy class="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span class="font-bold">
+                    🏆 Anti-Nilai Kembar: Total nilai tiap peringkat dijamin bertingkat & berbeda (Juara 1 > Juara 2 > Juara 3) guna mencegah komplain kesamaan nilai dari orang tua.
+                  </span>
+                </div>
               </div>
             </div>
           </div>

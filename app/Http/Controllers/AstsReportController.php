@@ -980,7 +980,7 @@ class AstsReportController extends Controller
                     // Build target averages for each ranked position
                     // Ensuring:
                     // 1. Target average of Juara 1 NEVER exceeds $highestPulledAvg
-                    // 2. Juara 1 >= Juara 2 >= Juara 3 ...
+                    // 2. Juara 1 > Juara 2 > Juara 3 ... (stepped by at least 0.15 to naturally prevent ties)
                     $targetAverages = [];
                     $prevTarget = $highestPulledAvg;
                     $rankIndex = 0;
@@ -993,8 +993,10 @@ class AstsReportController extends Controller
                         // Use the original average from the sorted pool as base
                         $baseAvg = $originalAvgs[$rankIndex] ?? (end($originalAvgs) ?: 75.0);
 
-                        // Ensure it strictly does not exceed previous rank's target
-                        $assignedTarget = min($baseAvg, $prevTarget);
+                        // Ensure target is strictly lower than previous rank's target
+                        $assignedTarget = ($rankIndex === 0)
+                            ? min($baseAvg, $highestPulledAvg, $classMaxScore)
+                            : min($baseAvg, $prevTarget - 0.15);
 
                         // Strict rule: never exceed the highest pulled score or average
                         $assignedTarget = min($assignedTarget, $highestPulledAvg, $classMaxScore);
@@ -1003,6 +1005,31 @@ class AstsReportController extends Controller
                         $prevTarget = $assignedTarget;
                         $rankIndex++;
                     }
+
+                    // Helper closure to safely update score, predicate, and description
+                    $updateScoreModel = function ($sc, $newScore) {
+                        $kkm = $sc->kkm ?? 75;
+                        $predicate = 'D';
+                        if ($newScore >= 90) {
+                            $predicate = 'A';
+                        } elseif ($newScore >= 80) {
+                            $predicate = 'B';
+                        } elseif ($newScore >= $kkm) {
+                            $predicate = 'C';
+                        }
+                        $description = $newScore >= $kkm
+                            ? 'Menunjukkan penguasaan kompetensi yang tuntas pada asesmen tengah semester.'
+                            : 'Perlu peningkatan dan pendampingan materi lebih lanjut.';
+
+                        $sc->update([
+                            'score' => $newScore,
+                            'predicate' => $predicate,
+                            'description' => $description,
+                        ]);
+                        $sc->score = $newScore;
+                        $sc->predicate = $predicate;
+                        $sc->description = $description;
+                    };
 
                     // Adjust each student's subject scores
                     foreach ($rankList as $rItem) {
@@ -1031,29 +1058,13 @@ class AstsReportController extends Controller
                             $kkm = $sc->kkm ?? 75;
                             $boundedScore = max(50, $boundedScore);
 
-                            $predicate = 'D';
-                            if ($boundedScore >= 90) {
-                                $predicate = 'A';
-                            } elseif ($boundedScore >= 80) {
-                                $predicate = 'B';
-                            } elseif ($boundedScore >= $kkm) {
-                                $predicate = 'C';
-                            }
-
-                            $description = $boundedScore >= $kkm
-                                ? 'Menunjukkan penguasaan kompetensi yang tuntas pada asesmen tengah semester.'
-                                : 'Perlu peningkatan dan pendampingan materi lebih lanjut.';
-
-                            $sc->update([
-                                'score' => $boundedScore,
-                                'predicate' => $predicate,
-                                'description' => $description,
-                            ]);
+                            $updateScoreModel($sc, $boundedScore);
                         }
                     }
 
-                    // Second pass: Guarantee strictly non-increasing total scores across desired ranks
-                    // (Rank 1 Total >= Rank 2 Total >= Rank 3 Total ...)
+                    // Second pass: ANTI-NILAI KEMBAR (STRICT NON-EQUAL TOTAL SCORES)
+                    // Guarantee: Total(Juara 1) > Total(Juara 2) > Total(Juara 3) > ...
+                    // Never equal (no ties between different ranks)
                     // while NEVER violating subject and class maximum pulled caps
                     $rankedStudentIds = array_values(array_filter(array_column($rankList, 'student_id'), fn($id) => isset($studentOriginalStats[$id])));
                     $refreshedScores = AstsSubjectScore::whereIn('student_id', $rankedStudentIds)
@@ -1062,35 +1073,27 @@ class AstsReportController extends Controller
                         ->get()
                         ->groupBy('student_id');
 
-                    for ($i = 0; $i < count($rankedStudentIds) - 1; $i++) {
-                        $currId = $rankedStudentIds[$i];
-                        $nextId = $rankedStudentIds[$i + 1];
+                    $maxPasses = 5;
+                    for ($pass = 0; $pass < $maxPasses; $pass++) {
+                        $anyConflict = false;
 
-                        $currStudentScores = $refreshedScores->get($currId, collect());
-                        $nextStudentScores = $refreshedScores->get($nextId, collect());
+                        for ($i = 0; $i < count($rankedStudentIds) - 1; $i++) {
+                            $currId = $rankedStudentIds[$i];
+                            $nextId = $rankedStudentIds[$i + 1];
 
-                        $currTotal = $currStudentScores->sum('score');
-                        $nextTotal = $nextStudentScores->sum('score');
+                            $currStudentScores = $refreshedScores->get($currId, collect());
+                            $nextStudentScores = $refreshedScores->get($nextId, collect());
 
-                        // If current rank total is less than next rank total, nudge scores safely
-                        if ($currTotal < $nextTotal) {
-                            $diff = $nextTotal - $currTotal;
-                            // Attempt to safely increase curr student's scores where below subject max
-                            foreach ($currStudentScores->sortBy('score') as $sc) {
-                                if ($diff <= 0) break;
-                                $maxSub = (int) ($maxScoreBySubject[$sc->subject_id] ?? $classMaxScore);
-                                $room = min($maxSub, (int) $classMaxScore) - $sc->score;
-                                if ($room > 0) {
-                                    $add = min($room, $diff);
-                                    $newScore = $sc->score + $add;
-                                    $sc->update(['score' => $newScore]);
-                                    $sc->score = $newScore;
-                                    $diff -= $add;
-                                }
-                            }
+                            $currTotal = (int) $currStudentScores->sum('score');
+                            $nextTotal = (int) $nextStudentScores->sum('score');
 
-                            // If still tied or inverted, safely decrease next student's scores (without falling below KKM)
-                            if ($diff > 0) {
+                            // We require strictly: currTotal > nextTotal (at least nextTotal + 1)
+                            // Never equal so parents will never see the same total for different ranks!
+                            if ($currTotal <= $nextTotal) {
+                                $anyConflict = true;
+                                $diff = ($nextTotal - $currTotal) + 1; // Minimum deficit to make currTotal > nextTotal
+
+                                // Priority 1: Safely decrease next student's scores on subjects above KKM
                                 foreach ($nextStudentScores->sortByDesc('score') as $sc) {
                                     if ($diff <= 0) break;
                                     $kkm = $sc->kkm ?? 75;
@@ -1098,12 +1101,31 @@ class AstsReportController extends Controller
                                     if ($roomDown > 0) {
                                         $sub = min($roomDown, $diff);
                                         $newScore = $sc->score - $sub;
-                                        $sc->update(['score' => $newScore]);
-                                        $sc->score = $newScore;
+                                        $updateScoreModel($sc, $newScore);
                                         $diff -= $sub;
                                     }
                                 }
+
+                                // Priority 2: If deficit still remains, safely increase curr student's scores
+                                // strictly without exceeding $maxScoreBySubject or $classMaxScore
+                                if ($diff > 0) {
+                                    foreach ($currStudentScores->sortBy('score') as $sc) {
+                                        if ($diff <= 0) break;
+                                        $maxSub = (int) ($maxScoreBySubject[$sc->subject_id] ?? $classMaxScore);
+                                        $roomUp = min($maxSub, (int) $classMaxScore) - $sc->score;
+                                        if ($roomUp > 0) {
+                                            $add = min($roomUp, $diff);
+                                            $newScore = $sc->score + $add;
+                                            $updateScoreModel($sc, $newScore);
+                                            $diff -= $add;
+                                        }
+                                    }
+                                }
                             }
+                        }
+
+                        if (!$anyConflict) {
+                            break;
                         }
                     }
                 }
