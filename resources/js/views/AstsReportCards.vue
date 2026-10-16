@@ -762,7 +762,7 @@
             :key="'batch-rep-'+rIdx"
             class="bg-white p-4 sm:p-7 rounded-2xl shadow-sm border border-slate-200 text-slate-900 space-y-4 print-page print-sheet overflow-x-auto"
           >
-            <AstsReportSheet :report="rep" />
+            <AstsReportSheet :report="rep" :paper-size="selectedPaperSize" />
           </div>
           <div v-if="batchReportsList.length === 0" class="text-center py-12 text-slate-400 text-xs font-medium bg-white rounded-3xl border border-slate-100">
             Memuat seluruh lembar rapor siswa kelas {{ ledgerData?.class?.name }}...
@@ -925,6 +925,7 @@
                     v-else-if="singleReportData" 
                     :report="singleReportData" 
                     :allow-edit="true" 
+                    :paper-size="selectedPaperSize"
                     @edit-notes="openNotesModalForCurrentStudent" 
                     @edit-titimangsa="openTitimangsaModal"
                   />

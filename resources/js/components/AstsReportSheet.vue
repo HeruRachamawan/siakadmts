@@ -1,5 +1,5 @@
 <template>
-  <div class="text-slate-900 font-inter text-[10px] leading-tight max-w-full print:leading-tight">
+  <div :class="['asts-report-sheet', (paperSize || '').toLowerCase() === 'f4' ? 'paper-f4' : 'paper-a4']" class="text-slate-900 font-inter text-[10px] leading-tight max-w-full print:leading-tight">
     <!-- 1. KOP SURAT RESMI MADRASAH (TABLE-BASED: 100% BULLETPROOF & DEAD-CENTERED) -->
     <table class="w-full border-collapse" style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">
       <tbody>
@@ -91,8 +91,8 @@
     </table>
 
     <!-- 4. TABEL CAPAIAN HASIL BELAJAR ASTS (SYNCHRONIZED 100% WITH LIVE REVIEW) -->
-    <div style="margin-bottom: 4px; overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 9.5px; line-height: 1.2;">
+    <div class="section-gap" style="margin-bottom: 4px; overflow-x: auto;">
+      <table class="report-table" style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 9.5px; line-height: 1.2;">
         <thead>
           <tr style="background-color: #f1f5f9; color: #020617; font-weight: 900; text-transform: uppercase; text-align: center; border-bottom: 1.5px solid #0f172a; font-size: 9px;">
             <th style="border: 1px solid #0f172a; padding: 3px 2px; width: 4%;">No</th>
@@ -224,8 +224,8 @@
     </div>
 
     <!-- 5. PENGEMBANGAN DIRI & EKSTRAKURIKULER (KATEGORI PREDIKAT A, B, C) -->
-    <div style="margin-bottom: 4px;">
-      <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 9px; line-height: 1.2;">
+    <div class="section-gap" style="margin-bottom: 4px;">
+      <table class="ekskul-table" style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 9px; line-height: 1.2;">
         <thead>
           <tr style="background-color: #f1f5f9; color: #020617; font-weight: 900; text-transform: uppercase; text-align: center; border-bottom: 1.5px solid #0f172a; font-size: 8.5px;">
             <th style="border: 1px solid #0f172a; padding: 2.5px 2px; width: 4%;">No</th>
@@ -261,12 +261,12 @@
     </div>
 
     <!-- 6. KETIDAKHADIRAN & CATATAN WALI KELAS (COMPACT TABLE FORMAT) -->
-    <table style="width: 100%; border-collapse: collapse; margin-top: 3px; margin-bottom: 4px;">
+    <table class="section-gap" style="width: 100%; border-collapse: collapse; margin-top: 3px; margin-bottom: 4px;">
       <tbody>
         <tr>
           <!-- Left: Kehadiran (32%) -->
           <td style="width: 30%; vertical-align: top; padding-right: 6px;">
-            <table style="width: 100%; font-size: 9px; border-collapse: collapse; border: 1px solid #0f172a;">
+            <table class="att-table" style="width: 100%; font-size: 9px; border-collapse: collapse; border: 1px solid #0f172a;">
               <thead>
                 <tr style="background-color: #f1f5f9; text-align: center; font-weight: 900; text-transform: uppercase; font-size: 8.5px; border-bottom: 1px solid #0f172a;">
                   <th colspan="2" style="padding: 2.5px; border: 1px solid #0f172a;">
@@ -305,7 +305,7 @@
 
           <!-- Right: Catatan Wali Kelas (70%) -->
           <td style="width: 70%; vertical-align: top; padding-left: 6px;">
-            <div style="border: 1px solid #0f172a; border-radius: 4px; padding: 4px 6px; min-height: 46px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="notes-box" style="border: 1px solid #0f172a; border-radius: 4px; padding: 4px 6px; min-height: 46px; display: flex; flex-direction: column; justify-content: space-between;">
               <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 2px; margin-bottom: 2px;">
                 <span style="font-weight: 800; text-transform: uppercase; font-size: 8.5px; color: #1e293b; letter-spacing: 0.03em;">
                   Catatan & Motivasi Perkembangan Belajar Wali Kelas:
@@ -330,56 +330,61 @@
       </tbody>
     </table>
 
-    <!-- 6. TITIMANGSA & BLOK TANDA TANGAN RESMI (COMPACT BREAK-INSIDE-AVOID) -->
-    <div style="padding-top: 2px; page-break-inside: avoid; break-inside: avoid;">
-      <div style="text-align: right; font-size: 9.5px; font-weight: 700; color: #1e293b; padding-right: 8px; margin-bottom: 2px;">
-        <span>{{ report?.city || 'Bogor' }}, {{ report?.issued_date || '........................' }}</span>
-        <button
-          v-if="allowEdit"
-          type="button"
-          @click="$emit('edit-titimangsa')"
-          class="no-print"
-          style="color: #b45309; font-weight: bold; font-size: 8px; cursor: pointer; border: none; background: transparent; margin-left: 6px;"
-          title="Ubah Tempat dan Tanggal Titimangsa Rapor"
-        >
-          ✏️ Edit Titimangsa
-        </button>
-      </div>
-
+    <!-- 6. TITIMANGSA & BLOK TANDA TANGAN RESMI (SEJAJAR PERSIS DENGAN KEPALA MADRASAH & MAKSIMALKAN RUANG KERTAS) -->
+    <div class="sig-wrapper" style="padding-top: 4px; page-break-inside: avoid; break-inside: avoid;">
       <table style="width: 100%; text-align: center; font-size: 9.5px; border-collapse: collapse;">
         <tbody>
           <tr>
-            <!-- Orang Tua -->
+            <!-- Kolom 1: Orang Tua / Wali Siswa -->
             <td style="width: 33.33%; vertical-align: top; padding: 0 6px;">
               <div>
-                <p style="font-weight: 700; color: #334155; margin: 0;">Mengetahui,</p>
-                <p style="font-weight: 700; color: #0f172a; margin: 0;">Orang Tua / Wali Siswa</p>
+                <!-- Spacer tersembunyi agar baris Mengetahui persis sejajar dengan Kolom Kepala Madrasah -->
+                <p style="visibility: hidden; margin: 0; line-height: 1.35; font-size: 9.5px; font-weight: 700;" aria-hidden="true">&nbsp;</p>
+                <p style="font-weight: 700; color: #334155; margin: 0; line-height: 1.35;">Mengetahui,</p>
+                <p style="font-weight: 700; color: #0f172a; margin: 0; line-height: 1.35;">Orang Tua / Wali Siswa</p>
               </div>
-              <div style="height: 32px;"></div>
-              <div style="border-bottom: 1px solid #0f172a; width: 80%; margin: 0 auto;"></div>
+              <div class="sig-space" style="height: 48px;"></div>
+              <div style="border-bottom: 1px solid #0f172a; width: 80%; margin: 0 auto; height: 12px;"></div>
             </td>
 
-            <!-- Wali Kelas -->
+            <!-- Kolom 2: Wali Kelas -->
             <td style="width: 33.33%; vertical-align: top; padding: 0 6px;">
               <div>
-                <p style="font-weight: 700; color: #334155; margin: 0;">Wali Kelas,</p>
-                <p style="font-weight: 700; color: #0f172a; margin: 0;">{{ (report?.student?.class_name || '').toLowerCase().startsWith('kelas') ? report?.student?.class_name : ('Kelas ' + (report?.student?.class_name || '')) }}</p>
+                <!-- Spacer tersembunyi agar baris Wali Kelas persis sejajar dengan Kolom Kepala Madrasah -->
+                <p style="visibility: hidden; margin: 0; line-height: 1.35; font-size: 9.5px; font-weight: 700;" aria-hidden="true">&nbsp;</p>
+                <p style="font-weight: 700; color: #334155; margin: 0; line-height: 1.35;">Wali Kelas,</p>
+                <p style="font-weight: 700; color: #0f172a; margin: 0; line-height: 1.35;">{{ (report?.student?.class_name || '').toLowerCase().startsWith('kelas') ? report?.student?.class_name : ('Kelas ' + (report?.student?.class_name || '')) }}</p>
               </div>
-              <div style="height: 32px;"></div>
+              <div class="sig-space" style="height: 48px;"></div>
               <div>
-                <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0;">{{ report?.student?.homeroom_teacher_name || '............................................' }}</p>
+                <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0; font-size: 9.5px;">{{ report?.student?.homeroom_teacher_name || '............................................' }}</p>
+                <p v-if="report?.student?.homeroom_teacher_nip && report.student.homeroom_teacher_nip !== '-'" style="font-size: 8.5px; color: #475569; font-family: monospace; margin: 1px 0 0 0;">NIP. {{ report.student.homeroom_teacher_nip }}</p>
               </div>
             </td>
 
-            <!-- Kepala Madrasah -->
+            <!-- Kolom 3: Titimangsa & Kepala Madrasah (Sejajar Tegak Lurus di Atas Kepala Madrasah) -->
             <td style="width: 33.33%; vertical-align: top; padding: 0 6px;">
               <div>
-                <p style="font-weight: 700; color: #334155; margin: 0;">Mengetahui,</p>
-                <p style="font-weight: 700; color: #0f172a; margin: 0;">Kepala Madrasah</p>
+                <p style="font-weight: 700; color: #1e293b; margin: 0; line-height: 1.35; font-size: 9.5px;">
+                  <span>{{ report?.city || 'Bogor' }}, {{ report?.issued_date || '........................' }}</span>
+                  <button
+                    v-if="allowEdit"
+                    type="button"
+                    @click="$emit('edit-titimangsa')"
+                    class="no-print"
+                    style="color: #b45309; font-weight: bold; font-size: 8px; cursor: pointer; border: none; background: transparent; margin-left: 4px;"
+                    title="Ubah Tempat dan Tanggal Titimangsa Rapor"
+                  >
+                    ✏️ Edit
+                  </button>
+                </p>
+                <p style="font-weight: 700; color: #334155; margin: 0; line-height: 1.35;">Mengetahui,</p>
+                <p style="font-weight: 700; color: #0f172a; margin: 0; line-height: 1.35;">Kepala Madrasah</p>
               </div>
-              <div style="height: 32px;"></div>
+              <div class="sig-space" style="height: 48px;"></div>
               <div>
-                <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0;">{{ report?.school_setting?.principal_name || '............................................' }}</p>
+                <p style="font-weight: 900; color: #020617; text-decoration: underline; margin: 0; font-size: 9.5px;">{{ report?.school_setting?.principal_name || '............................................' }}</p>
+                <p v-if="report?.school_setting?.principal_nip && report.school_setting.principal_nip !== '-'" style="font-size: 8.5px; color: #475569; font-family: monospace; margin: 1px 0 0 0;">NIP. {{ report.school_setting.principal_nip }}</p>
               </div>
             </td>
           </tr>
@@ -398,6 +403,10 @@ defineProps({
   allowEdit: {
     type: Boolean,
     default: false,
+  },
+  paperSize: {
+    type: String,
+    default: 'f4', // 'f4' | 'a4'
   },
 });
 
@@ -418,6 +427,65 @@ function getImageUrl(path) {
 .font-inter { font-family: 'Inter', system-ui, sans-serif; }
 .font-lexend { font-family: 'Lexend', system-ui, sans-serif; }
 
+/* KERTAS A4: Rapi & padat pas 1 lembar utuh A4 (tinggi 297mm) */
+.paper-a4 .report-table td,
+.paper-a4 .report-table th {
+  padding-top: 2.8px !important;
+  padding-bottom: 2.8px !important;
+}
+.paper-a4 .ekskul-table td,
+.paper-a4 .ekskul-table th {
+  padding-top: 2.5px !important;
+  padding-bottom: 2.5px !important;
+}
+.paper-a4 .att-table td,
+.paper-a4 .att-table th {
+  padding-top: 2.5px !important;
+  padding-bottom: 2.5px !important;
+}
+.paper-a4 .notes-box {
+  min-height: 52px !important;
+}
+.paper-a4 .sig-space {
+  height: 48px !important;
+}
+.paper-a4 .section-gap {
+  margin-bottom: 4px !important;
+}
+.paper-a4 .sig-wrapper {
+  padding-top: 4px !important;
+}
+
+/* KERTAS F4 (FOLIO / 330mm): Lebih panjang 33mm dari A4,
+   Berikan kelonggaran vertikal agar mengisi seluruh kertas secara maksimal tanpa sisa ruang kosong di bawah */
+.paper-f4 .report-table td,
+.paper-f4 .report-table th {
+  padding-top: 4.2px !important;
+  padding-bottom: 4.2px !important;
+}
+.paper-f4 .ekskul-table td,
+.paper-f4 .ekskul-table th {
+  padding-top: 3.8px !important;
+  padding-bottom: 3.8px !important;
+}
+.paper-f4 .att-table td,
+.paper-f4 .att-table th {
+  padding-top: 3.5px !important;
+  padding-bottom: 3.5px !important;
+}
+.paper-f4 .notes-box {
+  min-height: 64px !important;
+}
+.paper-f4 .sig-space {
+  height: 68px !important;
+}
+.paper-f4 .section-gap {
+  margin-bottom: 7px !important;
+}
+.paper-f4 .sig-wrapper {
+  padding-top: 10px !important;
+}
+
 @media print {
   .no-print {
     display: none !important;
@@ -430,9 +498,35 @@ function getImageUrl(path) {
     -webkit-box-orient: vertical !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    max-height: 2.7em !important;
-    line-height: 1.18 !important;
-    font-size: 8px !important;
+    max-height: 2.8em !important;
+    line-height: 1.22 !important;
+    font-size: 8.5px !important;
+  }
+
+  /* Mode Cetak A4 */
+  .paper-a4 .report-table td,
+  .paper-a4 .report-table th {
+    padding-top: 2.6px !important;
+    padding-bottom: 2.6px !important;
+  }
+  .paper-a4 .sig-space {
+    height: 46px !important;
+  }
+  .paper-a4 .sig-wrapper {
+    padding-top: 4px !important;
+  }
+
+  /* Mode Cetak F4: Regangkan baris & tanda tangan secara maksimal memenuhi 330mm */
+  .paper-f4 .report-table td,
+  .paper-f4 .report-table th {
+    padding-top: 4.2px !important;
+    padding-bottom: 4.2px !important;
+  }
+  .paper-f4 .sig-space {
+    height: 70px !important;
+  }
+  .paper-f4 .sig-wrapper {
+    padding-top: 12px !important;
   }
 }
 </style>
