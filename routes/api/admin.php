@@ -156,8 +156,8 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
 
 });
 
-// Rekap Nilai Ijazah Kelas 9 (PDUM Kemenag) - Dapat diakses oleh Admin, Operator, Kurikulum, Kepala Sekolah, dan Guru/Wali Kelas
-Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah,teacher'])
+// Rekap Nilai Ijazah Kelas 9 (PDUM Kemenag) - Dapat diakses oleh Admin, Operator TU, Kurikulum, dan Kepala Sekolah
+Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {

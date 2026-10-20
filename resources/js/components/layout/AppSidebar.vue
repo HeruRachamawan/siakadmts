@@ -241,19 +241,6 @@
             </Transition>
           </RouterLink>
 
-          <!-- Rekap Nilai Ijazah (PDUM) -->
-          <RouterLink
-            to="/admin/graduation-grades"
-            :title="isCollapsed ? 'Rekap Nilai Ijazah (PDUM)' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <GraduationCap class="w-4 h-4 flex-shrink-0 text-emerald-400" />
-            <Transition name="label-fade">
-              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rekap Ijazah (PDUM)</span>
-            </Transition>
-          </RouterLink>
 
           <div v-if="!isCollapsed" class="nav-section">Supervisi Kehadiran</div>
           <div v-else class="my-1 border-t border-slate-200/50"></div>
@@ -554,22 +541,6 @@
               </Transition>
             </RouterLink>
 
-            <!-- Rekap Nilai Ijazah (PDUM) - Khusus Wali Kelas -->
-            <RouterLink
-              to="/admin/graduation-grades"
-              :title="isCollapsed ? 'Rekap Nilai Ijazah (PDUM)' : ''"
-              class="nav-link"
-              :class="isCollapsed ? 'justify-center' : ''"
-              active-class="nav-link-active"
-            >
-              <GraduationCap class="w-4 h-4 flex-shrink-0 text-emerald-400" />
-              <Transition name="label-fade">
-                <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
-                  <span class="text-sm whitespace-nowrap overflow-hidden">Rekap Ijazah (PDUM)</span>
-                  <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold uppercase">Wali</span>
-                </div>
-              </Transition>
-            </RouterLink>
           </template>
 
           <!-- D. TUGAS TAMBAHAN & PROFIL -->
