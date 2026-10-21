@@ -6,18 +6,28 @@
         <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center shadow-lg shadow-emerald-600/20 flex-shrink-0 mt-0.5 sm:mt-0">
           <BookOpenCheck class="w-5 h-5 sm:w-6 sm:h-6" />
         </div>
-        <div class="min-w-0">
+          <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-base sm:text-xl font-black text-slate-800 font-lexend uppercase tracking-wider">Rapor Tengah Semester (ASTS)</h1>
+            <h1 class="text-base sm:text-xl font-black text-slate-800 font-lexend uppercase tracking-wider">
+              {{ isMonitoringMode ? 'Monitoring Leger Wali Kelas' : 'Rapor Tengah Semester (ASTS)' }}
+            </h1>
             <span
               class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide border shadow-2xs"
               :class="activeSemester === 'genap' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'"
             >
               ASTS {{ activeSemester === 'genap' ? 'Genap' : 'Ganjil' }}
             </span>
+            <span
+              v-if="!isHomeroomOnly"
+              class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs"
+            >
+              Supervisi Seluruh Rombel
+            </span>
           </div>
           <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 font-medium leading-relaxed">
-            Ledger nilai kolektif kelas terintegrasi langsung dengan koreksi ujian, catatan wali kelas, dan cetak rapor resmi.
+            {{ isMonitoringMode
+              ? 'Monitoring kelengkapan nilai rombel dan pencetakan leger nilai resmi seluruh wali kelas tanpa harus berpindah akun.'
+              : 'Ledger nilai kolektif kelas terintegrasi langsung dengan koreksi ujian, catatan wali kelas, dan cetak rapor resmi.' }}
           </p>
         </div>
       </div>
@@ -120,7 +130,7 @@
       </div>
       <div class="pt-2">
         <RouterLink
-          to="/teacher/dashboard"
+          :to="isHomeroomOnly ? '/teacher/dashboard' : '/admin/dashboard'"
           class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-600/20"
         >
           Kembali ke Dashboard
@@ -1746,6 +1756,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import * as XLSX from 'xlsx';
 import { api } from '../api';
 import { useToast } from '../composables/useToast';
@@ -1788,6 +1799,11 @@ import {
 } from 'lucide-vue-next';
 
 const toast = useToast();
+const route = useRoute();
+const isMonitoringMode = computed(() => {
+  return route.path.includes('ledger') || route.query.tab === 'ledger';
+});
+
 const loading = ref(false);
 const pullingScores = ref(false);
 const savingNotes = ref(false);
@@ -2000,11 +2016,24 @@ async function fetchOptions() {
     isHomeroomOnly.value = !!d.is_homeroom_only;
     globalSchoolSetting.value = d.school_setting || null;
 
-    if (d.homeroom_class_id) {
+    if (route.query.semester && ['ganjil', 'genap'].includes(String(route.query.semester))) {
+      activeSemester.value = String(route.query.semester);
+    }
+    if (route.query.tab && ['ledger', 'print'].includes(String(route.query.tab))) {
+      activeSubTab.value = String(route.query.tab);
+    } else if (route.path.includes('ledger')) {
+      activeSubTab.value = 'ledger';
+    }
+
+    if (route.query.class_id && classes.value.some(c => c.id == route.query.class_id)) {
+      selectedClassId.value = Number(route.query.class_id);
+    } else if (d.homeroom_class_id && classes.value.some(c => c.id == d.homeroom_class_id)) {
       selectedClassId.value = d.homeroom_class_id;
-      await fetchLedger();
     } else if (classes.value.length > 0 && !selectedClassId.value) {
       selectedClassId.value = classes.value[0].id;
+    }
+
+    if (selectedClassId.value) {
       await fetchLedger();
     }
   } catch (err) {

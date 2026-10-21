@@ -227,6 +227,20 @@
             </Transition>
           </RouterLink>
 
+          <!-- Monitoring Leger Wali Kelas -->
+          <RouterLink
+            to="/admin/ledger-monitoring"
+            :title="isCollapsed ? 'Monitoring Leger Wali Kelas' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <TableProperties class="w-4 h-4 flex-shrink-0 text-emerald-400" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Leger Wali Kelas</span>
+            </Transition>
+          </RouterLink>
+
           <!-- Monitoring ASTS & Standar KKTP -->
           <RouterLink
             to="/kurikulum/asts-monitoring"
@@ -624,6 +638,20 @@
             </Transition>
           </RouterLink>
 
+          <!-- Monitoring Leger Wali Kelas -->
+          <RouterLink
+            to="/admin/ledger-monitoring"
+            :title="isCollapsed ? 'Monitoring Leger Wali Kelas' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <TableProperties class="w-4 h-4 flex-shrink-0 text-emerald-400" />
+            <Transition name="label-fade">
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Leger Wali Kelas</span>
+            </Transition>
+          </RouterLink>
+
           <!-- Monitoring ASTS & Standar KKTP -->
           <RouterLink
             to="/kurikulum/asts-monitoring"
@@ -926,6 +954,7 @@ import {
   FileCheck2,
   BookOpenCheck,
   Sliders,
+  TableProperties,
   Tent,
   ArrowRightLeft,
   X

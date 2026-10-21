@@ -89,14 +89,12 @@ class AstsReportController extends Controller
      */
     private function checkHomeroomAccess($user, int $classId, ?Request $request = null): bool
     {
-        $isTeacherRoute = ($request && ($request->is('api/teacher/*') || $request->is('teacher/*'))) || $user?->role === 'teacher';
-
-        // Staff route allows full access
-        if (!$isTeacherRoute && in_array($user?->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah'])) {
+        // 1. Staff supervisor roles (admin, operator, kurikulum, kepala_sekolah) have full access to all classes
+        if ($user && in_array($user->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah'])) {
             return true;
         }
 
-        // On teacher route or for teacher role: restricted to assigned homeroom class OR matching grade local class
+        // 2. Regular teacher: strictly verify homeroom ownership or matching grade local class ownership
         $teacher = $user ? ($user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first()) : null;
         if (!$teacher) {
             return false;
@@ -130,7 +128,7 @@ class AstsReportController extends Controller
     public function options(Request $request)
     {
         $user = $request->user();
-        $isTeacherRoute = $request->is('api/teacher/*') || $request->is('teacher/*') || $user?->role === 'teacher';
+        $isStaffSupervisor = $user && in_array($user->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah']);
         $teacher = $user ? ($user->teacher ?: \App\Models\Teacher::where('user_id', $user->id)->first()) : null;
 
         $homeroomClasses = collect();
@@ -140,7 +138,7 @@ class AstsReportController extends Controller
 
         $homeroomClassId = $homeroomClasses->first()?->id;
 
-        if ($isTeacherRoute) {
+        if (!$isStaffSupervisor) {
             if ($homeroomClasses->isNotEmpty()) {
                 $homeroomGradeLevels = $homeroomClasses->pluck('grade_level')->filter()->unique();
 
@@ -186,7 +184,9 @@ class AstsReportController extends Controller
                     'is_lokal' => $isLokal,
                 ];
             })
-            ->sortBy('grade_level')
+            ->sortBy(function ($c) {
+                return sprintf('%02d_%s', $c['grade_level'] ?? 0, $c['name'] ?? '');
+            })
             ->values();
         }
 
@@ -211,7 +211,7 @@ class AstsReportController extends Controller
                 'school_setting' => $officialSchoolSetting,
                 'settings' => $rawSettings,
                 'homeroom_class_id' => $homeroomClassId,
-                'is_homeroom_only' => (bool) $isTeacherRoute,
+                'is_homeroom_only' => !$isStaffSupervisor,
                 'default_titimangsa' => [
                     'city' => $defaultCity,
                     'issued_date' => $defaultDate,

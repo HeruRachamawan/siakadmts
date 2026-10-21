@@ -81,6 +81,8 @@ const routes = [
     { path: '/admin/academic-years', component: () => import('../views/AdminAcademicYears.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Tahun Ajaran' } },
     { path: '/admin/grades', component: () => import('../views/AdminGrades.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Rekap Nilai Siswa' } },
     { path: '/admin/asts-reports', component: () => import('../views/AstsReportCards.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Rapor Tengah Semester (ASTS)' } },
+    { path: '/admin/ledger-monitoring', component: () => import('../views/AstsReportCards.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Monitoring Leger Wali Kelas' } },
+    { path: '/kurikulum/ledger-monitoring', redirect: '/admin/ledger-monitoring' },
     { path: '/admin/graduation-grades', component: () => import('../views/GraduationGrades.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Rekap Nilai Ijazah (PDUM)' } },
     { path: '/operator/graduation-grades', redirect: '/admin/graduation-grades' },
     { path: '/kurikulum/graduation-grades', redirect: '/admin/graduation-grades' },
