@@ -706,14 +706,29 @@
 
               <!-- Bar chart container -->
               <div class="pt-5 pb-2 px-1">
-                <div class="h-36 flex items-end gap-1 sm:gap-2 border-b-2 border-slate-800 relative">
+                <div
+                  class="h-36 flex items-end gap-1 sm:gap-2 border-b-2 border-slate-800 relative"
+                  style="height: 144px; display: flex; align-items: flex-end; position: relative; border-bottom: 2px solid #1e293b;"
+                >
                   <!-- Guideline 70% -->
-                  <div class="absolute inset-x-0 bottom-[70%] border-b border-dashed border-emerald-600 pointer-events-none z-0">
-                    <span class="absolute -top-2.5 -left-6 text-[8px] font-mono text-emerald-700 font-bold bg-white px-0.5">70%</span>
+                  <div
+                    class="absolute inset-x-0 bottom-[70%] border-b border-dashed border-emerald-600 pointer-events-none z-0"
+                    style="position: absolute; left: 0; right: 0; bottom: 70%; border-bottom: 1px dashed #059669; pointer-events: none; z-index: 0;"
+                  >
+                    <span
+                      class="absolute -top-2.5 -left-6 text-[8px] font-mono text-emerald-700 font-bold bg-white px-0.5"
+                      style="position: absolute; top: -10px; left: -24px; font-size: 8px; font-family: monospace; font-weight: bold; color: #047857; background: #ffffff; padding: 0 2px;"
+                    >70%</span>
                   </div>
                   <!-- Guideline 30% -->
-                  <div class="absolute inset-x-0 bottom-[30%] border-b border-dashed border-rose-500 pointer-events-none z-0">
-                    <span class="absolute -top-2.5 -left-6 text-[8px] font-mono text-rose-700 font-bold bg-white px-0.5">30%</span>
+                  <div
+                    class="absolute inset-x-0 bottom-[30%] border-b border-dashed border-rose-500 pointer-events-none z-0"
+                    style="position: absolute; left: 0; right: 0; bottom: 30%; border-bottom: 1px dashed #f43f5e; pointer-events: none; z-index: 0;"
+                  >
+                    <span
+                      class="absolute -top-2.5 -left-6 text-[8px] font-mono text-rose-700 font-bold bg-white px-0.5"
+                      style="position: absolute; top: -10px; left: -24px; font-size: 8px; font-family: monospace; font-weight: bold; color: #be123c; background: #ffffff; padding: 0 2px;"
+                    >30%</span>
                   </div>
 
                   <!-- Bars -->
@@ -721,22 +736,37 @@
                     v-for="qa in analysisQuestions"
                     :key="qa.question_number"
                     class="flex-1 flex flex-col items-center h-full justify-end z-10 min-w-[20px]"
+                    style="flex: 1 1 0%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 20px; z-index: 10;"
                   >
                     <!-- Percentage label on top of bar -->
-                    <span class="text-[7.5px] sm:text-[8px] font-mono font-bold text-slate-700 mb-0.5">
+                    <span
+                      class="text-[7.5px] sm:text-[8px] font-mono font-bold text-slate-700 mb-0.5"
+                      style="font-size: 8px; font-family: monospace; font-weight: bold; margin-bottom: 2px;"
+                    >
                       {{ Math.round((qa.difficulty_index || 0) * 100) }}%
                     </span>
                     <div
                       class="w-full rounded-t-sm transition-all"
                       :style="{
+                        width: '100%',
                         height: Math.max(4, Math.round((qa.difficulty_index || 0) * 100)) + '%',
-                        backgroundColor: qa.difficulty_category === 'Mudah' ? '#10b981' : (qa.difficulty_category === 'Sedang' ? '#f59e0b' : '#ef4444')
+                        backgroundColor: qa.difficulty_category === 'Mudah' ? '#10b981' : (qa.difficulty_category === 'Sedang' ? '#f59e0b' : '#ef4444'),
+                        borderTopLeftRadius: '2px',
+                        borderTopRightRadius: '2px',
+                        WebkitPrintColorAdjust: 'exact',
+                        printColorAdjust: 'exact',
                       }"
                     ></div>
                     <!-- Question number and answer key label -->
-                    <div class="text-[8px] sm:text-[9px] font-bold text-slate-800 text-center mt-1">
+                    <div
+                      class="text-[8px] sm:text-[9px] font-bold text-slate-800 text-center mt-1"
+                      style="font-size: 8.5px; font-weight: bold; text-align: center; margin-top: 4px;"
+                    >
                       #{{ qa.question_number }}
-                      <span class="block text-[7.5px] text-teal-800 font-mono font-black">{{ qa.correct_answer || '-' }}</span>
+                      <span
+                        class="block text-[7.5px] text-teal-800 font-mono font-black"
+                        style="display: block; font-size: 7.5px; color: #115e59; font-family: monospace; font-weight: 900;"
+                      >{{ qa.correct_answer || '-' }}</span>
                     </div>
                   </div>
                 </div>
@@ -1465,8 +1495,10 @@ function printDocument() {
       page-break-inside: avoid;
       break-inside: avoid;
     }
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    *, *::before, *::after {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
   </style>
 </head>
 <body>
@@ -1669,8 +1701,10 @@ function printAdjustedDocument() {
       page-break-inside: avoid;
       break-inside: avoid;
     }
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    *, *::before, *::after {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
   </style>
 </head>
 <body>
@@ -1705,30 +1739,38 @@ function printAnalysisDocument() {
   const paperCssSize = isF4 ? '330mm 215mm' : '297mm 210mm';
   const paperTitle = isF4 ? 'F4 / Folio' : 'A4';
 
+  // Copy all existing application styles and Tailwind stylesheets
+  const existingStyles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+    .map(el => el.outerHTML)
+    .join('\n');
+
   printWindow.document.open();
   printWindow.document.write(`<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="utf-8">
   <title>Laporan Analisis Butir Soal & Daya Serap (${paperTitle}) - ${props.exam?.title || 'Ujian'}</title>
+  ${existingStyles}
   <style>
     @page {
       size: ${paperCssSize};
       margin: 8mm 8mm 8mm 8mm;
     }
-    * {
+    *, *::before, *::after {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
     }
     body {
       background: #ffffff !important;
-      color: #0f172a;
+      color: #0f172a !important;
       padding: 0;
       margin: 0;
       font-size: ${isF4 ? '10px' : '9.5px'};
       line-height: 1.35;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
     .text-center { text-align: center; }
     .text-left { text-align: left; }
@@ -1740,15 +1782,16 @@ function printAnalysisDocument() {
     .uppercase { text-transform: uppercase; }
     .underline { text-decoration: underline; }
     
-    .flex { display: flex; }
-    .flex-col { flex-direction: column; }
-    .justify-between { justify-content: space-between; }
-    .justify-center { justify-content: center; }
-    .justify-end { justify-content: flex-end; }
-    .items-center { align-items: center; }
-    .items-start { align-items: flex-start; }
-    .flex-1 { flex: 1 1 0%; }
-    .flex-shrink-0 { flex-shrink: 0; }
+    .flex { display: flex !important; }
+    .flex-col { flex-direction: column !important; }
+    .justify-between { justify-content: space-between !important; }
+    .justify-center { justify-content: center !important; }
+    .justify-end { justify-content: flex-end !important; }
+    .items-center { align-items: center !important; }
+    .items-start { align-items: flex-start !important; }
+    .items-end { align-items: flex-end !important; }
+    .flex-1 { flex: 1 1 0% !important; }
+    .flex-shrink-0 { flex-shrink: 0 !important; }
     .gap-1 { gap: 4px; }
     .gap-1\\.5 { gap: 6px; }
     .gap-2 { gap: 8px; }
@@ -1763,7 +1806,7 @@ function printAnalysisDocument() {
     .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
     .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
     
-    .w-full { width: 100%; }
+    .w-full { width: 100% !important; }
     .w-8 { width: 32px; }
     .w-14 { width: 56px; }
     .w-16 { width: 64px; }
@@ -1777,8 +1820,9 @@ function printAnalysisDocument() {
     .h-16 { height: 64px; }
     .h-18 { height: 72px; }
     .h-20 { height: 80px; }
-    .h-36 { height: 144px; }
-    .min-w-\\[20px\\] { min-width: 20px; }
+    .h-36 { height: 144px !important; }
+    .h-full { height: 100% !important; }
+    .min-w-\\[20px\\] { min-width: 20px !important; }
     
     .p-2 { padding: 8px; }
     .p-3 { padding: 12px; }
@@ -1805,9 +1849,9 @@ function printAnalysisDocument() {
     
     .border { border: 1px solid #cbd5e1; }
     .border-b { border-bottom: 1px solid #cbd5e1; }
-    .border-b-2 { border-bottom: 2px solid #0f172a; }
+    .border-b-2 { border-bottom: 2px solid #0f172a !important; }
     .border-b-4 { border-bottom: 4px double #0f172a; }
-    .border-dashed { border-style: dashed; }
+    .border-dashed { border-style: dashed !important; }
     .border-double { border-style: double; }
     .border-slate-200 { border-color: #e2e8f0; }
     .border-slate-300 { border-color: #cbd5e1; }
@@ -1815,40 +1859,40 @@ function printAnalysisDocument() {
     .border-slate-800 { border-color: #1e293b; }
     .border-slate-900 { border-color: #0f172a; }
     .border-teal-300 { border-color: #5eead4; }
-    .border-emerald-600 { border-color: #059669; }
-    .border-rose-500 { border-color: #f43f5e; }
+    .border-emerald-600 { border-color: #059669 !important; }
+    .border-rose-500 { border-color: #f43f5e !important; }
     
     .rounded { border-radius: 4px; }
     .rounded-sm { border-radius: 2px; }
-    .rounded-t-sm { border-top-left-radius: 2px; border-top-right-radius: 2px; }
+    .rounded-t-sm { border-top-left-radius: 2px !important; border-top-right-radius: 2px !important; }
     .rounded-lg { border-radius: 8px; }
     .rounded-xl { border-radius: 12px; }
     .rounded-2xl { border-radius: 16px; }
     
-    .bg-white { background-color: #ffffff; }
-    .bg-slate-50 { background-color: #f8fafc; }
-    .bg-slate-100 { background-color: #f1f5f9; }
-    .bg-slate-200\\/90 { background-color: rgba(226, 232, 240, 0.9); }
-    .bg-teal-800 { background-color: #115e59; }
-    .bg-teal-100 { background-color: #ccfbf1; }
-    .bg-teal-100\\/70 { background-color: rgba(204, 251, 241, 0.7); }
-    .bg-emerald-500 { background-color: #10b981; }
-    .bg-amber-500 { background-color: #f59e0b; }
-    .bg-rose-500 { background-color: #ef4444; }
+    .bg-white { background-color: #ffffff !important; }
+    .bg-slate-50 { background-color: #f8fafc !important; }
+    .bg-slate-100 { background-color: #f1f5f9 !important; }
+    .bg-slate-200\\/90 { background-color: rgba(226, 232, 240, 0.9) !important; }
+    .bg-teal-800 { background-color: #115e59 !important; }
+    .bg-teal-100 { background-color: #ccfbf1 !important; }
+    .bg-teal-100\\/70 { background-color: rgba(204, 251, 241, 0.7) !important; }
+    .bg-emerald-500 { background-color: #10b981 !important; }
+    .bg-amber-500 { background-color: #f59e0b !important; }
+    .bg-rose-500 { background-color: #ef4444 !important; }
     
-    .text-white { color: #ffffff; }
-    .text-slate-500 { color: #64748b; }
-    .text-slate-600 { color: #475569; }
-    .text-slate-700 { color: #334155; }
-    .text-slate-800 { color: #1e293b; }
-    .text-slate-900 { color: #0f172a; }
-    .text-teal-700 { color: #0f766e; }
-    .text-teal-800 { color: #115e59; }
-    .text-teal-900 { color: #134e4a; }
-    .text-emerald-700 { color: #047857; }
-    .text-amber-700 { color: #b45309; }
-    .text-rose-700 { color: #be123c; }
-    .text-rose-800 { color: #9f1239; }
+    .text-white { color: #ffffff !important; }
+    .text-slate-500 { color: #64748b !important; }
+    .text-slate-600 { color: #475569 !important; }
+    .text-slate-700 { color: #334155 !important; }
+    .text-slate-800 { color: #1e293b !important; }
+    .text-slate-900 { color: #0f172a !important; }
+    .text-teal-700 { color: #0f766e !important; }
+    .text-teal-800 { color: #115e59 !important; }
+    .text-teal-900 { color: #134e4a !important; }
+    .text-emerald-700 { color: #047857 !important; }
+    .text-amber-700 { color: #b45309 !important; }
+    .text-rose-700 { color: #be123c !important; }
+    .text-rose-800 { color: #9f1239 !important; }
     
     .text-xs { font-size: 10px; }
     .text-sm { font-size: 11px; }
@@ -1862,14 +1906,16 @@ function printAnalysisDocument() {
     .text-\\[10px\\] { font-size: 10px; }
     .text-\\[11px\\] { font-size: 11px; }
     
-    .relative { position: relative; }
-    .absolute { position: absolute; }
+    .relative { position: relative !important; }
+    .absolute { position: absolute !important; }
     .inset-x-0 { left: 0; right: 0; }
-    .bottom-\\[70\\%\\] { bottom: 70%; }
-    .bottom-\\[30\\%\\] { bottom: 30%; }
-    .-left-6 { left: -24px; }
-    .-top-2\\.5 { top: -10px; }
+    .bottom-\\[70\\%\\] { bottom: 70% !important; }
+    .bottom-\\[30\\%\\] { bottom: 30% !important; }
+    .-left-6 { left: -24px !important; }
+    .-top-2\\.5 { top: -10px !important; }
     .pointer-events-none { pointer-events: none; }
+    .z-0 { z-index: 0 !important; }
+    .z-10 { z-index: 10 !important; }
     
     table {
       width: 100% !important;
@@ -1901,8 +1947,6 @@ function printAnalysisDocument() {
       page-break-inside: avoid;
       break-inside: avoid;
     }
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
   </style>
 </head>
 <body>
@@ -1916,7 +1960,7 @@ function printAnalysisDocument() {
   setTimeout(() => {
     printWindow.print();
     printWindow.close();
-  }, 400);
+  }, 450);
 }
 
 async function exportToWord() {
