@@ -19,11 +19,11 @@
         <!-- Action Quick Links -->
         <div class="flex flex-wrap items-center gap-3">
           <RouterLink
-            to="/admin/asts-reports"
+            to="/admin/ledger-monitoring"
             class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs transition-all flex items-center gap-2 backdrop-blur-xs cursor-pointer"
           >
-            <BookOpenCheck class="w-4 h-4 text-emerald-300" />
-            <span>Buku Rapor ASTS</span>
+            <TableProperties class="w-4 h-4 text-emerald-300" />
+            <span>Monitoring Leger Nilai</span>
           </RouterLink>
 
           <button
@@ -452,7 +452,7 @@
             </div>
 
             <RouterLink
-              :to="`/admin/asts-reports?class_id=${cls.id}&semester=${selectedSemester}&academic_year_id=${selectedYearId}`"
+              :to="`/admin/ledger-monitoring?class_id=${cls.id}&semester=${selectedSemester}&academic_year_id=${selectedYearId}`"
               class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-700 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <span>Buka Ledger</span>
@@ -471,6 +471,7 @@ import { useToast } from '../composables/useToast';
 import { api } from '../api';
 import {
   Sliders,
+  TableProperties,
   BookOpenCheck,
   RefreshCw,
   Grid,

@@ -213,19 +213,6 @@
             </Transition>
           </RouterLink>
 
-          <!-- Rapor ASTS (Sumatif Tengah Semester) -->
-          <RouterLink
-            to="/admin/asts-reports"
-            :title="isCollapsed ? 'Rapor ASTS (PTS)' : ''"
-            class="nav-link"
-            :class="isCollapsed ? 'justify-center' : ''"
-            active-class="nav-link-active"
-          >
-            <BookOpenCheck class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade">
-              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rapor ASTS</span>
-            </Transition>
-          </RouterLink>
 
           <!-- Monitoring Leger Wali Kelas -->
           <RouterLink
