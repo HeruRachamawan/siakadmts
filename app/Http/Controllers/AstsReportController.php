@@ -887,6 +887,14 @@ class AstsReportController extends Controller
 
         // Save class+semester specific keys
         if ($classId) {
+            $lockStatus = self::getClassLockStatus((int)$classId, null, $semester);
+            if ($lockStatus['is_locked']) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Titimangsa kelas ini sedang dikunci. Silakan buka kunci terlebih dahulu jika ingin mengubah titimangsa.'
+                ], 422);
+            }
+
             \App\Models\Setting::updateOrCreate(['key' => "asts_issued_city_{$classId}_{$semester}"], ['value' => $city]);
             \App\Models\Setting::updateOrCreate(['key' => "asts_issued_date_{$classId}_{$semester}"], ['value' => $issuedDate]);
         }

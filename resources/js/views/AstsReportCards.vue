@@ -668,24 +668,32 @@
       <div v-else-if="activeSubTab === 'print'" class="space-y-4">
         <!-- Banner Indikator Kesiapan & Kelengkapan Nilai Kelas (No Print) -->
         <div v-if="ledgerStudents.length" class="no-print rounded-2xl p-3 sm:px-4 sm:py-3 border shadow-xs transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
-          :class="isClassScoresComplete ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950' : 'bg-amber-50/80 border-amber-200 text-amber-950'">
+          :class="isLocked
+            ? 'bg-slate-900 border-slate-800 text-white'
+            : (isClassScoresComplete ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950' : 'bg-amber-50/80 border-amber-200 text-amber-950')">
           <div class="flex items-center gap-2.5">
             <div class="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0"
-              :class="isClassScoresComplete ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'">
-              <Check v-if="isClassScoresComplete" class="w-4 h-4" />
+              :class="isLocked
+                ? 'bg-amber-400 text-slate-950'
+                : (isClassScoresComplete ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white')">
+              <Lock v-if="isLocked" class="w-4 h-4" />
+              <Check v-else-if="isClassScoresComplete" class="w-4 h-4" />
               <AlertTriangle v-else class="w-4 h-4" />
             </div>
             <div>
-              <div class="text-xs font-black font-lexend flex items-center gap-2">
-                <span>{{ isClassScoresComplete ? 'Semua Nilai Mata Pelajaran Lengkap (Siap Cetak)' : 'Perhatian: Ada Mata Pelajaran yang Nilainya Belum Masuk' }}</span>
+              <div class="text-xs font-black font-lexend flex items-center gap-2" :class="isLocked ? 'text-amber-300' : ''">
+                <span>{{ isLocked ? '🔒 Nilai Rapor Kelas Telah Dikunci (Status Final Resmi)' : (isClassScoresComplete ? 'Semua Nilai Mata Pelajaran Lengkap (Siap Cetak)' : 'Perhatian: Ada Mata Pelajaran yang Nilainya Belum Masuk') }}</span>
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                  :class="isClassScoresComplete ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'">
-                  {{ subjectsWithScoresCount }} / {{ subjectsList.length }} Mapel Terisi
+                  :class="isLocked ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' : (isClassScoresComplete ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')">
+                  {{ isLocked ? 'Terproteksi' : `${subjectsWithScoresCount} / ${subjectsList.length} Mapel Terisi` }}
                 </span>
               </div>
               <p class="text-[11px] font-medium leading-tight mt-0.5"
-                :class="isClassScoresComplete ? 'text-emerald-800' : 'text-amber-800'">
-                <template v-if="isClassScoresComplete">
+                :class="isLocked ? 'text-slate-300' : (isClassScoresComplete ? 'text-emerald-800' : 'text-amber-800')">
+                <template v-if="isLocked">
+                  Nilai, urutan peringkat, dan catatan telah dibekukan{{ lockStatus?.locked_at ? ' pada ' + formatLockDate(lockStatus.locked_at) : '' }}. Data kini sah dan siap dicetak ke printer atau diekspor ke PDF.
+                </template>
+                <template v-else-if="isClassScoresComplete">
                   Seluruh nilai ASTS siswa pada kelas ini sudah lengkap dan valid untuk dicetak atau dibagikan.
                 </template>
                 <template v-else>
@@ -695,7 +703,16 @@
             </div>
           </div>
           <button
-            v-if="!isClassScoresComplete"
+            v-if="isLocked"
+            type="button"
+            @click="openLockModal(false)"
+            class="self-start sm:self-center px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 text-[11px] font-black rounded-xl transition-all shadow-xs cursor-pointer flex items-center gap-1 active:scale-95 flex-shrink-0"
+          >
+            <Unlock class="w-3.5 h-3.5 text-slate-950" />
+            <span>Buka Kunci</span>
+          </button>
+          <button
+            v-else-if="!isClassScoresComplete"
             type="button"
             @click="activeSubTab = 'ledger'"
             class="self-start sm:self-center px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold rounded-xl transition-all shadow-xs cursor-pointer flex items-center gap-1 active:scale-95 flex-shrink-0"
@@ -750,9 +767,9 @@
             <button
               type="button"
               @click="openBulkNotesModal()"
-              :disabled="!ledgerStudents.length"
-              class="px-3 py-2 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
-              title="Isi catatan wali kelas & kehadiran untuk seluruh siswa sekaligus"
+              :disabled="!ledgerStudents.length || isLocked"
+              class="px-3 py-2 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
+              :title="isLocked ? 'Catatan wali kelas sedang dikunci' : 'Isi catatan wali kelas & kehadiran untuk seluruh siswa sekaligus'"
             >
               <ClipboardList class="w-3.5 h-3.5 text-purple-600 flex-shrink-0" />
               <span class="truncate">Catatan 1 Kelas</span>
@@ -763,7 +780,9 @@
             <button
               type="button"
               @click="openRankModal"
-              class="px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              :disabled="!ledgerStudents.length || isLocked"
+              class="px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
+              :title="isLocked ? 'Peringkat sedang dikunci' : 'Atur susunan juara dan nomor urut peringkat siswa di kelas ini'"
             >
               <Trophy class="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
               <span>Atur Peringkat</span>
@@ -773,8 +792,9 @@
             <button
               type="button"
               @click="openTitimangsaModal"
-              class="px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-              title="Atur Tempat dan Tanggal Resmi Penerbitan Rapor ASTS"
+              :disabled="isLocked"
+              class="px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
+              :title="isLocked ? 'Titimangsa sedang dikunci' : 'Atur Tempat dan Tanggal Resmi Penerbitan Rapor ASTS'"
             >
               <Calendar class="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
               <span>Titimangsa</span>
@@ -984,7 +1004,7 @@
                   <AstsReportSheet 
                     v-else-if="singleReportData" 
                     :report="singleReportData" 
-                    :allow-edit="true" 
+                    :allow-edit="!isLocked" 
                     :paper-size="selectedPaperSize"
                     @edit-notes="openNotesModalForCurrentStudent" 
                     @edit-titimangsa="openTitimangsaModal"
@@ -2157,6 +2177,10 @@ async function onSaveBulkNotes(items) {
 }
 
 function openTitimangsaModal() {
+  if (isLocked.value) {
+    toast.error('Titimangsa rapor kelas ini sedang dikunci. Silakan buka kunci terlebih dahulu jika ingin mengubah titimangsa.');
+    return;
+  }
   if (singleReportData.value?.city) {
     titimangsaForm.city = singleReportData.value.city;
   }
@@ -2173,6 +2197,10 @@ function setTitimangsaToday() {
 }
 
 async function saveTitimangsaSubmit() {
+  if (isLocked.value) {
+    toast.error('Titimangsa rapor kelas ini sedang dikunci. Silakan buka kunci terlebih dahulu jika ingin mengubah titimangsa.');
+    return;
+  }
   if (!selectedClassId.value) {
     toast.error('Silakan pilih kelas terlebih dahulu.');
     return;
