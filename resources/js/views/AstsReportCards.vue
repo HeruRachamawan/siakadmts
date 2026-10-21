@@ -257,9 +257,15 @@
                 <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/30">
                   Terproteksi
                 </span>
+                <span
+                  v-if="lockStatus?.locked_via === 'affiliated' && lockStatus?.locked_class_name"
+                  class="px-2 py-0.5 rounded-full text-[9px] font-black bg-teal-400/20 text-teal-300 border border-teal-400/30 flex items-center gap-1"
+                >
+                  🔗 Sinkron Kelas: {{ lockStatus.locked_class_name }}
+                </span>
               </div>
               <p class="text-[11px] text-slate-300 leading-tight">
-                Nilai rapor, susunan peringkat, dan catatan kelas telah dibekukan{{ lockStatus?.locked_at ? ' pada ' + formatLockDate(lockStatus.locked_at) : '' }}{{ lockStatus?.locked_by_name ? ' oleh ' + lockStatus.locked_by_name : '' }}. Fitur Tarik Nilai, Reset, dan Pengubahan Peringkat dinonaktifkan demi menjaga keaslian rapor.
+                Nilai rapor, susunan peringkat, dan catatan kelas telah dibekukan{{ lockStatus?.locked_at ? ' pada ' + formatLockDate(lockStatus.locked_at) : '' }}{{ lockStatus?.locked_by_name ? ' oleh ' + lockStatus.locked_by_name : '' }}. Fitur Tarik Nilai, Reset, dan Pengubahan Peringkat dinonaktifkan pada kelas utama dan kelas lokal terkait demi menjaga keaslian rapor.
               </p>
             </div>
           </div>
@@ -1416,13 +1422,22 @@
                 <li><strong class="text-emerald-700">Cetak Rapor, Ledger, dan Export Excel tetap dapat dilakukan kapan saja.</strong></li>
               </ul>
             </div>
+            <div class="p-3 bg-teal-50 border border-teal-200 rounded-2xl flex items-start gap-2.5 text-xs text-teal-950">
+              <Sparkles class="w-4 h-4 text-teal-600 flex-shrink-0 mt-0.5" />
+              <div class="space-y-0.5">
+                <span class="font-bold text-teal-900">Sinkronisasi Kelas Utama & Lokal:</span>
+                <p class="text-[11px] text-teal-800 leading-relaxed">
+                  Penguncian ini akan otomatis melindungi seluruh kelas terkait pada tingkat yang sama (Kelas Utama & Kelas Lokal). Data terkunci secara seragam.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div v-else class="space-y-3">
             <div class="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-950">
               <AlertTriangle class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
               <p class="leading-relaxed">
-                Membuka kunci akan mengaktifkan kembali tombol <strong>Tarik Nilai</strong>, <strong>Reset Nilai</strong>, dan <strong>Atur Peringkat</strong>. Lakukan ini hanya bila ada revisi resmi dari guru mapel atau siswa susulan.
+                Membuka kunci akan mengaktifkan kembali tombol <strong>Tarik Nilai</strong>, <strong>Reset Nilai</strong>, dan <strong>Atur Peringkat</strong> pada kelas ini dan kelas terkait. Lakukan ini hanya bila ada revisi resmi dari guru mapel atau siswa susulan.
               </p>
             </div>
             <div class="space-y-1">

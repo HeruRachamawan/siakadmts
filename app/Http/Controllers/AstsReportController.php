@@ -917,7 +917,44 @@ class AstsReportController extends Controller
     }
 
     /**
+     * Helper to get all affiliated class IDs (Main Class + its child Local Classes, or Local Class + its parent Main Class).
+     */
+    public static function getAffiliatedClassIds(int $classId): array
+    {
+        $class = ClassRoom::find($classId);
+        if (!$class) {
+            return [$classId];
+        }
+
+        $ids = collect([$classId]);
+
+        // 1. Direct shared students: if this is a main class, find all local classes having students in this class
+        $childLocalIds = Student::where('class_id', $classId)
+            ->whereNotNull('lokal_class_id')
+            ->pluck('lokal_class_id')
+            ->unique();
+        $ids = $ids->concat($childLocalIds);
+
+        // 2. Direct shared students: if this is a local class, find its parent main class
+        $parentMainIds = Student::where('lokal_class_id', $classId)
+            ->whereNotNull('class_id')
+            ->pluck('class_id')
+            ->unique();
+        $ids = $ids->concat($parentMainIds);
+
+        // 3. Fallback / grade level matching: All classes sharing the exact same grade_level
+        // e.g. Kelas 7 (Induk) and Kelas 7A, 7B (Lokal)
+        if (!empty($class->grade_level)) {
+            $sameGradeIds = ClassRoom::where('grade_level', $class->grade_level)->pluck('id');
+            $ids = $ids->concat($sameGradeIds);
+        }
+
+        return $ids->filter()->unique()->map(fn($id) => (int)$id)->values()->toArray();
+    }
+
+    /**
      * Get lock status of ASTS report for a class, semester, and academic year.
+     * Inherits lock status from parent main class or affiliated classes if applicable.
      */
     public static function getClassLockStatus(int $classId, ?int $yearId, string $semester): array
     {
@@ -926,38 +963,60 @@ class AstsReportController extends Controller
         $key = "asts_lock_{$classId}_{$yearId}_{$semester}";
 
         $raw = \App\Models\Setting::where('key', $key)->value('value');
-        if (!$raw) {
-            return [
-                'is_locked' => false,
-                'locked_at' => null,
-                'locked_by_name' => null,
-                'locked_by_role' => null,
-                'reason' => null,
-            ];
+        if ($raw) {
+            $data = json_decode($raw, true);
+            if (is_array($data) && !empty($data['is_locked'])) {
+                return [
+                    'is_locked' => true,
+                    'locked_at' => $data['locked_at'] ?? null,
+                    'locked_by_name' => $data['locked_by_name'] ?? null,
+                    'locked_by_role' => $data['locked_by_role'] ?? null,
+                    'reason' => $data['reason'] ?? null,
+                    'locked_via' => 'direct',
+                    'locked_class_id' => $classId,
+                ];
+            }
         }
 
-        $data = json_decode($raw, true);
-        if (!is_array($data) || empty($data['is_locked'])) {
-            return [
-                'is_locked' => false,
-                'locked_at' => null,
-                'locked_by_name' => null,
-                'locked_by_role' => null,
-                'reason' => null,
-            ];
+        // If direct lock key is not locked, check affiliated classes (parent main class or sister local classes)
+        $affiliatedIds = self::getAffiliatedClassIds($classId);
+        foreach ($affiliatedIds as $affId) {
+            if ($affId === $classId) continue;
+            $affKey = "asts_lock_{$affId}_{$yearId}_{$semester}";
+            $affRaw = \App\Models\Setting::where('key', $affKey)->value('value');
+            if ($affRaw) {
+                $affData = json_decode($affRaw, true);
+                if (is_array($affData) && !empty($affData['is_locked'])) {
+                    $affClass = ClassRoom::find($affId);
+                    $affName = $affClass ? $affClass->name : "ID {$affId}";
+                    return [
+                        'is_locked' => true,
+                        'locked_at' => $affData['locked_at'] ?? null,
+                        'locked_by_name' => $affData['locked_by_name'] ?? null,
+                        'locked_by_role' => $affData['locked_by_role'] ?? null,
+                        'reason' => $affData['reason'] ?? null,
+                        'locked_via' => 'affiliated',
+                        'locked_class_id' => $affId,
+                        'locked_class_name' => $affName,
+                    ];
+                }
+            }
         }
 
         return [
-            'is_locked' => true,
-            'locked_at' => $data['locked_at'] ?? null,
-            'locked_by_name' => $data['locked_by_name'] ?? null,
-            'locked_by_role' => $data['locked_by_role'] ?? null,
-            'reason' => $data['reason'] ?? null,
+            'is_locked' => false,
+            'locked_at' => null,
+            'locked_by_name' => null,
+            'locked_by_role' => null,
+            'reason' => null,
+            'locked_via' => null,
+            'locked_class_id' => null,
         ];
     }
 
     /**
      * Toggle lock (kunci / buka kunci) nilai rapor ASTS kelas.
+     * Automatically cascades & synchronizes lock state across all affiliated classes (Main & Local).
      */
     public function toggleLock(Request $request)
     {
@@ -984,7 +1043,8 @@ class AstsReportController extends Controller
         }
 
         $user = $request->user();
-        $key = "asts_lock_{$classId}_{$yearId}_{$semester}";
+        $targetClass = ClassRoom::find($classId);
+        $affiliatedIds = self::getAffiliatedClassIds($classId);
 
         if ($shouldLock) {
             $lockData = [
@@ -994,18 +1054,28 @@ class AstsReportController extends Controller
                 'locked_by_name' => $user?->name ?? 'Wali Kelas',
                 'locked_by_role' => $user?->role ?? 'teacher',
                 'reason' => $reason,
+                'source_class_id' => $classId,
+                'source_class_name' => $targetClass?->name,
             ];
 
-            \App\Models\Setting::updateOrCreate(
-                ['key' => $key],
-                ['value' => json_encode($lockData)]
-            );
+            // Lock the target class and all affiliated classes (main + local)
+            foreach ($affiliatedIds as $targetId) {
+                $key = "asts_lock_{$targetId}_{$yearId}_{$semester}";
+                \App\Models\Setting::updateOrCreate(
+                    ['key' => $key],
+                    ['value' => json_encode($lockData)]
+                );
+            }
+
+            $affClasses = ClassRoom::whereIn('id', $affiliatedIds)->get(['id', 'name']);
+            $classNames = $affClasses->pluck('name')->join(', ');
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Nilai rapor ASTS kelas berhasil dikunci. Data kini terproteksi.',
+                'message' => "Nilai rapor ASTS {$targetClass?->name} beserta kelas terkait ({$classNames}) berhasil dikunci. Data kini terproteksi.",
                 'data' => [
                     'lock_status' => self::getClassLockStatus($classId, $yearId, $semester),
+                    'affiliated_classes' => $affClasses,
                 ]
             ]);
         } else {
@@ -1016,18 +1086,27 @@ class AstsReportController extends Controller
                 'unlocked_by_name' => $user?->name ?? 'Wali Kelas',
                 'unlocked_by_role' => $user?->role ?? 'teacher',
                 'reason' => $reason,
+                'source_class_id' => $classId,
+                'source_class_name' => $targetClass?->name,
             ];
 
-            \App\Models\Setting::updateOrCreate(
-                ['key' => $key],
-                ['value' => json_encode($unlockData)]
-            );
+            // Unlock the target class and all affiliated classes
+            foreach ($affiliatedIds as $targetId) {
+                $key = "asts_lock_{$targetId}_{$yearId}_{$semester}";
+                \App\Models\Setting::updateOrCreate(
+                    ['key' => $key],
+                    ['value' => json_encode($unlockData)]
+                );
+            }
+
+            $affClasses = ClassRoom::whereIn('id', $affiliatedIds)->get(['id', 'name']);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Kunci nilai rapor ASTS berhasil dibuka. Fitur penarikan & pengubahan nilai aktif kembali.',
+                'message' => 'Kunci nilai rapor ASTS berhasil dibuka untuk seluruh kelas terkait. Fitur penarikan & pengubahan nilai aktif kembali.',
                 'data' => [
                     'lock_status' => self::getClassLockStatus($classId, $yearId, $semester),
+                    'affiliated_classes' => $affClasses,
                 ]
             ]);
         }
