@@ -226,28 +226,16 @@
               <span>Export Excel</span>
             </button>
 
-            <!-- Cetak Ledger Nilai Lengkap (Matriks Mapel) - Otomatis Murni -->
+            <!-- Tombol Utama: Cetak Leger Nilai Lengkap (Landscape) -->
             <button
               type="button"
-              @click="printLedgerSheet('original')"
+              @click="openLedgerPrintModal"
               :disabled="!ledgerStudents.length"
-              class="px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-sm active:scale-95"
-              title="Cetak lembar rekap ledger nilai seluruh mata pelajaran (Landscape) urut peringkat otomatis murni"
+              class="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 shadow-sm active:scale-95"
+              title="Cetak lembar rekapitulasi matriks nilai seluruh mata pelajaran (Landscape) dengan Kop resmi madrasah dan identitas kelas"
             >
-              <TableProperties class="w-3.5 h-3.5 text-emerald-200 flex-shrink-0" />
-              <span>Ledger Otomatis</span>
-            </button>
-
-            <!-- Cetak Ledger Nilai Lengkap (Matriks Mapel) - Hasil Atur -->
-            <button
-              type="button"
-              @click="printLedgerSheet('adjusted')"
-              :disabled="!ledgerStudents.length"
-              class="px-3 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-sm active:scale-95"
-              title="Cetak lembar rekap ledger nilai seluruh mata pelajaran (Landscape) hasil penataan wali kelas"
-            >
-              <TableProperties class="w-3.5 h-3.5 text-amber-200 flex-shrink-0" />
-              <span>Ledger Diatur</span>
+              <Printer class="w-3.5 h-3.5 text-emerald-200 flex-shrink-0" />
+              <span>Cetak Leger</span>
             </button>
           </div>
         </div>
@@ -1558,6 +1546,149 @@
       </div>
     </div>
 
+    <!-- MODAL CETAK LEGER NILAI LENGKAP (LANDSCAPE) -->
+    <div
+      v-if="showLedgerPrintModal"
+      class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150 no-print"
+      @click.self="showLedgerPrintModal = false"
+    >
+      <div class="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full shadow-2xl border border-slate-100 space-y-5 animate-in zoom-in-95 duration-200">
+        <!-- Header -->
+        <div class="flex items-start gap-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center flex-shrink-0 border border-emerald-100 shadow-2xs">
+            <Printer class="w-5 h-5" />
+          </div>
+          <div>
+            <h3 class="text-base font-black text-slate-800 font-lexend">
+              Cetak Leger Nilai Siswa (Landscape)
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
+              Mencetak lembar rekapitulasi matriks nilai seluruh mata pelajaran kelas <strong class="text-slate-800">{{ ledgerData?.class?.name }}</strong> lengkap dengan Kop Madrasah resmi dan Pengesahan.
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <!-- Opsi Urutan Peringkat Siswa -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">
+              Urutan Peringkat Siswa
+            </label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label
+                :class="ledgerPrintRankType === 'adjusted' ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/70'"
+                class="p-3 border rounded-2xl cursor-pointer transition-all flex flex-col justify-between space-y-1"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Trophy class="w-3.5 h-3.5 text-amber-600" />
+                    Penataan Wali Kelas
+                  </span>
+                  <input
+                    type="radio"
+                    v-model="ledgerPrintRankType"
+                    value="adjusted"
+                    class="text-emerald-600 focus:ring-emerald-500"
+                  />
+                </div>
+                <p class="text-[10px] text-slate-500 leading-tight">
+                  Mengikuti susunan juara & peringkat yang telah disesuaikan oleh wali kelas.
+                </p>
+              </label>
+
+              <label
+                :class="ledgerPrintRankType === 'original' ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/70'"
+                class="p-3 border rounded-2xl cursor-pointer transition-all flex flex-col justify-between space-y-1"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Award class="w-3.5 h-3.5 text-teal-600" />
+                    Otomatis Murni
+                  </span>
+                  <input
+                    type="radio"
+                    v-model="ledgerPrintRankType"
+                    value="original"
+                    class="text-emerald-600 focus:ring-emerald-500"
+                  />
+                </div>
+                <p class="text-[10px] text-slate-500 leading-tight">
+                  Urut murni berdasarkan nilai rata-rata tertinggi hasil ujian siswa.
+                </p>
+              </label>
+            </div>
+          </div>
+
+          <!-- Opsi Ukuran Kertas -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">
+              Ukuran Kertas Cetak
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <label
+                :class="ledgerPrintPaperSize === 'f4' ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/70'"
+                class="p-3 border rounded-2xl cursor-pointer transition-all flex items-center justify-between"
+              >
+                <div>
+                  <div class="text-xs font-bold text-slate-800">Folio / F4</div>
+                  <div class="text-[10px] text-slate-500">330 × 215 mm (Standar)</div>
+                </div>
+                <input
+                  type="radio"
+                  v-model="ledgerPrintPaperSize"
+                  value="f4"
+                  class="text-emerald-600 focus:ring-emerald-500"
+                />
+              </label>
+
+              <label
+                :class="ledgerPrintPaperSize === 'a4' ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/70'"
+                class="p-3 border rounded-2xl cursor-pointer transition-all flex items-center justify-between"
+              >
+                <div>
+                  <div class="text-xs font-bold text-slate-800">A4</div>
+                  <div class="text-[10px] text-slate-500">297 × 210 mm</div>
+                </div>
+                <input
+                  type="radio"
+                  v-model="ledgerPrintPaperSize"
+                  value="a4"
+                  class="text-emerald-600 focus:ring-emerald-500"
+                />
+              </label>
+            </div>
+          </div>
+
+          <!-- Petunjuk Orientasi Landscape -->
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-1 text-slate-600 flex items-start gap-2.5">
+            <FileSpreadsheet class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+            <div class="text-[11px] leading-relaxed">
+              Orientasi cetak otomatis disetel ke <strong class="text-slate-800 font-bold">Landscape (Mendatar)</strong>. Pastikan pada dialog printer browser opsi <em>"Background graphics"</em> (grafik latar belakang) tercentang agar warna dan arsiran tabel tampil sempurna.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tombol Aksi -->
+        <div class="pt-3 grid grid-cols-2 sm:flex sm:justify-end gap-2 border-t border-slate-100">
+          <button
+            type="button"
+            @click="showLedgerPrintModal = false"
+            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer text-center"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            @click="confirmPrintLedger"
+            class="px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 text-center"
+          >
+            <Printer class="w-4 h-4" />
+            <span>Cetak Sekarang</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- HIDDEN DEDICATED PRINT AREA FOR CLASS RANKING SHEET -->
     <div
       id="asts-ranking-sheet-print-area"
@@ -1592,6 +1723,7 @@
         :city="currentCity"
         :issued-date="currentIssuedDate"
         :rank-type="ledgerSheetRankType"
+        :paper-size="ledgerPrintPaperSize"
       />
     </div>
   </div>
@@ -1616,6 +1748,8 @@ import {
   Download,
   X,
   Trophy,
+  Award,
+  FileSpreadsheet,
   Search,
   ChevronRight,
   ChevronLeft,
@@ -2332,7 +2466,27 @@ function printRankingSheet(type = 'adjusted') {
   }, 150);
 }
 
-function printLedgerSheet(type = 'adjusted') {
+// Ledger Print Modal State & Handlers
+const showLedgerPrintModal = ref(false);
+const ledgerPrintRankType = ref('adjusted'); // 'adjusted' | 'original'
+const ledgerPrintPaperSize = ref('f4'); // 'f4' | 'a4'
+
+function openLedgerPrintModal() {
+  if (!ledgerStudents.value.length) {
+    toast.error('Belum ada data nilai siswa untuk dicetak ledgernya.');
+    return;
+  }
+  ledgerPrintRankType.value = hasManualRanks.value ? 'adjusted' : 'original';
+  ledgerPrintPaperSize.value = selectedPaperSize.value || 'f4';
+  showLedgerPrintModal.value = true;
+}
+
+function confirmPrintLedger() {
+  showLedgerPrintModal.value = false;
+  printLedgerSheet(ledgerPrintRankType.value, ledgerPrintPaperSize.value);
+}
+
+function printLedgerSheet(type = 'adjusted', paper = null) {
   if (!ledgerStudents.value.length) {
     toast.error('Belum ada data nilai siswa untuk dicetak ledgernya.');
     return;
@@ -2342,7 +2496,8 @@ function printLedgerSheet(type = 'adjusted') {
   document.body.classList.remove('printing-ranking');
   document.body.classList.add('printing-ledger');
 
-  const isA4 = selectedPaperSize.value === 'a4';
+  const chosenPaper = paper || selectedPaperSize.value;
+  const isA4 = chosenPaper === 'a4';
   // Ledger selalu dicetak secara Landscape (Folio 330x215mm atau A4 Landscape 297x210mm)
   const paperSize = isA4 ? 'A4 landscape' : '330mm 215mm';
 

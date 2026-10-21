@@ -179,6 +179,44 @@
             </td>
           </tr>
 
+          <!-- Row Rekapitulasi Rata-Rata Kelas -->
+          <tr v-if="sortedStudents.length > 0" style="background-color: #f1f5f9; font-weight: 900; border-top: 1.5px solid #0f172a;">
+            <td colspan="4" style="border: 1px solid #0f172a; padding: 2.5px 4px; text-align: center; text-transform: uppercase; font-size: 8px; color: #0f172a;">
+              RATA-RATA KELAS
+            </td>
+
+            <!-- Rata-rata per Mapel -->
+            <td
+              v-for="sbj in subjects"
+              :key="'ledger-avg-'+sbj.id"
+              style="border: 1px solid #0f172a; padding: 2.5px 1px; text-align: center; font-family: monospace; font-size: 8px; font-weight: 900; color: #065f46;"
+            >
+              {{ getSubjectAverage(sbj.id) }}
+            </td>
+
+            <!-- Total, Rata-rata, Pkt -->
+            <td style="border: 1px solid #0f172a; padding: 2.5px 2px; text-align: center; font-family: monospace; font-size: 8px; font-weight: 900; color: #0f172a; background-color: #f8fafc;">
+              {{ classAverageTotal }}
+            </td>
+            <td style="border: 1px solid #0f172a; padding: 2.5px 2px; text-align: center; font-family: monospace; font-size: 8px; font-weight: 900; color: #065f46; background-color: #ecfdf5;">
+              {{ Number(classAverageScore || 0).toFixed(1) }}
+            </td>
+            <td style="border: 1px solid #0f172a; padding: 2.5px 2px; text-align: center; color: #64748b; font-size: 8px;">
+              -
+            </td>
+
+            <!-- Total Kehadiran Kelas S/I/A -->
+            <td style="border: 1px solid #0f172a; padding: 2.5px 1px; text-align: center; font-family: monospace; font-size: 7.5px; font-weight: bold; color: #334155;">
+              {{ totalSick }}
+            </td>
+            <td style="border: 1px solid #0f172a; padding: 2.5px 1px; text-align: center; font-family: monospace; font-size: 7.5px; font-weight: bold; color: #334155;">
+              {{ totalPermission }}
+            </td>
+            <td style="border: 1px solid #0f172a; padding: 2.5px 1px; text-align: center; font-family: monospace; font-size: 7.5px; font-weight: bold; color: #dc2626;">
+              {{ totalUnexcused }}
+            </td>
+          </tr>
+
           <tr v-if="sortedStudents.length === 0">
             <td :colspan="8 + subjects.length" style="border: 1px solid #94a3b8; padding: 10px; text-align: center; color: #94a3b8; font-style: italic;">
               Tidak ada data peserta didik pada kelas ini.
@@ -347,5 +385,40 @@ const classAverageScore = computed(() => {
   if (!props.students || props.students.length === 0) return 0;
   const total = props.students.reduce((acc, s) => acc + (Number(s.average_score) || 0), 0);
   return total / props.students.length;
+});
+
+const classAverageTotal = computed(() => {
+  if (!props.students || props.students.length === 0) return 0;
+  const total = props.students.reduce((acc, s) => acc + (Number(s.total_score) || 0), 0);
+  return Math.round(total / props.students.length);
+});
+
+function getSubjectAverage(subjectId) {
+  if (!props.students || !props.students.length) return '-';
+  let sum = 0;
+  let count = 0;
+  for (const st of props.students) {
+    const val = st.scores?.[subjectId]?.score;
+    if (val !== undefined && val !== null && val !== '') {
+      sum += Number(val);
+      count++;
+    }
+  }
+  return count > 0 ? (sum / count).toFixed(1) : '-';
+}
+
+const totalSick = computed(() => {
+  if (!props.students) return 0;
+  return props.students.reduce((acc, s) => acc + (Number(s.sick_count) || 0), 0);
+});
+
+const totalPermission = computed(() => {
+  if (!props.students) return 0;
+  return props.students.reduce((acc, s) => acc + (Number(s.permission_count) || 0), 0);
+});
+
+const totalUnexcused = computed(() => {
+  if (!props.students) return 0;
+  return props.students.reduce((acc, s) => acc + (Number(s.unexcused_count) || 0), 0);
 });
 </script>
