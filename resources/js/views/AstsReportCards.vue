@@ -159,9 +159,9 @@
             <button
               type="button"
               @click="openPullModal"
-              :disabled="pullingScores"
-              class="px-3.5 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
-              title="Tarik otomatis nilai dari modul Koreksi Ujian (bisa memilih Nilai Jadi standar rapor atau Nilai Asli)"
+              :disabled="pullingScores || isLocked"
+              class="px-3.5 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+              :title="isLocked ? 'Nilai rapor kelas ini sedang dikunci. Buka kunci terlebih dahulu jika ingin menarik ulang nilai.' : 'Tarik otomatis nilai dari modul Koreksi Ujian (bisa memilih Nilai Jadi standar rapor atau Nilai Asli)'"
             >
               <Sparkles v-if="!pullingScores" class="w-3.5 h-3.5 text-amber-200 flex-shrink-0" />
               <div v-else class="animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full flex-shrink-0"></div>
@@ -172,9 +172,9 @@
             <button
               type="button"
               @click="openResetModal()"
-              :disabled="subjectsWithScoresCount === 0"
+              :disabled="subjectsWithScoresCount === 0 || isLocked"
               class="px-3 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs active:scale-95"
-              title="Kosongkan atau reset nilai rapor (per mata pelajaran atau seluruh kelas)"
+              :title="isLocked ? 'Nilai rapor kelas ini sedang dikunci.' : 'Kosongkan atau reset nilai rapor (per mata pelajaran atau seluruh kelas)'"
             >
               <RotateCcw class="w-3.5 h-3.5 text-rose-600 flex-shrink-0" />
               <span>Reset Nilai</span>
@@ -184,12 +184,35 @@
             <button
               type="button"
               @click="openRankModal"
-              :disabled="!ledgerStudents.length"
-              class="px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
-              title="Atur susunan juara dan nomor urut peringkat siswa di kelas ini"
+              :disabled="!ledgerStudents.length || isLocked"
+              class="px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+              :title="isLocked ? 'Peringkat kelas ini sedang dikunci.' : 'Atur susunan juara dan nomor urut peringkat siswa di kelas ini'"
             >
               <Trophy class="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
               <span>Atur Peringkat</span>
+            </button>
+
+            <!-- Kunci / Buka Kunci Nilai Button -->
+            <button
+              v-if="!isLocked"
+              type="button"
+              @click="openLockModal(true)"
+              :disabled="!ledgerStudents.length"
+              class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+              title="Kunci nilai rapor & peringkat kelas ini agar data final aman dan tidak tertimpa"
+            >
+              <Lock class="w-3.5 h-3.5 text-amber-300 flex-shrink-0" />
+              <span>Kunci Nilai</span>
+            </button>
+            <button
+              v-else
+              type="button"
+              @click="openLockModal(false)"
+              class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+              title="Buka kunci nilai rapor kelas ini jika perlu perbaikan nilai"
+            >
+              <Unlock class="w-3.5 h-3.5 text-slate-950 flex-shrink-0" />
+              <span>Buka Kunci</span>
             </button>
 
             <!-- Export Excel Ledger -->
@@ -225,6 +248,41 @@
             >
               <TableProperties class="w-3.5 h-3.5 text-amber-200 flex-shrink-0" />
               <span>Ledger Diatur</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner Status Kunci Nilai Rapor (Locked State Banner) -->
+        <div
+          v-if="isLocked"
+          class="p-3.5 sm:p-4 rounded-2xl border bg-slate-900 border-slate-800 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200"
+        >
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-9 h-9 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
+              <Lock class="w-4 h-4" />
+            </div>
+            <div class="space-y-0.5 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-black font-lexend text-amber-300">
+                  🔒 NILAI RAPOR ASTS KELAS TELAH DIKUNCI (FINAL)
+                </span>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                  Terproteksi
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-300 leading-tight">
+                Nilai rapor, susunan peringkat, dan catatan kelas telah dibekukan{{ lockStatus?.locked_at ? ' pada ' + formatLockDate(lockStatus.locked_at) : '' }}{{ lockStatus?.locked_by_name ? ' oleh ' + lockStatus.locked_by_name : '' }}. Fitur Tarik Nilai, Reset, dan Pengubahan Peringkat dinonaktifkan demi menjaga keaslian rapor.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
+            <button
+              type="button"
+              @click="openLockModal(false)"
+              class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+            >
+              <Unlock class="w-3.5 h-3.5 text-slate-950" />
+              <span>Buka Kunci</span>
             </button>
           </div>
         </div>
@@ -270,9 +328,9 @@
               v-if="hasManualRanks"
               type="button"
               @click="resetRanksToDefault"
-              :disabled="savingRanks"
-              class="px-3 py-1.5 bg-white hover:bg-amber-100 border border-amber-300 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 disabled:opacity-50"
-              title="Hapus penyesuaian manual dan kembalikan ke perhitungan otomatis"
+              :disabled="savingRanks || isLocked"
+              class="px-3 py-1.5 bg-white hover:bg-amber-100 border border-amber-300 text-amber-900 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+              :title="isLocked ? 'Peringkat dikunci' : 'Hapus penyesuaian manual dan kembalikan ke perhitungan otomatis'"
             >
               <RotateCcw class="w-3.5 h-3.5 text-amber-700" />
               <span>Reset ke Otomatis</span>
@@ -280,7 +338,9 @@
             <button
               type="button"
               @click="openRankModal"
-              class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+              :disabled="isLocked"
+              class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+              :title="isLocked ? 'Peringkat dikunci' : 'Atur susunan juara dan nomor urut peringkat siswa di kelas ini'"
             >
               <Trophy class="w-3.5 h-3.5 text-amber-200" />
               <span>{{ hasManualRanks ? 'Ubah Urutan' : 'Atur Peringkat' }}</span>
@@ -318,7 +378,7 @@
               <span v-else class="text-[10px] text-slate-400 font-mono">⏳</span>
 
               <button
-                v-if="st.has_scores"
+                v-if="st.has_scores && !isLocked"
                 type="button"
                 @click.stop="openResetModal(st.subject_id)"
                 class="ml-0.5 p-0.5 rounded hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
@@ -966,6 +1026,12 @@
         </div>
 
         <form @submit.prevent="saveNotesSubmit" class="p-4 sm:p-6 space-y-4">
+          <!-- Warning if Locked -->
+          <div v-if="isLocked" class="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2.5 text-xs text-amber-950 font-bold">
+            <Lock class="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <span>Nilai dan catatan kelas ini sedang dikunci (read-only). Buka kunci terlebih dahulu jika ingin melakukan perubahan.</span>
+          </div>
+
           <!-- Attendance Counts -->
           <div class="space-y-1">
             <label class="block text-[11px] font-black text-slate-700 uppercase tracking-wider">Rekapitulasi Ketidakhadiran Tengah Semester</label>
@@ -976,7 +1042,8 @@
                   v-model.number="notesForm.sick_count"
                   type="number"
                   min="0"
-                  class="w-full text-center text-sm font-black text-slate-800 bg-white border border-slate-300 rounded-lg py-1 mt-1 focus:ring-2 focus:ring-emerald-400 font-mono"
+                  :disabled="isLocked"
+                  class="w-full text-center text-sm font-black text-slate-800 bg-white border border-slate-300 rounded-lg py-1 mt-1 focus:ring-2 focus:ring-emerald-400 font-mono disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
               <div class="p-2.5 sm:p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
@@ -985,7 +1052,8 @@
                   v-model.number="notesForm.permission_count"
                   type="number"
                   min="0"
-                  class="w-full text-center text-sm font-black text-slate-800 bg-white border border-slate-300 rounded-lg py-1 mt-1 focus:ring-2 focus:ring-emerald-400 font-mono"
+                  :disabled="isLocked"
+                  class="w-full text-center text-sm font-black text-slate-800 bg-white border border-slate-300 rounded-lg py-1 mt-1 focus:ring-2 focus:ring-emerald-400 font-mono disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
               <div class="p-2.5 sm:p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
@@ -994,7 +1062,8 @@
                   v-model.number="notesForm.unexcused_count"
                   type="number"
                   min="0"
-                  class="w-full text-center text-sm font-black text-slate-800 bg-white border border-slate-300 rounded-lg py-1 mt-1 focus:ring-2 focus:ring-emerald-400 font-mono"
+                  :disabled="isLocked"
+                  class="w-full text-center text-sm font-black text-slate-800 bg-white border border-slate-300 rounded-lg py-1 mt-1 focus:ring-2 focus:ring-emerald-400 font-mono disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -1009,12 +1078,13 @@
             <textarea
               v-model="notesForm.homeroom_notes"
               rows="3"
+              :disabled="isLocked"
               placeholder="Contoh: Tingkatkan terus ketekunan belajar dan keaktifan dalam ibadah berjamaah."
-              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:ring-2 focus:ring-emerald-400 focus:bg-white transition-all"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:ring-2 focus:ring-emerald-400 focus:bg-white transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             ></textarea>
             
             <!-- Quick Motivation Suggestions -->
-            <div class="space-y-1 pt-1">
+            <div v-if="!isLocked" class="space-y-1 pt-1">
               <span class="text-[10px] font-bold text-slate-500 block">Pilihan Kalimat Motivasi Cepat (Klik untuk memilih):</span>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 <button
@@ -1037,9 +1107,10 @@
               @click="showNotesModal = false"
               class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer text-center"
             >
-              Batal
+              {{ isLocked ? 'Tutup' : 'Batal' }}
             </button>
             <button
+              v-if="!isLocked"
               type="submit"
               :disabled="savingNotes"
               class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 text-center"
@@ -1285,6 +1356,104 @@
       </div>
     </div>
 
+    <!-- MODAL KUNCI / BUKA KUNCI NILAI RAPOR ASTS -->
+    <div v-if="showLockModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 no-print">
+      <div class="bg-white rounded-2xl sm:rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 transform transition-all">
+        <!-- Header -->
+        <div
+          class="px-5 py-4 sm:px-6 sm:py-5 border-b border-slate-100 flex justify-between items-center"
+          :class="lockModalMode === 'lock' ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white' : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md"
+              :class="lockModalMode === 'lock' ? 'bg-amber-400 text-slate-950 shadow-amber-400/20' : 'bg-white text-amber-600 shadow-white/20'"
+            >
+              <Lock v-if="lockModalMode === 'lock'" class="w-5 h-5" />
+              <Unlock v-else class="w-5 h-5" />
+            </div>
+            <div>
+              <h2 class="text-sm sm:text-base font-black font-lexend uppercase tracking-wider">
+                {{ lockModalMode === 'lock' ? 'Kunci Nilai Rapor ASTS' : 'Buka Kunci Nilai Rapor' }}
+              </h2>
+              <p class="text-[11px] sm:text-xs opacity-90 font-medium">
+                Kelas {{ ledgerData?.class?.name }} &bull; Semester {{ activeSemester === 'ganjil' ? 'Ganjil' : 'Genap' }}
+              </p>
+            </div>
+          </div>
+          <button
+            @click="showLockModal = false"
+            class="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white cursor-pointer"
+          >
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-4 sm:p-6 space-y-4">
+          <div v-if="lockModalMode === 'lock'" class="space-y-3">
+            <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5 text-xs text-amber-950">
+              <AlertTriangle class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <p class="leading-relaxed">
+                Pastikan seluruh <strong>16 mata pelajaran</strong> sudah disetorkan dan susunan peringkat siswa sudah sesuai sebelum mengunci rapor.
+              </p>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs space-y-2 text-slate-700">
+              <div class="font-bold text-slate-900">Efek saat nilai dikunci:</div>
+              <ul class="space-y-1.5 list-disc list-inside text-slate-600">
+                <li>Fitur <strong>⚡ Tarik Nilai</strong> otomatis akan dinonaktifkan.</li>
+                <li>Tombol <strong>Reset Nilai</strong> dan pengosongan nilai per mapel dinonaktifkan.</li>
+                <li>Penyesuaian nomor peringkat siswa dibekukan.</li>
+                <li>Catatan wali kelas terlindungi dari ketidaksengajaan edit.</li>
+                <li><strong class="text-emerald-700">Cetak Rapor, Ledger, dan Export Excel tetap dapat dilakukan kapan saja.</strong></li>
+              </ul>
+            </div>
+          </div>
+
+          <div v-else class="space-y-3">
+            <div class="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-950">
+              <AlertTriangle class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+              <p class="leading-relaxed">
+                Membuka kunci akan mengaktifkan kembali tombol <strong>Tarik Nilai</strong>, <strong>Reset Nilai</strong>, dan <strong>Atur Peringkat</strong>. Lakukan ini hanya bila ada revisi resmi dari guru mapel atau siswa susulan.
+              </p>
+            </div>
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-slate-700">Alasan Pembukaan Kunci (Opsional):</label>
+              <input
+                v-model="lockReason"
+                type="text"
+                placeholder="Contoh: Revisi nilai susulan mapel IPA"
+                class="w-full text-xs font-medium rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 shadow-2xs"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-4 sm:p-5 border-t border-slate-100 flex items-center justify-between gap-2.5 bg-slate-50/50">
+          <button
+            type="button"
+            @click="showLockModal = false"
+            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            @click="executeToggleLock"
+            :disabled="togglingLock"
+            class="px-5 py-2 font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 text-white"
+            :class="lockModalMode === 'lock' ? 'bg-slate-900 hover:bg-black' : 'bg-amber-600 hover:bg-amber-700'"
+          >
+            <Lock v-if="lockModalMode === 'lock' && !togglingLock" class="w-4 h-4 text-amber-300" />
+            <Unlock v-else-if="!togglingLock" class="w-4 h-4" />
+            <div v-else class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+            <span>{{ togglingLock ? 'Memproses...' : (lockModalMode === 'lock' ? 'Ya, Kunci Nilai Sekarang' : 'Ya, Buka Kunci') }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL ATUR TITIMANGSA RAPOR (TEMPAT & TANGGAL CETAK) -->
     <div v-if="showTitimangsaModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 no-print">
       <div class="bg-white rounded-2xl sm:rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 transform transition-all">
@@ -1445,6 +1614,8 @@ import {
   ArrowDown,
   Info,
   ClipboardList,
+  Lock,
+  Unlock,
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -1482,6 +1653,9 @@ const activeYear = ref(null);
 const selectedClassId = ref('');
 const ledgerData = ref(null);
 const isHomeroomOnly = ref(false);
+
+const isLocked = computed(() => Boolean(ledgerData.value?.lock_status?.is_locked));
+const lockStatus = computed(() => ledgerData.value?.lock_status || null);
 
 const selectedStudentId = ref('');
 const singleReportData = ref(null);
@@ -1521,6 +1695,12 @@ const showResetModal = ref(false);
 const resettingScores = ref(false);
 const resetScope = ref('single'); // 'single' | 'all'
 const selectedResetSubjectId = ref('');
+
+// Modal Lock / Unlock Scores
+const showLockModal = ref(false);
+const lockModalMode = ref('lock'); // 'lock' | 'unlock'
+const lockReason = ref('');
+const togglingLock = ref(false);
 
 // Modal Titimangsa
 const showTitimangsaModal = ref(false);
@@ -1847,6 +2027,55 @@ async function resetRanksToDefault() {
   }
 }
 
+function openLockModal(shouldLock) {
+  if (!selectedClassId.value) {
+    toast.error('Silakan pilih kelas terlebih dahulu.');
+    return;
+  }
+  lockModalMode.value = shouldLock ? 'lock' : 'unlock';
+  lockReason.value = '';
+  showLockModal.value = true;
+}
+
+async function executeToggleLock() {
+  if (!selectedClassId.value) return;
+  togglingLock.value = true;
+  const shouldLock = lockModalMode.value === 'lock';
+  try {
+    const res = await api.post('/teacher/asts-reports/toggle-lock', {
+      class_id: selectedClassId.value,
+      semester: activeSemester.value,
+      academic_year_id: activeYear.value?.id,
+      lock: shouldLock,
+      reason: lockReason.value || null,
+    });
+    toast.success(res?.message || (shouldLock ? 'Nilai rapor berhasil dikunci!' : 'Kunci nilai berhasil dibuka.'));
+    showLockModal.value = false;
+    lockReason.value = '';
+    await fetchLedger(true);
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal mengubah status kunci nilai.');
+  } finally {
+    togglingLock.value = false;
+  }
+}
+
+function formatLockDate(isoStr) {
+  if (!isoStr) return '';
+  try {
+    const d = new Date(isoStr);
+    return d.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch (e) {
+    return isoStr;
+  }
+}
+
 function openNotesModal(student) {
   if (!student) return;
   editingStudent.value = student;
@@ -1868,6 +2097,10 @@ function openNotesModalForCurrentStudent() {
 }
 
 async function saveNotesSubmit() {
+  if (isLocked.value) {
+    toast.error('Nilai dan catatan kelas ini sedang dikunci. Silakan buka kunci terlebih dahulu jika ingin mengubah catatan.');
+    return;
+  }
   savingNotes.value = true;
   try {
     await api.post('/teacher/asts-reports/save-notes', notesForm);
@@ -1885,6 +2118,10 @@ async function saveNotesSubmit() {
 }
 
 function openBulkNotesModal(initialSearchText = '') {
+  if (isLocked.value) {
+    toast.error('Nilai dan catatan kelas ini sedang dikunci. Silakan buka kunci terlebih dahulu jika ingin mengubah catatan.');
+    return;
+  }
   if (!selectedClassId.value || !ledgerStudents.value.length) {
     toast.error('Silakan pilih kelas yang memiliki data siswa terlebih dahulu.');
     return;

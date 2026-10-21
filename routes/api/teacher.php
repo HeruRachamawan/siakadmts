@@ -78,6 +78,7 @@ Route::middleware(['auth:sanctum', 'role:teacher,admin,operator,kurikulum,kepala
     Route::post('asts-reports/adjust-ranks', [\App\Http\Controllers\AstsReportController::class, 'adjustRanks']);
     Route::post('asts-reports/reset-ranks', [\App\Http\Controllers\AstsReportController::class, 'resetRanks']);
     Route::post('asts-reports/reset-scores', [\App\Http\Controllers\AstsReportController::class, 'resetScores']);
+    Route::post('asts-reports/toggle-lock', [\App\Http\Controllers\AstsReportController::class, 'toggleLock']);
     Route::get('asts-reports/student/{studentId}', [\App\Http\Controllers\AstsReportController::class, 'studentReport']);
     Route::get('asts-reports/batch-class/{classId}', [\App\Http\Controllers\AstsReportController::class, 'batchClassReport']);
 

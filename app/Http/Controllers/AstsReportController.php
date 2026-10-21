@@ -476,6 +476,7 @@ class AstsReportController extends Controller
                 'total_students' => count($ledgerStudents),
                 'class_average_score' => $classAverageScore,
                 'school_setting' => self::getOfficialSchoolSetting(),
+                'lock_status' => self::getClassLockStatus((int)$classId, (int)$yearId, $semester),
             ]
         ]);
     }
@@ -505,6 +506,14 @@ class AstsReportController extends Controller
 
         $activeYear = AcademicYear::where('is_active', true)->first();
         $yearId = $request->input('academic_year_id', $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));
+
+        $lockStatus = self::getClassLockStatus((int)$classId, (int)$yearId, $semester);
+        if ($lockStatus['is_locked']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Nilai rapor kelas ini sedang dikunci. Silakan buka kunci terlebih dahulu untuk menarik ulang nilai.'
+            ], 422);
+        }
 
         $class = ClassRoom::findOrFail($classId);
         $classStudents = $this->getStudentsForClass((int)$classId);
@@ -671,6 +680,14 @@ class AstsReportController extends Controller
         $activeYear = AcademicYear::where('is_active', true)->first();
         $yearId = $request->input('academic_year_id', $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));
 
+        $lockStatus = self::getClassLockStatus($classId, (int)$yearId, $semester);
+        if ($lockStatus['is_locked']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Nilai rapor kelas ini sedang dikunci. Silakan buka kunci terlebih dahulu untuk mengosongkan nilai.'
+            ], 422);
+        }
+
         $classStudents = $this->getStudentsForClass($classId);
         $classStudentIds = $classStudents->pluck('id')->toArray();
 
@@ -732,6 +749,15 @@ class AstsReportController extends Controller
             ], 403);
         }
 
+        $targetClassId = (int)($student->class_id ?: $student->lokal_class_id);
+        $lockStatus = self::getClassLockStatus($targetClassId, (int)$request->academic_year_id, $request->semester);
+        if ($lockStatus['is_locked']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Nilai dan catatan kelas ini sedang dikunci. Silakan buka kunci terlebih dahulu untuk mengubah catatan.'
+            ], 422);
+        }
+
         $report = AstsReport::updateOrCreate(
             [
                 'student_id' => $request->student_id,
@@ -779,6 +805,14 @@ class AstsReportController extends Controller
                 'status' => 'error',
                 'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
             ], 403);
+        }
+
+        $lockStatus = self::getClassLockStatus($classId, $academicYearId, $semester);
+        if ($lockStatus['is_locked']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Nilai dan catatan kelas ini sedang dikunci. Silakan buka kunci terlebih dahulu untuk mengubah catatan.'
+            ], 422);
         }
 
         $items = $request->input('items', []);
@@ -875,6 +909,123 @@ class AstsReportController extends Controller
     }
 
     /**
+     * Get lock status of ASTS report for a class, semester, and academic year.
+     */
+    public static function getClassLockStatus(int $classId, ?int $yearId, string $semester): array
+    {
+        $activeYear = AcademicYear::where('is_active', true)->first();
+        $yearId = $yearId ?: ($activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));
+        $key = "asts_lock_{$classId}_{$yearId}_{$semester}";
+
+        $raw = \App\Models\Setting::where('key', $key)->value('value');
+        if (!$raw) {
+            return [
+                'is_locked' => false,
+                'locked_at' => null,
+                'locked_by_name' => null,
+                'locked_by_role' => null,
+                'reason' => null,
+            ];
+        }
+
+        $data = json_decode($raw, true);
+        if (!is_array($data) || empty($data['is_locked'])) {
+            return [
+                'is_locked' => false,
+                'locked_at' => null,
+                'locked_by_name' => null,
+                'locked_by_role' => null,
+                'reason' => null,
+            ];
+        }
+
+        return [
+            'is_locked' => true,
+            'locked_at' => $data['locked_at'] ?? null,
+            'locked_by_name' => $data['locked_by_name'] ?? null,
+            'locked_by_role' => $data['locked_by_role'] ?? null,
+            'reason' => $data['reason'] ?? null,
+        ];
+    }
+
+    /**
+     * Toggle lock (kunci / buka kunci) nilai rapor ASTS kelas.
+     */
+    public function toggleLock(Request $request)
+    {
+        $request->validate([
+            'class_id' => 'required|exists:classes,id',
+            'semester' => 'required|string|in:ganjil,genap',
+            'academic_year_id' => 'nullable|exists:academic_years,id',
+            'lock' => 'required|boolean',
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $classId = (int)$request->input('class_id');
+        $semester = $request->input('semester');
+        $activeYear = AcademicYear::where('is_active', true)->first();
+        $yearId = $request->input('academic_year_id', $activeYear?->id ?? AcademicYear::orderBy('id', 'desc')->value('id'));
+        $shouldLock = (bool)$request->input('lock');
+        $reason = trim($request->input('reason', ''));
+
+        if (!$this->checkHomeroomAccess($request->user(), $classId, $request)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda tidak memiliki izin untuk mengelola status kunci nilai kelas ini.'
+            ], 403);
+        }
+
+        $user = $request->user();
+        $key = "asts_lock_{$classId}_{$yearId}_{$semester}";
+
+        if ($shouldLock) {
+            $lockData = [
+                'is_locked' => true,
+                'locked_at' => now()->toIso8601String(),
+                'locked_by_id' => $user?->id,
+                'locked_by_name' => $user?->name ?? 'Wali Kelas',
+                'locked_by_role' => $user?->role ?? 'teacher',
+                'reason' => $reason,
+            ];
+
+            \App\Models\Setting::updateOrCreate(
+                ['key' => $key],
+                ['value' => json_encode($lockData)]
+            );
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Nilai rapor ASTS kelas berhasil dikunci. Data kini terproteksi.',
+                'data' => [
+                    'lock_status' => self::getClassLockStatus($classId, $yearId, $semester),
+                ]
+            ]);
+        } else {
+            $unlockData = [
+                'is_locked' => false,
+                'unlocked_at' => now()->toIso8601String(),
+                'unlocked_by_id' => $user?->id,
+                'unlocked_by_name' => $user?->name ?? 'Wali Kelas',
+                'unlocked_by_role' => $user?->role ?? 'teacher',
+                'reason' => $reason,
+            ];
+
+            \App\Models\Setting::updateOrCreate(
+                ['key' => $key],
+                ['value' => json_encode($unlockData)]
+            );
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Kunci nilai rapor ASTS berhasil dibuka. Fitur penarikan & pengubahan nilai aktif kembali.',
+                'data' => [
+                    'lock_status' => self::getClassLockStatus($classId, $yearId, $semester),
+                ]
+            ]);
+        }
+    }
+
+    /**
      * Adjust student rankings with optional smart score adjustment.
      */
     public function adjustRanks(Request $request)
@@ -909,6 +1060,14 @@ class AstsReportController extends Controller
                 'status' => 'error',
                 'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
             ], 403);
+        }
+
+        $lockStatus = self::getClassLockStatus((int)$classId, (int)$academicYearId, $semester);
+        if ($lockStatus['is_locked']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Peringkat kelas ini sedang dikunci. Silakan buka kunci terlebih dahulu jika ingin mengatur peringkat.'
+            ], 422);
         }
 
         DB::beginTransaction();
@@ -1168,6 +1327,14 @@ class AstsReportController extends Controller
                 'status' => 'error',
                 'message' => 'Anda hanya memiliki izin untuk mengelola Rapor ASTS kelas binaan Anda.'
             ], 403);
+        }
+
+        $lockStatus = self::getClassLockStatus((int)$classId, (int)$academicYearId, $semester);
+        if ($lockStatus['is_locked']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Peringkat kelas ini sedang dikunci. Silakan buka kunci terlebih dahulu jika ingin me-reset peringkat.'
+            ], 422);
         }
 
         $students = $this->getStudentsForClass((int)$classId);
