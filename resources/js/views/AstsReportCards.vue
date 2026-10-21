@@ -1684,6 +1684,56 @@
             </div>
           </div>
 
+          <!-- Opsi Target Halaman (Fit to Page) -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">
+              Tata Letak & Kepadatan Halaman
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <label
+                :class="ledgerPrintFitMode === 'fit' ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/70'"
+                class="p-2.5 border rounded-2xl cursor-pointer transition-all flex flex-col justify-between space-y-1"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Sparkles class="w-3.5 h-3.5 text-emerald-600" />
+                    Pas 1 Halaman (Auto Fit)
+                  </span>
+                  <input
+                    type="radio"
+                    v-model="ledgerPrintFitMode"
+                    value="fit"
+                    class="text-emerald-600 focus:ring-emerald-500"
+                  />
+                </div>
+                <p class="text-[10px] text-slate-500 leading-tight">
+                  Menyesuaikan baris & kop otomatis agar seluruh siswa (hingga 45+ siswa) pas dalam 1 lembar tanpa terpotong.
+                </p>
+              </label>
+
+              <label
+                :class="ledgerPrintFitMode === 'standard' ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/70'"
+                class="p-2.5 border rounded-2xl cursor-pointer transition-all flex flex-col justify-between space-y-1"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <TableProperties class="w-3.5 h-3.5 text-teal-600" />
+                    Standar / Multi-Halaman
+                  </span>
+                  <input
+                    type="radio"
+                    v-model="ledgerPrintFitMode"
+                    value="standard"
+                    class="text-emerald-600 focus:ring-emerald-500"
+                  />
+                </div>
+                <p class="text-[10px] text-slate-500 leading-tight">
+                  Ukuran teks dan baris standar jika jumlah siswa sangat banyak (>50 siswa) atau ingin dicetak beberapa lembar.
+                </p>
+              </label>
+            </div>
+          </div>
+
           <!-- Petunjuk Orientasi Landscape -->
           <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-1 text-slate-600 flex items-start gap-2.5">
             <FileSpreadsheet class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
@@ -1749,6 +1799,7 @@
         :issued-date="currentIssuedDate"
         :rank-type="ledgerSheetRankType"
         :paper-size="ledgerPrintPaperSize"
+        :fit-mode="ledgerSheetFitMode"
       />
     </div>
   </div>
@@ -2514,6 +2565,8 @@ function printRankingSheet(type = 'adjusted') {
 const showLedgerPrintModal = ref(false);
 const ledgerPrintRankType = ref('adjusted'); // 'adjusted' | 'original'
 const ledgerPrintPaperSize = ref('f4'); // 'f4' | 'a4'
+const ledgerPrintFitMode = ref('fit'); // 'fit' | 'standard'
+const ledgerSheetFitMode = ref('fit');
 
 function openLedgerPrintModal() {
   if (!ledgerStudents.value.length) {
@@ -2522,28 +2575,32 @@ function openLedgerPrintModal() {
   }
   ledgerPrintRankType.value = hasManualRanks.value ? 'adjusted' : 'original';
   ledgerPrintPaperSize.value = selectedPaperSize.value || 'f4';
+  ledgerPrintFitMode.value = 'fit';
   showLedgerPrintModal.value = true;
 }
 
 function confirmPrintLedger() {
   showLedgerPrintModal.value = false;
-  printLedgerSheet(ledgerPrintRankType.value, ledgerPrintPaperSize.value);
+  printLedgerSheet(ledgerPrintRankType.value, ledgerPrintPaperSize.value, ledgerPrintFitMode.value);
 }
 
-function printLedgerSheet(type = 'adjusted', paper = null) {
+function printLedgerSheet(type = 'adjusted', paper = null, fit = 'fit') {
   if (!ledgerStudents.value.length) {
     toast.error('Belum ada data nilai siswa untuk dicetak ledgernya.');
     return;
   }
   ledgerSheetRankType.value = type;
+  ledgerSheetFitMode.value = fit;
   printTarget.value = 'ledger';
   document.body.classList.remove('printing-ranking');
   document.body.classList.add('printing-ledger');
 
-  const chosenPaper = paper || selectedPaperSize.value;
+  const chosenPaper = paper || ledgerPrintPaperSize.value || 'f4';
   const isA4 = chosenPaper === 'a4';
   // Ledger selalu dicetak secara Landscape (Folio 330x215mm atau A4 Landscape 297x210mm)
   const paperSize = isA4 ? 'A4 landscape' : '330mm 215mm';
+  // Margin optimal untuk print: A4 (3mm 5mm 3mm 5mm), F4 (3.5mm 6mm 3.5mm 6mm)
+  const pageMargin = isA4 ? '3mm 5mm 3mm 5mm' : '3.5mm 6mm 3.5mm 6mm';
 
   let styleEl = document.getElementById('asts-print-page-style');
   if (!styleEl) {
@@ -2555,7 +2612,11 @@ function printLedgerSheet(type = 'adjusted', paper = null) {
     @media print {
       @page {
         size: ${paperSize};
-        margin: 4mm 6mm 4mm 6mm;
+        margin: ${pageMargin} !important;
+      }
+      body.printing-ledger {
+        margin: 0 !important;
+        padding: 0 !important;
       }
     }
   `;
@@ -2567,7 +2628,7 @@ function printLedgerSheet(type = 'adjusted', paper = null) {
       printTarget.value = 'report';
       document.body.classList.remove('printing-ledger');
     }, 1000);
-  }, 150);
+  }, 200);
 }
 
 function triggerPrint() {
@@ -2817,9 +2878,7 @@ onMounted(() => {
     break-inside: avoid !important;
   }
 
-  @page {
-    margin: 4mm 8mm 4mm 8mm !important;
-  }
+  /* Margin dinamis dikelola oleh masing-masing fungsi cetak di styleEl */
 
   /* Pastikan border tabel rapor terlihat tajam */
   table {
