@@ -1030,6 +1030,7 @@
       :class-name="ledgerData?.class?.name || ''"
       :semester="activeSemester"
       :students="ledgerStudents"
+      :subjects="subjectsList"
       :saving="savingRanks"
       @close="showRankModal = false"
       @save="onSaveRankAdjust"
@@ -2223,7 +2224,7 @@ function openRankModal() {
   showRankModal.value = true;
 }
 
-async function onSaveRankAdjust({ ranks, adjust_scores }) {
+async function onSaveRankAdjust({ ranks, adjust_scores, locked_subject_ids }) {
   if (!selectedClassId.value) return;
   savingRanks.value = true;
   try {
@@ -2233,6 +2234,7 @@ async function onSaveRankAdjust({ ranks, adjust_scores }) {
       academic_year_id: activeYear.value?.id,
       ranks,
       adjust_scores: Boolean(adjust_scores),
+      locked_subject_ids: Array.isArray(locked_subject_ids) ? locked_subject_ids : [],
     };
 
     const res = await api.post('/teacher/asts-reports/adjust-ranks', payload);

@@ -1125,6 +1125,8 @@ class AstsReportController extends Controller
             'ranks.*.student_id' => 'required|exists:students,id',
             'ranks.*.rank' => 'required|integer|min:1',
             'adjust_scores' => 'nullable|boolean',
+            'locked_subject_ids' => 'nullable|array',
+            'locked_subject_ids.*' => 'integer|exists:subjects,id',
         ]);
 
         $classId = $request->input('class_id');
@@ -1132,6 +1134,7 @@ class AstsReportController extends Controller
         $academicYearId = $request->input('academic_year_id');
         $rankList = $request->input('ranks');
         $shouldAdjustScores = (bool) $request->input('adjust_scores', false);
+        $lockedSubjectIds = array_map('intval', (array) $request->input('locked_subject_ids', []));
 
         // Ensure no duplicate ranks exist in submitted list
         $submittedRankValues = array_column($rankList, 'rank');
@@ -1174,8 +1177,8 @@ class AstsReportController extends Controller
             }
 
             // 2. If score adjustment is requested:
-            // Adjust subject scores proportionally so that higher ranked students maintain higher or equal averages,
-            // with a STRICT GUARANTEE that no score will exceed the maximum score already pulled.
+            // Adjust subject scores proportionally within bounded corridor [KKM Floor .. Capped Ceiling]
+            // with STRICT EXEMPTION for any locked subjects selected by the homeroom teacher.
             if ($shouldAdjustScores) {
                 $studentIds = array_column($rankList, 'student_id');
                 $scores = AstsSubjectScore::whereIn('student_id', $studentIds)
@@ -1308,6 +1311,11 @@ class AstsReportController extends Controller
                         $factor = $currentAvg > 0 ? ($targetAvg / $currentAvg) : 1.0;
 
                         foreach ($sScores as $sc) {
+                            // JIKA MAPEL INI DIKUNCI OLEH GURU/WALI KELAS, JANGAN DISENTUH SAMA SEKALI!
+                            if (in_array((int)$sc->subject_id, $lockedSubjectIds)) {
+                                continue;
+                            }
+
                             $kkm = (int) ($subjectKkmMap[$sc->subject_id] ?? ($sc->kkm ?: 75));
                             $subjectOriginalMax = $maxScoreBySubject[$sc->subject_id] ?? 90;
                             // Subject ceiling: do not explode beyond 94-95 or original max
@@ -1330,6 +1338,7 @@ class AstsReportController extends Controller
                     // Never equal, while strictly:
                     // 1. Lower bound is KKM (never turns red)
                     // 2. Upper bound is subjectCeiling (never explodes)
+                    // 3. Locked subjects are 100% exempted
                     $rankedStudentIds = array_column($rankedWithScores, 'student_id');
                     $refreshedScores = AstsSubjectScore::whereIn('student_id', $rankedStudentIds)
                         ->where('academic_year_id', $academicYearId)
@@ -1356,9 +1365,13 @@ class AstsReportController extends Controller
                                 $anyConflict = true;
                                 $diff = ($nextTotal - $currTotal) + 1;
 
-                                // Priority 1: Safely decrease next student's scores only down to KKM
+                                // Priority 1: Safely decrease next student's scores only down to KKM on UNLOCKED subjects
                                 foreach ($nextStudentScores->sortByDesc('score') as $sc) {
                                     if ($diff <= 0) break;
+                                    if (in_array((int)$sc->subject_id, $lockedSubjectIds)) {
+                                        continue; // Lewatkan mapel terkunci!
+                                    }
+
                                     $kkm = (int) ($subjectKkmMap[$sc->subject_id] ?? ($sc->kkm ?: 75));
                                     $roomDown = $sc->score - $kkm;
                                     if ($roomDown > 0) {
@@ -1369,10 +1382,14 @@ class AstsReportController extends Controller
                                     }
                                 }
 
-                                // Priority 2: If deficit still remains, safely increase curr student's scores up to subjectCeiling
+                                // Priority 2: Safely increase curr student's scores up to subjectCeiling on UNLOCKED subjects
                                 if ($diff > 0) {
                                     foreach ($currStudentScores->sortBy('score') as $sc) {
                                         if ($diff <= 0) break;
+                                        if (in_array((int)$sc->subject_id, $lockedSubjectIds)) {
+                                            continue; // Lewatkan mapel terkunci!
+                                        }
+
                                         $kkm = (int) ($subjectKkmMap[$sc->subject_id] ?? ($sc->kkm ?: 75));
                                         $subjectOriginalMax = $maxScoreBySubject[$sc->subject_id] ?? 90;
                                         $subjectCeiling = (int) min(94, max($kkm + 3, $subjectOriginalMax));
@@ -1387,10 +1404,14 @@ class AstsReportController extends Controller
                                     }
                                 }
 
-                                // Priority 3: Fallback safety if tightly clustered, allow curr student to go up to 95 max
+                                // Priority 3: Fallback safety if tightly clustered, allow curr student to go up to 95 max on UNLOCKED subjects
                                 if ($diff > 0) {
                                     foreach ($currStudentScores->sortBy('score') as $sc) {
                                         if ($diff <= 0) break;
+                                        if (in_array((int)$sc->subject_id, $lockedSubjectIds)) {
+                                            continue; // Lewatkan mapel terkunci!
+                                        }
+
                                         $kkm = (int) ($subjectKkmMap[$sc->subject_id] ?? ($sc->kkm ?: 75));
                                         $roomUp = 95 - $sc->score;
                                         if ($roomUp > 0) {
@@ -1413,11 +1434,16 @@ class AstsReportController extends Controller
 
             DB::commit();
 
+            $lockedCount = count($lockedSubjectIds);
+            $successMsg = $shouldAdjustScores
+                ? ($lockedCount > 0
+                    ? "Peringkat dan nilai siswa berhasil diselaraskan (dengan {$lockedCount} mata pelajaran dikunci murni tanpa diubah)!"
+                    : 'Peringkat dan nilai siswa berhasil diselaraskan (nilai dijamin tuntas minimal KKM dan tidak melebihi batas wajar)!')
+                : 'Peringkat siswa berhasil diperbarui tanpa mengubah nilai mata pelajaran yang sudah ditarik!';
+
             return response()->json([
                 'status' => 'success',
-                'message' => $shouldAdjustScores
-                    ? 'Peringkat dan nilai siswa berhasil diselaraskan (nilai dijamin tuntas minimal KKM dan tidak melebihi batas wajar)!'
-                    : 'Peringkat siswa berhasil diperbarui tanpa mengubah nilai mata pelajaran yang sudah ditarik!',
+                'message' => $successMsg,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

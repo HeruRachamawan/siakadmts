@@ -249,6 +249,59 @@
                   </span>
                 </div>
               </div>
+
+              <!-- Pemilihan Mapel yang Dikunci (Murni Tanpa Berubah) -->
+              <div v-if="adjustScores && subjects.length > 0" class="mt-3 pt-3 border-t border-amber-200/60 space-y-2" @click.stop>
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                  <div class="flex items-center gap-1.5 text-xs font-black text-slate-800">
+                    <Lock class="w-3.5 h-3.5 text-amber-700" />
+                    <span>Pilih Mapel yang DIKUNCI MURNI (Nilai Tidak Boleh Diubah):</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button
+                      v-if="lockedSubjectIds.length > 0"
+                      type="button"
+                      @click="lockedSubjectIds = []"
+                      class="text-[10px] text-slate-500 hover:text-slate-800 font-bold underline cursor-pointer"
+                    >
+                      Buka Semua
+                    </button>
+                    <span v-if="lockedSubjectIds.length > 0" class="text-slate-300">|</span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-2xs"
+                      :class="lockedSubjectIds.length > 0 ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-slate-100 text-slate-600 border-slate-200'"
+                    >
+                      {{ lockedSubjectIds.length }} Mapel Terkunci
+                    </span>
+                  </div>
+                </div>
+                <p class="text-[11px] text-slate-600 leading-relaxed">
+                  Jika ada guru yang meminta agar nilai mapelnya <strong>tetap asli 100%</strong>, klik mapel tersebut untuk menguncinya 🔒. Penyelarasan nilai hanya akan dialihkan ke mapel lain yang tidak terkunci.
+                </p>
+
+                <div class="flex flex-wrap gap-1.5 pt-1 max-h-36 overflow-y-auto p-1.5 bg-white/80 rounded-xl border border-amber-200/60 shadow-inner">
+                  <button
+                    v-for="sbj in subjects"
+                    :key="'lock-sbj-' + sbj.id"
+                    type="button"
+                    @click="toggleLockSubject(sbj.id)"
+                    class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border select-none"
+                    :class="lockedSubjectIds.includes(sbj.id)
+                      ? 'bg-rose-50 text-rose-800 border-rose-300 shadow-xs ring-1 ring-rose-400/30'
+                      : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'"
+                    :title="lockedSubjectIds.includes(sbj.id) ? 'Mapel ini TERKUNCI (Nilai tetap asli 100%)' : 'Klik untuk mengunci nilai mapel ini'"
+                  >
+                    <Lock v-if="lockedSubjectIds.includes(sbj.id)" class="w-3 h-3 text-rose-600 flex-shrink-0" />
+                    <Unlock v-else class="w-3 h-3 text-slate-400 flex-shrink-0" />
+                    <span>{{ sbj.name || sbj.code }}</span>
+                    <span
+                      v-if="lockedSubjectIds.includes(sbj.id)"
+                      class="text-[9px] font-black uppercase tracking-wider text-rose-700 bg-white/90 px-1 py-0.2 rounded border border-rose-200"
+                    >
+                      Terkunci
+                    </span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -301,13 +354,14 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { Trophy, X, ArrowUp, ArrowDown, AlertTriangle, Sparkles, RotateCcw, Check, ShieldCheck } from 'lucide-vue-next';
+import { Trophy, X, ArrowUp, ArrowDown, AlertTriangle, Sparkles, RotateCcw, Check, ShieldCheck, Lock, Unlock } from 'lucide-vue-next';
 
 const props = defineProps({
   show: { type: Boolean, default: false },
   className: { type: String, default: '' },
   semester: { type: String, default: 'ganjil' },
   students: { type: Array, default: () => [] },
+  subjects: { type: Array, default: () => [] },
   saving: { type: Boolean, default: false },
 });
 
@@ -315,6 +369,7 @@ const emit = defineEmits(['close', 'save', 'reset-default']);
 
 const localRankList = ref([]);
 const adjustScores = ref(false);
+const lockedSubjectIds = ref([]);
 
 watch(
   () => props.show,
@@ -348,6 +403,17 @@ function initRankList() {
   }));
 
   adjustScores.value = false;
+  lockedSubjectIds.value = [];
+}
+
+function toggleLockSubject(subjectId) {
+  const numId = Number(subjectId);
+  const idx = lockedSubjectIds.value.indexOf(numId);
+  if (idx > -1) {
+    lockedSubjectIds.value.splice(idx, 1);
+  } else {
+    lockedSubjectIds.value.push(numId);
+  }
 }
 
 function moveStudentRank(index, direction) {
@@ -417,6 +483,7 @@ function handleSave() {
       rank: parseInt(item.rank) || 1,
     })),
     adjust_scores: Boolean(adjustScores.value),
+    locked_subject_ids: Boolean(adjustScores.value) ? lockedSubjectIds.value : [],
   });
 }
 </script>
