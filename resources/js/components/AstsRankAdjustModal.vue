@@ -198,7 +198,7 @@
           </div>
         </div>
 
-        <!-- Opsi Penyelarasan Nilai Siswa Sesuai Peringkat -->
+        <!-- Opsi 1: Penyelarasan Nilai Siswa Sesuai Peringkat -->
         <div
           class="p-4 rounded-2xl border transition-all cursor-pointer select-none"
           :class="adjustScores 
@@ -249,60 +249,76 @@
                   </span>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
 
-              <!-- Pemilihan Mapel yang Dikunci (Murni Tanpa Berubah) -->
-              <div v-if="adjustScores && subjects.length > 0" class="mt-3 pt-3 border-t border-amber-200/60 space-y-2" @click.stop>
-                <div class="flex items-center justify-between gap-2 flex-wrap">
-                  <div class="flex items-center gap-1.5 text-xs font-black text-slate-800">
-                    <Lock class="w-3.5 h-3.5 text-amber-700" />
-                    <span>Pilih Mapel yang DIKUNCI MURNI (Nilai Tidak Boleh Diubah):</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button
-                      v-if="lockedSubjectIds.length > 0"
-                      type="button"
-                      @click="lockedSubjectIds = []"
-                      class="text-[10px] text-slate-500 hover:text-slate-800 font-bold underline cursor-pointer"
-                    >
-                      Buka Semua
-                    </button>
-                    <span v-if="lockedSubjectIds.length > 0" class="text-slate-300">|</span>
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-2xs"
-                      :class="lockedSubjectIds.length > 0 ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-slate-100 text-slate-600 border-slate-200'"
-                    >
-                      {{ lockedSubjectIds.length }} Mapel Terkunci
-                    </span>
-                  </div>
-                </div>
-                <p class="text-[11px] text-slate-600 leading-relaxed">
-                  Jika ada guru yang meminta agar nilai mapelnya <strong>tetap asli 100%</strong>, klik mapel tersebut untuk menguncinya 🔒. Penyelarasan nilai hanya akan dialihkan ke mapel lain yang tidak terkunci.
-                </p>
-
-                <div class="flex flex-wrap gap-1.5 pt-1 max-h-36 overflow-y-auto p-1.5 bg-white/80 rounded-xl border border-amber-200/60 shadow-inner">
-                  <button
-                    v-for="sbj in subjects"
-                    :key="'lock-sbj-' + sbj.id"
-                    type="button"
-                    @click="toggleLockSubject(sbj.id)"
-                    class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border select-none"
-                    :class="lockedSubjectIds.includes(sbj.id)
-                      ? 'bg-rose-50 text-rose-800 border-rose-300 shadow-xs ring-1 ring-rose-400/30'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'"
-                    :title="lockedSubjectIds.includes(sbj.id) ? 'Mapel ini TERKUNCI (Nilai tetap asli 100%)' : 'Klik untuk mengunci nilai mapel ini'"
-                  >
-                    <Lock v-if="lockedSubjectIds.includes(sbj.id)" class="w-3 h-3 text-rose-600 flex-shrink-0" />
-                    <Unlock v-else class="w-3 h-3 text-slate-400 flex-shrink-0" />
-                    <span>{{ sbj.name || sbj.code }}</span>
-                    <span
-                      v-if="lockedSubjectIds.includes(sbj.id)"
-                      class="text-[9px] font-black uppercase tracking-wider text-rose-700 bg-white/90 px-1 py-0.2 rounded border border-rose-200"
-                    >
-                      Terkunci
-                    </span>
-                  </button>
-                </div>
+        <!-- Opsi 2: KOTAK PENGUNCIAN MAPEL (NILAI MURNI 100%) - SELALU TAMPIL JELAS -->
+        <div class="p-4 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-3">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-2xs">
+                🔒
+              </div>
+              <div>
+                <h4 class="text-xs font-black text-slate-900 font-lexend">Penguncian Mata Pelajaran (Nilai Tetap Asli / Murni)</h4>
+                <p class="text-[10.5px] text-slate-500">Pilih mapel di kelas ini yang <strong>dilarang berubah</strong> nilainya ketika peringkat diselaraskan.</p>
               </div>
             </div>
+            <div class="flex items-center gap-2">
+              <button
+                v-if="lockedSubjectIds.length > 0"
+                type="button"
+                @click="lockedSubjectIds = []"
+                class="text-[10.5px] text-slate-500 hover:text-rose-700 font-bold underline cursor-pointer"
+              >
+                Buka Semua
+              </button>
+              <span v-if="lockedSubjectIds.length > 0" class="text-slate-300">|</span>
+              <span
+                class="text-[10px] font-black px-2.5 py-0.5 rounded-full border shadow-2xs flex items-center gap-1"
+                :class="lockedSubjectIds.length > 0 ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-slate-100 text-slate-600 border-slate-200'"
+              >
+                <Lock v-if="lockedSubjectIds.length > 0" class="w-3 h-3 text-rose-600" />
+                <span>{{ lockedSubjectIds.length }} Mapel Terkunci Murni</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Petunjuk -->
+          <div class="p-2.5 bg-rose-50/70 rounded-xl border border-rose-200/80 text-[11px] text-rose-900 flex items-start gap-2">
+            <span class="text-xs mt-0.5">💡</span>
+            <div class="leading-relaxed">
+              Klik pada tombol mapel di bawah untuk <strong>mengunci nilainya (🔒 Terkunci)</strong>. Guru yang tidak ingin nilainya diubah akan tetap aman karena nilainya 100% tidak disentuh oleh sistem.
+            </div>
+          </div>
+
+          <!-- Chips Mapel -->
+          <div v-if="availableSubjects.length > 0" class="flex flex-wrap gap-1.5 p-2 bg-slate-50 rounded-xl border border-slate-200 max-h-40 overflow-y-auto">
+            <button
+              v-for="sbj in availableSubjects"
+              :key="'lock-sbj-' + sbj.id"
+              type="button"
+              @click="toggleLockSubject(sbj.id)"
+              class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border select-none active:scale-95"
+              :class="lockedSubjectIds.includes(Number(sbj.id))
+                ? 'bg-rose-600 text-white border-rose-700 shadow-sm ring-2 ring-rose-400/40'
+                : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'"
+              :title="lockedSubjectIds.includes(Number(sbj.id)) ? 'Mapel ini TERKUNCI (Nilai tetap asli 100%) - Klik untuk membuka' : 'Klik untuk mengunci nilai mapel ini'"
+            >
+              <Lock v-if="lockedSubjectIds.includes(Number(sbj.id))" class="w-3.5 h-3.5 text-white flex-shrink-0" />
+              <Unlock v-else class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+              <span>{{ sbj.name || sbj.code }}</span>
+              <span
+                v-if="lockedSubjectIds.includes(Number(sbj.id))"
+                class="text-[9px] font-black uppercase tracking-wider text-rose-700 bg-white px-1.5 py-0.2 rounded-md"
+              >
+                MURNI
+              </span>
+            </button>
+          </div>
+          <div v-else class="p-3 text-center text-xs text-slate-400 italic bg-slate-50 rounded-xl border border-slate-200">
+            Daftar mapel kelas ini sedang dimuat...
           </div>
         </div>
 
@@ -310,7 +326,7 @@
         <div v-if="!adjustScores" class="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-500 flex items-start gap-2.5">
           <ShieldCheck class="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
           <p class="text-[11px] leading-relaxed">
-            Opsi selaraskan nilai tidak dicentang: Hanya nomor urutan peringkat (ranking) yang diperbarui di rapor. Seluruh nilai mata pelajaran tetap menggunakan nilai asli apa adanya.
+            Opsi selaraskan nilai belum aktif: Hanya nomor urutan peringkat (ranking) yang diperbarui di rapor. Seluruh nilai mata pelajaran tetap menggunakan nilai asli apa adanya.
           </p>
         </div>
       </div>
@@ -371,6 +387,22 @@ const localRankList = ref([]);
 const adjustScores = ref(false);
 const lockedSubjectIds = ref([]);
 
+const availableSubjects = computed(() => {
+  if (props.subjects && props.subjects.length > 0) {
+    return props.subjects;
+  }
+  // Fallback: extract subjects from first student's scores if available
+  const firstWithScores = props.students.find(s => s.scores && Object.keys(s.scores).length > 0);
+  if (firstWithScores && firstWithScores.scores) {
+    return Object.keys(firstWithScores.scores).map(subId => ({
+      id: Number(subId),
+      name: firstWithScores.scores[subId]?.subject_name || `Mapel #${subId}`,
+      code: firstWithScores.scores[subId]?.subject_code || `#${subId}`,
+    }));
+  }
+  return [];
+});
+
 watch(
   () => props.show,
   (newVal) => {
@@ -413,6 +445,10 @@ function toggleLockSubject(subjectId) {
     lockedSubjectIds.value.splice(idx, 1);
   } else {
     lockedSubjectIds.value.push(numId);
+    // Otomatis aktifkan penyesuaian nilai jika belum aktif
+    if (!adjustScores.value) {
+      adjustScores.value = true;
+    }
   }
 }
 

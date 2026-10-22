@@ -1972,7 +1972,19 @@ const currentTitimangsaSummary = computed(() => {
 // Modal Rank Adjuster
 const showRankModal = ref(false);
 
-const subjectsList = computed(() => ledgerData.value?.subjects || []);
+const subjectsList = computed(() => {
+  if (ledgerData.value?.subjects && ledgerData.value.subjects.length > 0) {
+    return ledgerData.value.subjects;
+  }
+  if (ledgerData.value?.subject_statuses && ledgerData.value.subject_statuses.length > 0) {
+    return ledgerData.value.subject_statuses.map(s => ({
+      id: s.subject_id,
+      name: s.subject_name,
+      code: s.subject_code,
+    }));
+  }
+  return [];
+});
 const subjectStatuses = computed(() => ledgerData.value?.subject_statuses || []);
 const ledgerStudents = computed(() => ledgerData.value?.students || []);
 
