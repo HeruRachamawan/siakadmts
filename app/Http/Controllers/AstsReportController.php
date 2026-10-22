@@ -1190,7 +1190,7 @@ class AstsReportController extends Controller
                 $allScoresFlat = $scores->flatten();
 
                 if ($allScoresFlat->isNotEmpty()) {
-                    $targetClass = \App\Models\Classes::find($classId);
+                    $targetClass = ClassRoom::find($classId);
                     $classGradeLevel = $targetClass?->grade_level;
 
                     // 1. Build accurate KKM map per subject based on database or SubjectGradeKkm
