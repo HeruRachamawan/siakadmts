@@ -233,13 +233,19 @@
                 <div class="p-2 bg-emerald-50/80 rounded-xl border border-emerald-200 text-emerald-900 text-[10.5px] flex items-center gap-2">
                   <ShieldCheck class="w-4 h-4 text-emerald-600 flex-shrink-0" />
                   <span class="font-bold">
-                    🔒 Jaminan Batas Atas: Nilai disesuaikan dalam batas aman & <u>TIDAK AKAN melebihi</u> nilai tertinggi yang sudah ditarik di kelas ini.
+                    🛡️ Anti-Nilai Merah: Nilai setiap mapel dijamin <u>TUNTAS &ge; KKM/KKTP</u> kelas (tidak ada nilai merah di rapor &amp; leger).
+                  </span>
+                </div>
+                <div class="p-2 bg-blue-50/80 rounded-xl border border-blue-200 text-blue-900 text-[10.5px] flex items-center gap-2">
+                  <Check class="w-4 h-4 text-blue-600 flex-shrink-0" />
+                  <span class="font-bold">
+                    🔒 Anti-Nilai Meledak: Nilai siswa ranking atas tetap terkontrol wajar dan proporsional (tidak melonjak drastis).
                   </span>
                 </div>
                 <div class="p-2 bg-amber-50/80 rounded-xl border border-amber-200 text-amber-950 text-[10.5px] flex items-center gap-2">
                   <Trophy class="w-4 h-4 text-amber-600 flex-shrink-0" />
                   <span class="font-bold">
-                    🏆 Anti-Nilai Kembar: Total nilai tiap peringkat dijamin bertingkat & berbeda (Juara 1 > Juara 2 > Juara 3) guna mencegah komplain kesamaan nilai dari orang tua.
+                    🏆 Anti-Nilai Kembar: Total nilai tiap peringkat dijamin bertingkat & berbeda (Juara 1 &gt; Juara 2 &gt; Juara 3).
                   </span>
                 </div>
               </div>

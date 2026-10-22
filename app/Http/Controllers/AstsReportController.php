@@ -1187,11 +1187,27 @@ class AstsReportController extends Controller
                 $allScoresFlat = $scores->flatten();
 
                 if ($allScoresFlat->isNotEmpty()) {
-                    // Maximum pulled score in the entire class
-                    $classMaxScore = (float) $allScoresFlat->max('score');
-                    $classMinScore = (float) $allScoresFlat->min('score');
+                    $targetClass = \App\Models\Classes::find($classId);
+                    $classGradeLevel = $targetClass?->grade_level;
 
-                    // Maximum pulled score PER SUBJECT across the class (strictly capped)
+                    // 1. Build accurate KKM map per subject based on database or SubjectGradeKkm
+                    $subjectKkmMap = [];
+                    foreach ($allScoresFlat->groupBy('subject_id') as $subId => $subScores) {
+                        $firstSc = $subScores->first();
+                        $dbKkm = $firstSc?->kkm;
+                        if (!empty($dbKkm) && (float)$dbKkm > 0) {
+                            $subjectKkmMap[$subId] = (float)$dbKkm;
+                        } else {
+                            $eff = \App\Models\SubjectGradeKkm::getEffectiveKkm($subId, $classGradeLevel, $academicYearId);
+                            $subjectKkmMap[$subId] = (float)($eff ?: 75.0);
+                        }
+                    }
+
+                    // Average KKM of the class
+                    $avgClassKkm = !empty($subjectKkmMap) ? (array_sum($subjectKkmMap) / count($subjectKkmMap)) : 75.0;
+
+                    // Maximum pulled score in the entire class & per subject
+                    $classMaxScore = (float) $allScoresFlat->max('score');
                     $maxScoreBySubject = [];
                     foreach ($allScoresFlat->groupBy('subject_id') as $subId => $subScores) {
                         $maxScoreBySubject[$subId] = (float) $subScores->max('score');
@@ -1218,43 +1234,42 @@ class AstsReportController extends Controller
 
                     // Extract all original student averages and sort descending
                     $originalAvgs = array_column($studentOriginalStats, 'avg');
-                    rsort($originalAvgs); // [highest_avg, 2nd_highest_avg, ...]
+                    rsort($originalAvgs);
 
-                    // The absolute highest average originally pulled in the class
-                    $highestPulledAvg = !empty($originalAvgs) ? $originalAvgs[0] : $classMaxScore;
+                    // --- BOUNDED CORRIDOR RULES ---
+                    // 1. Safe Ceiling (Anti-Meledak): Juara 1 tidak boleh meledak tinggi (maksimal 91.0 - 93.0)
+                    $highestPulledAvg = !empty($originalAvgs) ? $originalAvgs[0] : 88.0;
+                    $safeCeilingAvg = min(93.0, max(85.0, $highestPulledAvg));
 
-                    // Build target averages for each ranked position
-                    // Ensuring:
-                    // 1. Target average of Juara 1 NEVER exceeds $highestPulledAvg
-                    // 2. Juara 1 > Juara 2 > Juara 3 ... (stepped by at least 0.15 to naturally prevent ties)
+                    // 2. Safe Floor (Anti-Nilai Merah): Peringkat terbawah TIDAK BOLEH di bawah KKM/KKTP
+                    $safeFloorAvg = max(75.5, $avgClassKkm + 0.5);
+
+                    // Ensure safeCeilingAvg > safeFloorAvg
+                    if ($safeCeilingAvg <= $safeFloorAvg + 1.0) {
+                        $safeCeilingAvg = $safeFloorAvg + 5.0;
+                    }
+
+                    // Filter only students with scores in rank order
+                    $rankedWithScores = array_values(array_filter($rankList, fn($r) => isset($studentOriginalStats[$r['student_id']])));
+                    $numRanked = count($rankedWithScores);
+
+                    // Build target averages with smooth gradient from safeCeilingAvg down to safeFloorAvg
                     $targetAverages = [];
-                    $prevTarget = $highestPulledAvg;
-                    $rankIndex = 0;
-                    foreach ($rankList as $rItem) {
-                        $sId = $rItem['student_id'];
-                        if (!isset($studentOriginalStats[$sId])) {
-                            continue;
+                    if ($numRanked === 1) {
+                        $singleId = $rankedWithScores[0]['student_id'];
+                        $targetAverages[$singleId] = min($safeCeilingAvg, max($studentOriginalStats[$singleId]['avg'], $safeFloorAvg));
+                    } elseif ($numRanked > 1) {
+                        $step = ($safeCeilingAvg - $safeFloorAvg) / ($numRanked - 1);
+                        foreach ($rankedWithScores as $idx => $rItem) {
+                            $sId = $rItem['student_id'];
+                            $targetAverages[$sId] = round($safeCeilingAvg - ($idx * $step), 2);
                         }
-
-                        // Use the original average from the sorted pool as base
-                        $baseAvg = $originalAvgs[$rankIndex] ?? (end($originalAvgs) ?: 75.0);
-
-                        // Ensure target is strictly lower than previous rank's target
-                        $assignedTarget = ($rankIndex === 0)
-                            ? min($baseAvg, $highestPulledAvg, $classMaxScore)
-                            : min($baseAvg, $prevTarget - 0.15);
-
-                        // Strict rule: never exceed the highest pulled score or average
-                        $assignedTarget = min($assignedTarget, $highestPulledAvg, $classMaxScore);
-
-                        $targetAverages[$sId] = $assignedTarget;
-                        $prevTarget = $assignedTarget;
-                        $rankIndex++;
                     }
 
                     // Helper closure to safely update score, predicate, and description
-                    $updateScoreModel = function ($sc, $newScore) {
-                        $kkm = $sc->kkm ?? 75;
+                    $updateScoreModel = function ($sc, $newScore, $kkm) {
+                        $newScore = (int) $newScore;
+                        $kkm = (int) $kkm;
                         $predicate = 'D';
                         if ($newScore >= 90) {
                             $predicate = 'A';
@@ -1269,16 +1284,18 @@ class AstsReportController extends Controller
 
                         $sc->update([
                             'score' => $newScore,
+                            'kkm' => $kkm,
                             'predicate' => $predicate,
                             'description' => $description,
                         ]);
                         $sc->score = $newScore;
+                        $sc->kkm = $kkm;
                         $sc->predicate = $predicate;
                         $sc->description = $description;
                     };
 
-                    // Adjust each student's subject scores
-                    foreach ($rankList as $rItem) {
+                    // Pass 1: Adjust each student's subject scores within the bounded corridor
+                    foreach ($rankedWithScores as $rItem) {
                         $sId = $rItem['student_id'];
                         $sScores = $scores->get($sId, collect());
 
@@ -1291,28 +1308,29 @@ class AstsReportController extends Controller
                         $factor = $currentAvg > 0 ? ($targetAvg / $currentAvg) : 1.0;
 
                         foreach ($sScores as $sc) {
+                            $kkm = (int) ($subjectKkmMap[$sc->subject_id] ?? ($sc->kkm ?: 75));
+                            $subjectOriginalMax = $maxScoreBySubject[$sc->subject_id] ?? 90;
+                            // Subject ceiling: do not explode beyond 94-95 or original max
+                            $subjectCeiling = (int) min(94, max($kkm + 3, $subjectOriginalMax));
+
                             $rawNewScore = (int) round($sc->score * $factor);
 
-                            // Strict constraint 1: Cannot exceed maximum pulled score for this subject in the class
-                            $maxSubjectLimit = $maxScoreBySubject[$sc->subject_id] ?? $classMaxScore;
-                            $boundedScore = min($rawNewScore, (int) $maxSubjectLimit);
+                            // Strict Rule 1: NEVER DROP BELOW KKM (Anti-Nilai Merah)
+                            $boundedScore = max($kkm, $rawNewScore);
 
-                            // Strict constraint 2: Cannot exceed highest pulled score in the entire class
-                            $boundedScore = min($boundedScore, (int) $classMaxScore);
+                            // Strict Rule 2: NEVER EXCEED CEILING (Anti-Meledak)
+                            $boundedScore = min($boundedScore, $subjectCeiling);
 
-                            // Strict constraint 3: Safe lower bound (do not drop below 50, respect KKM if original was above)
-                            $kkm = $sc->kkm ?? 75;
-                            $boundedScore = max(50, $boundedScore);
-
-                            $updateScoreModel($sc, $boundedScore);
+                            $updateScoreModel($sc, $boundedScore, $kkm);
                         }
                     }
 
-                    // Second pass: ANTI-NILAI KEMBAR (STRICT NON-EQUAL TOTAL SCORES)
+                    // Pass 2: ANTI-NILAI KEMBAR (STRICT NON-EQUAL TOTAL SCORES)
                     // Guarantee: Total(Juara 1) > Total(Juara 2) > Total(Juara 3) > ...
-                    // Never equal (no ties between different ranks)
-                    // while NEVER violating subject and class maximum pulled caps
-                    $rankedStudentIds = array_values(array_filter(array_column($rankList, 'student_id'), fn($id) => isset($studentOriginalStats[$id])));
+                    // Never equal, while strictly:
+                    // 1. Lower bound is KKM (never turns red)
+                    // 2. Upper bound is subjectCeiling (never explodes)
+                    $rankedStudentIds = array_column($rankedWithScores, 'student_id');
                     $refreshedScores = AstsSubjectScore::whereIn('student_id', $rankedStudentIds)
                         ->where('academic_year_id', $academicYearId)
                         ->where('semester', $semester)
@@ -1334,35 +1352,51 @@ class AstsReportController extends Controller
                             $nextTotal = (int) $nextStudentScores->sum('score');
 
                             // We require strictly: currTotal > nextTotal (at least nextTotal + 1)
-                            // Never equal so parents will never see the same total for different ranks!
                             if ($currTotal <= $nextTotal) {
                                 $anyConflict = true;
-                                $diff = ($nextTotal - $currTotal) + 1; // Minimum deficit to make currTotal > nextTotal
+                                $diff = ($nextTotal - $currTotal) + 1;
 
-                                // Priority 1: Safely decrease next student's scores on subjects above KKM
+                                // Priority 1: Safely decrease next student's scores only down to KKM
                                 foreach ($nextStudentScores->sortByDesc('score') as $sc) {
                                     if ($diff <= 0) break;
-                                    $kkm = $sc->kkm ?? 75;
+                                    $kkm = (int) ($subjectKkmMap[$sc->subject_id] ?? ($sc->kkm ?: 75));
                                     $roomDown = $sc->score - $kkm;
                                     if ($roomDown > 0) {
                                         $sub = min($roomDown, $diff);
                                         $newScore = $sc->score - $sub;
-                                        $updateScoreModel($sc, $newScore);
+                                        $updateScoreModel($sc, $newScore, $kkm);
                                         $diff -= $sub;
                                     }
                                 }
 
-                                // Priority 2: If deficit still remains, safely increase curr student's scores
-                                // strictly without exceeding $maxScoreBySubject or $classMaxScore
+                                // Priority 2: If deficit still remains, safely increase curr student's scores up to subjectCeiling
                                 if ($diff > 0) {
                                     foreach ($currStudentScores->sortBy('score') as $sc) {
                                         if ($diff <= 0) break;
-                                        $maxSub = (int) ($maxScoreBySubject[$sc->subject_id] ?? $classMaxScore);
-                                        $roomUp = min($maxSub, (int) $classMaxScore) - $sc->score;
+                                        $kkm = (int) ($subjectKkmMap[$sc->subject_id] ?? ($sc->kkm ?: 75));
+                                        $subjectOriginalMax = $maxScoreBySubject[$sc->subject_id] ?? 90;
+                                        $subjectCeiling = (int) min(94, max($kkm + 3, $subjectOriginalMax));
+
+                                        $roomUp = $subjectCeiling - $sc->score;
                                         if ($roomUp > 0) {
                                             $add = min($roomUp, $diff);
                                             $newScore = $sc->score + $add;
-                                            $updateScoreModel($sc, $newScore);
+                                            $updateScoreModel($sc, $newScore, $kkm);
+                                            $diff -= $add;
+                                        }
+                                    }
+                                }
+
+                                // Priority 3: Fallback safety if tightly clustered, allow curr student to go up to 95 max
+                                if ($diff > 0) {
+                                    foreach ($currStudentScores->sortBy('score') as $sc) {
+                                        if ($diff <= 0) break;
+                                        $kkm = (int) ($subjectKkmMap[$sc->subject_id] ?? ($sc->kkm ?: 75));
+                                        $roomUp = 95 - $sc->score;
+                                        if ($roomUp > 0) {
+                                            $add = min($roomUp, $diff);
+                                            $newScore = $sc->score + $add;
+                                            $updateScoreModel($sc, $newScore, $kkm);
                                             $diff -= $add;
                                         }
                                     }
@@ -1382,7 +1416,7 @@ class AstsReportController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => $shouldAdjustScores
-                    ? 'Peringkat dan nilai siswa berhasil diselaraskan (nilai dijamin tidak melebihi nilai tarikan maksimal)!'
+                    ? 'Peringkat dan nilai siswa berhasil diselaraskan (nilai dijamin tuntas minimal KKM dan tidak melebihi batas wajar)!'
                     : 'Peringkat siswa berhasil diperbarui tanpa mengubah nilai mata pelajaran yang sudah ditarik!',
             ]);
         } catch (\Exception $e) {
