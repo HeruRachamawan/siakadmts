@@ -776,6 +776,17 @@
               <span>Cetak Nilai Asli</span>
             </button>
 
+            <!-- Tombol 1.5: Cetak Daftar Nilai (Khusus Kurikulum - 1 Kolom Nilai) -->
+            <button
+              type="button"
+              @click="openGradeListPrint(selectedExamDetail?.id)"
+              class="px-4 py-2 bg-indigo-700 hover:bg-indigo-800 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-sm shadow-indigo-700/20 cursor-pointer"
+              title="Cetak lembar daftar nilai resmi kurikulum (tanpa kolom nilai asli & remedial, hanya 1 kolom nilai)"
+            >
+              <FileText class="w-4 h-4" />
+              <span>Cetak Daftar Nilai</span>
+            </button>
+
             <!-- Tombol 2: Cetak Nilai Jadi (Rapor) -->
             <button
               type="button"
@@ -1020,6 +1031,7 @@
     <!-- COMPONENT PRINT MODALS UNTUK KURIKULUM / ADMIN -->
     <ExamCorrectionPrintModals
       v-model:show-recap="showRecapPrintModal"
+      v-model:show-grade-list="showGradeListPrintModal"
       v-model:show-adjusted="showAdjustedPrintModal"
       v-model:show-analysis="showAnalysisPrintModal"
       :exam="printExamData"
@@ -1086,6 +1098,7 @@ const inspectAnalysis = ref(null);
 
 // Print Preview States untuk Kurikulum & Admin
 const showRecapPrintModal = ref(false);
+const showGradeListPrintModal = ref(false);
 const showAdjustedPrintModal = ref(false);
 const showAnalysisPrintModal = ref(false);
 const printExamData = ref(null);
@@ -1376,6 +1389,13 @@ async function openRecapPrint(id) {
   if (!targetId) return;
   const ok = await loadExamForPrint(targetId);
   if (ok) showRecapPrintModal.value = true;
+}
+
+async function openGradeListPrint(id) {
+  const targetId = id || selectedExamDetail.value?.id;
+  if (!targetId) return;
+  const ok = await loadExamForPrint(targetId);
+  if (ok) showGradeListPrintModal.value = true;
 }
 
 async function openAdjustedPrint(id) {
