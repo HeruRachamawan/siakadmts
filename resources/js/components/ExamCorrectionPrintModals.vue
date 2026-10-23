@@ -442,36 +442,24 @@
             <!-- Tabel Daftar Nilai (1 Kolom Nilai Saja, Tanpa Nilai Asli & Remedial) -->
             <div class="overflow-x-auto border border-slate-300 rounded-lg shadow-sm">
               <table class="w-full border-collapse text-xs">
-                <colgroup>
-                  <col style="width: 4%;">
-                  <col style="width: 12%;">
-                  <col style="width: 26%;">
-                  <col style="width: 4%;">
-                  <col
-                    v-for="typeObj in activeQuestionTypesList"
-                    :key="typeObj.key"
-                    :style="{ width: `${40 / (activeQuestionTypesList.length || 1)}%` }"
-                  />
-                  <col style="width: 7%;">
-                  <col style="width: 7%;">
-                </colgroup>
                 <thead>
                   <tr class="bg-slate-100 text-slate-800 uppercase font-black tracking-wider text-center text-[10px]">
-                    <th rowspan="2" class="border border-slate-300 px-1 py-1.5 text-center">No</th>
-                    <th rowspan="2" class="border border-slate-300 px-1.5 py-1.5 text-center">NISN</th>
-                    <th rowspan="2" class="border border-slate-300 px-2 py-1.5 text-left">Nama Siswa</th>
-                    <th rowspan="2" class="border border-slate-300 px-1 py-1.5 text-center">L/P</th>
+                    <th rowspan="2" class="border border-slate-300 px-1 py-1.5 text-center" style="width: 3.5%; min-width: 26px;">No</th>
+                    <th rowspan="2" class="border border-slate-300 px-1.5 py-1.5 text-center font-mono" style="width: 11%; min-width: 75px;">NISN</th>
+                    <th rowspan="2" class="border border-slate-300 px-2 py-1.5 text-left" style="width: 25%; min-width: 150px;">Nama Siswa</th>
+                    <th rowspan="2" class="border border-slate-300 px-1 py-1.5 text-center" style="width: 3.5%; min-width: 26px;">L/P</th>
                     <th :colspan="activeQuestionTypesList.length" class="border border-slate-300 px-2 py-1.5 bg-slate-200/90 text-teal-950 font-black tracking-wider text-[10.5px]">
                       Capaian Nilai per Bentuk Soal (Poin / Maks)
                     </th>
-                    <th rowspan="2" class="border border-slate-300 px-1 py-1.5 bg-slate-200/90 font-black text-slate-900 text-center tracking-wider text-[11px]">NILAI</th>
-                    <th rowspan="2" class="border border-slate-300 px-1 py-1.5 bg-slate-100 font-black text-slate-800 text-center tracking-wider text-[10.5px]">Keterangan</th>
+                    <th rowspan="2" class="border border-slate-300 px-1 py-1.5 bg-slate-200/90 font-black text-slate-900 text-center tracking-wider text-[11px]" style="width: 7%; min-width: 48px;">NILAI</th>
+                    <th rowspan="2" class="border border-slate-300 px-1 py-1.5 bg-slate-100 font-black text-slate-800 text-center tracking-wider text-[10.5px]" style="width: 8%; min-width: 58px;">Keterangan</th>
                   </tr>
                   <tr class="bg-slate-50 text-slate-700 font-bold text-center text-[10px]">
                     <th
                       v-for="typeObj in activeQuestionTypesList"
                       :key="typeObj.key"
                       class="border border-slate-300 px-1.5 py-1.5 bg-slate-50/90 text-center"
+                      :style="{ width: `${42 / (activeQuestionTypesList.length || 1)}%`, minWidth: '70px' }"
                     >
                       <div class="font-extrabold text-slate-800 text-[10.5px] uppercase tracking-wide leading-tight">{{ typeObj.label }}</div>
                       <div class="text-[9px] text-slate-500 font-semibold mt-0.5 whitespace-nowrap leading-tight">
@@ -2020,7 +2008,6 @@ function printGradeListDocument() {
       width: 100% !important;
       max-width: 100% !important;
       border-collapse: collapse !important;
-      table-layout: auto !important;
       margin-top: 4px;
     }
     th, td {
