@@ -454,12 +454,12 @@
                     <th rowspan="2" class="border border-slate-300 px-1 py-1.5 bg-slate-200/90 font-black text-slate-900 text-center tracking-wider text-[11px]" style="width: 7%; min-width: 48px;">NILAI</th>
                     <th rowspan="2" class="border border-slate-300 px-1 py-1.5 bg-slate-100 font-black text-slate-800 text-center tracking-wider text-[10.5px]" style="width: 8%; min-width: 58px;">Keterangan</th>
                   </tr>
-                  <tr class="bg-slate-50 text-slate-700 font-bold text-center text-[10px]">
+                  <tr class="text-slate-700 font-bold text-center text-[10px]" style="background-color: #f8fafc;">
                     <th
                       v-for="typeObj in activeQuestionTypesList"
                       :key="typeObj.key"
-                      class="border border-slate-300 px-1.5 py-1.5 bg-slate-50/90 text-center"
-                      :style="{ width: `${42 / (activeQuestionTypesList.length || 1)}%`, minWidth: '70px' }"
+                      class="border border-slate-300 px-1.5 py-1.5 text-center"
+                      :style="{ width: `${42 / (activeQuestionTypesList.length || 1)}%`, minWidth: '70px', backgroundColor: '#f8fafc' }"
                     >
                       <div class="font-extrabold text-slate-800 text-[10.5px] uppercase tracking-wide leading-tight">{{ typeObj.label }}</div>
                       <div class="text-[9px] text-slate-500 font-semibold mt-0.5 whitespace-nowrap leading-tight">
@@ -472,7 +472,7 @@
                   <tr
                     v-for="(student, idx) in students"
                     :key="student.id"
-                    :class="idx % 2 === 1 ? 'bg-slate-50/50' : 'bg-white'"
+                    :style="{ backgroundColor: idx % 2 === 1 ? '#f8fafc' : '#ffffff' }"
                     class="hover:bg-indigo-50/40 transition-colors"
                   >
                     <td class="border border-slate-300 px-1 py-1.5 text-center font-bold text-slate-500 align-middle">{{ idx + 1 }}</td>
@@ -1862,17 +1862,12 @@ function printGradeListDocument() {
   const isF4 = selectedGradeListPaperSize.value === 'f4';
   const paperTitle = isF4 ? 'F4 / Folio Lanskap' : 'A4 Lanskap';
 
-  const headStyles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
-    .map(el => el.outerHTML)
-    .join('\n');
-
   printWindow.document.open();
   printWindow.document.write(`<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="utf-8">
   <title>Daftar Nilai Asesmen (${paperTitle}) - ${props.exam?.title || 'Ujian'}</title>
-  ${headStyles}
   <style>
     @page {
       size: ${isF4 ? '330mm 215mm' : 'A4 landscape'};
@@ -2009,8 +2004,21 @@ function printGradeListDocument() {
       max-width: 100% !important;
       border-collapse: collapse !important;
       margin-top: 4px;
+      display: table !important;
+    }
+    thead {
+      display: table-header-group !important;
+    }
+    tbody {
+      display: table-row-group !important;
+    }
+    tr {
+      display: table-row !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
     th, td {
+      display: table-cell !important;
       border: 1px solid #334155 !important;
       vertical-align: middle !important;
       padding: ${isF4 ? '3px 4px' : '2px 2.5px'} !important;
@@ -2018,18 +2026,11 @@ function printGradeListDocument() {
       font-size: ${isF4 ? '9.5px' : '8.5px'} !important;
       line-height: 1.2 !important;
     }
-    thead {
-      display: table-header-group;
-    }
     thead th {
       background-color: #f1f5f9 !important;
       font-weight: 900 !important;
       color: #0f172a !important;
       font-size: ${isF4 ? '9.5px' : '8.5px'} !important;
-    }
-    tr {
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
     }
     .break-inside-avoid {
       page-break-inside: avoid !important;

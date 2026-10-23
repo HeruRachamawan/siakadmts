@@ -164,16 +164,12 @@
         overflow: visible !important;
     }
 
-    /* 3. Reset flex layout agar tidak membatasi ukuran kertas */
-    .flex,
+    /* 3. Reset container layout agar tidak membatasi ukuran kertas */
     .h-screen,
     .min-h-screen,
     main,
     .overflow-y-auto,
-    .overflow-hidden,
-    .bg-\[\#F8FAFC\],
-    .bg-\[\#F4F7F6\],
-    .bg-slate-50 {
+    .overflow-hidden {
         display: block !important;
         height: auto !important;
         max-height: none !important;
