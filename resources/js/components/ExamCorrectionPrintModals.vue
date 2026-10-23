@@ -87,7 +87,7 @@
             class="printable-recap-sheet bg-white p-8 sm:p-10 shadow-2xl border border-slate-300 text-slate-900 rounded-xl space-y-5 my-2 transition-all duration-200"
           >
             <!-- Kop Madrasah -->
-            <div class="flex items-center gap-5 border-b-4 border-double border-slate-900 pb-3">
+            <div class="flex items-center justify-between gap-4">
               <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center">
                 <img
                   v-if="schoolProfile?.app_logo_url || schoolProfile?.app_logo"
@@ -99,7 +99,7 @@
                   MTS
                 </div>
               </div>
-              <div class="text-center flex-1 pr-6 sm:pr-14">
+              <div class="text-center flex-1">
                 <div class="text-xs sm:text-sm font-bold tracking-widest text-slate-700 uppercase">
                   {{ schoolProfile?.school_foundation || 'YAYASAN PENDIDIKAN ISLAM AL-HASANAH' }}
                 </div>
@@ -116,6 +116,13 @@
                   Telp: {{ schoolProfile?.school_phone || '081617666017' }} • Email: {{ schoolProfile?.school_email || 'mtsalhasanah.ciomas@gmail.com' }}
                 </div>
               </div>
+              <div class="w-20 h-20 flex-shrink-0" aria-hidden="true"></div>
+            </div>
+
+            <!-- Garis Ganda Pemisah Kop (Tebal - Tipis) -->
+            <div class="space-y-0.5 mt-2 mb-2">
+              <div class="border-b-2 border-slate-900"></div>
+              <div class="border-b border-slate-900"></div>
             </div>
 
             <!-- Judul Lembar Rekap -->
@@ -368,7 +375,7 @@
             class="printable-recap-sheet bg-white p-6 sm:p-10 shadow-2xl border border-slate-300 text-slate-900 rounded-xl space-y-5 my-2 transition-all duration-200"
           >
             <!-- Kop Madrasah -->
-            <div class="flex items-center gap-5 border-b-4 border-double border-slate-900 pb-3">
+            <div class="flex items-center justify-between gap-4">
               <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center">
                 <img
                   v-if="schoolProfile?.app_logo_url || schoolProfile?.app_logo"
@@ -380,7 +387,7 @@
                   MTS
                 </div>
               </div>
-              <div class="text-center flex-1 pr-6 sm:pr-14">
+              <div class="text-center flex-1">
                 <div class="text-xs sm:text-sm font-bold tracking-widest text-slate-700 uppercase">
                   {{ schoolProfile?.school_foundation || 'YAYASAN PENDIDIKAN ISLAM AL-HASANAH' }}
                 </div>
@@ -397,11 +404,18 @@
                   Telp: {{ schoolProfile?.school_phone || '081617666017' }} • Email: {{ schoolProfile?.school_email || 'mtsalhasanah.ciomas@gmail.com' }}
                 </div>
               </div>
+              <div class="w-20 h-20 flex-shrink-0" aria-hidden="true"></div>
+            </div>
+
+            <!-- Garis Ganda Pemisah Kop (Tebal - Tipis) -->
+            <div class="space-y-0.5 mt-2 mb-2">
+              <div class="border-b-2 border-slate-900"></div>
+              <div class="border-b border-slate-900"></div>
             </div>
 
             <!-- Judul Lembar -->
             <div class="text-center space-y-1">
-              <h2 class="text-sm sm:text-base font-black uppercase tracking-wider text-slate-900 font-lexend underline decoration-slate-900 underline-offset-4">
+              <h2 class="text-sm sm:text-base font-black uppercase tracking-wider text-slate-900 font-lexend inline-block border-b-2 border-slate-900 pb-0.5">
                 LEMBAR DAFTAR NILAI ASESMEN PEMBELAJARAN
               </h2>
               <p class="text-xs font-bold text-slate-700 uppercase tracking-wide">
@@ -409,19 +423,19 @@
               </p>
             </div>
 
-            <!-- Metadata Asesmen -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-2 text-xs border border-slate-300 rounded-xl p-4 bg-slate-50/80">
+            <!-- Metadata Asesmen (2 Kolom Seimbang) -->
+            <div class="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs border border-slate-300 rounded-xl p-3.5 bg-slate-50/80">
               <div class="space-y-1.5">
-                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Mata Pelajaran</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-900 font-bold text-xs">{{ exam.subject?.name || '-' }}</span></div>
-                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Kelas / Rombel</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-900 font-bold text-xs">Kelas {{ exam.class_room?.name || '-' }}</span></div>
-                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Guru Pengampu</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-800 font-semibold text-xs">{{ exam.teacher?.full_name || exam.teacher?.name || '-' }}</span></div>
-                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Nama Paket Ujian</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-800 font-medium font-mono text-xs">{{ exam.title }}</span></div>
+                <div class="flex items-baseline"><span class="w-32 text-slate-600 font-bold flex-shrink-0">Mata Pelajaran</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-900 font-bold text-xs">{{ exam.subject?.name || '-' }}</span></div>
+                <div class="flex items-baseline"><span class="w-32 text-slate-600 font-bold flex-shrink-0">Kelas / Rombel</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-900 font-bold text-xs">Kelas {{ exam.class_room?.name || '-' }}</span></div>
+                <div class="flex items-baseline"><span class="w-32 text-slate-600 font-bold flex-shrink-0">Guru Pengampu</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-800 font-semibold text-xs">{{ exam.teacher?.full_name || exam.teacher?.name || '-' }}</span></div>
+                <div class="flex items-baseline"><span class="w-32 text-slate-600 font-bold flex-shrink-0">Nama Paket Ujian</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-800 font-medium font-mono text-xs">{{ exam.title }}</span></div>
               </div>
               <div class="space-y-1.5">
-                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Jenis Asesmen</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-900 font-bold text-xs">{{ getExamTypeFullName(exam.exam_type) }}</span></div>
-                <div class="flex items-center"><span class="w-32 text-slate-500 font-medium flex-shrink-0">KKM / KKTP</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 font-mono font-black border border-emerald-300 text-xs shadow-sm">{{ exam.kkm }}</span></div>
-                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Bobot Penilaian</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-700 text-xs">Objektif: <strong class="text-slate-900 font-bold">{{ exam.pg_weight }}%</strong> &bull; Uraian: <strong class="text-slate-900 font-bold">{{ exam.essay_weight }}%</strong></span></div>
-                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Komposisi Soal</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-800 font-medium text-xs">{{ exam.total_questions }} Butir ({{ activeQuestionTypesList.map(t => `${t.count} ${t.label}`).join(', ') }})</span></div>
+                <div class="flex items-baseline"><span class="w-32 text-slate-600 font-bold flex-shrink-0">Jenis Asesmen</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-900 font-bold text-xs">{{ getExamTypeFullName(exam.exam_type) }}</span></div>
+                <div class="flex items-center"><span class="w-32 text-slate-600 font-bold flex-shrink-0">KKM / KKTP</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 font-mono font-black border border-emerald-300 text-xs shadow-sm">{{ exam.kkm }}</span></div>
+                <div class="flex items-baseline"><span class="w-32 text-slate-600 font-bold flex-shrink-0">Bobot Penilaian</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-700 text-xs">Objektif: <strong class="text-slate-900 font-bold">{{ exam.pg_weight }}%</strong> &bull; Uraian: <strong class="text-slate-900 font-bold">{{ exam.essay_weight }}%</strong></span></div>
+                <div class="flex items-baseline"><span class="w-32 text-slate-600 font-bold flex-shrink-0">Komposisi Soal</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-800 font-medium text-xs">{{ exam.total_questions }} Butir ({{ activeQuestionTypesList.map(t => `${t.count} ${t.label}`).join(', ') }})</span></div>
               </div>
             </div>
 
@@ -665,7 +679,7 @@
             class="printable-recap-sheet bg-white p-8 sm:p-10 shadow-2xl border border-slate-300 text-slate-900 rounded-xl space-y-5 my-2 transition-all duration-200"
           >
             <!-- Kop -->
-            <div class="flex items-center gap-5 border-b-4 border-double border-slate-900 pb-3">
+            <div class="flex items-center justify-between gap-4">
               <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center">
                 <img
                   v-if="schoolProfile?.app_logo_url || schoolProfile?.app_logo"
@@ -677,7 +691,7 @@
                   MTS
                 </div>
               </div>
-              <div class="text-center flex-1 pr-6 sm:pr-14">
+              <div class="text-center flex-1">
                 <div class="text-xs sm:text-sm font-bold tracking-widest text-slate-700 uppercase">
                   {{ schoolProfile?.school_foundation || 'YAYASAN PENDIDIKAN ISLAM AL-HASANAH' }}
                 </div>
@@ -694,6 +708,13 @@
                   Telp: {{ schoolProfile?.school_phone || '081617666017' }} • Email: {{ schoolProfile?.school_email || 'mtsalhasanah.ciomas@gmail.com' }}
                 </div>
               </div>
+              <div class="w-20 h-20 flex-shrink-0" aria-hidden="true"></div>
+            </div>
+
+            <!-- Garis Ganda Pemisah Kop (Tebal - Tipis) -->
+            <div class="space-y-0.5 mt-2 mb-2">
+              <div class="border-b-2 border-slate-900"></div>
+              <div class="border-b border-slate-900"></div>
             </div>
 
             <!-- Judul -->
@@ -927,7 +948,7 @@
             class="printable-recap-sheet bg-white p-8 sm:p-10 shadow-2xl border border-slate-300 text-slate-900 rounded-xl space-y-5 my-2 transition-all duration-200"
           >
             <!-- Kop -->
-            <div class="flex items-center gap-5 border-b-4 border-double border-slate-900 pb-3">
+            <div class="flex items-center justify-between gap-4">
               <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center">
                 <img
                   v-if="schoolProfile?.app_logo_url || schoolProfile?.app_logo"
@@ -939,7 +960,7 @@
                   MTS
                 </div>
               </div>
-              <div class="text-center flex-1 pr-6 sm:pr-14">
+              <div class="text-center flex-1">
                 <div class="text-xs sm:text-sm font-bold tracking-widest text-slate-700 uppercase">
                   {{ schoolProfile?.school_foundation || 'YAYASAN PENDIDIKAN ISLAM AL-HASANAH' }}
                 </div>
@@ -956,6 +977,13 @@
                   Telp: {{ schoolProfile?.school_phone || '081617666017' }} • Email: {{ schoolProfile?.school_email || 'mtsalhasanah.ciomas@gmail.com' }}
                 </div>
               </div>
+              <div class="w-20 h-20 flex-shrink-0" aria-hidden="true"></div>
+            </div>
+
+            <!-- Garis Ganda Pemisah Kop (Tebal - Tipis) -->
+            <div class="space-y-0.5 mt-2 mb-2">
+              <div class="border-b-2 border-slate-900"></div>
+              <div class="border-b border-slate-900"></div>
             </div>
 
             <!-- Judul -->
@@ -1872,11 +1900,100 @@ function printGradeListDocument() {
       background: #ffffff !important;
     }
     .printable-recap-sheet > * + * {
-      margin-top: 12px !important;
+      margin-top: 10px !important;
     }
     .space-y-5 > * + * {
-      margin-top: 12px !important;
+      margin-top: 10px !important;
     }
+
+    /* Layout & Flexbox */
+    .flex { display: flex !important; }
+    .items-center { align-items: center !important; }
+    .items-baseline { align-items: baseline !important; }
+    .justify-between { justify-content: space-between !important; }
+    .justify-center { justify-content: center !important; }
+    .flex-1 { flex: 1 1 0% !important; }
+    .flex-shrink-0 { flex-shrink: 0 !important; }
+    .text-center { text-align: center !important; }
+    .text-left { text-align: left !important; }
+    .text-right { text-align: right !important; }
+
+    /* CSS Grid 2-Kolom Metadata */
+    .grid { display: grid !important; }
+    .grid-cols-2 {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+    }
+    .gap-4 { gap: 16px !important; }
+    .gap-x-8 { column-gap: 32px !important; }
+    .gap-y-1\\.5 { row-gap: 6px !important; }
+    .space-y-0\\.5 > * + * { margin-top: 2px !important; }
+    .space-y-1 > * + * { margin-top: 4px !important; }
+    .space-y-1\\.5 > * + * { margin-top: 6px !important; }
+
+    /* Dimensi & Spasi */
+    .w-full { width: 100% !important; }
+    .w-20 { width: 80px !important; }
+    .h-20 { height: 80px !important; }
+    .w-32 { width: 120px !important; }
+    .mr-2 { margin-right: 8px !important; }
+    .mt-0\\.5 { margin-top: 2px !important; }
+    .mt-2 { margin-top: 8px !important; }
+    .mb-2 { margin-bottom: 8px !important; }
+    .p-3, .p-3\\.5 { padding: 10px 14px !important; }
+    .px-2\\.5 { padding-left: 10px !important; padding-right: 10px !important; }
+    .py-0\\.5 { padding-top: 2px !important; padding-bottom: 2px !important; }
+    .pb-0\\.5 { padding-bottom: 2px !important; }
+
+    /* Border & Garis Kop */
+    .border { border: 1px solid #cbd5e1 !important; }
+    .border-b { border-bottom: 1px solid #0f172a !important; }
+    .border-b-2 { border-bottom: 2px solid #0f172a !important; }
+    .border-slate-300 { border-color: #cbd5e1 !important; }
+    .border-slate-900 { border-color: #0f172a !important; }
+    .border-emerald-300 { border-color: #6ee7b7 !important; }
+    .rounded-xl { border-radius: 10px !important; }
+    .rounded-lg { border-radius: 8px !important; }
+    .rounded { border-radius: 4px !important; }
+    .inline-block { display: inline-block !important; }
+
+    /* Background & Warna */
+    .bg-white { background-color: #ffffff !important; }
+    .bg-slate-50\\/80, .bg-slate-50 { background-color: #f8fafc !important; }
+    .bg-slate-100 { background-color: #f1f5f9 !important; }
+    .bg-slate-200\\/90 { background-color: rgba(226, 232, 240, 0.9) !important; }
+    .bg-emerald-50 { background-color: #ecfdf5 !important; }
+    .bg-teal-800 { background-color: #115e59 !important; }
+    .text-white { color: #ffffff !important; }
+    .text-slate-500 { color: #64748b !important; }
+    .text-slate-600 { color: #475569 !important; }
+    .text-slate-700 { color: #334155 !important; }
+    .text-slate-800 { color: #1e293b !important; }
+    .text-slate-900 { color: #0f172a !important; }
+    .text-emerald-800 { color: #065f46 !important; }
+    .text-teal-950 { color: #042f2e !important; }
+
+    /* Tipografi */
+    .font-black { font-weight: 900 !important; }
+    .font-bold { font-weight: 700 !important; }
+    .font-semibold { font-weight: 600 !important; }
+    .font-medium { font-weight: 500 !important; }
+    .uppercase { text-transform: uppercase !important; }
+    .tracking-wide { letter-spacing: 0.025em !important; }
+    .tracking-wider { letter-spacing: 0.05em !important; }
+    .tracking-widest { letter-spacing: 0.1em !important; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; }
+
+    .text-\\[10px\\] { font-size: 10px !important; }
+    .text-\\[10\\.5px\\] { font-size: 10.5px !important; }
+    .text-\\[11px\\] { font-size: 11px !important; }
+    .text-xs { font-size: ${isF4 ? '10px' : '9.5px'} !important; }
+    .text-sm { font-size: 11px !important; }
+    .text-base { font-size: 12.5px !important; }
+    .text-xl { font-size: 17px !important; }
+    .text-2xl { font-size: 19px !important; }
+
+    /* Tabel Daftar Nilai */
     table {
       width: 100% !important;
       border-collapse: collapse !important;
@@ -1900,12 +2017,6 @@ function printGradeListDocument() {
     tr {
       page-break-inside: avoid;
       break-inside: avoid;
-    }
-    .border-b-4 {
-      border-bottom: 4px double #0f172a !important;
-    }
-    .border-double {
-      border-bottom-style: double !important;
     }
     .break-inside-avoid {
       page-break-inside: avoid;
