@@ -531,7 +531,7 @@
             </div>
 
             <!-- Statistik Klasikal -->
-            <div class="space-y-1.5">
+            <div class="space-y-1.5 break-inside-avoid">
               <div class="text-xs font-black text-slate-800 uppercase tracking-wider">Rekapitulasi Ketuntasan Klasikal:</div>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
                 <div class="p-2.5 border border-slate-300 rounded-lg bg-slate-50/80 shadow-sm">
@@ -554,7 +554,7 @@
             </div>
 
             <!-- Tanda Tangan Resmi -->
-            <div class="pt-6 text-xs text-slate-800">
+            <div class="pt-6 text-xs text-slate-800 break-inside-avoid">
               <div class="grid grid-cols-2 gap-8 text-center">
                 <div>
                   <div class="invisible select-none mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
@@ -1679,9 +1679,8 @@ function printDocument() {
   <title>Rekapitulasi Nilai Asesmen (${paperTitle}) - ${props.exam?.title || 'Ujian'}</title>
   <style>
     @page {
-      size: ${isF4 ? '330mm 215mm landscape' : 'A4 landscape'};
-      size: landscape;
-      margin: 6mm 8mm 6mm 8mm;
+      size: ${isF4 ? '330mm 215mm' : 'A4 landscape'};
+      margin: ${isF4 ? '5mm 6mm 5mm 6mm' : '4mm 5mm 4mm 5mm'};
     }
     * {
       box-sizing: border-box;
@@ -1694,8 +1693,13 @@ function printDocument() {
       color: #0f172a;
       padding: 0;
       margin: 0;
-      font-size: ${isF4 ? '10px' : '9px'};
-      line-height: 1.35;
+      font-size: ${isF4 ? '9.5px' : '8.5px'};
+      line-height: 1.25;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    .overflow-x-auto, .overflow-auto, .overflow-hidden {
+      overflow: visible !important;
     }
     .text-center { text-align: center; }
     .text-left { text-align: left; }
@@ -1871,9 +1875,8 @@ function printGradeListDocument() {
   ${headStyles}
   <style>
     @page {
-      size: ${isF4 ? '330mm 215mm' : 'A4'} landscape;
-      size: landscape;
-      margin: 5mm 6mm 5mm 6mm;
+      size: ${isF4 ? '330mm 215mm' : 'A4 landscape'};
+      margin: ${isF4 ? '5mm 6mm 5mm 6mm' : '4mm 5mm 4mm 5mm'};
     }
     * {
       box-sizing: border-box;
@@ -1886,9 +1889,11 @@ function printGradeListDocument() {
       color: #0f172a !important;
       margin: 0 !important;
       padding: 0 !important;
-      font-size: ${isF4 ? '10px' : '9.5px'};
-      line-height: 1.3;
+      font-size: ${isF4 ? '9.5px' : '8.5px'};
+      line-height: 1.25;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      width: 100% !important;
+      max-width: 100% !important;
     }
     .printable-recap-sheet {
       width: 100% !important;
@@ -1900,10 +1905,15 @@ function printGradeListDocument() {
       background: #ffffff !important;
     }
     .printable-recap-sheet > * + * {
-      margin-top: 10px !important;
+      margin-top: ${isF4 ? '10px' : '8px'} !important;
     }
     .space-y-5 > * + * {
-      margin-top: 10px !important;
+      margin-top: ${isF4 ? '10px' : '8px'} !important;
+    }
+
+    /* Mencegah Konten Terpotong (Zero Clipping) */
+    .overflow-x-auto, .overflow-auto, .overflow-hidden {
+      overflow: visible !important;
     }
 
     /* Layout & Flexbox */
@@ -1925,23 +1935,23 @@ function printGradeListDocument() {
       grid-template-columns: 1fr 1fr !important;
     }
     .gap-4 { gap: 16px !important; }
-    .gap-x-8 { column-gap: 32px !important; }
-    .gap-y-1\\.5 { row-gap: 6px !important; }
+    .gap-x-8 { column-gap: 28px !important; }
+    .gap-y-1\\.5 { row-gap: 5px !important; }
     .space-y-0\\.5 > * + * { margin-top: 2px !important; }
-    .space-y-1 > * + * { margin-top: 4px !important; }
-    .space-y-1\\.5 > * + * { margin-top: 6px !important; }
+    .space-y-1 > * + * { margin-top: 3px !important; }
+    .space-y-1\\.5 > * + * { margin-top: 5px !important; }
 
     /* Dimensi & Spasi */
     .w-full { width: 100% !important; }
-    .w-20 { width: 80px !important; }
-    .h-20 { height: 80px !important; }
-    .w-32 { width: 120px !important; }
-    .mr-2 { margin-right: 8px !important; }
+    .w-20 { width: ${isF4 ? '80px' : '70px'} !important; }
+    .h-20 { height: ${isF4 ? '80px' : '70px'} !important; }
+    .w-32 { width: ${isF4 ? '120px' : '108px'} !important; }
+    .mr-2 { margin-right: 6px !important; }
     .mt-0\\.5 { margin-top: 2px !important; }
-    .mt-2 { margin-top: 8px !important; }
-    .mb-2 { margin-bottom: 8px !important; }
-    .p-3, .p-3\\.5 { padding: 10px 14px !important; }
-    .px-2\\.5 { padding-left: 10px !important; padding-right: 10px !important; }
+    .mt-2 { margin-top: 6px !important; }
+    .mb-2 { margin-bottom: 6px !important; }
+    .p-3, .p-3\\.5 { padding: ${isF4 ? '10px 14px' : '8px 10px'} !important; }
+    .px-2\\.5 { padding-left: 8px !important; padding-right: 8px !important; }
     .py-0\\.5 { padding-top: 2px !important; padding-bottom: 2px !important; }
     .pb-0\\.5 { padding-bottom: 2px !important; }
 
@@ -1952,8 +1962,8 @@ function printGradeListDocument() {
     .border-slate-300 { border-color: #cbd5e1 !important; }
     .border-slate-900 { border-color: #0f172a !important; }
     .border-emerald-300 { border-color: #6ee7b7 !important; }
-    .rounded-xl { border-radius: 10px !important; }
-    .rounded-lg { border-radius: 8px !important; }
+    .rounded-xl { border-radius: 8px !important; }
+    .rounded-lg { border-radius: 6px !important; }
     .rounded { border-radius: 4px !important; }
     .inline-block { display: inline-block !important; }
 
@@ -1984,18 +1994,19 @@ function printGradeListDocument() {
     .tracking-widest { letter-spacing: 0.1em !important; }
     .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; }
 
-    .text-\\[10px\\] { font-size: 10px !important; }
-    .text-\\[10\\.5px\\] { font-size: 10.5px !important; }
-    .text-\\[11px\\] { font-size: 11px !important; }
-    .text-xs { font-size: ${isF4 ? '10px' : '9.5px'} !important; }
-    .text-sm { font-size: 11px !important; }
-    .text-base { font-size: 12.5px !important; }
-    .text-xl { font-size: 17px !important; }
-    .text-2xl { font-size: 19px !important; }
+    .text-\\[10px\\] { font-size: ${isF4 ? '10px' : '8.5px'} !important; }
+    .text-\\[10\\.5px\\] { font-size: ${isF4 ? '10.5px' : '9px'} !important; }
+    .text-\\[11px\\] { font-size: ${isF4 ? '11px' : '9.5px'} !important; }
+    .text-xs { font-size: ${isF4 ? '9.5px' : '8.5px'} !important; }
+    .text-sm { font-size: ${isF4 ? '11px' : '9.5px'} !important; }
+    .text-base { font-size: ${isF4 ? '12.5px' : '11px'} !important; }
+    .text-xl { font-size: ${isF4 ? '17px' : '15px'} !important; }
+    .text-2xl { font-size: ${isF4 ? '19px' : '17px'} !important; }
 
-    /* Tabel Daftar Nilai */
+    /* Tabel Daftar Nilai Presisi Tanpa Terpotong */
     table {
       width: 100% !important;
+      max-width: 100% !important;
       border-collapse: collapse !important;
       table-layout: fixed !important;
       margin-top: 4px;
@@ -2003,8 +2014,10 @@ function printGradeListDocument() {
     th, td {
       border: 1px solid #334155 !important;
       vertical-align: middle !important;
-      padding: 3px 4px !important;
+      padding: ${isF4 ? '3px 4px' : '2px 2.5px'} !important;
       color: #0f172a !important;
+      font-size: ${isF4 ? '9.5px' : '8.5px'} !important;
+      line-height: 1.2 !important;
     }
     thead {
       display: table-header-group;
@@ -2013,14 +2026,15 @@ function printGradeListDocument() {
       background-color: #f1f5f9 !important;
       font-weight: 900 !important;
       color: #0f172a !important;
+      font-size: ${isF4 ? '9.5px' : '8.5px'} !important;
     }
     tr {
-      page-break-inside: avoid;
-      break-inside: avoid;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
     .break-inside-avoid {
-      page-break-inside: avoid;
-      break-inside: avoid;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
     img {
       max-width: 100%;
@@ -2028,8 +2042,8 @@ function printGradeListDocument() {
       object-fit: contain;
     }
     .signature-box {
-      height: 50px !important;
-      min-height: 50px !important;
+      height: 45px !important;
+      min-height: 45px !important;
     }
   </style>
 </head>
@@ -2063,7 +2077,9 @@ function printAdjustedDocument() {
 
   const isF4 = selectedAdjustedPaperSize.value === 'f4';
   const isPortrait = selectedAdjustedOrientation.value === 'portrait';
-  let paperCssSize = isPortrait ? (isF4 ? '215mm 330mm portrait' : 'A4 portrait') : (isF4 ? '330mm 215mm landscape' : 'A4 landscape');
+  let paperCssSize = isPortrait 
+    ? (isF4 ? '215mm 330mm' : 'A4 portrait') 
+    : (isF4 ? '330mm 215mm' : 'A4 landscape');
   const paperTitle = (isF4 ? 'F4 / Folio' : 'A4') + (isPortrait ? ' Potret' : ' Lanskap');
 
   printWindow.document.open();
@@ -2075,8 +2091,7 @@ function printAdjustedDocument() {
   <style>
     @page {
       size: ${paperCssSize};
-      size: ${isPortrait ? 'portrait' : 'landscape'};
-      margin: 6mm 8mm 6mm 8mm;
+      margin: ${isPortrait ? '6mm 6mm 6mm 6mm' : '5mm 6mm 5mm 6mm'};
     }
     * {
       box-sizing: border-box;
@@ -2089,8 +2104,13 @@ function printAdjustedDocument() {
       color: #0f172a;
       padding: 0;
       margin: 0;
-      font-size: ${isPortrait ? (isF4 ? '10px' : '9.5px') : (isF4 ? '11px' : '10px')};
-      line-height: 1.35;
+      font-size: ${isPortrait ? (isF4 ? '10px' : '9.5px') : (isF4 ? '10.5px' : '9.5px')};
+      line-height: 1.3;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    .overflow-x-auto, .overflow-auto, .overflow-hidden {
+      overflow: visible !important;
     }
     .text-center { text-align: center; }
     .text-left { text-align: left; }
