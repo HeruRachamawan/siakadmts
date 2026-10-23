@@ -404,86 +404,105 @@
             </div>
 
             <!-- Metadata Asesmen -->
-            <div class="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs font-medium border border-slate-300 rounded-lg p-3 bg-slate-50/70">
-              <div class="space-y-1">
-                <div class="flex items-center"><span class="w-32 text-slate-600">Mata Pelajaran</span><span class="mr-2">:</span><strong class="text-slate-900 font-bold">{{ exam.subject?.name || '-' }}</strong></div>
-                <div class="flex items-center"><span class="w-32 text-slate-600">Kelas / Rombel</span><span class="mr-2">:</span><strong class="text-slate-900 font-bold">Kelas {{ exam.class_room?.name || '-' }}</strong></div>
-                <div class="flex items-center"><span class="w-32 text-slate-600">Guru Pengampu</span><span class="mr-2">:</span><span class="text-slate-800 font-semibold">{{ exam.teacher?.full_name || exam.teacher?.name || '-' }}</span></div>
-                <div class="flex items-center"><span class="w-32 text-slate-600">Nama Paket Ujian</span><span class="mr-2">:</span><span class="text-slate-800 font-mono">{{ exam.title }}</span></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-2 text-xs border border-slate-300 rounded-xl p-4 bg-slate-50/80">
+              <div class="space-y-1.5">
+                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Mata Pelajaran</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-900 font-bold text-xs">{{ exam.subject?.name || '-' }}</span></div>
+                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Kelas / Rombel</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-900 font-bold text-xs">Kelas {{ exam.class_room?.name || '-' }}</span></div>
+                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Guru Pengampu</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-800 font-semibold text-xs">{{ exam.teacher?.full_name || exam.teacher?.name || '-' }}</span></div>
+                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Nama Paket Ujian</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-800 font-medium font-mono text-xs">{{ exam.title }}</span></div>
               </div>
-              <div class="space-y-1">
-                <div class="flex items-center"><span class="w-36 text-slate-600">Jenis Asesmen</span><span class="mr-2">:</span><strong class="text-slate-900 font-bold">{{ getExamTypeFullName(exam.exam_type) }}</strong></div>
-                <div class="flex items-center"><span class="w-36 text-slate-600">KKM / KKTP</span><span class="mr-2">:</span><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono font-black border border-emerald-300 text-xs">{{ exam.kkm }}</span></div>
-                <div class="flex items-center"><span class="w-36 text-slate-600">Bobot Penilaian</span><span class="mr-2">:</span><span class="text-slate-800">Objektif: <strong>{{ exam.pg_weight }}%</strong> | Uraian: <strong>{{ exam.essay_weight }}%</strong></span></div>
-                <div class="flex items-center"><span class="w-36 text-slate-600">Komposisi Soal</span><span class="mr-2">:</span><span class="text-slate-800 font-medium">{{ exam.total_questions }} Butir ({{ activeQuestionTypesList.map(t => `${t.count} ${t.label}`).join(', ') }})</span></div>
+              <div class="space-y-1.5">
+                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Jenis Asesmen</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-900 font-bold text-xs">{{ getExamTypeFullName(exam.exam_type) }}</span></div>
+                <div class="flex items-center"><span class="w-32 text-slate-500 font-medium flex-shrink-0">KKM / KKTP</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 font-mono font-black border border-emerald-300 text-xs shadow-sm">{{ exam.kkm }}</span></div>
+                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Bobot Penilaian</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-700 text-xs">Objektif: <strong class="text-slate-900 font-bold">{{ exam.pg_weight }}%</strong> &bull; Uraian: <strong class="text-slate-900 font-bold">{{ exam.essay_weight }}%</strong></span></div>
+                <div class="flex items-baseline"><span class="w-32 text-slate-500 font-medium flex-shrink-0">Komposisi Soal</span><span class="mr-2 text-slate-400 font-bold">:</span><span class="text-slate-800 font-medium text-xs">{{ exam.total_questions }} Butir ({{ activeQuestionTypesList.map(t => `${t.count} ${t.label}`).join(', ') }})</span></div>
               </div>
             </div>
 
             <!-- Tabel Daftar Nilai (1 Kolom Nilai Saja, Tanpa Nilai Asli & Remedial) -->
-            <div class="overflow-hidden border border-slate-300 rounded-lg">
+            <div class="overflow-x-auto border border-slate-300 rounded-lg shadow-sm">
               <table class="w-full border-collapse text-xs">
                 <thead>
                   <tr class="bg-slate-100 text-slate-800 uppercase font-black tracking-wider text-center text-[10px]">
-                    <th rowspan="2" class="border border-slate-300 px-2 py-2 w-10">No</th>
-                    <th rowspan="2" class="border border-slate-300 px-2.5 py-2 w-28">NISN</th>
-                    <th rowspan="2" class="border border-slate-300 px-3 py-2 text-left min-w-[180px]">Nama Siswa</th>
-                    <th rowspan="2" class="border border-slate-300 px-1.5 py-2 w-10">L/P</th>
-                    <th :colspan="activeQuestionTypesList.length" class="border border-slate-300 px-3 py-1.5 bg-slate-200/80 text-teal-950 font-black">
+                    <th rowspan="2" style="width: 42px; min-width: 42px;" class="border border-slate-300 px-2 py-2.5 text-center">No</th>
+                    <th rowspan="2" style="width: 110px; min-width: 110px;" class="border border-slate-300 px-2.5 py-2.5 text-center">NISN</th>
+                    <th rowspan="2" class="border border-slate-300 px-3.5 py-2.5 text-left min-w-[200px]">Nama Siswa</th>
+                    <th rowspan="2" style="width: 42px; min-width: 42px;" class="border border-slate-300 px-1.5 py-2.5 text-center">L/P</th>
+                    <th :colspan="activeQuestionTypesList.length" class="border border-slate-300 px-3 py-2 bg-slate-200/90 text-teal-950 font-black tracking-wider text-[10.5px]">
                       Capaian Nilai per Bentuk Soal (Poin / Maks)
                     </th>
-                    <th rowspan="2" class="border border-slate-300 px-3 py-2 w-24 bg-slate-200 font-black text-slate-900 text-center">NILAI</th>
-                    <th rowspan="2" class="border border-slate-300 px-2 py-2 w-24">Keterangan</th>
+                    <th rowspan="2" style="width: 80px; min-width: 80px;" class="border border-slate-300 px-2 py-2.5 bg-slate-200/90 font-black text-slate-900 text-center tracking-wider text-[11px]">NILAI</th>
+                    <th rowspan="2" style="width: 105px; min-width: 105px;" class="border border-slate-300 px-2 py-2.5 bg-slate-100 font-black text-slate-800 text-center tracking-wider text-[10.5px]">Keterangan</th>
                   </tr>
                   <tr class="bg-slate-50 text-slate-700 font-bold text-center text-[10px]">
                     <th
                       v-for="typeObj in activeQuestionTypesList"
                       :key="typeObj.key"
-                      class="border border-slate-300 px-2 py-1.5 min-w-[80px]"
+                      style="min-width: 120px;"
+                      class="border border-slate-300 px-2.5 py-2 bg-slate-50/90 text-center"
                     >
-                      <div class="font-bold text-slate-800">{{ typeObj.label }}</div>
-                      <div class="text-[9px] text-slate-500 font-normal">({{ typeObj.count }} Soal • Maks {{ typeObj.maxScore }})</div>
+                      <div class="font-extrabold text-slate-800 text-[11px] uppercase tracking-wide leading-tight">{{ typeObj.label }}</div>
+                      <div class="text-[9.5px] text-slate-500 font-semibold mt-0.5 whitespace-nowrap leading-tight">
+                        ({{ typeObj.count }} Soal &bull; Maks {{ typeObj.maxScore }})
+                      </div>
                     </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-slate-200">
                   <tr
                     v-for="(student, idx) in students"
                     :key="student.id"
-                    class="hover:bg-slate-50/50"
+                    :class="idx % 2 === 1 ? 'bg-slate-50/50' : 'bg-white'"
+                    class="hover:bg-indigo-50/40 transition-colors"
                   >
-                    <td class="border border-slate-300 px-2 py-1.5 text-center font-bold text-slate-500">{{ idx + 1 }}</td>
-                    <td class="border border-slate-300 px-2.5 py-1.5 text-center font-mono text-slate-600">{{ student.nisn || '-' }}</td>
-                    <td class="border border-slate-300 px-3 py-1.5 font-bold text-slate-800">{{ student.name }}</td>
-                    <td class="border border-slate-300 px-1.5 py-1.5 text-center font-bold text-slate-600">{{ student.gender || '-' }}</td>
+                    <td class="border border-slate-300 px-2 py-2 text-center font-bold text-slate-500 align-middle">{{ idx + 1 }}</td>
+                    <td class="border border-slate-300 px-2.5 py-2 text-center font-mono font-medium text-slate-700 align-middle text-[11px]">{{ student.nisn || '-' }}</td>
+                    <td class="border border-slate-300 px-3.5 py-2 font-bold text-slate-800 align-middle uppercase text-[11.5px] tracking-tight">{{ student.name }}</td>
+                    <td class="border border-slate-300 px-1.5 py-2 text-center font-bold text-slate-600 align-middle">{{ student.gender || '-' }}</td>
 
                     <td
                       v-for="typeObj in activeQuestionTypesList"
                       :key="typeObj.key"
-                      class="border border-slate-300 px-2 py-1.5 text-center"
+                      class="border border-slate-300 px-2 py-2 text-center align-middle bg-white"
                     >
-                      <div class="font-bold text-slate-800">
+                      <div class="font-extrabold text-slate-900 text-xs leading-none">
                         {{ calculateStudentTypeScore(student, typeObj).earned }}
                       </div>
-                      <div class="text-[9px] text-slate-500">
+                      <div class="text-[9.5px] text-slate-500 font-semibold mt-1 leading-none">
                         ({{ calculateStudentTypeScore(student, typeObj).percentage }}%)
                       </div>
                     </td>
 
                     <!-- 1 Kolom Nilai Tunggal -->
-                    <td class="border border-slate-300 px-3 py-1.5 text-center font-black text-sm text-slate-900 bg-slate-50/80">
+                    <td class="border border-slate-300 px-2.5 py-2 text-center font-black text-[13px] text-slate-900 bg-slate-100/60 align-middle">
                       {{ getStudentFinalGrade(student) }}
                     </td>
 
                     <!-- Keterangan Status KKM -->
-                    <td class="border border-slate-300 px-2 py-1.5 text-center font-black text-[10px]">
-                      <span v-if="getStudentPrintStatus(student) === 'TUNTAS' || getStudentPrintStatus(student) === 'TUNTAS (REM)'" class="text-emerald-700">TUNTAS</span>
-                      <span v-else-if="getStudentPrintStatus(student) === 'REMEDIAL'" class="text-rose-600">REMEDIAL</span>
-                      <span v-else class="text-slate-400">BELUM UJIAN</span>
+                    <td class="border border-slate-300 px-2 py-2 text-center align-middle whitespace-nowrap">
+                      <span
+                        v-if="getStudentPrintStatus(student) === 'TUNTAS' || getStudentPrintStatus(student) === 'TUNTAS (REM)'"
+                        class="inline-flex items-center justify-center px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-300"
+                      >
+                        TUNTAS
+                      </span>
+                      <span
+                        v-else-if="getStudentPrintStatus(student) === 'REMEDIAL'"
+                        class="inline-flex items-center justify-center px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-300"
+                      >
+                        REMEDIAL
+                      </span>
+                      <span
+                        v-else
+                        class="inline-flex items-center justify-center px-2 py-0.5 rounded text-[9.5px] font-bold text-slate-400 bg-slate-50 border border-slate-200"
+                      >
+                        BELUM UJIAN
+                      </span>
                     </td>
                   </tr>
 
                   <tr v-if="students.length === 0">
-                    <td :colspan="6 + activeQuestionTypesList.length" class="border border-slate-300 px-4 py-6 text-center text-slate-400">
+                    <td :colspan="6 + activeQuestionTypesList.length" class="border border-slate-300 px-4 py-8 text-center text-slate-400 font-medium italic">
                       Tidak ada data siswa pada kelas ini.
                     </td>
                   </tr>
@@ -494,22 +513,22 @@
             <!-- Statistik Klasikal -->
             <div class="space-y-1.5">
               <div class="text-xs font-black text-slate-800 uppercase tracking-wider">Rekapitulasi Ketuntasan Klasikal:</div>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                <div class="p-2 border border-slate-300 rounded bg-slate-50">
-                  <span class="text-slate-500 block text-[10px]">Total Siswa Peserta</span>
-                  <strong class="text-slate-800 text-sm">{{ printStats.participated }} / {{ printStats.total }} Siswa</strong>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                <div class="p-2.5 border border-slate-300 rounded-lg bg-slate-50/80 shadow-sm">
+                  <span class="text-slate-500 block text-[10px] font-medium uppercase tracking-tight">Total Siswa Peserta</span>
+                  <strong class="text-slate-800 text-sm font-black">{{ printStats.participated }} / {{ printStats.total }} Siswa</strong>
                 </div>
-                <div class="p-2 border border-slate-300 rounded bg-slate-50">
-                  <span class="text-slate-500 block text-[10px]">Tuntas Belajar</span>
-                  <strong class="text-emerald-700 text-sm">{{ printStats.totalPassed }} Siswa ({{ printStats.passPercentage }}%)</strong>
+                <div class="p-2.5 border border-slate-300 rounded-lg bg-slate-50/80 shadow-sm">
+                  <span class="text-slate-500 block text-[10px] font-medium uppercase tracking-tight">Tuntas Belajar</span>
+                  <strong class="text-emerald-700 text-sm font-black">{{ printStats.totalPassed }} Siswa ({{ printStats.passPercentage }}%)</strong>
                 </div>
-                <div class="p-2 border border-slate-300 rounded bg-slate-50">
-                  <span class="text-slate-500 block text-[10px]">Belum Tuntas (Remedial)</span>
-                  <strong class="text-rose-600 text-sm">{{ printStats.remedialCount }} Siswa</strong>
+                <div class="p-2.5 border border-slate-300 rounded-lg bg-slate-50/80 shadow-sm">
+                  <span class="text-slate-500 block text-[10px] font-medium uppercase tracking-tight">Belum Tuntas (Remedial)</span>
+                  <strong class="text-rose-600 text-sm font-black">{{ printStats.remedialCount }} Siswa</strong>
                 </div>
-                <div class="p-2 border border-slate-300 rounded bg-slate-50">
-                  <span class="text-slate-500 block text-[10px]">Rata-rata / Tertinggi / Terendah</span>
-                  <strong class="text-slate-800 text-sm">{{ printStats.avgScore }} / {{ printStats.maxScore }} / {{ printStats.minScore }}</strong>
+                <div class="p-2.5 border border-slate-300 rounded-lg bg-slate-50/80 shadow-sm">
+                  <span class="text-slate-500 block text-[10px] font-medium uppercase tracking-tight">Rata-rata / Tertinggi / Terendah</span>
+                  <strong class="text-slate-800 text-sm font-black">{{ printStats.avgScore }} / {{ printStats.maxScore }} / {{ printStats.minScore }}</strong>
                 </div>
               </div>
             </div>
@@ -1821,26 +1840,53 @@ function printGradeListDocument() {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
     body {
       background: #ffffff !important;
       color: #0f172a;
       padding: 0;
       margin: 0;
-      font-size: ${isF4 ? '10px' : '9px'};
+      font-size: ${isF4 ? '10px' : '9.5px'};
       line-height: 1.35;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      page-break-inside: auto;
+    }
+    tr {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    thead {
+      display: table-header-group;
+    }
+    th, td {
+      border: 1px solid #94a3b8;
+      vertical-align: middle;
     }
     .text-center { text-align: center; }
     .text-left { text-align: left; }
     .text-right { text-align: right; }
     .font-bold { font-weight: bold; }
     .font-semibold { font-weight: 600; }
+    .font-medium { font-weight: 500; }
     .font-black { font-weight: 900; }
+    .font-extrabold { font-weight: 800; }
     .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
     .uppercase { text-transform: uppercase; }
     .underline { text-decoration: underline; }
+    .tracking-tight { letter-spacing: -0.025em; }
+    .tracking-wide { letter-spacing: 0.025em; }
+    .tracking-wider { letter-spacing: 0.05em; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .leading-none { line-height: 1; }
+    .leading-tight { line-height: 1.25; }
+    .align-middle { vertical-align: middle; }
     
+    .inline-block { display: inline-block; }
+    .inline-flex { display: inline-flex; }
     .flex { display: flex; }
     .flex-col { flex-direction: column; }
     .justify-between { justify-content: space-between; }
@@ -1848,23 +1894,38 @@ function printGradeListDocument() {
     .justify-end { justify-content: flex-end; }
     .items-center { align-items: center; }
     .items-start { align-items: flex-start; }
+    .items-baseline { align-items: baseline; }
     .flex-1 { flex: 1 1 0%; }
     .flex-shrink-0 { flex-shrink: 0; }
+    
     .gap-1 { gap: 4px; }
     .gap-1\\.5 { gap: 6px; }
     .gap-2 { gap: 8px; }
+    .gap-2\\.5 { gap: 10px; }
     .gap-3 { gap: 12px; }
     .gap-4 { gap: 16px; }
     .gap-5 { gap: 20px; }
     .gap-8 { gap: 32px; }
+    .gap-10 { gap: 40px; }
     .gap-x-8 { column-gap: 32px; }
+    .gap-x-10 { column-gap: 40px; }
     .gap-y-1\\.5 { row-gap: 6px; }
+    .gap-y-2 { row-gap: 8px; }
+    
     .grid { display: grid; }
+    .grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
     .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
     .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+    @media (min-width: 640px) {
+      .sm\\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (min-width: 768px) {
+      .md\\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    }
     
     .w-full { width: 100%; }
     .w-10 { width: 40px; }
+    .w-12 { width: 48px; }
     .w-18 { width: 72px; }
     .w-20 { width: 80px; }
     .w-24 { width: 96px; }
@@ -1874,50 +1935,74 @@ function printGradeListDocument() {
     .h-18 { height: 72px; }
     .h-20 { height: 80px; }
     
+    .p-1 { padding: 4px; }
     .p-2 { padding: 8px; }
+    .p-2\\.5 { padding: 10px; }
     .p-3 { padding: 12px; }
+    .p-3\\.5 { padding: 14px; }
     .p-4 { padding: 16px; }
     .px-1\\.5 { padding-left: 6px; padding-right: 6px; }
     .px-2 { padding-left: 8px; padding-right: 8px; }
     .px-2\\.5 { padding-left: 10px; padding-right: 10px; }
     .px-3 { padding-left: 12px; padding-right: 12px; }
+    .px-3\\.5 { padding-left: 14px; padding-right: 14px; }
+    .py-0\\.5 { padding-top: 2px; padding-bottom: 2px; }
+    .py-1 { padding-top: 4px; padding-bottom: 4px; }
     .py-1\\.5 { padding-top: 6px; padding-bottom: 6px; }
     .py-2 { padding-top: 8px; padding-bottom: 8px; }
+    .py-2\\.5 { padding-top: 10px; padding-bottom: 10px; }
     .pb-3 { padding-bottom: 12px; }
     .pt-6 { padding-top: 24px; }
+    .mb-1 { margin-bottom: 4px; }
     .mb-4 { margin-bottom: 16px; }
+    .mt-0\\.5 { margin-top: 2px; }
+    .mt-1 { margin-top: 4px; }
+    .mr-2 { margin-right: 8px; }
+    .mr-2\\.5 { margin-right: 10px; }
     .pr-6 { padding-right: 24px; }
     .pr-14 { padding-right: 56px; }
-    .mr-2 { margin-right: 8px; }
     
     .space-y-1 > * + * { margin-top: 4px; }
     .space-y-1\\.5 > * + * { margin-top: 6px; }
+    .space-y-2 > * + * { margin-top: 8px; }
     .space-y-5 > * + * { margin-top: 20px; }
     
     .border { border: 1px solid #94a3b8; }
     .border-b { border-bottom: 1px solid #94a3b8; }
     .border-b-4 { border-bottom: 4px solid #0f172a; }
     .border-double { border-bottom-style: double; }
+    .border-slate-200 { border-color: #e2e8f0; }
     .border-slate-300 { border-color: #cbd5e1; }
     .border-slate-900 { border-color: #0f172a; }
-    .border-teal-300 { border-color: #5eead4; }
+    .border-emerald-200 { border-color: #a7f3d0; }
     .border-emerald-300 { border-color: #6ee7b7; }
+    .border-rose-200 { border-color: #fecdd3; }
+    .border-rose-300 { border-color: #fda4af; }
     
     .rounded { border-radius: 4px; }
+    .rounded-md { border-radius: 6px; }
     .rounded-lg { border-radius: 8px; }
     .rounded-xl { border-radius: 12px; }
     .rounded-2xl { border-radius: 16px; }
+    .rounded-full { border-radius: 9999px; }
+    .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
     
     .bg-white { background-color: #ffffff; }
     .bg-slate-50 { background-color: #f8fafc !important; }
-    .bg-slate-100 { background-color: #f1f5f9 !important; }
-    .bg-slate-150 { background-color: #e6edf4 !important; }
-    .bg-slate-200 { background-color: #e2e8f0 !important; }
-    .bg-slate-200\\/80 { background-color: rgba(226, 232, 240, 0.8) !important; }
+    .bg-slate-50\\/50 { background-color: rgba(248, 250, 252, 0.5) !important; }
     .bg-slate-50\\/70 { background-color: rgba(248, 250, 252, 0.7) !important; }
     .bg-slate-50\\/80 { background-color: rgba(248, 250, 252, 0.8) !important; }
+    .bg-slate-50\\/90 { background-color: rgba(248, 250, 252, 0.9) !important; }
+    .bg-slate-100 { background-color: #f1f5f9 !important; }
+    .bg-slate-100\\/50 { background-color: rgba(241, 245, 249, 0.5) !important; }
+    .bg-slate-100\\/60 { background-color: rgba(241, 245, 249, 0.6) !important; }
+    .bg-slate-200 { background-color: #e2e8f0 !important; }
+    .bg-slate-200\\/80 { background-color: rgba(226, 232, 240, 0.8) !important; }
+    .bg-slate-200\\/90 { background-color: rgba(226, 232, 240, 0.9) !important; }
     .bg-teal-800 { background-color: #115e59 !important; color: white !important; }
+    .bg-emerald-50 { background-color: #ecfdf5 !important; }
     .bg-emerald-100 { background-color: #d1fae5 !important; }
+    .bg-rose-50 { background-color: #fff1f2 !important; }
     
     .text-white { color: #ffffff !important; }
     .text-slate-400 { color: #94a3b8; }
@@ -1931,6 +2016,7 @@ function printGradeListDocument() {
     .text-emerald-700 { color: #047857; }
     .text-emerald-800 { color: #065f46; }
     .text-rose-600 { color: #e11d48; }
+    .text-rose-700 { color: #be123c; }
     
     .text-xs { font-size: 10px; }
     .text-sm { font-size: 11px; }
@@ -1939,8 +2025,12 @@ function printGradeListDocument() {
     .text-xl { font-size: 16px; }
     .text-2xl { font-size: 18px; }
     .text-\\[9px\\] { font-size: 9px; }
+    .text-\\[9\\.5px\\] { font-size: 9.5px; }
     .text-\\[10px\\] { font-size: 10px; }
+    .text-\\[10\\.5px\\] { font-size: 10.5px; }
     .text-\\[11px\\] { font-size: 11px; }
+    .text-\\[11\\.5px\\] { font-size: 11.5px; }
+    .text-\\[13px\\] { font-size: 13px; }
     
     .break-inside-avoid {
       page-break-inside: avoid;
@@ -2843,9 +2933,9 @@ async function exportGradeListToWord() {
   if (qTypes.length > 0) {
     thQTypes = `<th colspan="${qTypes.length}" style="border: 1pt solid #000000; padding: 5pt 3pt; background-color: #cbd5e1; color: #000000; font-weight: 900; font-size: 8.5pt; text-align: center;">CAPAIAN NILAI PER BENTUK SOAL (POIN / MAKS)</th>`;
     thQTypesSub = qTypes.map(t => `
-      <th style="border: 1pt solid #000000; padding: 4pt 2.5pt; background-color: #e2e8f0; text-align: center; font-size: 8pt; min-width: 60pt;">
-        <div style="font-weight: 900; color: #000000;">${t.label}</div>
-        <div style="font-size: 7.5pt; color: #000000; font-weight: normal;">(${t.count} Soal • Maks ${t.maxScore})</div>
+      <th style="border: 1pt solid #000000; padding: 4.5pt 3pt; background-color: #f1f5f9; text-align: center; font-size: 8pt; min-width: 85pt; width: 85pt;">
+        <div style="font-weight: 900; color: #000000; text-transform: uppercase;">${t.label}</div>
+        <div style="font-size: 7.5pt; color: #475569; font-weight: bold; white-space: nowrap;">(${t.count} Soal • Maks ${t.maxScore})</div>
       </th>
     `).join('');
   }
@@ -2862,7 +2952,7 @@ async function exportGradeListToWord() {
         return `
           <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; font-size: 8.5pt;">
             <div style="font-weight: 900; color: #000000;">${score.earned}</div>
-            <div style="font-size: 7.5pt; color: #333333; font-weight: 600;">(${score.percentage}%)</div>
+            <div style="font-size: 7.5pt; color: #475569; font-weight: 600;">(${score.percentage}%)</div>
           </td>
         `;
       }).join('');
@@ -2872,21 +2962,21 @@ async function exportGradeListToWord() {
 
       let statusHtml = '';
       if (status === 'TUNTAS' || status === 'TUNTAS (REM)') {
-        statusHtml = '<b style="color: #15803d; font-size: 8.5pt;">TUNTAS</b>';
+        statusHtml = '<span style="display:inline-block; padding: 1.5pt 6pt; background-color: #ecfdf5; color: #15803d; border: 0.75pt solid #86efac; border-radius: 3pt; font-weight: 900; font-size: 8pt;">TUNTAS</span>';
       } else if (status === 'REMEDIAL') {
-        statusHtml = '<b style="color: #dc2626; font-size: 8.5pt;">REMEDIAL</b>';
+        statusHtml = '<span style="display:inline-block; padding: 1.5pt 6pt; background-color: #fff1f2; color: #dc2626; border: 0.75pt solid #fca5a5; border-radius: 3pt; font-weight: 900; font-size: 8pt;">REMEDIAL</span>';
       } else {
-        statusHtml = '<span style="color: #64748b; font-size: 8pt; font-weight: bold;">BELUM UJIAN</span>';
+        statusHtml = '<span style="display:inline-block; padding: 1.5pt 4pt; background-color: #f8fafc; color: #94a3b8; border: 0.75pt solid #cbd5e1; border-radius: 3pt; font-weight: bold; font-size: 7.5pt;">BELUM UJIAN</span>';
       }
 
       return `
         <tr style="background-color: ${idx % 2 === 1 ? '#f8fafc' : '#ffffff'};">
           <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; font-weight: bold; color: #000000; font-size: 8.5pt;">${idx + 1}</td>
-          <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; font-family: Arial, sans-serif; font-size: 8.5pt; font-weight: bold; color: #000000;">${student.nisn || '-'}</td>
-          <td align="left" style="border: 1pt solid #000000; padding: 3.5pt 6pt; font-weight: bold; font-size: 9pt; color: #000000;">${student.name}</td>
+          <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; font-family: monospace; font-size: 8.5pt; font-weight: bold; color: #000000;">${student.nisn || '-'}</td>
+          <td align="left" style="border: 1pt solid #000000; padding: 3.5pt 6pt; font-weight: bold; font-size: 9pt; color: #000000; text-transform: uppercase;">${student.name}</td>
           <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; font-weight: bold; font-size: 8.5pt; color: #000000;">${student.gender || '-'}</td>
           ${typeScoresHtml}
-          <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; background-color: #cbd5e1;"><b style="font-size: 10pt; color: #000000;">${finalGrade}</b></td>
+          <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; background-color: #f1f5f9;"><b style="font-size: 10pt; color: #000000;">${finalGrade}</b></td>
           <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt;">${statusHtml}</td>
         </tr>
       `;
