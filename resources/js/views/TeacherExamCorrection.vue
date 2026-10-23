@@ -2932,9 +2932,7 @@
                   <div class="invisible select-none mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Mengetahui,</div>
                   <div>Kepala MTs Al - Hasanah</div>
-                  <div class="h-20 flex items-center justify-center">
-                    <!-- Space for stamp & sign -->
-                  </div>
+                  <div style="height: 55px; min-height: 55px;" class="flex items-center justify-center">&nbsp;</div>
                   <div class="font-black text-slate-900 underline">{{ schoolProfile?.principal_name || 'Kepala Madrasah' }}</div>
                 </div>
 
@@ -2942,9 +2940,7 @@
                   <div class="font-medium mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Guru Pengampu,</div>
                   <div>Mata Pelajaran {{ activeExam.subject?.name || '' }}</div>
-                  <div class="h-20 flex items-center justify-center">
-                    <!-- Space for sign -->
-                  </div>
+                  <div style="height: 55px; min-height: 55px;" class="flex items-center justify-center">&nbsp;</div>
                   <div class="font-black text-slate-900 underline">{{ activeExam.teacher?.full_name || activeExam.teacher?.name || 'Guru Mata Pelajaran' }}</div>
                 </div>
               </div>
@@ -3240,18 +3236,18 @@
             <div class="pt-4 text-xs text-slate-800 break-inside-avoid">
               <div class="grid grid-cols-2 gap-8 text-center">
                 <div>
-                  <div class="invisible select-none mb-1">Ciomas, {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</div>
+                  <div class="invisible select-none mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Mengetahui,</div>
                   <div>Kepala MTs Al - Hasanah</div>
-                  <div class="h-20 flex items-center justify-center"></div>
+                  <div style="height: 55px; min-height: 55px;" class="flex items-center justify-center">&nbsp;</div>
                   <div class="font-black text-slate-900 underline">{{ schoolProfile?.principal_name || 'Kepala Madrasah' }}</div>
                 </div>
 
                 <div>
-                  <div class="font-medium mb-1">Ciomas, {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</div>
+                  <div class="font-medium mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Guru Pengampu,</div>
                   <div>Mata Pelajaran {{ activeExam.subject?.name || '' }}</div>
-                  <div class="h-20 flex items-center justify-center"></div>
+                  <div style="height: 55px; min-height: 55px;" class="flex items-center justify-center">&nbsp;</div>
                   <div class="font-black text-slate-900 underline">{{ activeExam.teacher?.full_name || activeExam.teacher?.name || 'Guru Mata Pelajaran' }}</div>
                 </div>
               </div>
@@ -3525,18 +3521,18 @@
             <div class="pt-4 text-xs text-slate-800 break-inside-avoid">
               <div class="grid grid-cols-2 gap-8 text-center">
                 <div>
-                  <div class="invisible select-none mb-1">Ciomas, {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</div>
+                  <div class="invisible select-none mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Mengetahui,</div>
                   <div>Kepala MTs Al - Hasanah</div>
-                  <div class="h-20 flex items-center justify-center"></div>
+                  <div style="height: 55px; min-height: 55px;" class="flex items-center justify-center">&nbsp;</div>
                   <div class="font-black text-slate-900 underline">{{ schoolProfile?.principal_name || 'Kepala Madrasah' }}</div>
                 </div>
 
                 <div>
-                  <div class="font-medium mb-1">Ciomas, {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</div>
+                  <div class="font-medium mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Guru Pengampu,</div>
                   <div>Mata Pelajaran {{ activeExam.subject?.name || '' }}</div>
-                  <div class="h-20 flex items-center justify-center"></div>
+                  <div style="height: 55px; min-height: 55px;" class="flex items-center justify-center">&nbsp;</div>
                   <div class="font-black text-slate-900 underline">{{ activeExam.teacher?.full_name || activeExam.teacher?.name || 'Guru Mata Pelajaran' }}</div>
                 </div>
               </div>

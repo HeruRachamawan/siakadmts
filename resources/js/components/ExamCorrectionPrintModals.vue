@@ -255,7 +255,7 @@
                   <div class="invisible select-none mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Mengetahui,</div>
                   <div>Kepala MTs Al - Hasanah</div>
-                  <div class="h-20 flex items-center justify-center"></div>
+                  <div style="height: 55px; min-height: 55px;" class="flex items-center justify-center">&nbsp;</div>
                   <div class="font-black text-slate-900 underline">{{ schoolProfile?.principal_name || 'Kepala Madrasah' }}</div>
                 </div>
 
@@ -263,7 +263,7 @@
                   <div class="font-medium mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Guru Pengampu,</div>
                   <div>Mata Pelajaran {{ exam.subject?.name || '' }}</div>
-                  <div class="h-20 flex items-center justify-center"></div>
+                  <div style="height: 55px; min-height: 55px;" class="flex items-center justify-center">&nbsp;</div>
                   <div class="font-black text-slate-900 underline">{{ exam.teacher?.full_name || exam.teacher?.name || 'Guru Mata Pelajaran' }}</div>
                 </div>
               </div>
@@ -540,7 +540,7 @@
                   <div class="invisible select-none mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Mengetahui,</div>
                   <div>Kepala MTs Al - Hasanah</div>
-                  <div class="h-20 flex items-center justify-center"></div>
+                  <div style="height: 55px; min-height: 55px;" class="flex items-center justify-center">&nbsp;</div>
                   <div class="font-black text-slate-900 underline">{{ schoolProfile?.principal_name || 'Kepala Madrasah' }}</div>
                 </div>
 
@@ -548,7 +548,7 @@
                   <div class="font-medium mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Guru Pengampu,</div>
                   <div>Mata Pelajaran {{ exam.subject?.name || '' }}</div>
-                  <div class="h-20 flex items-center justify-center"></div>
+                  <div style="height: 55px; min-height: 55px;" class="flex items-center justify-center">&nbsp;</div>
                   <div class="font-black text-slate-900 underline">{{ exam.teacher?.full_name || exam.teacher?.name || 'Guru Mata Pelajaran' }}</div>
                 </div>
               </div>
@@ -863,7 +863,7 @@
                   <div class="invisible select-none mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Mengetahui,</div>
                   <div>Kepala MTs Al - Hasanah</div>
-                  <div class="h-20 flex items-center justify-center"></div>
+                  <div style="height: 55px; min-height: 55px;" class="flex items-center justify-center">&nbsp;</div>
                   <div class="font-black text-slate-900 underline">{{ schoolProfile?.principal_name || 'Kepala Madrasah' }}</div>
                 </div>
 
@@ -871,7 +871,7 @@
                   <div class="font-medium mb-1">Ciomas, {{ getPrintDateFormatted() }}</div>
                   <div class="font-bold">Guru Pengampu,</div>
                   <div>Mata Pelajaran {{ exam.subject?.name || '' }}</div>
-                  <div class="h-20 flex items-center justify-center"></div>
+                  <div style="height: 55px; min-height: 55px;" class="flex items-center justify-center">&nbsp;</div>
                   <div class="font-black text-slate-900 underline">{{ exam.teacher?.full_name || exam.teacher?.name || 'Guru Mata Pelajaran' }}</div>
                 </div>
               </div>

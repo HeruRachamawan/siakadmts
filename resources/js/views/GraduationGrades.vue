@@ -2394,8 +2394,8 @@
                       {{ settings?.date_place || 'Bogor' }}, {{ formatDateIndo(settings?.graduation_date) }}
                     </p>
                     <p class="font-bold font-serif">Kepala Madrasah,</p>
-                    <div class="h-18 sm:h-20 flex items-center justify-center">
-                      <!-- Ruang tanda tangan & stempel madrasah -->
+                    <div style="height: 55px; min-height: 55px;" class="flex items-center justify-center">
+                      &nbsp;<!-- Ruang tanda tangan & stempel madrasah -->
                     </div>
                     <p class="font-bold font-serif underline text-sm sm:text-base leading-snug">
                       {{ settings?.principal_name || schoolSetting?.principal_name || 'H. Umar Usman Ali, S.Pd, S.Pd.I' }}
