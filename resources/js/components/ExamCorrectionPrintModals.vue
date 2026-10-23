@@ -301,6 +301,12 @@
           </div>
 
           <div class="flex items-center gap-2 flex-wrap justify-end">
+            <!-- Tip Cetak Chrome -->
+            <div class="hidden xl:flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-[11px] font-semibold shadow-sm">
+              <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              <span>Pastikan centang <strong class="font-black text-amber-950">"Background graphics"</strong> di dialog cetak agar warna tabel &amp; status tuntas muncul.</span>
+            </div>
+
             <!-- Pilihan Ukuran Kertas (A4 / F4) -->
             <div class="flex items-center bg-slate-200/90 p-1 rounded-xl border border-slate-300 shadow-inner">
               <button
@@ -1635,8 +1641,7 @@ function printDocument() {
   }
 
   const isF4 = selectedPaperSize.value === 'f4';
-  const paperCssSize = isF4 ? '330mm 215mm' : '297mm 210mm';
-  const paperTitle = isF4 ? 'F4 / Folio' : 'A4';
+  const paperTitle = isF4 ? 'F4 / Folio Lanskap' : 'A4 Lanskap';
 
   printWindow.document.open();
   printWindow.document.write(`<!DOCTYPE html>
@@ -1646,8 +1651,9 @@ function printDocument() {
   <title>Rekapitulasi Nilai Asesmen (${paperTitle}) - ${props.exam?.title || 'Ujian'}</title>
   <style>
     @page {
-      size: ${paperCssSize};
-      margin: 8mm 8mm 8mm 8mm;
+      size: ${isF4 ? '330mm 215mm landscape' : 'A4 landscape'};
+      size: landscape;
+      margin: 6mm 8mm 6mm 8mm;
     }
     * {
       box-sizing: border-box;
@@ -1822,8 +1828,7 @@ function printGradeListDocument() {
   }
 
   const isF4 = selectedGradeListPaperSize.value === 'f4';
-  const paperCssSize = isF4 ? '330mm 215mm' : '297mm 210mm';
-  const paperTitle = isF4 ? 'F4 / Folio' : 'A4';
+  const paperTitle = isF4 ? 'F4 / Folio Lanskap' : 'A4 Lanskap';
 
   const headStyles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
     .map(el => el.outerHTML)
@@ -1838,13 +1843,15 @@ function printGradeListDocument() {
   ${headStyles}
   <style>
     @page {
-      size: ${paperCssSize};
-      margin: 8mm 8mm 8mm 8mm;
+      size: ${isF4 ? '330mm 215mm' : 'A4'} landscape;
+      size: landscape;
+      margin: 5mm 6mm 5mm 6mm;
     }
     * {
       box-sizing: border-box;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
+      color-adjust: exact !important;
     }
     html, body {
       background: #ffffff !important;
@@ -1852,7 +1859,7 @@ function printGradeListDocument() {
       margin: 0 !important;
       padding: 0 !important;
       font-size: ${isF4 ? '10px' : '9.5px'};
-      line-height: 1.35;
+      line-height: 1.3;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
     .printable-recap-sheet {
@@ -1865,10 +1872,10 @@ function printGradeListDocument() {
       background: #ffffff !important;
     }
     .printable-recap-sheet > * + * {
-      margin-top: 14px !important;
+      margin-top: 12px !important;
     }
     .space-y-5 > * + * {
-      margin-top: 14px !important;
+      margin-top: 12px !important;
     }
     table {
       width: 100% !important;
@@ -1877,12 +1884,18 @@ function printGradeListDocument() {
       margin-top: 4px;
     }
     th, td {
-      border: 1px solid #94a3b8 !important;
+      border: 1px solid #334155 !important;
       vertical-align: middle !important;
-      padding: 4px 5px !important;
+      padding: 3px 4px !important;
+      color: #0f172a !important;
     }
     thead {
       display: table-header-group;
+    }
+    thead th {
+      background-color: #f1f5f9 !important;
+      font-weight: 900 !important;
+      color: #0f172a !important;
     }
     tr {
       page-break-inside: avoid;
@@ -1902,6 +1915,10 @@ function printGradeListDocument() {
       max-width: 100%;
       height: auto;
       object-fit: contain;
+    }
+    .signature-box {
+      height: 50px !important;
+      min-height: 50px !important;
     }
   </style>
 </head>
@@ -1935,7 +1952,7 @@ function printAdjustedDocument() {
 
   const isF4 = selectedAdjustedPaperSize.value === 'f4';
   const isPortrait = selectedAdjustedOrientation.value === 'portrait';
-  let paperCssSize = isPortrait ? (isF4 ? '215mm 330mm' : '210mm 297mm') : (isF4 ? '330mm 215mm' : '297mm 210mm');
+  let paperCssSize = isPortrait ? (isF4 ? '215mm 330mm portrait' : 'A4 portrait') : (isF4 ? '330mm 215mm landscape' : 'A4 landscape');
   const paperTitle = (isF4 ? 'F4 / Folio' : 'A4') + (isPortrait ? ' Potret' : ' Lanskap');
 
   printWindow.document.open();
@@ -1947,7 +1964,8 @@ function printAdjustedDocument() {
   <style>
     @page {
       size: ${paperCssSize};
-      margin: 8mm 8mm 8mm 8mm;
+      size: ${isPortrait ? 'portrait' : 'landscape'};
+      margin: 6mm 8mm 6mm 8mm;
     }
     * {
       box-sizing: border-box;
