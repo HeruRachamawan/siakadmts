@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\GalleryController;
 use App\Http\Controllers\Admin\GradeController as AdminGradeController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\StudentController as AdminStudentController;
+use App\Http\Controllers\Admin\StudentPromotionController;
+use App\Http\Controllers\Admin\AlumniController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\TeacherController;
 use App\Http\Controllers\Admin\UserController;
@@ -37,8 +39,18 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::get('excel/export/{type}', [\App\Http\Controllers\Admin\ExcelImportExportController::class, 'exportExcel']);
 
     Route::apiResource('users', UserController::class);
+    Route::get('academic-years/options', [AcademicYearController::class, 'options']);
     Route::apiResource('academic-years', AcademicYearController::class)
         ->parameters(['academic-years' => 'academic_year']);
+
+    // Kenaikan Kelas & Kelulusan Massal
+    Route::get('promotions/candidates', [StudentPromotionController::class, 'getCandidates']);
+    Route::post('promotions/process', [StudentPromotionController::class, 'processPromotions']);
+
+    // Buku Induk Alumni
+    Route::get('alumni', [AlumniController::class, 'index']);
+    Route::put('alumni/{id}', [AlumniController::class, 'update']);
+    Route::post('alumni/{id}/revert', [AlumniController::class, 'revertToActive']);
     Route::apiResource('teachers', TeacherController::class);
     Route::post('teachers/{teacher}/reset-credentials', [TeacherController::class, 'resetCredentials'])
         ->name('teachers.reset-credentials');

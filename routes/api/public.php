@@ -14,4 +14,7 @@ Route::prefix('public')->group(function () {
     Route::get('/ppdb/info', [PpdbPublicController::class, 'getInfo']);
     Route::post('/ppdb/register', [PpdbPublicController::class, 'register']);
     Route::get('/ppdb/status/{keyword}', [PpdbPublicController::class, 'checkStatus']);
+
+    // Public Academic Year Options
+    Route::get('/academic-years', [\App\Http\Controllers\Admin\AcademicYearController::class, 'options']);
 });

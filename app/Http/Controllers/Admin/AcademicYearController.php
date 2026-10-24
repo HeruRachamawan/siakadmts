@@ -72,4 +72,25 @@ class AcademicYearController extends BaseController
 
         return $this->success($academicYear, 'Tahun ajaran diaktifkan');
     }
+
+    public function options()
+    {
+        $years = AcademicYear::orderBy('year', 'desc')->orderBy('semester', 'desc')->get()->map(function ($y) {
+            return [
+                'id' => $y->id,
+                'year' => $y->year,
+                'semester' => $y->semester,
+                'is_active' => (bool)$y->is_active,
+                'label' => "{$y->year} - " . ($y->semester === 'odd' ? 'Ganjil' : 'Genap') . ($y->is_active ? ' (Aktif)' : ''),
+            ];
+        });
+
+        $active = AcademicYear::where('is_active', true)->first();
+
+        return $this->success([
+            'years' => $years,
+            'active_id' => $active?->id,
+            'active_label' => $active ? "{$active->year} - " . ($active->semester === 'odd' ? 'Ganjil' : 'Genap') : null,
+        ]);
+    }
 }

@@ -374,6 +374,34 @@
               </Transition>
             </RouterLink>
 
+            <!-- Kenaikan Kelas & Kelulusan -->
+            <RouterLink
+              to="/admin/promotions"
+              :title="isCollapsed ? 'Kenaikan Kelas & Kelulusan' : ''"
+              class="nav-link"
+              :class="isCollapsed ? 'justify-center' : ''"
+              active-class="nav-link-active"
+            >
+              <ArrowRightLeft class="w-4 h-4 flex-shrink-0 text-emerald-400" />
+              <Transition name="label-fade">
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Kenaikan Kelas</span>
+              </Transition>
+            </RouterLink>
+
+            <!-- Buku Induk Alumni -->
+            <RouterLink
+              to="/admin/alumni"
+              :title="isCollapsed ? 'Buku Induk Alumni' : ''"
+              class="nav-link"
+              :class="isCollapsed ? 'justify-center' : ''"
+              active-class="nav-link-active"
+            >
+              <BookOpen class="w-4 h-4 flex-shrink-0 text-indigo-400" />
+              <Transition name="label-fade">
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Buku Induk Alumni</span>
+              </Transition>
+            </RouterLink>
+
             <!-- Data Guru -->
             <RouterLink
               v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum' || currentRole === 'kepala_sekolah'"
@@ -1207,7 +1235,7 @@ const routeSectionMap = {
   kurikulum_kbm: ['/admin/schedules', '/admin/subjects', '/admin/calendar-events'],
   kurikulum_asesmen: ['/admin/exam-corrections', '/admin/grades', '/admin/ledger-monitoring', '/kurikulum/asts-monitoring'],
   kurikulum_supervisi: ['/admin/teacher-presensi-monitoring'],
-  data_master: ['/admin/students', '/admin/teachers', '/admin/classes', '/admin/academic-years', '/admin/extracurriculars', '/admin/ppdb'],
+  data_master: ['/admin/students', '/admin/promotions', '/admin/alumni', '/admin/teachers', '/admin/classes', '/admin/academic-years', '/admin/extracurriculars', '/admin/ppdb'],
   teacher_presensi: ['/teacher/presensi', '/teacher/presensi-recap', '/teacher/schedules', '/teacher/calendar'],
   teacher_pembelajaran: ['/teacher/attendance', '/teacher/exam-corrections', '/teacher/grades', '/teacher/extracurriculars'],
   teacher_homeroom: ['/teacher/homeroom-attendance', '/teacher/students', '/teacher/asts-reports'],

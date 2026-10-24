@@ -12,6 +12,7 @@ class Student extends Model
         'user_id', 'class_id', 'lokal_class_id', 'nisn', 'nis', 'nik', 'no_kk', 'full_name', 'gender',
         'birth_place', 'birth_date', 'religion', 'child_number', 'siblings_count',
         'hobby', 'aspiration', 'address', 'parent_phone',
+        'status', 'graduation_year', 'graduation_date', 'alumni_notes',
         'mother_name', 'mother_status', 'mother_nik', 'mother_job', 'mother_income',
         'father_name', 'father_status', 'father_nik', 'father_job', 'father_income',
         'guardian_name', 'guardian_relation', 'guardian_nik', 'guardian_job', 'guardian_phone', 'guardian_income',
@@ -23,6 +24,7 @@ class Student extends Model
 
     protected $casts = [
         'birth_date' => 'date:Y-m-d',
+        'graduation_date' => 'date:Y-m-d',
         'child_number' => 'integer',
         'siblings_count' => 'integer',
     ];
@@ -89,5 +91,10 @@ class Student extends Model
     public function extracurricularGrades(): HasMany
     {
         return $this->hasMany(ExtracurricularGrade::class);
+    }
+
+    public function classHistories(): HasMany
+    {
+        return $this->hasMany(StudentClassHistory::class)->orderBy('id', 'desc');
     }
 }

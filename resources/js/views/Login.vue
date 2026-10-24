@@ -137,6 +137,34 @@
           </div>
 
           <form @submit.prevent="onSubmit" class="space-y-4">
+            <!-- Academic Year Selector -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-semibold text-slate-700">Tahun Ajaran & Semester</label>
+                <span v-if="academicYearStore.isViewingArchive" class="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded">
+                  Mode Arsip
+                </span>
+              </div>
+              <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-slate-900 transition-colors">
+                  <Calendar class="w-4 h-4 text-emerald-600" />
+                </div>
+                <select
+                  v-model="selectedAcademicYearId"
+                  @change="academicYearStore.setAcademicYear(selectedAcademicYearId)"
+                  class="form-input !pl-9 transition-all focus:border-slate-900 bg-white cursor-pointer text-xs font-medium"
+                >
+                  <option 
+                    v-for="y in academicYearStore.years" 
+                    :key="y.id" 
+                    :value="y.id"
+                  >
+                    {{ y.label }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
             <!-- Username Input -->
             <div class="space-y-1.5">
               <label class="block text-xs font-semibold text-slate-700">
@@ -282,10 +310,12 @@
 import { reactive, ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { useAcademicYearStore } from '../stores/academicYear';
 import { api } from '../api';
 import { useToast } from '../composables/useToast';
 import {
   BookOpen,
+  Calendar,
   ArrowLeft,
   ArrowRight,
   User,
@@ -303,6 +333,8 @@ const toast = useToast();
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const academicYearStore = useAcademicYearStore();
+const selectedAcademicYearId = ref(null);
 const loading = ref(false);
 const error = ref('');
 const showPassword = ref(false);
@@ -373,6 +405,13 @@ onMounted(async () => {
   } catch (err) {
     console.error('Failed to load public settings', err);
     appSettings.value = {};
+  }
+
+  try {
+    await academicYearStore.fetchOptions();
+    selectedAcademicYearId.value = academicYearStore.selectedId;
+  } catch (err) {
+    console.warn('Gagal memuat tahun ajaran di login:', err);
   }
 });
 
