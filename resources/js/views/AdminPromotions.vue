@@ -40,7 +40,7 @@
             >
               <option value="" disabled>-- Pilih Kelas Asal --</option>
               <option v-for="c in classOptions" :key="c.id" :value="c.id">
-                {{ formatClassName(c) }}
+                Kelas {{ c.name }} (Tingkat {{ c.grade_level }})
               </option>
             </select>
           </div>
@@ -416,7 +416,9 @@ onMounted(async () => {
 async function fetchClassOptions() {
   try {
     const res = await api.get('admin/classes?all=true');
-    classOptions.value = res.data || [];
+    const raw = res.data || [];
+    // Kelas Asal HANYA rombel nyata (7A, 7B, 8A, 8B, 9A, 9B), saring kelas angka murni ('7', '8', '9')
+    classOptions.value = raw.filter(c => !/^\d+$/.test(String(c.name || '').trim()));
   } catch (err) {
     toast.error('Gagal memuat daftar kelas');
   }
