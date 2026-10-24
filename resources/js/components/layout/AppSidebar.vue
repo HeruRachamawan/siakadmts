@@ -1116,6 +1116,20 @@
                 <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Pengaturan</span>
               </Transition>
             </RouterLink>
+
+            <!-- Backup & Restore Database -->
+            <RouterLink
+              to="/admin/database-backup"
+              :title="isCollapsed ? 'Backup Database' : ''"
+              class="nav-link"
+              :class="isCollapsed ? 'justify-center' : ''"
+              active-class="nav-link-active"
+            >
+              <Database class="w-4 h-4 flex-shrink-0" />
+              <Transition name="label-fade">
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Backup Database</span>
+              </Transition>
+            </RouterLink>
           </div>
         </template>
 
@@ -1199,6 +1213,7 @@ import {
   Tent,
   ArrowRightLeft,
   ChevronDown,
+  Database,
   X
 } from 'lucide-vue-next';
 
@@ -1242,7 +1257,7 @@ const routeSectionMap = {
   teacher_extra: ['/teacher/ppdb', '/teacher/profile'],
   admin_supervisi: ['/admin/daily-student-attendance', '/admin/exam-corrections', '/admin/asts-reports', '/admin/ledger-monitoring', '/kurikulum/asts-monitoring', '/admin/attendance-reports', '/admin/schedules', '/admin/teacher-presensi-monitoring'],
   admin_website: ['/admin/posts', '/admin/galleries', '/admin/achievements', '/admin/facilities'],
-  admin_sistem: ['/admin/calendar-events', '/admin/users', '/admin/settings']
+  admin_sistem: ['/admin/calendar-events', '/admin/users', '/admin/settings', '/admin/database-backup']
 };
 
 function isRouteInSection(key) {

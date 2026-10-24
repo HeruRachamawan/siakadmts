@@ -84,6 +84,7 @@ const routes = [
     { path: '/admin/daily-student-attendance', component: () => import('../views/AdminDailyAttendanceMonitoring.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Monitoring Presensi Siswa' } },
     { path: '/admin/teacher-presensi-monitoring', component: () => import('../views/AdminTeacherAttendanceMonitoring.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Monitoring Presensi Guru' } },
     { path: '/admin/settings', component: () => import('../views/AdminSettings.vue'), meta: { requiresAuth: true, role: 'admin', title: 'Pengaturan Sekolah' } },
+    { path: '/admin/database-backup', component: () => import('../views/AdminDatabaseBackup.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator'], title: 'Cadangan & Pemulihan Database' } },
     { path: '/admin/academic-years', component: () => import('../views/AdminAcademicYears.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Tahun Ajaran' } },
     { path: '/admin/grades', component: () => import('../views/AdminGrades.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Rekap Nilai Siswa' } },
     { path: '/admin/asts-reports', component: () => import('../views/AstsReportCards.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Rapor Tengah Semester (ASTS)' } },

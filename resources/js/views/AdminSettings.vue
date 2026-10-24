@@ -11,6 +11,14 @@
           <p class="text-xs text-slate-500 font-normal mt-0.5">Ubah identitas madrasah, teks landing page, peta lokasi, dan logo aplikasi di sini.</p>
         </div>
       </div>
+
+      <RouterLink
+        to="/admin/database-backup"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition-all border border-emerald-200 shadow-2xs cursor-pointer"
+      >
+        <Database class="w-4 h-4 text-emerald-600" />
+        <span>Cadangan Database</span>
+      </RouterLink>
     </div>
 
     <form @submit.prevent="saveSettings" class="space-y-6">
@@ -305,6 +313,7 @@ import {
   MapPin,
   CalendarCheck,
   ArrowRight,
+  Database,
   Save
 } from 'lucide-vue-next';
 

@@ -185,7 +185,16 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
         Route::post('graduation-grades/generate-serial-numbers', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'generateSerialNumbers']);
         Route::put('graduation-grades/students/{id}/serial-number', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'updateStudentSerialNumber']);
     });
-
-
-
+// Database Backup & Restore Management (Admin & Operator)
+Route::middleware(['auth:sanctum', 'role:admin,operator'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('backups', [\App\Http\Controllers\Admin\BackupController::class, 'index']);
+        Route::post('backups', [\App\Http\Controllers\Admin\BackupController::class, 'store']);
+        Route::get('backups/{filename}/download', [\App\Http\Controllers\Admin\BackupController::class, 'download']);
+        Route::delete('backups/{filename}', [\App\Http\Controllers\Admin\BackupController::class, 'destroy']);
+        Route::post('backups/restore', [\App\Http\Controllers\Admin\BackupController::class, 'restore']);
+        Route::post('backups/schedule', [\App\Http\Controllers\Admin\BackupController::class, 'updateSchedule']);
+    });
 
