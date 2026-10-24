@@ -293,7 +293,7 @@
             <div>
               <div class="flex items-center gap-2 flex-wrap">
                 <h3 class="text-sm font-black text-slate-800 font-lexend uppercase tracking-wider">
-                  Pratinjau Lembar Daftar Nilai Asesmen
+                  Pratinjau Lembar Analisis Capaian Nilai Asesmen
                 </h3>
                 <span
                   :class="selectedGradeListPaperSize === 'f4' ? 'bg-indigo-100 text-indigo-800 border-indigo-300' : 'bg-blue-100 text-blue-800 border-blue-300'"
@@ -416,7 +416,7 @@
             <!-- Judul Lembar -->
             <div class="text-center space-y-1">
               <h2 class="text-sm sm:text-base font-black uppercase tracking-wider text-slate-900 font-lexend inline-block border-b-2 border-slate-900 pb-0.5">
-                LEMBAR DAFTAR NILAI ASESMEN PEMBELAJARAN
+                LEMBAR ANALISIS CAPAIAN NILAI ASESMEN PER BENTUK SOAL
               </h2>
               <p class="text-xs font-bold text-slate-700 uppercase tracking-wide">
                 {{ getExamTypeFullName(exam.exam_type) }} • SEMESTER {{ formatSemester(exam.semester || exam.academic_year?.semester) }} • TAHUN PELAJARAN {{ formatAcademicYear(exam) }}
@@ -451,7 +451,7 @@
                     <th :colspan="activeQuestionTypesList.length" class="border border-slate-300 px-2 py-1.5 bg-slate-200/90 text-teal-950 font-black tracking-wider text-[10.5px]">
                       Capaian Nilai per Bentuk Soal (Poin / Maks)
                     </th>
-                    <th rowspan="2" class="border border-slate-300 px-1 py-1.5 bg-slate-200/90 font-black text-slate-900 text-center tracking-wider text-[11px]" style="width: 7%; min-width: 48px;">NILAI</th>
+                    <th rowspan="2" class="border border-slate-300 px-1 py-1.5 bg-slate-200/90 font-black text-slate-900 text-center tracking-wider text-[10.5px] leading-tight" style="width: 8%; min-width: 58px;">TOTAL NILAI</th>
                     <th rowspan="2" class="border border-slate-300 px-1 py-1.5 bg-slate-100 font-black text-slate-800 text-center tracking-wider text-[10.5px]" style="width: 8%; min-width: 58px;">Keterangan</th>
                   </tr>
                   <tr class="text-slate-700 font-bold text-center text-[10px]" style="background-color: #f8fafc;">
@@ -1867,7 +1867,7 @@ function printGradeListDocument() {
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <title>Daftar Nilai Asesmen (${paperTitle}) - ${props.exam?.title || 'Ujian'}</title>
+  <title>Analisis Capaian Nilai Asesmen (${paperTitle}) - ${props.exam?.title || 'Ujian'}</title>
   <style>
     @page {
       size: ${isF4 ? '330mm 215mm' : 'A4 landscape'};
@@ -2878,7 +2878,7 @@ async function exportGradeListToWord() {
     return;
   }
 
-  toast.info('Menyiapkan dokumen Word Daftar Nilai...');
+  toast.info('Menyiapkan dokumen Word Analisis Capaian Nilai...');
 
   let logoData = null;
   try {
@@ -3006,7 +3006,7 @@ async function exportGradeListToWord() {
       xmlns="http://www.w3.org/TR/REC-html40">
 <head>
   <meta charset="utf-8">
-  <title>Daftar Nilai Asesmen (${paperTag}) - ${props.exam.title || 'Ujian'}</title>
+  <title>Analisis Capaian Nilai Asesmen (${paperTag}) - ${props.exam.title || 'Ujian'}</title>
   <!--[if gte mso 9]>
   <xml>
     <w:WordDocument>
@@ -3075,7 +3075,7 @@ async function exportGradeListToWord() {
 
     <div style="text-align: center; margin: 4pt 0 7pt 0;">
       <div style="font-size: 11pt; font-weight: 900; text-decoration: underline; text-transform: uppercase; color: #000000;">
-        LEMBAR DAFTAR NILAI ASESMEN PEMBELAJARAN
+        LEMBAR ANALISIS CAPAIAN NILAI ASESMEN PER BENTUK SOAL
       </div>
       <div style="font-size: 8.5pt; font-weight: bold; text-transform: uppercase; margin-top: 1pt; color: #000000;">
         ${getExamTypeFullName(props.exam.exam_type)} • SEMESTER ${formatSemester(props.exam.semester || props.exam.academic_year?.semester)} • TAHUN PELAJARAN ${formatAcademicYear(props.exam)}
@@ -3111,7 +3111,7 @@ async function exportGradeListToWord() {
           <th rowspan="2" style="border: 1pt solid #000000; padding: 4pt 4pt; text-align: left;">Nama Lengkap Siswa</th>
           <th rowspan="2" width="24" style="border: 1pt solid #000000; padding: 4pt 2pt;">L/P</th>
           ${thQTypes}
-          <th rowspan="2" width="55" style="border: 1pt solid #000000; padding: 4pt 2pt; background-color: #cbd5e1;">NILAI</th>
+          <th rowspan="2" width="60" style="border: 1pt solid #000000; padding: 4pt 2pt; background-color: #cbd5e1; font-size: 8pt; line-height: 1.1;">TOTAL NILAI</th>
           <th rowspan="2" width="60" style="border: 1pt solid #000000; padding: 4pt 2pt;">Keterangan</th>
         </tr>
         <tr style="background-color: #e2e8f0;">
@@ -3199,12 +3199,12 @@ async function exportGradeListToWord() {
     const safeMapel = (props.exam.subject?.name || 'Mapel').replace(/[^a-zA-Z0-9_-]/g, '_');
     const safeKelas = (props.exam.class_room?.name || 'Kelas').replace(/[^a-zA-Z0-9_-]/g, '_');
     a.href = url;
-    a.download = `Daftar_Nilai_${safeMapel}_${safeKelas}_${paperTag}.doc`;
+    a.download = `Analisis_Capaian_Nilai_${safeMapel}_${safeKelas}_${paperTag}.doc`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success(`Lembar daftar nilai format ${paperTag} berhasil diunduh ke Word (.doc)`);
+    toast.success(`Lembar analisis capaian nilai format ${paperTag} berhasil diunduh ke Word (.doc)`);
   } catch (err) {
     console.error('Word export error:', err);
     toast.error('Gagal mengunduh file Word.');
