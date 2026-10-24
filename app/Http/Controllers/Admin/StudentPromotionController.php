@@ -23,9 +23,12 @@ class StudentPromotionController extends BaseController
         ]);
 
         $class = ClassRoom::with(['academicYear', 'homeroomTeacher'])->findOrFail($request->input('class_id'));
-        $academicYearId = $class->academic_year_id ?? AcademicYear::where('is_active', true)->value('id');
 
-        $students = Student::where('class_id', $class->id)
+        // Ambil siswa yang terdaftar di rombel utama maupun rombel lokal
+        $students = Student::where(function ($q) use ($class) {
+                $q->where('class_id', $class->id)
+                  ->orWhere('lokal_class_id', $class->id);
+            })
             ->where(function ($q) {
                 $q->whereNull('status')
                   ->orWhereIn('status', ['aktif', 'tinggal_kelas']);
@@ -33,11 +36,9 @@ class StudentPromotionController extends BaseController
             ->orderBy('full_name')
             ->get();
 
-        // Ringkasan presensi per siswa
+        // Ringkasan presensi per siswa di kelas ini (attendances tabel menggunakan class_id, bukan academic_year_id)
         $attendances = Attendance::whereIn('student_id', $students->pluck('id'))
-            ->when($academicYearId, function ($q) use ($academicYearId) {
-                $q->where('academic_year_id', $academicYearId);
-            })
+            ->where('class_id', $class->id)
             ->select('student_id', 'status', DB::raw('count(*) as count'))
             ->groupBy('student_id', 'status')
             ->get()
@@ -45,12 +46,19 @@ class StudentPromotionController extends BaseController
 
         $isFinalGrade = in_array((string)$class->grade_level, ['9', 'IX']);
 
-        $candidateData = $students->map(function ($student) use ($attendances, $isFinalGrade) {
+        $candidateData = $students->map(function ($student) use ($attendances, $isFinalGrade, $class) {
             $studentAtt = $attendances->get($student->id, collect());
-            $hadir = $studentAtt->where('status', 'hadir')->first()->count ?? 0;
-            $sakit = $studentAtt->where('status', 'sakit')->first()->count ?? 0;
-            $izin  = $studentAtt->where('status', 'izin')->first()->count ?? 0;
-            $alfa  = $studentAtt->where('status', 'alfa')->first()->count ?? 0;
+            // Mendukung status kode bahasa Inggris maupun Indonesia
+            $hadir = ($studentAtt->where('status', 'hadir')->first()->count ?? 0)
+                   + ($studentAtt->where('status', 'present')->first()->count ?? 0);
+            $sakit = ($studentAtt->where('status', 'sakit')->first()->count ?? 0)
+                   + ($studentAtt->where('status', 'sick')->first()->count ?? 0);
+            $izin  = ($studentAtt->where('status', 'izin')->first()->count ?? 0)
+                   + ($studentAtt->where('status', 'permission')->first()->count ?? 0);
+            $alfa  = ($studentAtt->where('status', 'alfa')->first()->count ?? 0)
+                   + ($studentAtt->where('status', 'alpha')->first()->count ?? 0);
+
+            $isLokal = ($student->lokal_class_id == $class->id && $student->class_id != $class->id);
 
             return [
                 'id' => $student->id,
@@ -60,6 +68,7 @@ class StudentPromotionController extends BaseController
                 'gender' => $student->gender,
                 'current_status' => $student->status ?? 'aktif',
                 'photo_url' => $student->photo_url,
+                'is_lokal' => $isLokal,
                 'attendance_summary' => [
                     'hadir' => $hadir,
                     'sakit' => $sakit,
@@ -134,6 +143,8 @@ class StudentPromotionController extends BaseController
                 $targetClass = $targetClassId ? ClassRoom::find($targetClassId) : null;
                 $toClassName = $targetClass?->name;
 
+                $isLokal = ($student->lokal_class_id == $sourceClass->id && $student->class_id != $sourceClass->id);
+
                 if ($action === 'lulus') {
                     $student->update([
                         'status' => 'lulus',
@@ -148,15 +159,29 @@ class StudentPromotionController extends BaseController
                     if (!$targetClassId) {
                         throw new \Exception("Kelas tujuan wajib dipilih untuk siswa {$student->full_name} yang naik kelas.");
                     }
-                    $student->update([
-                        'status' => 'aktif',
-                        'class_id' => $targetClassId,
-                    ]);
+                    if ($isLokal) {
+                        $student->update([
+                            'status' => 'aktif',
+                            'lokal_class_id' => $targetClassId,
+                        ]);
+                    } else {
+                        $student->update([
+                            'status' => 'aktif',
+                            'class_id' => $targetClassId,
+                        ]);
+                    }
                 } elseif ($action === 'tinggal_kelas') {
-                    $student->update([
-                        'status' => 'tinggal_kelas',
-                        'class_id' => $targetClassId ?? $sourceClass->id,
-                    ]);
+                    if ($isLokal) {
+                        $student->update([
+                            'status' => 'tinggal_kelas',
+                            'lokal_class_id' => $targetClassId ?? $sourceClass->id,
+                        ]);
+                    } else {
+                        $student->update([
+                            'status' => 'tinggal_kelas',
+                            'class_id' => $targetClassId ?? $sourceClass->id,
+                        ]);
+                    }
                     $toClassName = $targetClass?->name ?? ($sourceClass->name . ' (Tinggal Kelas)');
                 } elseif (in_array($action, ['mutasi', 'keluar'])) {
                     $student->update([

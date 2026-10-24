@@ -167,7 +167,12 @@
                     </div>
                   </div>
                   <div>
-                    <p class="font-bold text-slate-900 leading-tight">{{ st.full_name }}</p>
+                    <div class="flex items-center gap-1.5">
+                      <p class="font-bold text-slate-900 leading-tight">{{ st.full_name }}</p>
+                      <span v-if="st.is_lokal" class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        Rombel Lokal
+                      </span>
+                    </div>
                     <p class="text-[10px] text-slate-400 font-mono">NISN: {{ st.nisn || '-' }} &bull; NIS: {{ st.nis || '-' }}</p>
                   </div>
                 </div>
