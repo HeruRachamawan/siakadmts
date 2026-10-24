@@ -27,10 +27,10 @@
     <!-- Filter & Configuration Panel -->
     <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Pilih Kelas Asal -->
+        <!-- Pilih Kelas Asal (Rombel Utama) -->
         <div>
           <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-            1. Pilih Kelas Asal (Yang Akan Diproses) <span class="text-rose-500">*</span>
+            1. Pilih Rombel Utama Asal <span class="text-rose-500">*</span>
           </label>
           <div class="relative">
             <select
@@ -38,7 +38,7 @@
               @change="fetchCandidates"
               class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer"
             >
-              <option value="" disabled>-- Pilih Rombel Kelas Asal --</option>
+              <option value="" disabled>-- Pilih Rombel Utama Asal --</option>
               <option v-for="c in classOptions" :key="c.id" :value="c.id">
                 Kelas {{ c.name }} (Tingkat {{ c.grade_level }})
               </option>
@@ -167,12 +167,7 @@
                     </div>
                   </div>
                   <div>
-                    <div class="flex items-center gap-1.5">
-                      <p class="font-bold text-slate-900 leading-tight">{{ st.full_name }}</p>
-                      <span v-if="st.is_lokal" class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                        Rombel Lokal
-                      </span>
-                    </div>
+                    <p class="font-bold text-slate-900 leading-tight">{{ st.full_name }}</p>
                     <p class="text-[10px] text-slate-400 font-mono">NISN: {{ st.nisn || '-' }} &bull; NIS: {{ st.nis || '-' }}</p>
                   </div>
                 </div>
