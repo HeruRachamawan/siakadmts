@@ -73,8 +73,9 @@ class StudentPromotionController extends BaseController
             ];
         });
 
-        // Ambil kelas tujuan yang tersedia
+        // Ambil kelas tujuan yang tersedia (Hanya Rombel Utama, kecualikan rombel lokal '7', '8', '9')
         $allClasses = ClassRoom::with('academicYear')
+            ->whereNotIn('name', ['7', '8', '9'])
             ->orderBy('grade_level')
             ->orderBy('name')
             ->get();

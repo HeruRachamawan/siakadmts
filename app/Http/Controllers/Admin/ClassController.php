@@ -23,6 +23,10 @@ class ClassController extends BaseController
             }
         }
 
+        if ($request->boolean('rombel_utama_only') || $request->boolean('exclude_lokal')) {
+            $query->whereNotIn('name', ['7', '8', '9']);
+        }
+
         if ($request->boolean('all') || $request->input('all') === 'true' || $request->input('all') === '1' || $request->input('per_page') == -1) {
             $allClasses = $query->orderBy('grade_level')->orderBy('name')->get();
             $uniqueClasses = $allClasses->unique('name')->values();

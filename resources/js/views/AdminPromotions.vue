@@ -407,10 +407,17 @@ onMounted(async () => {
   graduationYearInput.value = `${nowYear}/${nowYear + 1}`;
 });
 
+function isRombelLokal(className) {
+  const name = String(className || '').trim();
+  return ['7', '8', '9'].includes(name) || /^\d+$/.test(name);
+}
+
 async function fetchClassOptions() {
   try {
-    const res = await api.get('admin/classes?all=true');
-    classOptions.value = res.data || [];
+    const res = await api.get('admin/classes?all=true&rombel_utama_only=true');
+    const raw = res.data || [];
+    // Saring HANYA Rombel Utama (7A, 7B, 8A, 8B, 9A, 9B), singkirkan rombel lokal (7, 8)
+    classOptions.value = raw.filter(c => !isRombelLokal(c.name));
   } catch (err) {
     toast.error('Gagal memuat daftar kelas');
   }
@@ -423,7 +430,7 @@ async function fetchCandidates() {
     const res = await api.get(`admin/promotions/candidates?class_id=${selectedClassId.value}`);
     const data = res.data;
     sourceClassData.value = data.source_class;
-    availableClasses.value = data.available_classes || [];
+    availableClasses.value = (data.available_classes || []).filter(c => !isRombelLokal(c.name));
 
     // Map candidates with initial selection
     candidates.value = (data.candidates || []).map(c => {
