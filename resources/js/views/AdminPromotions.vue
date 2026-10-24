@@ -27,10 +27,10 @@
     <!-- Filter & Configuration Panel -->
     <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Pilih Kelas Asal (Rombel Utama) -->
+        <!-- Pilih Kelas Asal -->
         <div>
           <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-            1. Pilih Rombel Utama Asal <span class="text-rose-500">*</span>
+            1. Pilih Kelas Asal <span class="text-rose-500">*</span>
           </label>
           <div class="relative">
             <select
@@ -38,9 +38,9 @@
               @change="fetchCandidates"
               class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer"
             >
-              <option value="" disabled>-- Pilih Rombel Utama Asal --</option>
+              <option value="" disabled>-- Pilih Kelas Asal --</option>
               <option v-for="c in classOptions" :key="c.id" :value="c.id">
-                Kelas {{ c.name }} (Tingkat {{ c.grade_level }})
+                {{ formatClassName(c) }}
               </option>
             </select>
           </div>
@@ -106,9 +106,9 @@
               v-model="massTargetClassId"
               class="px-2 py-1 bg-slate-50 text-xs font-bold rounded-lg border border-slate-200 cursor-pointer"
             >
-              <option value="">-- Pilih Kelas --</option>
+              <option value="">-- Pilih Kelas Tujuan --</option>
               <option v-for="c in filteredTargetClasses" :key="c.id" :value="c.id">
-                Kelas {{ c.name }}
+                {{ formatClassName(c) }}
               </option>
             </select>
             <button
@@ -140,9 +140,8 @@
               <th class="py-3 px-4 w-12 text-center">No</th>
               <th class="py-3 px-4">Nama Siswa & NISN</th>
               <th class="py-3 px-4 text-center">L/P</th>
-              <th class="py-3 px-4 text-center">Rekap Absensi (H / S / I / A)</th>
               <th class="py-3 px-4 min-w-[190px]">Keputusan Status</th>
-              <th class="py-3 px-4 min-w-[170px]">Kelas Tujuan Baru</th>
+              <th class="py-3 px-4 min-w-[220px]">Kelas Tujuan Baru</th>
               <th class="py-3 px-4 min-w-[180px]">Catatan / Keterangan</th>
             </tr>
           </thead>
@@ -177,17 +176,6 @@
                   {{ st.gender }}
                 </span>
               </td>
-              <td class="py-3 px-4 text-center">
-                <div class="inline-flex items-center gap-1 font-mono text-[11px] font-semibold">
-                  <span class="text-emerald-700 font-bold" title="Hadir">{{ st.attendance_summary.hadir }}H</span>
-                  <span class="text-slate-300">/</span>
-                  <span class="text-blue-600" title="Sakit">{{ st.attendance_summary.sakit }}S</span>
-                  <span class="text-slate-300">/</span>
-                  <span class="text-amber-600" title="Izin">{{ st.attendance_summary.izin }}I</span>
-                  <span class="text-slate-300">/</span>
-                  <span class="text-rose-600 font-bold" :class="{'bg-rose-100 px-1 rounded': st.attendance_summary.alfa > 3}" title="Alfa">{{ st.attendance_summary.alfa }}A</span>
-                </div>
-              </td>
               <!-- Decision Action Radio/Select -->
               <td class="py-3 px-4">
                 <select
@@ -216,9 +204,9 @@
                     v-model="st.target_class_id"
                     class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-800 cursor-pointer focus:ring-1 focus:ring-emerald-500"
                   >
-                    <option value="" disabled>-- Pilih Rombel --</option>
+                    <option value="" disabled>-- Pilih Kelas Tujuan --</option>
                     <option v-for="c in availableTargetClassesForStudent(st)" :key="c.id" :value="c.id">
-                      Kelas {{ c.name }}
+                      {{ formatClassName(c) }}
                     </option>
                   </select>
                 </div>
@@ -384,17 +372,35 @@ const summaryCounts = computed(() => {
   return counts;
 });
 
+function formatClassName(c) {
+  if (!c) return '-';
+  const name = String(c.name || '').trim();
+  if (/^\d+$/.test(name)) {
+    return `Tingkat ${name} (Global / Penampungan)`;
+  }
+  return `Kelas ${name}`;
+}
+
 const filteredTargetClasses = computed(() => {
   if (!sourceClassData.value) return availableClasses.value;
   const currentLevel = parseInt(sourceClassData.value.grade_level, 10);
   if (isNaN(currentLevel)) return availableClasses.value;
-  // target next level (e.g. from 7 -> 8, from 8 -> 9)
-  return availableClasses.value.filter(c => parseInt(c.grade_level, 10) === currentLevel + 1);
+  const targetLevel = currentLevel + 1;
+  return availableClasses.value
+    .filter(c => parseInt(c.grade_level, 10) === targetLevel)
+    .sort((a, b) => {
+      // Prioritaskan kelas global (nama murni angka misalnya '8') di urutan pertama
+      const aIsGlobal = /^\d+$/.test(String(a.name).trim());
+      const bIsGlobal = /^\d+$/.test(String(b.name).trim());
+      if (aIsGlobal && !bIsGlobal) return -1;
+      if (!aIsGlobal && bIsGlobal) return 1;
+      return String(a.name).localeCompare(String(b.name));
+    });
 });
 
 function availableTargetClassesForStudent(student) {
   if (student.action === 'tinggal_kelas') {
-    // Keep in same grade level
+    // Tetap di tingkat kelas yang sama
     const currentLevel = parseInt(sourceClassData.value?.grade_level, 10);
     return availableClasses.value.filter(c => parseInt(c.grade_level, 10) === currentLevel);
   }
@@ -407,17 +413,10 @@ onMounted(async () => {
   graduationYearInput.value = `${nowYear}/${nowYear + 1}`;
 });
 
-function isRombelLokal(className) {
-  const name = String(className || '').trim();
-  return ['7', '8', '9'].includes(name) || /^\d+$/.test(name);
-}
-
 async function fetchClassOptions() {
   try {
-    const res = await api.get('admin/classes?all=true&rombel_utama_only=true');
-    const raw = res.data || [];
-    // Saring HANYA Rombel Utama (7A, 7B, 8A, 8B, 9A, 9B), singkirkan rombel lokal (7, 8)
-    classOptions.value = raw.filter(c => !isRombelLokal(c.name));
+    const res = await api.get('admin/classes?all=true');
+    classOptions.value = res.data || [];
   } catch (err) {
     toast.error('Gagal memuat daftar kelas');
   }
@@ -430,15 +429,17 @@ async function fetchCandidates() {
     const res = await api.get(`admin/promotions/candidates?class_id=${selectedClassId.value}`);
     const data = res.data;
     sourceClassData.value = data.source_class;
-    availableClasses.value = (data.available_classes || []).filter(c => !isRombelLokal(c.name));
+    availableClasses.value = data.available_classes || [];
 
-    // Map candidates with initial selection
+    // Map candidates dengan auto-select kelas tujuan global
     candidates.value = (data.candidates || []).map(c => {
       const defaultAction = c.default_action || (sourceClassData.value.is_final_grade ? 'lulus' : 'naik_kelas');
       let targetClassId = '';
 
       if (defaultAction === 'naik_kelas' && filteredTargetClasses.value.length > 0) {
         targetClassId = filteredTargetClasses.value[0].id;
+      } else if (defaultAction === 'tinggal_kelas') {
+        targetClassId = sourceClassData.value?.id || '';
       }
 
       return {

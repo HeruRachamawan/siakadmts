@@ -33,28 +33,9 @@ class StudentPromotionController extends BaseController
             ->orderBy('full_name')
             ->get();
 
-        // Ringkasan presensi per siswa di kelas utama ini
-        $attendances = Attendance::whereIn('student_id', $students->pluck('id'))
-            ->where('class_id', $class->id)
-            ->select('student_id', 'status', DB::raw('count(*) as count'))
-            ->groupBy('student_id', 'status')
-            ->get()
-            ->groupBy('student_id');
-
         $isFinalGrade = in_array((string)$class->grade_level, ['9', 'IX']);
 
-        $candidateData = $students->map(function ($student) use ($attendances, $isFinalGrade) {
-            $studentAtt = $attendances->get($student->id, collect());
-            // Mendukung status kode bahasa Inggris maupun Indonesia
-            $hadir = ($studentAtt->where('status', 'hadir')->first()->count ?? 0)
-                   + ($studentAtt->where('status', 'present')->first()->count ?? 0);
-            $sakit = ($studentAtt->where('status', 'sakit')->first()->count ?? 0)
-                   + ($studentAtt->where('status', 'sick')->first()->count ?? 0);
-            $izin  = ($studentAtt->where('status', 'izin')->first()->count ?? 0)
-                   + ($studentAtt->where('status', 'permission')->first()->count ?? 0);
-            $alfa  = ($studentAtt->where('status', 'alfa')->first()->count ?? 0)
-                   + ($studentAtt->where('status', 'alpha')->first()->count ?? 0);
-
+        $candidateData = $students->map(function ($student) use ($isFinalGrade) {
             return [
                 'id' => $student->id,
                 'nisn' => $student->nisn,
@@ -63,19 +44,12 @@ class StudentPromotionController extends BaseController
                 'gender' => $student->gender,
                 'current_status' => $student->status ?? 'aktif',
                 'photo_url' => $student->photo_url,
-                'attendance_summary' => [
-                    'hadir' => $hadir,
-                    'sakit' => $sakit,
-                    'izin'  => $izin,
-                    'alfa'  => $alfa,
-                ],
                 'default_action' => $isFinalGrade ? 'lulus' : 'naik_kelas',
             ];
         });
 
-        // Ambil kelas tujuan yang tersedia (Hanya Rombel Utama, kecualikan rombel lokal '7', '8', '9')
+        // Ambil kelas tujuan yang tersedia (termasuk kelas tingkat global 7, 8, 9 maupun rombel spesifik)
         $allClasses = ClassRoom::with('academicYear')
-            ->whereNotIn('name', ['7', '8', '9'])
             ->orderBy('grade_level')
             ->orderBy('name')
             ->get();
