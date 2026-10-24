@@ -46,6 +46,9 @@
     .nav-section {
         @apply px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mx-2 mt-3 mb-1;
     }
+    .nav-section-btn {
+        @apply w-[calc(100%-1rem)] mx-2 my-1 px-2.5 py-1.5 flex items-center justify-between text-[10.5px] font-extrabold uppercase tracking-wider text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 rounded-md transition-all duration-150 cursor-pointer select-none focus:outline-none;
+    }
     
     /* Enterprise Micro-Radius Buttons */
     .btn {
