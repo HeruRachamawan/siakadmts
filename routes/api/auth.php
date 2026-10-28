@@ -13,3 +13,4 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 Route::get('/user', [AuthController::class, 'me'])->middleware('auth:sanctum');
 Route::post('/change-password', [\App\Http\Controllers\Auth\PasswordController::class, 'changePassword'])->middleware('auth:sanctum');
 Route::get('/my-password-reset-requests', [\App\Http\Controllers\Auth\PasswordController::class, 'getMyResetRequests'])->middleware('auth:sanctum');
+Route::get('/quick-search', [\App\Http\Controllers\Admin\QuickSearchController::class, 'search'])->middleware('auth:sanctum');

@@ -52,6 +52,7 @@
             @toggle-sidebar="toggleSidebar"
             @open-notifications="openNotificationModal"
             @open-change-password="showChangePasswordModal = true"
+            @open-command-palette="showCommandPalette = true"
             @logout="handleLogout"
           />
 
@@ -426,6 +427,12 @@
     />
     <ConfirmDialog />
     <GlobalLoadingOverlay />
+    <CommandPalette
+      :isOpen="showCommandPalette"
+      @close="showCommandPalette = false"
+      @open-change-password="showChangePasswordModal = true"
+      @logout="handleLogout"
+    />
   </div>
 </template>
 
@@ -439,6 +446,7 @@ import ConfirmDialog from './components/ConfirmDialog.vue';
 import GlobalLoadingOverlay from './components/GlobalLoadingOverlay.vue';
 import AppSidebar from './components/layout/AppSidebar.vue';
 import AppHeader from './components/layout/AppHeader.vue';
+import CommandPalette from './components/CommandPalette.vue';
 import { toastState, useToast } from './composables/useToast';
 import { api } from './api';
 import { ArrowLeft } from 'lucide-vue-next';
@@ -469,6 +477,7 @@ const isCollapsed = ref(false);
 const isMobileSidebarOpen = ref(false);
 const currentTime = ref('');
 
+const showCommandPalette = ref(false);
 const showChangePasswordModal = ref(false);
 const submittingChangePass = ref(false);
 const changePassForm = reactive({
@@ -770,6 +779,13 @@ function updateTime() {
   currentTime.value = `${day}, ${date} ${month} ${year} ${hh}:${mm}:${ss}`;
 }
 
+function handleGlobalKeydown(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    showCommandPalette.value = !showCommandPalette.value;
+  }
+}
+
 let timer;
 let notifTimer;
 onMounted(() => {
@@ -780,10 +796,12 @@ onMounted(() => {
   fetchRoleNotifications();
   checkTeacherHomeroom();
   notifTimer = setInterval(fetchRoleNotifications, 15000);
+  window.addEventListener('keydown', handleGlobalKeydown);
 });
 onUnmounted(() => {
   clearInterval(timer);
   clearInterval(notifTimer);
+  window.removeEventListener('keydown', handleGlobalKeydown);
 });
 
 watch([user, currentRole], () => {

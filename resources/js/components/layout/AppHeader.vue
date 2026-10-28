@@ -16,8 +16,31 @@
       </div>
     </div>
 
-    <!-- Header Right: Clock + Role Switcher + Reset Notifications + Profile -->
+    <!-- Header Right: Quick Search + Clock + Role Switcher + Profile -->
     <div class="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
+      <!-- Quick Search Button (Desktop) -->
+      <button
+        type="button"
+        @click="$emit('open-command-palette')"
+        class="hidden sm:inline-flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-slate-400 hover:text-slate-600 text-xs font-medium transition-all shadow-2xs cursor-pointer select-none"
+        title="Tekan Ctrl + K untuk mencari cepat"
+      >
+        <Search class="w-3.5 h-3.5 text-slate-400" />
+        <span class="text-slate-400 font-normal hidden md:inline">Cari apa saja...</span>
+        <kbd class="px-1.5 py-0.2 rounded bg-white border border-slate-200 text-slate-500 font-mono text-[9px] font-bold shadow-2xs">
+          Ctrl K
+        </kbd>
+      </button>
+
+      <!-- Quick Search Button (Mobile Icon) -->
+      <button
+        type="button"
+        @click="$emit('open-command-palette')"
+        class="inline-flex sm:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer border border-transparent hover:border-slate-200"
+        title="Pencarian Cepat"
+      >
+        <Search class="w-4 h-4 text-slate-600" />
+      </button>
       <!-- GLOBAL ACADEMIC YEAR SWITCHER BADGE -->
       <div class="relative">
         <button
@@ -225,8 +248,11 @@ import {
   Menu,
   GraduationCap,
   Building2,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Search
 } from 'lucide-vue-next';
+
+defineEmits(['toggle-sidebar', 'open-notifications', 'open-change-password', 'logout', 'open-command-palette']);
 
 defineProps({
   user: Object,
@@ -261,7 +287,5 @@ function handleSwitchRole(targetRole) {
     router.push('/admin/dashboard');
   }
 }
-
-defineEmits(['toggle-sidebar', 'open-notifications', 'open-change-password', 'logout']);
 </script>
 
