@@ -966,6 +966,18 @@
             <Award class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade"><span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Transkrip Nilai</span></Transition>
           </RouterLink>
+
+          <!-- Buku SPP & Pembayaran Siswa -->
+          <RouterLink
+            to="/student/finance"
+            :title="isCollapsed ? 'Buku SPP & Pembayaran' : ''"
+            class="nav-link"
+            :class="isCollapsed ? 'justify-center' : ''"
+            active-class="nav-link-active"
+          >
+            <Wallet class="w-4 h-4 flex-shrink-0 text-emerald-400" />
+            <Transition name="label-fade"><span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">SPP & Pembayaran</span></Transition>
+          </RouterLink>
         </template>
 
         <!-- 4. MANAJEMEN WEBSITE (Admin) -->

@@ -201,6 +201,7 @@ const routes = [
     { path: '/student/profile', component: () => import('../views/StudentProfile.vue'), meta: { requiresAuth: true, role: 'student', title: 'Profil Saya' } },
     { path: '/student/attendances', component: () => import('../views/StudentAttendance.vue'), meta: { requiresAuth: true, role: 'student', title: 'Kehadiran Saya' } },
     { path: '/student/transcript', component: () => import('../views/StudentTranscript.vue'), meta: { requiresAuth: true, role: 'student', title: 'Transkrip Nilai Saya' } },
+    { path: '/student/finance', component: () => import('../views/StudentFinance.vue'), meta: { requiresAuth: true, role: 'student', title: 'Buku SPP Siswa' } },
 
     { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
 ];

@@ -33,7 +33,7 @@
     </div>
 
     <!-- Shadcn Stat Cards Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
       <!-- Rata-rata Nilai -->
       <div class="shadcn-card p-5 flex items-center justify-between">
         <div class="space-y-1">
@@ -66,10 +66,26 @@
           <Building2 class="w-5 h-5" />
         </div>
       </div>
+
+      <!-- Status SPP -->
+      <RouterLink to="/student/finance" class="shadcn-card p-5 flex items-center justify-between hover:border-emerald-300 transition-all cursor-pointer">
+        <div class="space-y-1">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status SPP</p>
+          <p class="text-base font-bold tracking-tight font-mono" :class="financeSummary.remaining > 0 ? 'text-rose-600' : 'text-emerald-700'">
+            {{ financeSummary.remaining > 0 ? formatRupiah(financeSummary.remaining) : 'Lunas Terbayar' }}
+          </p>
+          <span class="text-[10px] text-slate-400 block font-sans">
+            {{ financeSummary.remaining > 0 ? 'Sisa tanggungan siswa' : 'Buku kendali aman' }}
+          </span>
+        </div>
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" :class="financeSummary.remaining > 0 ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'">
+          <Wallet class="w-5 h-5" />
+        </div>
+      </RouterLink>
     </div>
 
     <!-- Quick Shortcuts -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
       <RouterLink to="/student/attendances" class="shadcn-card p-5 flex items-center justify-between hover:border-emerald-300 transition-all cursor-pointer">
         <div class="space-y-1">
           <p class="text-sm font-semibold text-slate-900">Rekap Kehadiran</p>
@@ -82,6 +98,14 @@
         <div class="space-y-1">
           <p class="text-sm font-semibold text-slate-900">Transkrip Nilai</p>
           <p class="text-xs text-slate-500">Lihat nilai tugas, UTS, dan UAS semester ini</p>
+        </div>
+        <ChevronRight class="w-5 h-5 text-slate-400" />
+      </RouterLink>
+
+      <RouterLink to="/student/finance" class="shadcn-card p-5 flex items-center justify-between hover:border-emerald-300 transition-all cursor-pointer">
+        <div class="space-y-1">
+          <p class="text-sm font-semibold text-slate-900">Buku Kendali SPP</p>
+          <p class="text-xs text-slate-500">Cek status SPP 12 bulan & cetak kwitansi</p>
         </div>
         <ChevronRight class="w-5 h-5 text-slate-400" />
       </RouterLink>
@@ -99,7 +123,8 @@ import {
   GraduationCap,
   CheckCircle2,
   Building2,
-  ChevronRight
+  ChevronRight,
+  Wallet,
 } from 'lucide-vue-next';
 
 const auth = useAuthStore();
@@ -107,6 +132,16 @@ const { user } = storeToRefs(auth);
 const grades = ref([]);
 const attendances = ref([]);
 const currentClass = ref('-');
+const financeSummary = ref({
+  total_billed: 0,
+  total_paid: 0,
+  remaining: 0,
+});
+
+const formatRupiah = (val) => {
+  if (!val && val !== 0) return 'Rp 0';
+  return 'Rp ' + Number(val).toLocaleString('id-ID');
+};
 
 onMounted(async () => {
   try {
@@ -115,6 +150,21 @@ onMounted(async () => {
   try {
     attendances.value = (await api.get('student/attendances')).data || [];
   } catch { attendances.value = []; }
+  try {
+    const dashRes = await api.get('student/dashboard');
+    currentClass.value = dashRes?.data?.class?.name || dashRes?.class?.name || '-';
+  } catch { currentClass.value = '-'; }
+  try {
+    const finRes = await api.get('student/finance/card');
+    const raw = finRes?.data || finRes || {};
+    financeSummary.value = {
+      total_billed: Number(raw.total_billed || 0),
+      total_paid: Number(raw.total_paid || 0),
+      remaining: Number(raw.total_remaining || 0),
+    };
+  } catch {
+    financeSummary.value = { total_billed: 0, total_paid: 0, remaining: 0 };
+  }
 });
 
 const avgGrade = computed(() => {
