@@ -47,10 +47,15 @@
             <RouterLink
               to="/ppdb"
               class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer"
-              :class="scrolled ? 'bg-emerald-50 text-emerald-800 border border-emerald-300/90 hover:bg-emerald-100' : 'bg-emerald-900/80 text-emerald-200 border border-emerald-600/60 hover:bg-emerald-800 hover:text-white'"
+              :class="[
+                scrolled
+                  ? (isPpdbOpen ? 'bg-emerald-50 text-emerald-800 border border-emerald-300/90 hover:bg-emerald-100' : 'bg-amber-50 text-amber-800 border border-amber-300/90 hover:bg-amber-100')
+                  : (isPpdbOpen ? 'bg-emerald-900/80 text-emerald-200 border border-emerald-600/60 hover:bg-emerald-800 hover:text-white' : 'bg-amber-950/80 text-amber-200 border border-amber-700/60 hover:bg-amber-900 hover:text-white')
+              ]"
             >
-              <UserPlus class="w-3.5 h-3.5 text-emerald-400" />
-              <span>PPDB Online</span>
+              <UserPlus v-if="isPpdbOpen" class="w-3.5 h-3.5 text-emerald-400" />
+              <Lock v-else class="w-3.5 h-3.5 text-amber-400" />
+              <span>{{ isPpdbOpen ? 'PPDB Online' : 'PPDB (Cek Status)' }}</span>
             </RouterLink>
 
             <RouterLink
@@ -83,8 +88,13 @@
         leave-to-class="opacity-0 -translate-y-4"
       >
         <div v-if="isMobileMenuOpen" class="lg:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl shadow-xl border-t border-slate-200 py-4 px-4 flex flex-col space-y-1">
-          <RouterLink to="/ppdb" @click="closeMobileMenu" class="mobile-nav-link text-emerald-800 font-bold bg-emerald-50 border border-emerald-200">
-            ✨ Pendaftaran Siswa Baru (PPDB Online)
+          <RouterLink
+            to="/ppdb"
+            @click="closeMobileMenu"
+            class="mobile-nav-link font-bold border transition-colors"
+            :class="isPpdbOpen ? 'text-emerald-800 bg-emerald-50 border-emerald-200' : 'text-amber-800 bg-amber-50 border-amber-200'"
+          >
+            {{ isPpdbOpen ? '✨ Pendaftaran Siswa Baru (PPDB Online)' : '🔒 Status & Pengumuman PPDB (Pendaftaran Ditutup)' }}
           </RouterLink>
           <a href="#beranda" @click="closeMobileMenu" class="mobile-nav-link">Beranda</a>
           <a href="#profil" @click="closeMobileMenu" class="mobile-nav-link">Profil & Visi Misi</a>
@@ -106,15 +116,32 @@
     </nav>
 
     <!-- Breaking News / Running Announcement Bar (Clean Academic Marquee) -->
-    <div class="fixed top-16 sm:top-20 inset-x-0 z-40 bg-[#021811] border-b border-emerald-900/80 backdrop-blur-md text-emerald-200 py-2 px-4 text-xs overflow-hidden">
+    <div
+      class="fixed top-16 sm:top-20 inset-x-0 z-40 border-b backdrop-blur-md py-2 px-4 text-xs overflow-hidden transition-colors"
+      :class="isPpdbOpen ? 'bg-[#021811] border-emerald-900/80 text-emerald-200' : 'bg-[#180a02] border-amber-900/80 text-amber-200'"
+    >
       <div class="max-w-7xl mx-auto flex items-center gap-3">
-        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-900/80 border border-emerald-700/60 text-[10px] font-bold text-emerald-300 uppercase tracking-wider flex-shrink-0">
-          <Megaphone class="w-3.5 h-3.5 text-amber-400" />
+        <div
+          class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex-shrink-0"
+          :class="isPpdbOpen ? 'bg-emerald-900/80 border border-emerald-700/60 text-emerald-300' : 'bg-amber-900/80 border border-amber-700/60 text-amber-300'"
+        >
+          <Megaphone class="w-3.5 h-3.5" :class="isPpdbOpen ? 'text-amber-400' : 'text-rose-400'" />
           <span>Pengumuman</span>
         </div>
         <div class="overflow-hidden whitespace-nowrap w-full">
-          <div class="inline-block animate-marquee font-medium text-emerald-100 text-[11px] sm:text-xs">
-            <span class="mr-8">📌 <strong>PPDB Online 2026/2027</strong>: Pendaftaran Peserta Didik Baru telah dibuka. Silakan mengisi formulir melalui menu PPDB Online.</span>
+          <div
+            class="inline-block animate-marquee font-medium text-[11px] sm:text-xs"
+            :class="isPpdbOpen ? 'text-emerald-100' : 'text-amber-100'"
+          >
+            <!-- DYNAMIC PPDB ANNOUNCEMENT ITEM -->
+            <span class="mr-8">
+              <template v-if="isPpdbOpen">
+                📌 <strong class="text-emerald-300 font-bold">PPDB Online {{ activeYearName }} ({{ ppdbBatchName }})</strong>: Pendaftaran Peserta Didik Baru Resmi <span class="text-emerald-400 font-extrabold underline uppercase">DIBUKA</span>. Silakan mengisi formulir pendaftaran melalui menu PPDB Online.
+              </template>
+              <template v-else>
+                🔒 <strong class="text-amber-300 font-bold">PPDB Online {{ activeYearName }}</strong>: Pendaftaran saat ini telah <span class="text-rose-400 font-extrabold underline uppercase">DITUTUP</span>. ({{ ppdbClosedMessage }}). Calon peserta didik dapat mengecek hasil seleksi pada menu Cek Status PPDB.
+              </template>
+            </span>
             <span class="mr-8">&bull;</span>
             <span class="mr-8">📖 <strong>Jadwal Pembelajaran</strong>: KBM Semester Aktif berjalan normal setiap Senin &ndash; Sabtu pukul 07.00 &ndash; 15.00 WIB.</span>
             <span class="mr-8">&bull;</span>
@@ -1059,11 +1086,30 @@ import {
   Globe,
   UserPlus,
   MessageCircle,
-  Megaphone
+  Megaphone,
+  Lock,
 } from 'lucide-vue-next';
 
 // Logo fallback state
 const logoErr = ref(false);
+
+// PPDB Dynamic Status Computation
+const ppdbStatus = computed(() => settings.value?.ppdb_status || {});
+const isPpdbOpen = computed(() => {
+  if (settings.value?.ppdb_status && typeof settings.value.ppdb_status.is_open !== 'undefined') {
+    return Boolean(settings.value.ppdb_status.is_open);
+  }
+  return settings.value?.ppdb_is_open !== '0' && settings.value?.ppdb_is_open !== false;
+});
+const ppdbBatchName = computed(() => {
+  return ppdbStatus.value?.batch_name || settings.value?.ppdb_batch_name || 'Gelombang 1';
+});
+const ppdbClosedMessage = computed(() => {
+  return ppdbStatus.value?.status_reason || settings.value?.ppdb_closed_message || 'Pendaftaran saat ini sedang ditutup oleh panitia madrasah.';
+});
+const activeYearName = computed(() => {
+  return settings.value?.active_academic_year?.name || '2026/2027';
+});
 
 // School operational hours detector
 const isSchoolHours = computed(() => {

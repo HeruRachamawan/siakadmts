@@ -11,6 +11,7 @@ use App\Models\Teacher;
 use App\Models\Student;
 use App\Models\ClassRoom;
 use App\Models\AcademicYear;
+use App\Http\Controllers\Public\PpdbPublicController;
 
 class WebsiteController extends Controller
 {
@@ -20,6 +21,9 @@ class WebsiteController extends Controller
         $galleries = Gallery::latest()->take(6)->get();
         $facilities = Facility::where('status', 'published')->latest()->get();
         $settings = Setting::pluck('value', 'key');
+        
+        // Status PPDB terkini (buka/tutup, gelombang, alasan/penjelasan penutupan)
+        $settings['ppdb_status'] = PpdbPublicController::getPpdbOpenStatus();
         
         $settings['principal_name'] = 'Dr. Nama Kepsek, M.Pd.';
         $settings['principal_photo'] = 'https://ui-avatars.com/api/?name=Kepala+Sekolah&background=6366f1&color=fff&size=150';
