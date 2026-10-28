@@ -308,6 +308,7 @@ import {
   Award,
   CheckCircle2,
   FileSpreadsheet,
+  Wallet,
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -360,6 +361,7 @@ const baseMenus = [
   { title: 'Rapor Tengah Semester (ASTS)', category: 'Penilaian', route: '/admin/asts-reports', icon: FileSpreadsheet, keywords: 'rapor tengah semester leger asts wali kelas' },
   { title: 'Kenaikan Kelas & Kelulusan', category: 'Kesiswaan', route: '/admin/promotions', icon: GraduationCap, keywords: 'naik kelas mutasi kelulusan tingkat' },
   { title: 'Buku Induk Alumni', category: 'Kesiswaan', route: '/admin/alumni', icon: GraduationCap, keywords: 'lulusan tamatan alumni arsip' },
+  { title: 'Keuangan & Kasir SPP', category: 'Administrasi', route: '/admin/finance', icon: Wallet, keywords: 'uang spp bayar kasir tagihan kuitansi bendahara kartu bulanan tunggakan pos cicilan' },
   { title: 'Pusat Cetak Dokumen', category: 'Cetak', route: '/admin/print-center', icon: Printer, keywords: 'cetak kartu surat lembar leger raport pdf' },
   { title: 'Agenda Persuratan', category: 'Persuratan', route: '/admin/letters', icon: Mail, keywords: 'surat masuk keluar arsip nomor agenda' },
   { title: 'Cadangan & Pemulihan Database', category: 'Sistem', route: '/admin/database-backup', icon: Database, keywords: 'backup restore sql migrasi hosting dump' },

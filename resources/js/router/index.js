@@ -6,6 +6,7 @@ function roleDashboard(r) {
     if (r === 'kepala_sekolah') return '/kepala-sekolah/dashboard';
     if (r === 'operator') return '/operator/dashboard';
     if (r === 'kurikulum') return '/kurikulum/dashboard';
+    if (r === 'bendahara') return '/admin/finance';
     if (r === 'teacher') return '/teacher/dashboard';
     if (r === 'student') return '/student/dashboard';
     return '/login';
@@ -96,6 +97,10 @@ const routes = [
     { path: '/admin/exam-corrections', component: () => import('../views/AdminExamCorrection.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Monitoring Koreksi Ujian' } },
     { path: '/admin/attendances', component: () => import('../views/AdminAttendances.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Presensi Siswa' } },
     { path: '/admin/attendance', component: () => import('../views/TeacherAttendance.vue'), meta: { requiresAuth: true, roles: ['admin', 'kurikulum', 'kepala_sekolah'], title: 'Presensi Harian' } },
+    { path: '/admin/finance', component: () => import('../views/AdminFinance.vue'), meta: { requiresAuth: true, roles: ['admin', 'bendahara', 'operator', 'kepala_sekolah'], title: 'Keuangan & Pembayaran SPP' } },
+    { path: '/bendahara/dashboard', redirect: '/admin/finance' },
+    { path: '/bendahara/finance', redirect: '/admin/finance' },
+    { path: '/operator/finance', redirect: '/admin/finance' },
     { path: '/admin/profile', component: () => import('../views/AdminProfile.vue'), meta: { requiresAuth: true, roles: ['admin', 'operator', 'kurikulum', 'kepala_sekolah', 'bendahara'], title: 'Profil & Biodata Diri' } },
     { path: '/kurikulum/profile', redirect: '/admin/profile' },
     { path: '/operator/profile', redirect: '/admin/profile' },

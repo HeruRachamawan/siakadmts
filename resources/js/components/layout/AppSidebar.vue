@@ -92,8 +92,8 @@
           </Transition>
         </RouterLink>
 
-        <!-- 2. ADMINISTRASI & PERSURATAN (Admin, Kepala Madrasah, Operator TU, & Waka Kurikulum) -->
-        <template v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum' || currentRole === 'kepala_sekolah'">
+        <!-- 2. ADMINISTRASI & PERSURATAN (Admin, Kepala Madrasah, Operator TU, Waka Kurikulum, & Bendahara) -->
+        <template v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum' || currentRole === 'kepala_sekolah' || currentRole === 'bendahara'">
           <button
             v-if="!isCollapsed"
             type="button"
@@ -105,7 +105,7 @@
                 class="w-1.5 h-1.5 rounded-full transition-colors duration-150 flex-shrink-0"
                 :class="isSectionOpen('administrasi') ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-slate-600 group-hover:bg-slate-400'"
               ></span>
-              <span class="truncate">Administrasi & Persuratan</span>
+              <span class="truncate">Administrasi & Keuangan</span>
             </span>
             <ChevronDown
               class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-transform duration-200 flex-shrink-0"
@@ -115,8 +115,24 @@
           <div v-else class="my-1 border-t border-slate-800"></div>
 
           <div v-show="isCollapsed || isSectionOpen('administrasi')" class="space-y-0.5">
+            <!-- Keuangan & Pembayaran SPP (Admin, Operator, Bendahara, Kepala Madrasah) -->
+            <RouterLink
+              v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'bendahara' || currentRole === 'kepala_sekolah'"
+              to="/admin/finance"
+              :title="isCollapsed ? 'Keuangan & SPP' : ''"
+              class="nav-link"
+              :class="isCollapsed ? 'justify-center' : ''"
+              active-class="nav-link-active"
+            >
+              <Wallet class="w-4 h-4 flex-shrink-0 text-emerald-400" />
+              <Transition name="label-fade">
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Keuangan & Kasir SPP</span>
+              </Transition>
+            </RouterLink>
+
             <!-- Buku Agenda Surat Masuk & Keluar -->
             <RouterLink
+              v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum' || currentRole === 'kepala_sekolah'"
               :to="currentRole === 'admin' ? '/admin/letters' : (currentRole === 'kurikulum' ? '/kurikulum/letters' : '/operator/letters')"
               :title="isCollapsed ? 'Buku Agenda Persuratan' : ''"
               class="nav-link"
@@ -1214,6 +1230,7 @@ import {
   ArrowRightLeft,
   ChevronDown,
   Database,
+  Wallet,
   X
 } from 'lucide-vue-next';
 
@@ -1246,7 +1263,7 @@ const route = useRoute();
 const openSections = ref({});
 
 const routeSectionMap = {
-  administrasi: ['/letters', '/print-center', '/graduation-grades'],
+  administrasi: ['/letters', '/print-center', '/graduation-grades', '/finance'],
   kurikulum_kbm: ['/admin/schedules', '/admin/subjects', '/admin/calendar-events'],
   kurikulum_asesmen: ['/admin/exam-corrections', '/admin/grades', '/admin/ledger-monitoring', '/kurikulum/asts-monitoring'],
   kurikulum_supervisi: ['/admin/teacher-presensi-monitoring'],

@@ -16,7 +16,7 @@ use App\Http\Controllers\Admin\TeacherController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah'])
+Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah,bendahara'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -25,6 +25,20 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::put('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update']);
     Route::get('dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
     Route::get('kepala-sekolah/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'kepalaSekolah'])->name('kepala-sekolah.dashboard');
+
+    // Modul Keuangan & Pembayaran SPP (Bendahara, Admin, Operator, Kepala Sekolah)
+    Route::prefix('finance')->name('finance.')->group(function () {
+        Route::get('summary', [\App\Http\Controllers\Admin\FinanceController::class, 'summary']);
+        Route::get('payment-types', [\App\Http\Controllers\Admin\FinanceController::class, 'getPaymentTypes']);
+        Route::post('payment-types', [\App\Http\Controllers\Admin\FinanceController::class, 'storePaymentType']);
+        Route::put('payment-types/{id}', [\App\Http\Controllers\Admin\FinanceController::class, 'updatePaymentType']);
+        Route::delete('payment-types/{id}', [\App\Http\Controllers\Admin\FinanceController::class, 'deletePaymentType']);
+        Route::post('generate-bills', [\App\Http\Controllers\Admin\FinanceController::class, 'generateBills']);
+        Route::get('student-card/{student_id}', [\App\Http\Controllers\Admin\FinanceController::class, 'getStudentCard']);
+        Route::post('pay', [\App\Http\Controllers\Admin\FinanceController::class, 'payBills']);
+        Route::get('receipt/{invoice_number}', [\App\Http\Controllers\Admin\FinanceController::class, 'getReceipt']);
+        Route::get('reports', [\App\Http\Controllers\Admin\FinanceController::class, 'getReports']);
+    });
     
     Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index']);
     Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update']);
