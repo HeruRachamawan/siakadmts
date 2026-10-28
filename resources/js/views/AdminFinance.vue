@@ -146,8 +146,8 @@
               class="form-input text-xs font-semibold"
             >
               <option value="">-- Semua Kelas / Pilih Rombel --</option>
-              <option v-for="cls in classes" :key="cls.id" :value="cls.id">
-                Kelas {{ cls.name }} (Tingkat {{ cls.grade_level }})
+              <option v-for="cls in classes" :key="cls?.id" :value="cls?.id">
+                Kelas {{ cls?.name }} (Tingkat {{ cls?.grade_level }})
               </option>
             </select>
           </div>
@@ -160,8 +160,8 @@
               class="form-input text-xs font-semibold"
             >
               <option value="">-- Pilih Nama Siswa --</option>
-              <option v-for="st in classStudents" :key="st.id" :value="st.id">
-                {{ st.full_name }} (NISN: {{ st.nisn || '-' }} • {{ st.class_name || '-' }})
+              <option v-for="st in classStudents" :key="st?.id" :value="st?.id">
+                {{ st?.full_name }} (NISN: {{ st?.nisn || '-' }} • {{ st?.class_name || '-' }})
               </option>
             </select>
           </div>
@@ -247,7 +247,7 @@
             </div>
 
             <!-- Select All Checkbox -->
-            <div v-if="studentCardData.monthly_bills.filter(b => b.status !== 'paid').length > 0" class="flex items-center gap-2">
+            <div v-if="(studentCardData.monthly_bills || []).filter(b => b && b.status !== 'paid').length > 0" class="flex items-center gap-2">
               <button
                 type="button"
                 @click="selectAllUnpaidMonthly"
@@ -259,7 +259,7 @@
           </div>
 
           <!-- Empty Bills Warning -->
-          <div v-if="studentCardData.monthly_bills.length === 0" class="p-6 text-center text-slate-400 space-y-2 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+          <div v-if="!studentCardData.monthly_bills || studentCardData.monthly_bills.length === 0" class="p-6 text-center text-slate-400 space-y-2 bg-slate-50 rounded-lg border border-dashed border-slate-200">
             <AlertCircle class="w-6 h-6 text-amber-500 mx-auto" />
             <p class="text-xs font-bold text-slate-700">Tagihan SPP Belum Terbentuk</p>
             <p class="text-[11px] text-slate-500">
@@ -270,12 +270,12 @@
           <!-- 12-Month Grid Cards -->
           <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             <div
-              v-for="b in studentCardData.monthly_bills"
-              :key="'bill-' + b.id"
+              v-for="b in (studentCardData.monthly_bills || [])"
+              :key="'bill-' + (b?.id || '')"
               class="relative p-3 rounded-lg border transition-all select-none"
               :class="[
-                b.status === 'paid' ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900' :
-                selectedBillIds.includes(b.id) ? 'bg-emerald-100/60 border-emerald-400 ring-2 ring-emerald-500/30' :
+                b?.status === 'paid' ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900' :
+                selectedBillIds.includes(b?.id) ? 'bg-emerald-100/60 border-emerald-400 ring-2 ring-emerald-500/30' :
                 'bg-white border-slate-200 hover:border-slate-300'
               ]"
             >
@@ -300,18 +300,18 @@
 
               <!-- Action or Paid info -->
               <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                <template v-if="b.status === 'paid'">
+                <template v-if="b?.status === 'paid'">
                   <span class="text-[10px] text-emerald-700 font-medium flex items-center gap-1">
                     <Check class="w-3 h-3 text-emerald-600" />
                     <span>Terbayar</span>
                   </span>
                 </template>
                 <template v-else>
-                  <label :for="'cb-' + b.id" class="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700">
+                  <label :for="'cb-' + b?.id" class="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700">
                     <input
-                      :id="'cb-' + b.id"
+                      :id="'cb-' + b?.id"
                       type="checkbox"
-                      :value="b.id"
+                      :value="b?.id"
                       v-model="selectedBillIds"
                       class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                     />
@@ -324,7 +324,7 @@
         </div>
 
         <!-- Tagihan Lainnya (Non-SPP: Uang Gedung, Seragam, dsb) -->
-        <div v-if="studentCardData.once_bills.length > 0" class="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs space-y-3">
+        <div v-if="studentCardData.once_bills && studentCardData.once_bills.length > 0" class="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs space-y-3">
           <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
             <Coins class="w-4 h-4 text-emerald-600" />
             <span>Tagihan Tambahan (Uang Gedung, Seragam, Ujian, dll)</span>
@@ -332,29 +332,29 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <div
-              v-for="ob in studentCardData.once_bills"
-              :key="'once-' + ob.id"
+              v-for="ob in (studentCardData.once_bills || [])"
+              :key="'once-' + (ob?.id || '')"
               class="p-3.5 rounded-lg border transition-all"
-              :class="ob.status === 'paid' ? 'bg-emerald-50/70 border-emerald-200' : 'bg-white border-slate-200'"
+              :class="ob?.status === 'paid' ? 'bg-emerald-50/70 border-emerald-200' : 'bg-white border-slate-200'"
             >
               <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold text-slate-800">{{ ob.payment_type?.name }}</span>
+                <span class="text-xs font-bold text-slate-800">{{ ob?.payment_type?.name }}</span>
                 <span
                   class="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase"
-                  :class="ob.status === 'paid' ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-100 text-rose-800'"
+                  :class="ob?.status === 'paid' ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-100 text-rose-800'"
                 >
-                  {{ ob.status === 'paid' ? 'Lunas' : 'Belum Bayar' }}
+                  {{ ob?.status === 'paid' ? 'Lunas' : 'Belum Bayar' }}
                 </span>
               </div>
-              <p class="text-xs font-mono font-bold text-slate-900">{{ formatRupiah(ob.amount) }}</p>
+              <p class="text-xs font-mono font-bold text-slate-900">{{ formatRupiah(ob?.amount) }}</p>
 
               <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
-                <span v-if="ob.status === 'paid'" class="text-[10px] text-emerald-700 font-semibold">Lunas Terbayar</span>
-                <label v-else :for="'cb-once-' + ob.id" class="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700">
+                <span v-if="ob?.status === 'paid'" class="text-[10px] text-emerald-700 font-semibold">Lunas Terbayar</span>
+                <label v-else :for="'cb-once-' + ob?.id" class="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700">
                   <input
-                    :id="'cb-once-' + ob.id"
+                    :id="'cb-once-' + ob?.id"
                     type="checkbox"
-                    :value="ob.id"
+                    :value="ob?.id"
                     v-model="selectedBillIds"
                     class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                   />
@@ -448,26 +448,26 @@
                 Belum ada pos tagihan. Klik "Tambah Pos Baru" untuk membuat master tarif.
               </td>
             </tr>
-            <tr v-for="(pt, idx) in paymentTypes" :key="pt.id" class="hover:bg-slate-50/70 transition-colors">
+            <tr v-for="(pt, idx) in paymentTypes" :key="pt?.id || idx" class="hover:bg-slate-50/70 transition-colors">
               <td class="p-3 text-center font-bold text-slate-400">{{ idx + 1 }}</td>
               <td class="p-3">
-                <p class="font-bold text-slate-900">{{ pt.name }}</p>
-                <p class="text-[10px] text-slate-400 font-normal">{{ pt.description || '-' }}</p>
+                <p class="font-bold text-slate-900">{{ pt?.name }}</p>
+                <p class="text-[10px] text-slate-400 font-normal">{{ pt?.description || '-' }}</p>
               </td>
               <td class="p-3">
                 <span
                   class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
-                  :class="pt.type === 'monthly' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-blue-50 text-blue-800 border border-blue-200'"
+                  :class="pt?.type === 'monthly' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-blue-50 text-blue-800 border border-blue-200'"
                 >
-                  {{ pt.type === 'monthly' ? 'Bulanan (SPP)' : 'Sekali Bayar' }}
+                  {{ pt?.type === 'monthly' ? 'Bulanan (SPP)' : 'Sekali Bayar' }}
                 </span>
               </td>
               <td class="p-3 font-mono font-bold text-slate-800">
-                {{ formatRupiah(pt.amount) }}
+                {{ formatRupiah(pt?.amount) }}
               </td>
               <td class="p-3">
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 font-mono">
-                  {{ pt.bills_count || 0 }} Siswa
+                  {{ pt?.bills_count || 0 }} Siswa
                 </span>
               </td>
               <td class="p-3 text-right">
@@ -506,8 +506,8 @@
             class="form-input text-xs font-semibold w-full sm:w-60"
           >
             <option value="">-- Seluruh Kelas --</option>
-            <option v-for="cls in classes" :key="'rep-cls-' + cls.id" :value="cls.id">
-              Kelas {{ cls.name }}
+            <option v-for="cls in classes" :key="'rep-cls-' + (cls?.id || '')" :value="cls?.id">
+              Kelas {{ cls?.name }}
             </option>
           </select>
         </div>
@@ -560,27 +560,27 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            <tr v-for="(st, idx) in reportData.students" :key="st.id" class="hover:bg-slate-50/70 transition-colors">
+            <tr v-for="(st, idx) in (reportData.students || [])" :key="st?.id || idx" class="hover:bg-slate-50/70 transition-colors">
               <td class="p-3 text-center font-bold text-slate-400">{{ idx + 1 }}</td>
-              <td class="p-3 font-bold text-slate-900">{{ st.full_name }}</td>
-              <td class="p-3 font-mono text-slate-600">{{ st.nisn }}</td>
-              <td class="p-3 font-bold text-emerald-700">{{ st.class_name }}</td>
-              <td class="p-3 font-mono text-slate-700">{{ formatRupiah(st.total_billed) }}</td>
-              <td class="p-3 font-mono text-emerald-700 font-semibold">{{ formatRupiah(st.total_paid) }}</td>
-              <td class="p-3 font-mono font-bold" :class="st.remaining > 0 ? 'text-rose-600' : 'text-slate-400'">
-                {{ formatRupiah(st.remaining) }}
+              <td class="p-3 font-bold text-slate-900">{{ st?.full_name }}</td>
+              <td class="p-3 font-mono text-slate-600">{{ st?.nisn }}</td>
+              <td class="p-3 font-bold text-emerald-700">{{ st?.class_name }}</td>
+              <td class="p-3 font-mono text-slate-700">{{ formatRupiah(st?.total_billed) }}</td>
+              <td class="p-3 font-mono text-emerald-700 font-semibold">{{ formatRupiah(st?.total_paid) }}</td>
+              <td class="p-3 font-mono font-bold" :class="st?.remaining > 0 ? 'text-rose-600' : 'text-slate-400'">
+                {{ formatRupiah(st?.remaining) }}
               </td>
               <td class="p-3 text-center">
                 <span
                   class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
-                  :class="st.status === 'lunas' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'"
+                  :class="st?.status === 'lunas' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'"
                 >
-                  {{ st.status === 'lunas' ? 'Lunas' : 'Nunggak' }}
+                  {{ st?.status === 'lunas' ? 'Lunas' : 'Nunggak' }}
                 </span>
               </td>
               <td class="p-3 text-right">
                 <button
-                  @click="openStudentFromReport(st.id)"
+                  @click="openStudentFromReport(st?.id)"
                   class="btn btn-outline text-[11px]"
                 >
                   <span>Buka Kasir</span>
@@ -711,8 +711,8 @@
             <label class="block text-xs font-semibold text-slate-700 mb-1">Pilih Pos Tagihan *</label>
             <select v-model="generateForm.payment_type_id" class="form-input text-xs font-semibold">
               <option value="">-- Pilih Pos Tagihan --</option>
-              <option v-for="pt in paymentTypes" :key="'gen-pt-' + pt.id" :value="pt.id">
-                {{ pt.name }} ({{ formatRupiah(pt.amount) }} • {{ pt.type === 'monthly' ? 'Bulanan' : 'Sekali Bayar' }})
+              <option v-for="pt in paymentTypes" :key="'gen-pt-' + (pt?.id || '')" :value="pt?.id">
+                {{ pt?.name }} ({{ formatRupiah(pt?.amount) }} • {{ pt?.type === 'monthly' ? 'Bulanan' : 'Sekali Bayar' }})
               </option>
             </select>
           </div>
@@ -721,8 +721,8 @@
             <label class="block text-xs font-semibold text-slate-700 mb-1">Sasaran Siswa</label>
             <select v-model="generateForm.class_id" class="form-input text-xs font-semibold">
               <option value="">Semua Siswa Aktif (Seluruh Kelas 7, 8, 9)</option>
-              <option v-for="cls in classes" :key="'gen-cls-' + cls.id" :value="cls.id">
-                Hanya Kelas {{ cls.name }}
+              <option v-for="cls in classes" :key="'gen-cls-' + (cls?.id || '')" :value="cls?.id">
+                Hanya Kelas {{ cls?.name }}
               </option>
             </select>
           </div>
@@ -908,14 +908,15 @@ const reportData = ref({
 });
 
 const selectedTotalAmount = computed(() => {
-  if (selectedBillIds.value.length === 0) return 0;
+  if (!selectedBillIds.value || selectedBillIds.value.length === 0) return 0;
   const allBills = [
-    ...(studentCardData.value.monthly_bills || []),
-    ...(studentCardData.value.once_bills || []),
-  ];
+    ...(studentCardData.value?.monthly_bills || []),
+    ...(studentCardData.value?.once_bills || []),
+  ].filter(b => b && b.id);
+
   return allBills
     .filter(b => selectedBillIds.value.includes(b.id))
-    .reduce((sum, b) => sum + (parseFloat(b.amount) - parseFloat(b.amount_paid)), 0);
+    .reduce((sum, b) => sum + (parseFloat(b.amount || 0) - parseFloat(b.amount_paid || 0)), 0);
 });
 
 const formatRupiah = (val) => {
@@ -934,20 +935,30 @@ const fetchSummary = async () => {
 
 const fetchClasses = async () => {
   try {
-    const res = await api.get('admin/classes');
-    classes.value = res?.data?.classes || res?.classes || res || [];
+    const res = await api.get('admin/classes', { all: true, per_page: 500 });
+    const raw = res?.data || res || [];
+    const list = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
+    classes.value = Array.isArray(list) ? list.filter(c => c && c.id) : [];
   } catch (err) {
     console.error('Failed to load classes:', err);
+    classes.value = [];
   }
 };
 
 const fetchStudentsByClass = async () => {
   try {
-    const params = selectedClassId.value ? { class_id: selectedClassId.value } : {};
+    const params = {
+      all: true,
+      per_page: 500,
+      ...(selectedClassId.value ? { class_id: selectedClassId.value } : {}),
+    };
     const res = await api.get('admin/students', params);
-    classStudents.value = res?.data?.students || res?.students || [];
+    const raw = res?.data || res || [];
+    const list = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
+    classStudents.value = Array.isArray(list) ? list.filter(s => s && s.id) : [];
   } catch (err) {
     console.error('Failed to load students:', err);
+    classStudents.value = [];
   }
 };
 
@@ -957,7 +968,15 @@ const loadStudentCard = async () => {
   selectedBillIds.value = [];
   try {
     const res = await api.get(`admin/finance/student-card/${selectedStudentId.value}`);
-    studentCardData.value = res?.data || {};
+    const data = res?.data || res || {};
+    studentCardData.value = {
+      student: data.student || null,
+      monthly_bills: Array.isArray(data.monthly_bills) ? data.monthly_bills.filter(b => b && b.id) : [],
+      once_bills: Array.isArray(data.once_bills) ? data.once_bills.filter(b => b && b.id) : [],
+      total_billed: Number(data.total_billed || 0),
+      total_paid: Number(data.total_paid || 0),
+      total_remaining: Number(data.total_remaining || 0),
+    };
   } catch (err) {
     toast.error('Gagal memuat kartu pembayaran siswa');
   } finally {
@@ -966,8 +985,9 @@ const loadStudentCard = async () => {
 };
 
 const selectAllUnpaidMonthly = () => {
+  if (!studentCardData.value?.monthly_bills) return;
   const unpaid = studentCardData.value.monthly_bills
-    .filter(b => b.status !== 'paid')
+    .filter(b => b && b.id && b.status !== 'paid')
     .map(b => b.id);
   selectedBillIds.value = unpaid;
 };
@@ -975,9 +995,12 @@ const selectAllUnpaidMonthly = () => {
 const fetchPaymentTypes = async () => {
   try {
     const res = await api.get('admin/finance/payment-types');
-    paymentTypes.value = res?.data || [];
+    const raw = res?.data || res || [];
+    const list = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
+    paymentTypes.value = Array.isArray(list) ? list.filter(p => p && p.id) : [];
   } catch (err) {
     console.error('Failed to fetch payment types:', err);
+    paymentTypes.value = [];
   }
 };
 
@@ -1122,9 +1145,14 @@ const fetchReports = async () => {
   try {
     const params = reportClassId.value ? { class_id: reportClassId.value } : {};
     const res = await api.get('admin/finance/reports', params);
-    reportData.value = res?.data?.data || res?.data || {};
+    const data = res?.data?.data || res?.data || {};
+    reportData.value = {
+      students: Array.isArray(data.students) ? data.students.filter(s => s && s.id) : [],
+      summary: data.summary || null,
+    };
   } catch (err) {
     console.error('Failed to fetch reports:', err);
+    reportData.value = { students: [], summary: null };
   } finally {
     loadingReport.value = false;
   }
