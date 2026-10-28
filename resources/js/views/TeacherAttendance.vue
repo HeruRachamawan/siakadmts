@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6 font-inter">
+  <div class="space-y-6 font-inter pb-24 md:pb-6">
     <!-- Header -->
     <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div class="flex items-center gap-3">
@@ -335,137 +335,273 @@
         </div>
       </div>
 
-      <!-- Table Content -->
-      <div v-else class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="border-b border-slate-100 bg-slate-50/50">
-              <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-12">NO</th>
-              <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">SISWA</th>
-              <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">NISN / NIS</th>
-              <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">STATUS KEHADIRAN</th>
-              <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">CATATAN / KETERANGAN</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-50">
-            <tr v-for="(student, index) in students" :key="student.student_id" class="hover:bg-slate-50/70 transition-colors">
-              <td class="px-6 py-4 text-xs font-bold text-slate-400">{{ index + 1 }}</td>
-              
-              <!-- Siswa -->
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
-                    <img v-if="student.photo_url" :src="student.photo_url" alt="Photo" class="w-full h-full object-cover" />
-                    <div v-else :class="student.gender === 'L' ? 'bg-blue-400' : 'bg-pink-400'" class="w-full h-full flex items-center justify-center">
-                      {{ getInitials(student.full_name) }}
+      <!-- Table & Mobile Cards Container -->
+      <template v-else>
+        <!-- Desktop Table View (Hidden on Mobile) -->
+        <div class="hidden md:block overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-100 bg-slate-50/50">
+                <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-12">NO</th>
+                <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">SISWA</th>
+                <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">NISN / NIS</th>
+                <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">STATUS KEHADIRAN</th>
+                <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">CATATAN / KETERANGAN</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              <tr v-for="(student, index) in students" :key="student.student_id" class="hover:bg-slate-50/70 transition-colors">
+                <td class="px-6 py-4 text-xs font-bold text-slate-400">{{ index + 1 }}</td>
+                
+                <!-- Siswa -->
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
+                      <img v-if="student.photo_url" :src="student.photo_url" alt="Photo" class="w-full h-full object-cover" />
+                      <div v-else :class="student.gender === 'L' ? 'bg-blue-400' : 'bg-pink-400'" class="w-full h-full flex items-center justify-center">
+                        {{ getInitials(student.full_name) }}
+                      </div>
                     </div>
+                    <span class="text-sm font-bold text-slate-800">{{ student.full_name }}</span>
                   </div>
-                  <span class="text-sm font-bold text-slate-800">{{ student.full_name }}</span>
+                </td>
+
+                <!-- NISN / NIS -->
+                <td class="px-6 py-4">
+                  <span class="text-xs font-mono font-bold text-slate-700 block">{{ student.nisn || '-' }}</span>
+                  <span class="text-[10px] text-slate-400 block">NIS: {{ student.nis || '-' }}</span>
+                </td>
+
+                <!-- Pill Buttons for Status (H / S / I / A) -->
+                <td class="px-6 py-4">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <!-- Hadir -->
+                    <button
+                      type="button"
+                      @click="student.status = 'present'"
+                      :class="[
+                        student.status === 'present'
+                          ? 'bg-emerald-600 text-white font-black shadow-md shadow-emerald-500/20 scale-105'
+                          : 'bg-slate-100 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 font-bold',
+                        'px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer'
+                      ]"
+                    >
+                      Hadir (H)
+                    </button>
+
+                    <!-- Sakit -->
+                    <button
+                      type="button"
+                      @click="student.status = 'sick'"
+                      :class="[
+                        student.status === 'sick'
+                          ? 'bg-blue-600 text-white font-black shadow-md shadow-blue-500/20 scale-105'
+                          : 'bg-slate-100 text-slate-500 hover:bg-blue-50 hover:text-blue-700 font-bold',
+                        'px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer'
+                      ]"
+                    >
+                      Sakit (S)
+                    </button>
+
+                    <!-- Izin -->
+                    <button
+                      type="button"
+                      @click="student.status = 'permission'"
+                      :class="[
+                        student.status === 'permission'
+                          ? 'bg-amber-500 text-white font-black shadow-md shadow-amber-500/20 scale-105'
+                          : 'bg-slate-100 text-slate-500 hover:bg-amber-50 hover:text-amber-700 font-bold',
+                        'px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer'
+                      ]"
+                    >
+                      Izin (I)
+                    </button>
+
+                    <!-- Alpa -->
+                    <button
+                      type="button"
+                      @click="student.status = 'alpha'"
+                      :class="[
+                        student.status === 'alpha'
+                          ? 'bg-red-600 text-white font-black shadow-md shadow-red-500/20 scale-105'
+                          : 'bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-700 font-bold',
+                        'px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer'
+                      ]"
+                    >
+                      Alpa (A)
+                    </button>
+                  </div>
+                </td>
+
+                <!-- Catatan -->
+                <td class="px-6 py-4">
+                  <input
+                    v-model="student.note"
+                    type="text"
+                    placeholder="Keterangan opsional..."
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 font-medium"
+                  />
+                </td>
+              </tr>
+
+              <tr v-if="!students.length">
+                <td colspan="5" class="px-6 py-12 text-center text-slate-400 text-xs font-semibold">
+                  Tidak ada siswa terdaftar di kelas ini.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Card View (Optimized for Smartphone Screens: Touch-Friendly) -->
+        <div class="block md:hidden p-3 sm:p-4 space-y-3 bg-slate-50/50">
+          <div
+            v-for="(student, index) in students"
+            :key="'mobile-' + student.student_id"
+            class="bg-white rounded-2xl border p-3.5 shadow-2xs transition-all space-y-3"
+            :class="[
+              student.status === 'alpha' ? 'border-rose-300 bg-rose-50/20 ring-1 ring-rose-200' :
+              student.status === 'sick' ? 'border-blue-300 bg-blue-50/20 ring-1 ring-blue-200' :
+              student.status === 'permission' ? 'border-amber-300 bg-amber-50/20 ring-1 ring-amber-200' :
+              'border-slate-200 hover:border-emerald-300'
+            ]"
+          >
+            <!-- Card Header: Profile, Number, NISN, Gender, Active Badge -->
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0 flex items-center justify-center font-bold text-slate-700 shadow-2xs">
+                  <img v-if="student.photo_url" :src="student.photo_url" class="w-full h-full object-cover" alt="Foto" />
+                  <div v-else :class="student.gender === 'L' ? 'bg-blue-400' : 'bg-pink-400'" class="w-full h-full text-white text-xs font-bold flex items-center justify-center">
+                    {{ getInitials(student.full_name) }}
+                  </div>
                 </div>
-              </td>
-
-              <!-- NISN / NIS -->
-              <td class="px-6 py-4">
-                <span class="text-xs font-mono font-bold text-slate-700 block">{{ student.nisn || '-' }}</span>
-                <span class="text-[10px] text-slate-400 block">NIS: {{ student.nis || '-' }}</span>
-              </td>
-
-              <!-- Pill Buttons for Status (H / S / I / A) -->
-              <td class="px-6 py-4">
-                <div class="flex items-center justify-center gap-1.5">
-                  <!-- Hadir -->
-                  <button
-                    type="button"
-                    @click="student.status = 'present'"
-                    :class="[
-                      student.status === 'present'
-                        ? 'bg-emerald-600 text-white font-black shadow-md shadow-emerald-500/20 scale-105'
-                        : 'bg-slate-100 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 font-bold',
-                      'px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer'
-                    ]"
-                  >
-                    Hadir (H)
-                  </button>
-
-                  <!-- Sakit -->
-                  <button
-                    type="button"
-                    @click="student.status = 'sick'"
-                    :class="[
-                      student.status === 'sick'
-                        ? 'bg-blue-600 text-white font-black shadow-md shadow-blue-500/20 scale-105'
-                        : 'bg-slate-100 text-slate-500 hover:bg-blue-50 hover:text-blue-700 font-bold',
-                      'px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer'
-                    ]"
-                  >
-                    Sakit (S)
-                  </button>
-
-                  <!-- Izin -->
-                  <button
-                    type="button"
-                    @click="student.status = 'permission'"
-                    :class="[
-                      student.status === 'permission'
-                        ? 'bg-amber-500 text-white font-black shadow-md shadow-amber-500/20 scale-105'
-                        : 'bg-slate-100 text-slate-500 hover:bg-amber-50 hover:text-amber-700 font-bold',
-                      'px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer'
-                    ]"
-                  >
-                    Izin (I)
-                  </button>
-
-                  <!-- Alpa -->
-                  <button
-                    type="button"
-                    @click="student.status = 'alpha'"
-                    :class="[
-                      student.status === 'alpha'
-                        ? 'bg-red-600 text-white font-black shadow-md shadow-red-500/20 scale-105'
-                        : 'bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-700 font-bold',
-                      'px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer'
-                    ]"
-                  >
-                    Alpa (A)
-                  </button>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-black text-slate-400 font-mono">#{{ index + 1 }}</span>
+                    <p class="font-bold text-slate-900 text-sm truncate leading-snug">{{ student.full_name }}</p>
+                  </div>
+                  <div class="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
+                    <span class="font-mono text-xs font-semibold">{{ student.nisn || student.nis || '-' }}</span>
+                    <span>&bull;</span>
+                    <span class="px-1.5 py-0.2 rounded text-[9.5px] font-bold" :class="student.gender === 'L' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-pink-50 text-pink-700 border border-pink-200'">
+                      {{ student.gender === 'L' ? 'L' : 'P' }}
+                    </span>
+                  </div>
                 </div>
-              </td>
+              </div>
 
-              <!-- Catatan -->
-              <td class="px-6 py-4">
-                <input
-                  v-model="student.note"
-                  type="text"
-                  placeholder="Keterangan opsional..."
-                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 font-medium"
-                />
-              </td>
-            </tr>
+              <!-- Status Badge Pill -->
+              <span
+                class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0"
+                :class="[
+                  student.status === 'present' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
+                  student.status === 'sick' ? 'bg-blue-100 text-blue-800 border border-blue-300' :
+                  student.status === 'permission' ? 'bg-amber-100 text-amber-800 border border-amber-300' :
+                  student.status === 'alpha' ? 'bg-rose-100 text-rose-800 border border-rose-300' :
+                  'bg-slate-100 text-slate-600'
+                ]"
+              >
+                {{ student.status === 'present' ? 'Hadir' : student.status === 'sick' ? 'Sakit' : student.status === 'permission' ? 'Izin' : student.status === 'alpha' ? 'Alpa' : '-' }}
+              </span>
+            </div>
 
-            <tr v-if="!students.length">
-              <td colspan="5" class="px-6 py-12 text-center text-slate-400 text-xs font-semibold">
-                Tidak ada siswa terdaftar di kelas ini.
-              </td>
-            </tr>
-          </tbody>
-        </table>
+            <!-- Touch-Friendly Status Buttons (Min Touch Target 40px for Thumb Ease) -->
+            <div class="grid grid-cols-4 gap-1.5 bg-slate-100/90 p-1 rounded-xl">
+              <!-- Hadir -->
+              <button
+                type="button"
+                @click="student.status = 'present'"
+                class="h-10 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 select-none active:scale-95 cursor-pointer"
+                :class="student.status === 'present' ? 'bg-emerald-600 text-white font-black shadow-sm ring-2 ring-emerald-400/40' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'"
+              >
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                <span>Hadir</span>
+              </button>
+
+              <!-- Sakit -->
+              <button
+                type="button"
+                @click="student.status = 'sick'"
+                class="h-10 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 select-none active:scale-95 cursor-pointer"
+                :class="student.status === 'sick' ? 'bg-blue-600 text-white font-black shadow-sm ring-2 ring-blue-400/40' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'"
+              >
+                <span>Sakit</span>
+              </button>
+
+              <!-- Izin -->
+              <button
+                type="button"
+                @click="student.status = 'permission'"
+                class="h-10 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 select-none active:scale-95 cursor-pointer"
+                :class="student.status === 'permission' ? 'bg-amber-500 text-white font-black shadow-sm ring-2 ring-amber-400/40' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'"
+              >
+                <span>Izin</span>
+              </button>
+
+              <!-- Alpa -->
+              <button
+                type="button"
+                @click="student.status = 'alpha'"
+                class="h-10 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 select-none active:scale-95 cursor-pointer"
+                :class="student.status === 'alpha' ? 'bg-red-600 text-white font-black shadow-sm ring-2 ring-rose-400/40' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'"
+              >
+                <span>Alpa</span>
+              </button>
+            </div>
+
+            <!-- Note / Keterangan Input in Card -->
+            <div class="relative">
+              <input
+                v-model="student.note"
+                type="text"
+                placeholder="Keterangan opsional..."
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Save Action Bar (Desktop) -->
+        <div v-if="selectedClass && students.length > 0" class="hidden md:flex px-8 py-5 bg-slate-50/80 border-t border-slate-100 items-center justify-between">
+          <span class="text-xs font-bold text-slate-500">
+            {{ students.length }} Siswa Siap Disimpan
+          </span>
+
+          <button
+            @click="submitAttendance"
+            :disabled="submitting"
+            class="px-7 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-all shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            <svg v-if="submitting" class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" stroke="currentColor" stroke-width="4" d="M4 12a8 8 0 1116 0 8 8 0 01-16 0m8-4v4l3 3m0-7l-3 3"></circle></svg>
+            <span>{{ submitting ? 'Menyimpan Presensi...' : 'Simpan Presensi Siswa' }}</span>
+          </button>
+        </div>
+      </template>
+    </div>
+
+    <!-- Mobile Floating Action Bar (Sticky at Bottom of Phone Screen) -->
+    <div
+      v-if="selectedClass && students.length > 0"
+      class="fixed bottom-0 inset-x-0 z-40 md:hidden bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 shadow-2xl flex items-center justify-between gap-3 animate-slide-up"
+    >
+      <!-- Mini Live Counter -->
+      <div class="flex items-center gap-1 text-[11px] font-black font-mono">
+        <span class="px-2 py-1 rounded-md bg-emerald-100 text-emerald-800" title="Hadir">H:{{ countStatus('present') }}</span>
+        <span class="px-2 py-1 rounded-md bg-blue-100 text-blue-800" title="Sakit">S:{{ countStatus('sick') }}</span>
+        <span class="px-2 py-1 rounded-md bg-amber-100 text-amber-800" title="Izin">I:{{ countStatus('permission') }}</span>
+        <span class="px-2 py-1 rounded-md bg-red-100 text-red-800" title="Alpa">A:{{ countStatus('alpha') }}</span>
       </div>
 
-      <!-- Bottom Save Action Bar -->
-      <div v-if="selectedClass && students.length > 0" class="px-8 py-5 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between">
-        <span class="text-xs font-bold text-slate-500">
-          {{ students.length }} Siswa Siap Disimpan
-        </span>
-
-        <button
-          @click="submitAttendance"
-          :disabled="submitting"
-          class="px-7 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-all shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
-        >
-          <svg v-if="submitting" class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" stroke="currentColor" stroke-width="4" d="M4 12a8 8 0 1116 0 8 8 0 01-16 0m8-4v4l3 3m0-7l-3 3"></circle></svg>
-          <span>{{ submitting ? 'Menyimpan Presensi...' : 'Simpan Presensi Siswa' }}</span>
-        </button>
-      </div>
+      <!-- Save Button -->
+      <button
+        @click="submitAttendance"
+        :disabled="submitting"
+        class="px-4 py-2 bg-emerald-600 active:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/30 cursor-pointer disabled:opacity-50 select-none shrink-0"
+      >
+        <svg v-if="submitting" class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" stroke="currentColor" stroke-width="4" d="M4 12a8 8 0 1116 0 8 8 0 01-16 0m8-4v4l3 3m0-7l-3 3"></circle></svg>
+        <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+        <span>{{ submitting ? 'Menyimpan...' : 'Simpan' }}</span>
+      </button>
     </div>
   </div>
 </template>
