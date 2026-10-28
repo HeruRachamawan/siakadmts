@@ -128,9 +128,10 @@
           <Megaphone class="w-3.5 h-3.5" :class="isPpdbOpen ? 'text-amber-400' : 'text-rose-400'" />
           <span>Pengumuman</span>
         </div>
-        <div class="overflow-hidden whitespace-nowrap w-full">
+        <div class="overflow-hidden whitespace-nowrap w-full flex">
+          <!-- Primary Marquee Stream (Visible immediately on screen at 0%) -->
           <div
-            class="inline-block animate-marquee font-medium text-[11px] sm:text-xs"
+            class="flex-shrink-0 flex items-center animate-marquee font-medium text-[11px] sm:text-xs"
             :class="isPpdbOpen ? 'text-emerald-100' : 'text-amber-100'"
           >
             <!-- DYNAMIC PPDB ANNOUNCEMENT ITEM -->
@@ -145,7 +146,28 @@
             <span class="mr-8">&bull;</span>
             <span class="mr-8">📖 <strong>Jadwal Pembelajaran</strong>: KBM Semester Aktif berjalan normal setiap Senin &ndash; Sabtu pukul 07.00 &ndash; 15.00 WIB.</span>
             <span class="mr-8">&bull;</span>
-            <span>💬 <strong>Informasi & Konsultasi</strong>: Hubungi staf madrasah via layanan WhatsApp resmi di sudut kanan bawah.</span>
+            <span class="mr-12">💬 <strong>Informasi & Konsultasi</strong>: Hubungi staf madrasah via layanan WhatsApp resmi di sudut kanan bawah.</span>
+          </div>
+
+          <!-- Secondary Duplicate Stream (For seamless infinite continuous loop without gaps) -->
+          <div
+            aria-hidden="true"
+            class="flex-shrink-0 flex items-center animate-marquee font-medium text-[11px] sm:text-xs"
+            :class="isPpdbOpen ? 'text-emerald-100' : 'text-amber-100'"
+          >
+            <!-- DYNAMIC PPDB ANNOUNCEMENT ITEM -->
+            <span class="mr-8">
+              <template v-if="isPpdbOpen">
+                📌 <strong class="text-emerald-300 font-bold">PPDB Online {{ activeYearName }} ({{ ppdbBatchName }})</strong>: Pendaftaran Peserta Didik Baru Resmi <span class="text-emerald-400 font-extrabold underline uppercase">DIBUKA</span>. Silakan mengisi formulir pendaftaran melalui menu PPDB Online.
+              </template>
+              <template v-else>
+                🔒 <strong class="text-amber-300 font-bold">PPDB Online {{ activeYearName }}</strong>: Pendaftaran saat ini telah <span class="text-rose-400 font-extrabold underline uppercase">DITUTUP</span>. ({{ ppdbClosedMessage }}). Calon peserta didik dapat mengecek hasil seleksi pada menu Cek Status PPDB.
+              </template>
+            </span>
+            <span class="mr-8">&bull;</span>
+            <span class="mr-8">📖 <strong>Jadwal Pembelajaran</strong>: KBM Semester Aktif berjalan normal setiap Senin &ndash; Sabtu pukul 07.00 &ndash; 15.00 WIB.</span>
+            <span class="mr-8">&bull;</span>
+            <span class="mr-12">💬 <strong>Informasi & Konsultasi</strong>: Hubungi staf madrasah via layanan WhatsApp resmi di sudut kanan bawah.</span>
           </div>
         </div>
       </div>
@@ -1437,14 +1459,19 @@ onUnmounted(() => {
 }
 
 @keyframes marquee {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
 }
 
 .animate-marquee {
-  display: inline-block;
+  display: inline-flex;
   white-space: nowrap;
-  animation: marquee 35s linear infinite;
+  animation: marquee 28s linear infinite;
+  will-change: transform;
 }
 
 .animate-marquee:hover {
