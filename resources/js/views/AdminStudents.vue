@@ -585,23 +585,67 @@ const exportExcelFile = async (type) => {
   exportingExcel.value = true;
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`/api/admin/excel/export/${type}`, {
+    const params = new URLSearchParams();
+    let dynamicFileName = `Data_Export_${type}.xlsx`;
+
+    if (type === 'students') {
+      params.set('schedule_mode', activeScheduleTab.value);
+      if (activeScheduleTab.value === 'utama') {
+        if (selectedClass.value) {
+          params.set('class_id', selectedClass.value);
+          const foundCls = classes.value.find(c => String(c.id) === String(selectedClass.value));
+          const clsClean = foundCls ? foundCls.name.replace(/[^a-zA-Z0-9_-]/g, '_') : selectedClass.value;
+          dynamicFileName = `Data_Siswa_Kelas_${clsClean}.xlsx`;
+        } else {
+          dynamicFileName = 'Data_Siswa_Semua_Kelas.xlsx';
+        }
+      } else {
+        if (selectedLokalClass.value === 'unassigned') {
+          params.set('lokal_class_id', 'unassigned');
+          dynamicFileName = 'Data_Siswa_Tanpa_Jadwal_Lokal.xlsx';
+        } else if (selectedLokalClass.value) {
+          params.set('lokal_class_id', selectedLokalClass.value);
+          const foundCls = classes.value.find(c => String(c.id) === String(selectedLokalClass.value));
+          const clsClean = foundCls ? foundCls.name.replace(/[^a-zA-Z0-9_-]/g, '_') : selectedLokalClass.value;
+          dynamicFileName = `Data_Siswa_Jadwal_Lokal_${clsClean}.xlsx`;
+        } else {
+          dynamicFileName = 'Data_Siswa_Semua_Jadwal_Lokal.xlsx';
+        }
+      }
+
+      if (searchQuery.value) {
+        params.set('search', searchQuery.value);
+      }
+    }
+
+    const queryStr = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetch(`/api/admin/excel/export/${type}${queryStr}`, {
       headers: {
         'Authorization': token ? `Bearer ${token}` : '',
         'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/json',
       },
     });
     if (!response.ok) throw new Error('Gagal mengekspor file Excel');
+
+    // Cek header Content-Disposition dari server jika ada
+    const disposition = response.headers.get('Content-Disposition');
+    if (disposition && disposition.includes('filename=')) {
+      const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+      if (match && match[1]) {
+        dynamicFileName = match[1].replace(/['"]/g, '').trim();
+      }
+    }
+
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Data_Export_${type}_YASPIN.xlsx`;
+    a.download = dynamicFileName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-    success('Data Excel berhasil diekspor!');
+    success(`Berhasil mengunduh ${dynamicFileName}!`);
   } catch (err) {
     console.error(err);
     showError('Gagal mengekspor file Excel');

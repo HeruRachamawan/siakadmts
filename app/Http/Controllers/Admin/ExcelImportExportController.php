@@ -715,8 +715,11 @@ class ExcelImportExportController extends Controller
     /**
      * Export database records to formatted Excel (.xlsx).
      */
-    public function exportExcel($type)
+    public function exportExcel(Request $request, $type)
     {
+        $customFileName = null;
+        $studentExportData = null;
+
         if (class_exists('\PhpOffice\PhpSpreadsheet\Spreadsheet')) {
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
@@ -731,7 +734,43 @@ class ExcelImportExportController extends Controller
                 ];
                 $sheet->fromArray([$headers], null, 'A1');
 
-                $students = Student::with(['classRoom', 'lokalClassRoom'])->orderBy('full_name')->get();
+                $studentQuery = Student::with(['classRoom', 'lokalClassRoom']);
+                $classLabel = 'Semua_Kelas';
+
+                if ($request->filled('class_id')) {
+                    $studentQuery->where('class_id', $request->input('class_id'));
+                    $cls = ClassRoom::find($request->input('class_id'));
+                    if ($cls) {
+                        $cleanCls = preg_replace('/[^a-zA-Z0-9_-]/', '_', $cls->name);
+                        $classLabel = 'Kelas_' . $cleanCls;
+                    }
+                } elseif ($request->filled('lokal_class_id')) {
+                    if ($request->input('lokal_class_id') === 'unassigned') {
+                        $studentQuery->whereNull('lokal_class_id');
+                        $classLabel = 'Tanpa_Jadwal_Lokal';
+                    } else {
+                        $studentQuery->where('lokal_class_id', $request->input('lokal_class_id'));
+                        $cls = ClassRoom::find($request->input('lokal_class_id'));
+                        if ($cls) {
+                            $cleanCls = preg_replace('/[^a-zA-Z0-9_-]/', '_', $cls->name);
+                            $classLabel = 'Jadwal_Lokal_' . $cleanCls;
+                        }
+                    }
+                }
+
+                if ($request->filled('search')) {
+                    $search = $request->input('search');
+                    $studentQuery->where(function ($q) use ($search) {
+                        $q->where('full_name', 'like', "%{$search}%")
+                          ->orWhere('nisn', 'like', "%{$search}%")
+                          ->orWhere('nis', 'like', "%{$search}%")
+                          ->orWhere('nik', 'like', "%{$search}%");
+                    });
+                }
+
+                $students = $studentQuery->orderBy('full_name')->get();
+                $studentExportData = $students;
+                $customFileName = "Data_Siswa_{$classLabel}";
                 $data = [];
                 foreach ($students as $i => $s) {
                     $birthDateStr = '-';
@@ -841,26 +880,28 @@ class ExcelImportExportController extends Controller
             }
 
             $writer = new Xlsx($spreadsheet);
-            $fileName = "Data_Export_{$type}_YASPIN.xlsx";
+            $fileName = $customFileName ? "{$customFileName}.xlsx" : "Data_Export_{$type}_YASPIN.xlsx";
 
             return response()->streamDownload(function () use ($writer) {
                 $writer->save('php://output');
             }, $fileName, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+                'Access-Control-Expose-Headers' => 'Content-Disposition',
                 'Cache-Control' => 'max-age=0, no-cache, must-revalidate',
                 'Pragma' => 'public',
             ]);
         }
 
         // CSV Fallback
-        $fileName = "Data_Export_{$type}_YASPIN.csv";
-        return response()->streamDownload(function () use ($type) {
+        $fileName = $customFileName ? "{$customFileName}.csv" : "Data_Export_{$type}_YASPIN.csv";
+        return response()->streamDownload(function () use ($type, $studentExportData) {
             $output = fopen('php://output', 'w');
             fputs($output, "\xEF\xBB\xBF");
 
             if ($type === 'students') {
                 fputcsv($output, ['NO', 'NISN', 'NIS', 'NAMA LENGKAP', 'GENDER', 'TEMPAT LAHIR', 'TGL LAHIR', 'SEKOLAH ASAL', 'ALAMAT', 'NO HP ORTU', 'NAMA AYAH', 'STATUS AYAH', 'NIK AYAH', 'PEKERJAAN AYAH', 'PENGHASILAN AYAH', 'NAMA IBU', 'STATUS IBU', 'NIK IBU', 'PEKERJAAN IBU', 'PENGHASILAN IBU']);
-                $students = Student::orderBy('full_name')->get();
+                $students = $studentExportData ?? Student::orderBy('full_name')->get();
                 foreach ($students as $i => $s) {
                     $birthDateStr = $s->birth_date ? (($s->birth_date instanceof \DateTimeInterface) ? $s->birth_date->format('Y-m-d') : (string)$s->birth_date) : '-';
                     fputcsv($output, [
@@ -887,6 +928,8 @@ class ExcelImportExportController extends Controller
             fclose($output);
         }, $fileName, [
             'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Access-Control-Expose-Headers' => 'Content-Disposition',
             'Cache-Control' => 'max-age=0, no-cache, must-revalidate',
         ]);
     }
