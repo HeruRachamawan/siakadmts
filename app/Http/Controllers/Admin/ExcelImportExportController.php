@@ -719,6 +719,8 @@ class ExcelImportExportController extends Controller
     {
         $customFileName = null;
         $studentExportData = null;
+        $teacherExportData = null;
+        $classExportData = null;
 
         if (class_exists('\PhpOffice\PhpSpreadsheet\Spreadsheet')) {
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -813,16 +815,56 @@ class ExcelImportExportController extends Controller
                 $sheet->fromArray($data, null, 'A2');
 
             } elseif ($type === 'teachers') {
-                $sheet->setTitle('Data Guru');
-                $headers = ['NO', 'NIP / NUPTK', 'NAMA LENGKAP & GELAR', 'GENDER', 'NO. WHATSAPP', 'EMAIL', 'JABATAN / POSISI', 'MAPEL DIAMPU'];
+                $sheet->setTitle('Data Guru & Pegawai');
+                $headers = ['NO', 'NIP / NUPTK', 'NAMA LENGKAP & GELAR', 'GENDER', 'NO. WHATSAPP', 'EMAIL', 'JABATAN / POSISI', 'MAPEL DIAMPU', 'WALI KELAS', 'STATUS AKUN'];
                 $sheet->fromArray([$headers], null, 'A1');
 
-                $teachers = Teacher::with(['user', 'subjects'])->orderBy('full_name')->get();
+                $teacherQuery = Teacher::with(['user', 'subjects', 'classes']);
+                $fileSuffix = 'Semua';
+
+                if ($request->filled('gender')) {
+                    $teacherQuery->where('gender', $request->input('gender'));
+                    $genderLabel = $request->input('gender') === 'L' ? 'Laki_Laki' : 'Perempuan';
+                    $fileSuffix .= "_{$genderLabel}";
+                }
+
+                if ($request->filled('position')) {
+                    $pos = $request->input('position');
+                    $teacherQuery->where('position', 'like', "%{$pos}%");
+                    $cleanPos = preg_replace('/[^a-zA-Z0-9_-]/', '_', $pos);
+                    $fileSuffix .= "_{$cleanPos}";
+                }
+
+                if ($request->filled('search')) {
+                    $search = $request->input('search');
+                    $teacherQuery->where(function ($q) use ($search) {
+                        $q->where('full_name', 'like', "%{$search}%")
+                          ->orWhere('nip', 'like', "%{$search}%")
+                          ->orWhere('phone', 'like', "%{$search}%")
+                          ->orWhere('position', 'like', "%{$search}%")
+                          ->orWhereHas('user', function ($uq) use ($search) {
+                              $uq->where('email', 'like', "%{$search}%");
+                          });
+                    });
+                    $cleanSearch = preg_replace('/[^a-zA-Z0-9_-]/', '_', substr($search, 0, 20));
+                    $fileSuffix .= "_Filter_{$cleanSearch}";
+                }
+
+                $teachers = $teacherQuery->orderBy('full_name')->get();
+                $teacherExportData = $teachers;
+                $customFileName = "Data_Guru_dan_Pegawai_{$fileSuffix}";
+
                 $data = [];
                 foreach ($teachers as $i => $t) {
                     $subjectsStr = ($t->subjects && $t->subjects->count() > 0)
                         ? $t->subjects->pluck('name')->implode(', ')
-                        : 'Umum / Kelas';
+                        : 'Umum / Non-Mapel';
+
+                    $homeroomStr = ($t->classes && $t->classes->count() > 0)
+                        ? $t->classes->pluck('name')->implode(', ')
+                        : '-';
+
+                    $accountStatus = ($t->user) ? ($t->user->is_active === false ? 'Nonaktif' : 'Aktif') : 'Belum Ada Akun';
 
                     $data[] = [
                         $i + 1,
@@ -833,6 +875,91 @@ class ExcelImportExportController extends Controller
                         $t->user ? $t->user->email : '-',
                         $t->position ?: 'Guru Pengajar',
                         $subjectsStr,
+                        $homeroomStr,
+                        $accountStatus,
+                    ];
+                }
+                $sheet->fromArray($data, null, 'A2');
+
+            } elseif ($type === 'classes') {
+                $sheet->setTitle('Data Rombel & Kelas');
+                $headers = [
+                    'NO', 'NAMA ROMBEL / KELAS', 'TINGKAT KELAS', 'KATEGORI ROMBEL',
+                    'WALI KELAS', 'NIP WALI KELAS', 'JUMLAH SISWA (UTAMA)', 'JUMLAH SISWA (JADWAL LOKAL)',
+                    'TAHUN AJARAN', 'SEMESTER'
+                ];
+                $sheet->fromArray([$headers], null, 'A1');
+
+                $classQuery = ClassRoom::with(['academicYear', 'homeroomTeacher'])->withCount(['students', 'lokalStudents']);
+                $tab = $request->input('tab', 'all'); // 'utama' | 'lokal' | 'all'
+                $tabLabel = 'Semua_Rombel';
+
+                if ($request->filled('academic_year_id')) {
+                    $classQuery->where('academic_year_id', $request->input('academic_year_id'));
+                } else {
+                    $activeYearId = AcademicYear::where('is_active', true)->value('id');
+                    if ($activeYearId) {
+                        $classQuery->where('academic_year_id', $activeYearId);
+                    }
+                }
+
+                if ($tab === 'utama') {
+                    $tabLabel = 'Rombel_Reguler_Utama';
+                    $classQuery->whereNotIn('name', ['7', '8', 'Kelas 7', 'Kelas 8', 'kelas 7', 'kelas 8']);
+                } elseif ($tab === 'lokal') {
+                    $tabLabel = 'Kelas_Jadwal_Lokal';
+                    $classQuery->where(function ($q) {
+                        $q->whereIn('name', ['7', '8', '9A', '9B', '9a', '9b'])
+                          ->orWhere('name', 'like', 'Kelas 7%')
+                          ->orWhere('name', 'like', 'Kelas 8%')
+                          ->orWhere('name', 'like', 'Kelas 9A%')
+                          ->orWhere('name', 'like', 'Kelas 9B%');
+                    });
+                }
+
+                if ($request->filled('search')) {
+                    $search = $request->input('search');
+                    $classQuery->where(function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                          ->orWhere('grade_level', 'like', "%{$search}%")
+                          ->orWhereHas('homeroomTeacher', function ($tq) use ($search) {
+                              $tq->where('full_name', 'like', "%{$search}%")
+                                 ->orWhere('nip', 'like', "%{$search}%");
+                          });
+                    });
+                    $cleanSearch = preg_replace('/[^a-zA-Z0-9_-]/', '_', substr($search, 0, 20));
+                    $tabLabel .= "_Filter_{$cleanSearch}";
+                }
+
+                $classes = $classQuery->orderBy('grade_level')->orderBy('name')->get();
+                $classExportData = $classes;
+                $customFileName = "Data_Kelas_{$tabLabel}";
+
+                $data = [];
+                foreach ($classes as $i => $c) {
+                    $nameTrim = trim($c->name);
+                    $nameLower = strtolower($nameTrim);
+                    $category = 'Rombel Utama (Reguler)';
+                    if ($nameTrim === '7' || $nameTrim === '8' || $nameLower === 'kelas 7' || $nameLower === 'kelas 8') {
+                        $category = 'Jadwal Lokal Khusus';
+                    } elseif (in_array($nameLower, ['9a', '9b', 'kelas 9a', 'kelas 9b', '9-a', '9-b'])) {
+                        $category = 'Reguler & Jadwal Lokal';
+                    }
+
+                    $academicYearStr = $c->academicYear ? $c->academicYear->year : '-';
+                    $semesterStr = $c->academicYear ? ($c->academicYear->semester === 'odd' ? 'Ganjil' : 'Genap') : '-';
+
+                    $data[] = [
+                        $i + 1,
+                        $c->name,
+                        $c->grade_level ?: '-',
+                        $category,
+                        $c->homeroomTeacher ? $c->homeroomTeacher->full_name : '-',
+                        (string)($c->homeroomTeacher?->nip ?: '-'),
+                        (int)($c->students_count ?? 0),
+                        (int)($c->lokal_students_count ?? 0),
+                        $academicYearStr,
+                        $semesterStr,
                     ];
                 }
                 $sheet->fromArray($data, null, 'A2');
@@ -895,7 +1022,7 @@ class ExcelImportExportController extends Controller
 
         // CSV Fallback
         $fileName = $customFileName ? "{$customFileName}.csv" : "Data_Export_{$type}_YASPIN.csv";
-        return response()->streamDownload(function () use ($type, $studentExportData) {
+        return response()->streamDownload(function () use ($type, $studentExportData, $teacherExportData, $classExportData) {
             $output = fopen('php://output', 'w');
             fputs($output, "\xEF\xBB\xBF");
 
@@ -912,10 +1039,55 @@ class ExcelImportExportController extends Controller
                     ]);
                 }
             } elseif ($type === 'teachers') {
-                fputcsv($output, ['NO', 'NIP', 'NUPTK', 'NAMA LENGKAP', 'EMAIL', 'NO HP']);
-                $teachers = Teacher::with('user')->orderBy('full_name')->get();
+                fputcsv($output, ['NO', 'NIP / NUPTK', 'NAMA LENGKAP & GELAR', 'GENDER', 'NO. WHATSAPP', 'EMAIL', 'JABATAN / POSISI', 'MAPEL DIAMPU', 'WALI KELAS', 'STATUS AKUN']);
+                $teachers = $teacherExportData ?? Teacher::with(['user', 'subjects', 'classes'])->orderBy('full_name')->get();
                 foreach ($teachers as $i => $t) {
-                    fputcsv($output, [$i + 1, $t->nip ?: '-', $t->nuptk ?: '-', $t->full_name, $t->user ? $t->user->email : '-', $t->phone ?: '-']);
+                    $subjectsStr = ($t->subjects && $t->subjects->count() > 0)
+                        ? $t->subjects->pluck('name')->implode(', ')
+                        : 'Umum / Non-Mapel';
+                    $homeroomStr = ($t->classes && $t->classes->count() > 0)
+                        ? $t->classes->pluck('name')->implode(', ')
+                        : '-';
+                    $accountStatus = ($t->user) ? ($t->user->is_active === false ? 'Nonaktif' : 'Aktif') : 'Belum Ada Akun';
+
+                    fputcsv($output, [
+                        $i + 1,
+                        $t->nip ?: '-',
+                        $t->full_name,
+                        $t->gender === 'L' ? 'Laki-laki' : ($t->gender === 'P' ? 'Perempuan' : '-'),
+                        $t->phone ?: '-',
+                        $t->user ? $t->user->email : '-',
+                        $t->position ?: 'Guru Pengajar',
+                        $subjectsStr,
+                        $homeroomStr,
+                        $accountStatus,
+                    ]);
+                }
+            } elseif ($type === 'classes') {
+                fputcsv($output, ['NO', 'NAMA ROMBEL / KELAS', 'TINGKAT KELAS', 'KATEGORI ROMBEL', 'WALI KELAS', 'NIP WALI KELAS', 'JUMLAH SISWA (UTAMA)', 'JUMLAH SISWA (JADWAL LOKAL)', 'TAHUN AJARAN', 'SEMESTER']);
+                $classes = $classExportData ?? ClassRoom::with(['academicYear', 'homeroomTeacher'])->withCount(['students', 'lokalStudents'])->orderBy('grade_level')->orderBy('name')->get();
+                foreach ($classes as $i => $c) {
+                    $nameTrim = trim($c->name);
+                    $nameLower = strtolower($nameTrim);
+                    $category = 'Rombel Utama (Reguler)';
+                    if ($nameTrim === '7' || $nameTrim === '8' || $nameLower === 'kelas 7' || $nameLower === 'kelas 8') {
+                        $category = 'Jadwal Lokal Khusus';
+                    } elseif (in_array($nameLower, ['9a', '9b', 'kelas 9a', 'kelas 9b', '9-a', '9-b'])) {
+                        $category = 'Reguler & Jadwal Lokal';
+                    }
+
+                    fputcsv($output, [
+                        $i + 1,
+                        $c->name,
+                        $c->grade_level ?: '-',
+                        $category,
+                        $c->homeroomTeacher ? $c->homeroomTeacher->full_name : '-',
+                        $c->homeroomTeacher?->nip ?: '-',
+                        (int)($c->students_count ?? 0),
+                        (int)($c->lokal_students_count ?? 0),
+                        $c->academicYear ? $c->academicYear->year : '-',
+                        $c->academicYear ? ($c->academicYear->semester === 'odd' ? 'Ganjil' : 'Genap') : '-',
+                    ]);
                 }
             } elseif ($type === 'grades') {
                 fputcsv($output, ['NO', 'NISN', 'NAMA SISWA', 'MATA PELAJARAN', 'TUGAS', 'UTS', 'UAS', 'NILAI AKHIR']);

@@ -121,6 +121,20 @@
           </button>
         </div>
 
+        <!-- Export Excel Button -->
+        <button
+          type="button"
+          @click="exportExcelFile"
+          :disabled="exportingExcel"
+          class="flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm transition-all shadow-2xs cursor-pointer active:scale-95 disabled:opacity-50"
+          :title="activeTab === 'utama' ? 'Ekspor Daftar Rombel Reguler ke Excel' : 'Ekspor Daftar Kelas Jadwal Lokal ke Excel'"
+        >
+          <svg v-if="exportingExcel" class="animate-spin h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" stroke="currentColor" stroke-width="4" d="M4 12a8 8 0 1116 0 8 8 0 01-16 0m8-4v4l3 3m0-7l-3 3"></circle></svg>
+          <svg v-else class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span class="hidden sm:inline">{{ exportingExcel ? 'Mengekspor...' : 'Export Excel' }}</span>
+          <span class="sm:hidden">Excel</span>
+        </button>
+
         <!-- Add Button -->
         <button
           @click="openAddForm"
@@ -476,8 +490,67 @@ const searchQuery = ref('');
 const activeTab = ref('utama'); // 'utama' | 'lokal'
 const viewMode = ref('grid'); // 'grid' | 'table'
 const activeYear = ref(null);
+const exportingExcel = ref(false);
 const showLokalStudentModal = ref(false);
 const targetLokalClass = ref(null);
+
+const exportExcelFile = async () => {
+  exportingExcel.value = true;
+  try {
+    const token = localStorage.getItem('token');
+    const params = new URLSearchParams();
+    params.set('tab', activeTab.value);
+
+    if (activeYear.value?.id) {
+      params.set('academic_year_id', activeYear.value.id);
+    }
+
+    let dynamicFileName = activeTab.value === 'utama'
+      ? 'Data_Rombel_Reguler_Utama.xlsx'
+      : 'Data_Rombel_Jadwal_Lokal.xlsx';
+
+    if (searchQuery.value) {
+      params.set('search', searchQuery.value);
+      const cleanSearch = searchQuery.value.replace(/[^a-zA-Z0-9_-]/g, '_');
+      dynamicFileName = activeTab.value === 'utama'
+        ? `Data_Rombel_Reguler_Filter_${cleanSearch}.xlsx`
+        : `Data_Rombel_Lokal_Filter_${cleanSearch}.xlsx`;
+    }
+
+    const queryStr = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetch(`/api/admin/excel/export/classes${queryStr}`, {
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/json',
+      },
+    });
+    if (!response.ok) throw new Error('Gagal mengekspor file Excel');
+
+    const disposition = response.headers.get('Content-Disposition');
+    if (disposition && disposition.includes('filename=')) {
+      const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+      if (match && match[1]) {
+        dynamicFileName = match[1].replace(/['"]/g, '').trim();
+      }
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = dynamicFileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    toast.success(`Berhasil mengunduh ${dynamicFileName}!`);
+  } catch (err) {
+    console.error(err);
+    toast.error('Gagal mengekspor data kelas ke Excel');
+  } finally {
+    exportingExcel.value = false;
+  }
+};
 
 function openManageStudents(cls) {
   targetLokalClass.value = cls;

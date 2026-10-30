@@ -250,23 +250,44 @@ const exportExcelFile = async (type) => {
   exportingExcel.value = true;
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`/api/admin/excel/export/${type}`, {
+    const params = new URLSearchParams();
+    let dynamicFileName = `Data_Export_${type}.xlsx`;
+
+    if (searchQuery.value) {
+      params.set('search', searchQuery.value);
+      const cleanSearch = searchQuery.value.replace(/[^a-zA-Z0-9_-]/g, '_');
+      dynamicFileName = `Data_Guru_dan_Pegawai_Filter_${cleanSearch}.xlsx`;
+    } else {
+      dynamicFileName = 'Data_Guru_dan_Pegawai_Semua.xlsx';
+    }
+
+    const queryStr = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetch(`/api/admin/excel/export/${type}${queryStr}`, {
       headers: {
         'Authorization': token ? `Bearer ${token}` : '',
         'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/json',
       },
     });
     if (!response.ok) throw new Error('Gagal mengekspor file Excel');
+
+    const disposition = response.headers.get('Content-Disposition');
+    if (disposition && disposition.includes('filename=')) {
+      const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+      if (match && match[1]) {
+        dynamicFileName = match[1].replace(/['"]/g, '').trim();
+      }
+    }
+
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Data_Export_${type}_YASPIN.xlsx`;
+    a.download = dynamicFileName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-    success('Data Excel berhasil diekspor!');
+    success(`Berhasil mengunduh ${dynamicFileName}!`);
   } catch (err) {
     console.error(err);
     showError('Gagal mengekspor file Excel');

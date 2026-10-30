@@ -43,6 +43,26 @@
             </button>
           </div>
         </div>
+
+        <div v-else-if="activeTab === 'teachers'" class="flex items-center gap-2">
+          <button
+            @click="exportTeacherMonitoringExcel"
+            class="px-4 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold rounded-xl text-xs hover:bg-emerald-100 transition-colors flex items-center gap-2 shadow-sm cursor-pointer"
+            title="Ekspor Rekap Monitoring Absen Guru ke Excel"
+          >
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>Export Excel (.xlsx)</span>
+          </button>
+
+          <button
+            @click="exportTeacherMonitoringCsv"
+            class="px-3.5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl text-xs hover:bg-slate-50 transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            title="Unduh Monitoring Absen Guru format CSV"
+          >
+            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>CSV</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -990,8 +1010,10 @@ const exportExcel = () => {
   XLSX.utils.book_append_sheet(wb, ws, 'Rekap Presensi');
 
   const cleanMonth = (filterMode.value === 'range' ? `${startDate.value}_sd_${endDate.value}` : selectedMonth.value).replace(/[^a-zA-Z0-9_-]/g, '_');
-  XLSX.writeFile(wb, `Rekap_Presensi_${cleanMonth}.xlsx`);
-  toast.success('Laporan Excel berhasil diunduh!');
+  const cleanClass = selectedClass.value ? getSelectedClassName().replace(/[^a-zA-Z0-9_-]/g, '_') : 'Semua_Kelas';
+  const fileName = `Rekap_Presensi_Siswa_${cleanClass}_${cleanMonth}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+  toast.success(`Berhasil mengunduh ${fileName}!`);
 };
 
 // ================= EXPORT CSV (UTF-8 BOM) =================
@@ -1014,12 +1036,101 @@ const exportCsv = () => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', `rekap_presensi_${selectedMonth.value}.csv`);
+  const cleanMonth = (filterMode.value === 'range' ? `${startDate.value}_sd_${endDate.value}` : selectedMonth.value).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const cleanClass = selectedClass.value ? getSelectedClassName().replace(/[^a-zA-Z0-9_-]/g, '_') : 'Semua_Kelas';
+  const fileName = `Rekap_Presensi_Siswa_${cleanClass}_${cleanMonth}.csv`;
+  link.setAttribute('download', fileName);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-  toast.success('Laporan CSV berhasil diunduh!');
+  toast.success(`Berhasil mengunduh ${fileName}!`);
+};
+
+// ================= EXPORT MONITORING GURU (EXCEL & CSV) =================
+const exportTeacherMonitoringExcel = () => {
+  const dataset = teachersMonitoring.value || [];
+  if (!dataset.length) {
+    toast.error('Tidak ada data monitoring guru untuk diekspor ke Excel');
+    return;
+  }
+
+  const schoolName = settings.value?.app_name || 'SEKOLAH / MADRASAH';
+  const period = formatMonthName(monitoringMonth.value);
+
+  const rows = [
+    [schoolName.toUpperCase()],
+    ['LAPORAN MONITORING AKTIVITAS MENGAJAR & PRESENSI GURU'],
+    [`Periode: ${period}`],
+    [`Dicetak Pada: ${new Date().toLocaleString('id-ID')}`],
+    [],
+    ['NO', 'NAMA GURU', 'NIP', 'MATA PELAJARAN', 'STATUS HARI INI', 'TOTAL SESI MENGAJAR', 'PERIODE']
+  ];
+
+  dataset.forEach((t, idx) => {
+    const subjectsStr = Array.isArray(t.subjects) && t.subjects.length > 0 ? t.subjects.join(', ') : 'Umum';
+    const statusHariIni = t.submitted_today ? 'Sudah Absen' : 'Belum Absen';
+
+    rows.push([
+      idx + 1,
+      t.full_name || '-',
+      t.nip ? String(t.nip) : '-',
+      subjectsStr,
+      statusHariIni,
+      t.total_sessions || 0,
+      period,
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [
+    { wch: 6 },
+    { wch: 32 },
+    { wch: 20 },
+    { wch: 30 },
+    { wch: 18 },
+    { wch: 22 },
+    { wch: 20 },
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Monitoring Guru');
+
+  const cleanMonth = (monitoringMonth.value || 'Bulan_Ini').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const fileName = `Monitoring_Absen_Guru_${cleanMonth}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+  toast.success(`Berhasil mengunduh ${fileName}!`);
+};
+
+const exportTeacherMonitoringCsv = () => {
+  const dataset = teachersMonitoring.value || [];
+  if (!dataset.length) {
+    toast.error('Tidak ada data monitoring guru untuk diekspor');
+    return;
+  }
+
+  const period = formatMonthName(monitoringMonth.value);
+  let csvContent = '\uFEFF';
+  csvContent += 'NO;NAMA GURU;NIP;MATA PELAJARAN;STATUS HARI INI;TOTAL SESI MENGAJAR;PERIODE\n';
+
+  dataset.forEach((t, idx) => {
+    const subjectsStr = Array.isArray(t.subjects) && t.subjects.length > 0 ? t.subjects.join(', ') : 'Umum';
+    const statusHariIni = t.submitted_today ? 'Sudah Absen' : 'Belum Absen';
+    csvContent += `${idx + 1};"${(t.full_name || '').replace(/"/g, '""')}";'${t.nip || ''};"${subjectsStr.replace(/"/g, '""')}";"${statusHariIni}";${t.total_sessions || 0};"${period}"\n`;
+  });
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  const cleanMonth = (monitoringMonth.value || 'Bulan_Ini').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const fileName = `Monitoring_Absen_Guru_${cleanMonth}.csv`;
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  toast.success(`Berhasil mengunduh ${fileName}!`);
 };
 
 // ================= CLEAN PRINT (NO RELOAD / SPA SAFE) =================
