@@ -66,6 +66,16 @@
 
         <button
           type="button"
+          @click="openImportModal(inputSemesterKey)"
+          class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+          title="Import Nilai Excel Massal (Per Semester atau Leger Lengkap)"
+        >
+          <Upload class="w-4 h-4 text-emerald-600" />
+          <span>Import Excel</span>
+        </button>
+
+        <button
+          type="button"
           v-if="activeTab === 'semester'"
           @click="saveSemesterTabGrades"
           :disabled="isSaving || !hasUnsavedChanges"
@@ -208,6 +218,30 @@
             <AlertCircle class="w-3.5 h-3.5 text-amber-600" />
             <span>Ada perubahan belum disimpan!</span>
           </div>
+
+          <!-- Tombol Download Template Excel -->
+          <button
+            type="button"
+            @click="downloadExcelTemplate(inputSemesterKey)"
+            :disabled="isDownloadingTemplate"
+            class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-50"
+            :title="`Unduh template Excel resmi untuk ${currentInputSemester.label}`"
+          >
+            <Download v-if="!isDownloadingTemplate" class="w-3.5 h-3.5 text-emerald-600" />
+            <RefreshCw v-else class="w-3.5 h-3.5 animate-spin text-emerald-600" />
+            <span class="hidden sm:inline">Template Excel</span>
+          </button>
+
+          <!-- Tombol Import Excel -->
+          <button
+            type="button"
+            @click="openImportModal(inputSemesterKey)"
+            class="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold rounded-xl transition-all shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer"
+            :title="`Upload & Import Nilai Excel untuk ${currentInputSemester.label}`"
+          >
+            <Upload class="w-3.5 h-3.5" />
+            <span>Import Excel</span>
+          </button>
 
           <!-- Quick Fill -->
           <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1">
@@ -2739,6 +2773,131 @@
         </div>
       </div>
     </div>
+
+    <!-- MODAL 4: IMPORT NILAI EXCEL MASSAL -->
+    <div
+      v-if="showImportModal"
+      class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto no-print"
+    >
+      <div class="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shadow-xs">
+              <Upload class="w-5 h-5 text-emerald-700" />
+            </div>
+            <div>
+              <h3 class="text-base font-black text-slate-800 font-lexend">Import Nilai Excel Massal</h3>
+              <p class="text-xs text-slate-400 font-medium">Unggah file Excel nilai ijazah untuk seluruh siswa sekaligus.</p>
+            </div>
+          </div>
+          <button
+            @click="showImportModal = false"
+            class="text-slate-400 hover:text-slate-600 rounded-full p-1.5 hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Form Target Semester -->
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Pilih Target Semester yang Diimpor:</label>
+            <select
+              v-model="importSemesterTarget"
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-emerald-500 focus:bg-white transition-all cursor-pointer shadow-2xs"
+            >
+              <option value="sem_1">📘 Semester 1 (Kls 7 Ganjil - TP 2024/2025)</option>
+              <option value="sem_2">📘 Semester 2 (Kls 7 Genap - TP 2024/2025)</option>
+              <option value="sem_3">📙 Semester 3 (Kls 8 Ganjil - TP 2025/2026)</option>
+              <option value="sem_4">📙 Semester 4 (Kls 8 Genap - TP 2025/2026)</option>
+              <option value="sem_5">📕 Semester 5 (Kls 9 Ganjil - TP 2026/2027)</option>
+              <option value="sem_6">📕 Semester 6 (Kls 9 Genap - TP 2026/2027)</option>
+              <option value="exam">📝 Nilai Ujian Madrasah (Teori & Praktik)</option>
+              <option value="all">📊 Leger Komplit (Semua Semester 1 s.d. 6 + Ujian)</option>
+            </select>
+            <div class="flex items-center justify-between mt-1.5 text-[11px]">
+              <span class="text-slate-500">Belum punya format Excel?</span>
+              <button
+                type="button"
+                @click="downloadExcelTemplate(importSemesterTarget)"
+                class="text-emerald-700 hover:text-emerald-800 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <Download class="w-3 h-3" />
+                <span>Unduh Template {{ importSemesterTarget === 'all' ? 'Leger' : 'Semester Ini' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dropzone Upload Area -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">File Excel Nilai (.xlsx / .xls / .csv):</label>
+            <div
+              @click="$refs.fileInputRef?.click()"
+              class="border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50/70 hover:bg-emerald-50/30 rounded-2xl p-6 text-center cursor-pointer transition-all space-y-2 group"
+            >
+              <input
+                ref="fileInputRef"
+                type="file"
+                accept=".xlsx, .xls, .csv"
+                class="hidden"
+                @change="onImportFileSelected"
+              />
+              <div class="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-200/80 flex items-center justify-center mx-auto text-emerald-600 group-hover:scale-110 transition-transform">
+                <FileUp class="w-6 h-6" />
+              </div>
+              <div v-if="!selectedImportFile">
+                <p class="text-xs font-bold text-slate-700">Klik di sini untuk memilih file Excel</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Mendukung format .xlsx, .xls, atau .csv (Maksimal 15 MB)</p>
+              </div>
+              <div v-else class="space-y-1">
+                <p class="text-xs font-black text-emerald-800 flex items-center justify-center gap-1.5">
+                  <CheckCircle2 class="w-4 h-4 text-emerald-600" />
+                  <span>{{ selectedImportFile.name }}</span>
+                </p>
+                <p class="text-[10px] text-slate-500 font-mono">
+                  Ukuran: {{ (selectedImportFile.size / 1024).toFixed(1) }} KB
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info Box Petunjuk -->
+          <div class="p-3 bg-amber-50/70 border border-amber-200/70 rounded-xl text-[11px] text-amber-900 leading-relaxed space-y-1">
+            <p class="font-bold flex items-center gap-1">
+              <span>💡</span>
+              <span>Tips Penting:</span>
+            </p>
+            <ul class="list-disc list-inside text-amber-800 space-y-0.5 pl-1 text-[10.5px]">
+              <li>Sistem mencocokkan siswa berdasarkan <strong>NISN</strong> atau <strong>NIS</strong> secara otomatis.</li>
+              <li>Nilai yang diisi harus angka di rentang <strong>0 s.d. 100</strong>.</li>
+              <li>Kolom mapel yang dibiarkan kosong di Excel tidak akan menghapus nilai yang sudah tersimpan sebelumnya.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+          <button
+            type="button"
+            @click="showImportModal = false"
+            class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer transition-colors"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            @click="submitImportExcel"
+            :disabled="!selectedImportFile || isImporting"
+            class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:shadow-none"
+          >
+            <RefreshCw v-if="isImporting" class="w-4 h-4 animate-spin" />
+            <Upload v-else class="w-4 h-4" />
+            <span>{{ isImporting ? 'Mengimpor Data...' : 'Unggah & Simpan Nilai' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -2765,7 +2924,11 @@ import {
   Search,
   Calendar,
   Filter,
-  Pencil
+  Pencil,
+  Upload,
+  FileUp,
+  FileDown,
+  CheckCircle2
 } from 'lucide-vue-next';
 
 // State
@@ -2805,6 +2968,119 @@ const currentInputSemester = computed(() => {
 });
 
 const semesterQuickScore = ref('');
+
+// ================= IMPORT & TEMPLATE EXCEL =================
+const showImportModal = ref(false);
+const isDownloadingTemplate = ref(false);
+const isImporting = ref(false);
+const selectedImportFile = ref(null);
+const fileInputRef = ref(null);
+const importSemesterTarget = ref('sem_1');
+
+function openImportModal(semesterKey) {
+  importSemesterTarget.value = semesterKey || inputSemesterKey.value || 'sem_1';
+  selectedImportFile.value = null;
+  if (fileInputRef.value) fileInputRef.value.value = '';
+  showImportModal.value = true;
+}
+
+function onImportFileSelected(event) {
+  const file = event.target.files?.[0];
+  if (file) {
+    selectedImportFile.value = file;
+  }
+}
+
+async function downloadExcelTemplate(semesterKey) {
+  const sem = semesterKey || inputSemesterKey.value || 'sem_1';
+  isDownloadingTemplate.value = true;
+  try {
+    const token = localStorage.getItem('token');
+    const params = new URLSearchParams();
+    params.set('semester', sem);
+    if (selectedClassId.value) {
+      params.set('class_id', selectedClassId.value);
+    }
+
+    const response = await fetch(`/api/admin/graduation-grades/template?${params.toString()}`, {
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => null);
+      throw new Error(errJson?.message || 'Gagal mengunduh template Excel');
+    }
+
+    let fileName = `Template_Nilai_Ijazah_${sem}.xlsx`;
+    const disposition = response.headers.get('Content-Disposition');
+    if (disposition && disposition.includes('filename=')) {
+      const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+      if (match && match[1]) {
+        fileName = match[1].replace(/['"]/g, '').trim();
+      }
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    toast.success(`Template ${fileName} berhasil diunduh!`);
+  } catch (err) {
+    console.error(err);
+    toast.error('Gagal mengunduh template: ' + (err.message || 'Terjadi kesalahan'));
+  } finally {
+    isDownloadingTemplate.value = false;
+  }
+}
+
+async function submitImportExcel() {
+  if (!selectedImportFile.value) {
+    toast.error('Pilih file Excel (.xlsx / .xls) terlebih dahulu');
+    return;
+  }
+
+  isImporting.value = true;
+  try {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('file', selectedImportFile.value);
+    formData.append('semester', importSemesterTarget.value);
+
+    const response = await fetch('/api/admin/graduation-grades/import', {
+      method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Accept': 'application/json',
+      },
+      body: formData,
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Gagal mengimpor file Excel');
+    }
+
+    toast.success(result.message || 'Nilai berhasil diimpor!');
+    showImportModal.value = false;
+    selectedImportFile.value = null;
+
+    // Reload data so table updates immediately
+    await fetchData();
+  } catch (err) {
+    console.error(err);
+    toast.error('Gagal mengimpor: ' + (err.message || 'Format file tidak sesuai'));
+  } finally {
+    isImporting.value = false;
+  }
+}
 
 // Leger View Mode Selector
 const ledgerMode = ref('final_grade');

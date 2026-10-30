@@ -15,6 +15,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class GraduationGradeController extends BaseController
 {
@@ -666,5 +672,379 @@ class GraduationGradeController extends BaseController
         $student->save();
 
         return $this->success($student, 'Nomor seri siswa berhasil diperbarui.');
+    }
+
+    /**
+     * Download Excel Template for Graduation Grades (Per Semester or Exam).
+     */
+    public function downloadTemplate(Request $request)
+    {
+        $semesterKey = $request->query('semester', 'sem_1');
+        $classId = $request->query('class_id');
+
+        $semLabels = [
+            'sem_1' => 'Semester 1 (Kls 7 Ganjil)',
+            'sem_2' => 'Semester 2 (Kls 7 Genap)',
+            'sem_3' => 'Semester 3 (Kls 8 Ganjil)',
+            'sem_4' => 'Semester 4 (Kls 8 Genap)',
+            'sem_5' => 'Semester 5 (Kls 9 Ganjil)',
+            'sem_6' => 'Semester 6 (Kls 9 Genap)',
+            'exam'  => 'Ujian Madrasah (Teori & Praktik)',
+            'all'   => 'Leger Lengkap (Semester 1-6 & Ujian)',
+        ];
+        $semLabel = $semLabels[$semesterKey] ?? 'Semester 1';
+
+        // 1. Identify Grade 9 classes
+        $grade9Classes = ClassRoom::where(function ($q) {
+            $q->where('grade_level', '9')
+              ->orWhere('name', 'like', '9%')
+              ->orWhere('name', 'like', 'IX%');
+        })->orderBy('name')->pluck('id')->toArray();
+
+        $targetClassIds = ($classId && in_array((int)$classId, $grade9Classes))
+            ? [(int)$classId]
+            : $grade9Classes;
+
+        // 2. Fetch Grade 9 Students
+        $students = Student::where(function ($q) use ($targetClassIds) {
+            $q->whereIn('class_id', $targetClassIds)
+              ->orWhereIn('lokal_class_id', $targetClassIds);
+        })->with(['classRoom:id,name', 'lokalClassRoom:id,name'])
+          ->orderBy('full_name')
+          ->get();
+
+        // 3. Active Subjects
+        $setting = GraduationSetting::getActiveSettings();
+        $allSubjects = $this->sortSubjectsAccordingToStructure(Subject::all(['id', 'name', 'code']));
+        $activeSubjectIds = is_array($setting->active_subject_ids) ? array_map('intval', $setting->active_subject_ids) : null;
+        $subjects = $activeSubjectIds !== null
+            ? $allSubjects->filter(fn($s) => in_array((int)$s->id, $activeSubjectIds))->values()
+            : $allSubjects;
+
+        $practicalIds = is_array($setting->practical_subject_ids) ? array_map('intval', $setting->practical_subject_ids) : [];
+
+        // 4. Existing grades mapping for pre-fill
+        $studentIds = $students->pluck('id')->toArray();
+        $existingGrades = GraduationGrade::whereIn('student_id', $studentIds)->get();
+        $gradeMap = [];
+        foreach ($existingGrades as $g) {
+            $gradeMap[$g->student_id][$g->subject_id] = $g;
+        }
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Template Nilai');
+
+        // Row 1: Judul
+        $sheet->setCellValue('A1', 'TEMPLATE NILAI IJAZAH & PDUM MADRASAH - ' . strtoupper($semLabel));
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(13)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('064E3B'));
+
+        // Row 2: Petunjuk
+        $sheet->setCellValue('A2', 'Petunjuk: Isikan nilai angka 0 s.d. 100 pada kolom mata pelajaran. Jangan mengubah nilai pada kolom NISN, NIS, dan NAMA SISWA.');
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(9)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('64748B'));
+
+        // Row 3: Header Tabel
+        $headers = ['NO', 'NISN', 'NIS', 'NAMA SISWA', 'KELAS'];
+
+        if ($semesterKey === 'exam') {
+            foreach ($subjects as $sub) {
+                $isPractical = in_array((int)$sub->id, $practicalIds);
+                if ($isPractical) {
+                    $headers[] = "[{$sub->code}] {$sub->name} (TEORI)";
+                    $headers[] = "[{$sub->code}] {$sub->name} (PRAKTIK)";
+                } else {
+                    $headers[] = "[{$sub->code}] {$sub->name} (NILAI AKHIR)";
+                }
+            }
+        } elseif ($semesterKey === 'all') {
+            foreach ($subjects as $sub) {
+                for ($s = 1; $s <= 6; $s++) {
+                    $headers[] = "[{$sub->code}] {$sub->name} (S{$s})";
+                }
+                $headers[] = "[{$sub->code}] {$sub->name} (UJIAN)";
+            }
+        } else {
+            foreach ($subjects as $sub) {
+                $headers[] = "[{$sub->code}] {$sub->name}";
+            }
+        }
+
+        $sheet->fromArray([$headers], null, 'A3');
+
+        // Row 4+: Data Siswa
+        $rows = [];
+        foreach ($students as $idx => $stu) {
+            $row = [
+                $idx + 1,
+                (string)$stu->nisn,
+                (string)($stu->nis ?: '-'),
+                $stu->full_name,
+                $stu->classRoom?->name ?? '9',
+            ];
+
+            if ($semesterKey === 'exam') {
+                foreach ($subjects as $sub) {
+                    $isPractical = in_array((int)$sub->id, $practicalIds);
+                    $existing = $gradeMap[$stu->id][$sub->id] ?? null;
+                    if ($isPractical) {
+                        $row[] = ($existing && $existing->exam_theory !== null) ? $existing->exam_theory : '';
+                        $row[] = ($existing && $existing->exam_practice !== null) ? $existing->exam_practice : '';
+                    } else {
+                        $row[] = ($existing && $existing->final_exam_score !== null) ? $existing->final_exam_score : '';
+                    }
+                }
+            } elseif ($semesterKey === 'all') {
+                foreach ($subjects as $sub) {
+                    $existing = $gradeMap[$stu->id][$sub->id] ?? null;
+                    for ($s = 1; $s <= 6; $s++) {
+                        $field = "sem_{$s}";
+                        $row[] = ($existing && $existing->{$field} !== null) ? $existing->{$field} : '';
+                    }
+                    $row[] = ($existing && $existing->final_exam_score !== null) ? $existing->final_exam_score : '';
+                }
+            } else {
+                foreach ($subjects as $sub) {
+                    $existing = $gradeMap[$stu->id][$sub->id] ?? null;
+                    $row[] = ($existing && $existing->{$semesterKey} !== null) ? $existing->{$semesterKey} : '';
+                }
+            }
+            $rows[] = $row;
+        }
+
+        if (!empty($rows)) {
+            $sheet->fromArray($rows, null, 'A4');
+        }
+
+        // Styling
+        $lastCol = $sheet->getHighestColumn();
+        $lastRow = max(4, $sheet->getHighestRow());
+
+        $sheet->getStyle("A3:{$lastCol}3")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '064E3B']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+        ]);
+        $sheet->getRowDimension(3)->setRowHeight(30);
+
+        $sheet->getStyle("A3:{$lastCol}{$lastRow}")->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CBD5E1']]],
+        ]);
+
+        foreach ($sheet->getColumnIterator() as $col) {
+            $sheet->getColumnDimension($col->getColumnIndex())->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $cleanSem = preg_replace('/[^a-zA-Z0-9_-]/', '_', $semesterKey);
+        $fileName = "Template_Nilai_Ijazah_{$cleanSem}.xlsx";
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Access-Control-Expose-Headers' => 'Content-Disposition',
+            'Cache-Control' => 'max-age=0, no-cache, must-revalidate',
+            'Pragma' => 'public',
+        ]);
+    }
+
+    /**
+     * Import Excel file containing graduation grades.
+     */
+    public function importGrades(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:15360',
+            'semester' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 422);
+        }
+
+        $file = $request->file('file');
+        $forcedSemester = $request->input('semester');
+
+        try {
+            $spreadsheet = IOFactory::load($file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
+            $data = $sheet->toArray(null, true, true, false);
+        } catch (\Throwable $e) {
+            return $this->error('Gagal membaca file Excel: ' . $e->getMessage(), 422);
+        }
+
+        if (empty($data) || count($data) < 3) {
+            return $this->error('File Excel kosong atau format tidak sesuai template.', 422);
+        }
+
+        // Find header row (the row containing NISN or NAMA SISWA)
+        $headerRowIdx = null;
+        $headerRow = [];
+        foreach ($data as $idx => $row) {
+            $rowStr = strtoupper(implode(' ', array_map('strval', $row)));
+            if (str_contains($rowStr, 'NISN') && (str_contains($rowStr, 'NAMA') || str_contains($rowStr, 'SISWA'))) {
+                $headerRowIdx = $idx;
+                $headerRow = $row;
+                break;
+            }
+        }
+
+        if ($headerRowIdx === null) {
+            return $this->error('Baris header kolom tidak ditemukan. Pastikan kolom NISN dan NAMA SISWA tersedia sesuai template.', 422);
+        }
+
+        $allSubjects = Subject::all(['id', 'name', 'code']);
+        $setting = GraduationSetting::getActiveSettings();
+
+        $nisnCol = null;
+        $nisCol = null;
+        $nameCol = null;
+        $subjectCols = [];
+
+        foreach ($headerRow as $cIdx => $rawHeader) {
+            $h = strtoupper(trim((string)$rawHeader));
+            if (empty($h)) continue;
+
+            if ($h === 'NISN' || str_contains($h, 'NISN')) {
+                $nisnCol = $cIdx;
+            } elseif ($h === 'NIS' || $h === 'N.I.S') {
+                $nisCol = $cIdx;
+            } elseif (str_contains($h, 'NAMA')) {
+                $nameCol = $cIdx;
+            } else {
+                foreach ($allSubjects as $sub) {
+                    $codeUpper = strtoupper(trim($sub->code));
+                    $nameUpper = strtoupper(trim($sub->name));
+
+                    $matchByCode = !empty($codeUpper) && str_contains($h, $codeUpper);
+                    $matchByName = str_contains($h, $nameUpper);
+
+                    if ($matchByCode || $matchByName) {
+                        $targetField = $forcedSemester ?: 'sem_1';
+
+                        if (str_contains($h, '(TEORI)')) {
+                            $targetField = 'exam_theory';
+                        } elseif (str_contains($h, '(PRAKTIK)')) {
+                            $targetField = 'exam_practice';
+                        } elseif (str_contains($h, '(NILAI AKHIR)') || str_contains($h, '(UJIAN)')) {
+                            $targetField = 'final_exam_score';
+                        } elseif (preg_match('/\(S([1-6])\)/i', $h, $m)) {
+                            $targetField = "sem_{$m[1]}";
+                        } elseif ($forcedSemester === 'exam') {
+                            $practicalIds = is_array($setting->practical_subject_ids) ? array_map('intval', $setting->practical_subject_ids) : [];
+                            if (in_array((int)$sub->id, $practicalIds)) {
+                                $targetField = 'exam_theory';
+                            } else {
+                                $targetField = 'final_exam_score';
+                            }
+                        }
+
+                        $subjectCols[] = [
+                            'col_idx' => $cIdx,
+                            'subject_id' => $sub->id,
+                            'target_field' => $targetField,
+                            'subject_name' => $sub->name,
+                        ];
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (empty($subjectCols)) {
+            return $this->error('Kolom mata pelajaran tidak terdeteksi. Gunakan template resmi yang telah diunduh dari sistem.', 422);
+        }
+
+        $grade9Students = Student::all(['id', 'nisn', 'nis', 'full_name']);
+        $studentsByNisn = [];
+        $studentsByNis = [];
+        $studentsByName = [];
+
+        foreach ($grade9Students as $stu) {
+            if (!empty($stu->nisn)) $studentsByNisn[trim($stu->nisn)] = $stu;
+            if (!empty($stu->nis)) $studentsByNis[trim($stu->nis)] = $stu;
+            $studentsByName[strtolower(trim($stu->full_name))] = $stu;
+        }
+
+        $importedStudentsCount = 0;
+        $updatedGradesCount = 0;
+        $studentRecordsToRecalc = [];
+
+        DB::beginTransaction();
+        try {
+            for ($r = $headerRowIdx + 1; $r < count($data); $r++) {
+                $row = $data[$r];
+                $rawNisn = $nisnCol !== null ? trim((string)($row[$nisnCol] ?? '')) : '';
+                $rawNis = $nisCol !== null ? trim((string)($row[$nisCol] ?? '')) : '';
+                $rawName = $nameCol !== null ? trim((string)($row[$nameCol] ?? '')) : '';
+
+                if (empty($rawNisn) && empty($rawNis) && empty($rawName)) {
+                    continue;
+                }
+
+                $student = null;
+                if (!empty($rawNisn) && isset($studentsByNisn[$rawNisn])) {
+                    $student = $studentsByNisn[$rawNisn];
+                } elseif (!empty($rawNis) && isset($studentsByNis[$rawNis])) {
+                    $student = $studentsByNis[$rawNis];
+                } elseif (!empty($rawName) && isset($studentsByName[strtolower($rawName)])) {
+                    $student = $studentsByName[strtolower($rawName)];
+                }
+
+                if (!$student) {
+                    continue;
+                }
+
+                $studentUpdated = false;
+
+                foreach ($subjectCols as $sc) {
+                    $val = $row[$sc['col_idx']] ?? null;
+                    if ($val === null || $val === '') continue;
+
+                    $valStr = str_replace(',', '.', trim((string)$val));
+                    if (!is_numeric($valStr)) continue;
+
+                    $numVal = floatval($valStr);
+                    if ($numVal < 0 || $numVal > 100) continue;
+
+                    $record = GraduationGrade::firstOrNew([
+                        'student_id' => $student->id,
+                        'subject_id' => $sc['subject_id'],
+                    ]);
+
+                    $field = $sc['target_field'];
+                    $record->{$field} = $numVal;
+
+                    $record->save();
+                    $studentRecordsToRecalc[$record->id] = $record;
+                    $updatedGradesCount++;
+                    $studentUpdated = true;
+                }
+
+                if ($studentUpdated) {
+                    $importedStudentsCount++;
+                }
+            }
+
+            foreach ($studentRecordsToRecalc as $rec) {
+                $rec->recalculateScores($setting);
+                $rec->save();
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return $this->error('Gagal memproses data import: ' . $e->getMessage(), 500);
+        }
+
+        if ($importedStudentsCount === 0) {
+            return $this->error('Tidak ada nilai valid yang berhasil diimpor. Pastikan NISN siswa dan kolom nilai terisi dengan angka 0-100.', 422);
+        }
+
+        return $this->success([
+            'imported_students' => $importedStudentsCount,
+            'updated_grades' => $updatedGradesCount,
+        ], "Alhamdulillah, berhasil mengimpor {$updatedGradesCount} nilai mata pelajaran untuk {$importedStudentsCount} siswa!");
     }
 }
