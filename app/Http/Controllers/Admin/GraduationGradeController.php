@@ -21,6 +21,9 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
 class GraduationGradeController extends BaseController
 {
@@ -815,24 +818,87 @@ class GraduationGradeController extends BaseController
             $sheet->fromArray($rows, null, 'A4');
         }
 
-        // Styling
+        // Explicitly set NISN and NIS as text strings to prevent Excel scientific notation or leading zero loss
+        foreach ($students as $idx => $stu) {
+            $rNum = $idx + 4;
+            $sheet->setCellValueExplicit("B{$rNum}", (string)$stu->nisn, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit("C{$rNum}", (string)($stu->nis ?: '-'), DataType::TYPE_STRING);
+        }
+
+        // Styling & Layout
         $lastCol = $sheet->getHighestColumn();
         $lastRow = max(4, $sheet->getHighestRow());
 
-        $sheet->getStyle("A3:{$lastCol}3")->applyFromArray([
-            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '064E3B']],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+        // Row 1: Merged Title
+        $sheet->mergeCells("A1:{$lastCol}1");
+        $sheet->getRowDimension(1)->setRowHeight(32);
+        $sheet->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 13, 'color' => ['rgb' => '064E3B']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'indent' => 1],
         ]);
-        $sheet->getRowDimension(3)->setRowHeight(30);
 
+        // Row 2: Merged Instructions
+        $sheet->mergeCells("A2:{$lastCol}2");
+        $sheet->getRowDimension(2)->setRowHeight(22);
+        $sheet->getStyle('A2')->applyFromArray([
+            'font' => ['italic' => true, 'size' => 9, 'color' => ['rgb' => '475569']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'indent' => 1],
+        ]);
+
+        // Row 3: Header Row
+        $sheet->getRowDimension(3)->setRowHeight(38);
+        $sheet->getStyle("A3:{$lastCol}3")->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '064E3B']],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+        ]);
+
+        // Rows 4+: Data Row Height & Alternating Zebra Striping
+        for ($r = 4; $r <= $lastRow; $r++) {
+            $sheet->getRowDimension($r)->setRowHeight(22);
+            if ($r % 2 === 1) {
+                $sheet->getStyle("A{$r}:{$lastCol}{$r}")->applyFromArray([
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F8FAFC']],
+                ]);
+            }
+        }
+
+        // Alignments & Number Formats
+        $sheet->getStyle("A4:A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("B4:C{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("B4:C{$lastRow}")->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
+        $sheet->getStyle("D4:D{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT)->setIndent(1);
+        $sheet->getStyle("E4:{$lastCol}{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("A4:{$lastCol}{$lastRow}")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+
+        // Thin Borders
         $sheet->getStyle("A3:{$lastCol}{$lastRow}")->applyFromArray([
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CBD5E1']]],
         ]);
 
-        foreach ($sheet->getColumnIterator() as $col) {
-            $sheet->getColumnDimension($col->getColumnIndex())->setAutoSize(true);
+        // Explicit Column Widths (Prevent oversized column A)
+        $sheet->getColumnDimension('A')->setWidth(7);
+        $sheet->getColumnDimension('B')->setWidth(18);
+        $sheet->getColumnDimension('C')->setWidth(18);
+        $sheet->getColumnDimension('D')->setWidth(35);
+        $sheet->getColumnDimension('E')->setWidth(12);
+
+        $startColIdx = Coordinate::columnIndexFromString('F');
+        $endColIdx = Coordinate::columnIndexFromString($lastCol);
+        for ($ci = $startColIdx; $ci <= $endColIdx; $ci++) {
+            $colLetter = Coordinate::stringFromColumnIndex($ci);
+            $sheet->getColumnDimension($colLetter)->setWidth(18);
         }
+
+        // Freeze Panes at F4: Keeps student info (A-E) and headers (1-3) pinned when scrolling
+        $sheet->freezePane('F4');
+
+        // Explicitly keep gridlines visible
+        $sheet->setShowGridLines(true);
 
         $writer = new Xlsx($spreadsheet);
         $cleanSem = preg_replace('/[^a-zA-Z0-9_-]/', '_', $semesterKey);
