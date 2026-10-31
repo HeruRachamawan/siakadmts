@@ -195,6 +195,7 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
         Route::post('graduation-grades/auto-pull', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'autoPull']);
         Route::get('graduation-grades/export-pdum', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'exportPdum']);
         Route::get('graduation-grades/template', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'downloadTemplate']);
+        Route::post('graduation-grades/preview-import', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'previewImport']);
         Route::post('graduation-grades/import', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'importGrades']);
         Route::post('graduation-grades/students', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'storeStudent']);
         Route::delete('graduation-grades/students/{id}', [\App\Http\Controllers\Admin\GraduationGradeController::class, 'deleteStudent']);

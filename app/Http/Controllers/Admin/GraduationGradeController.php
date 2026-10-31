@@ -916,6 +916,213 @@ class GraduationGradeController extends BaseController
     }
 
     /**
+     * Preview and validate Excel file containing graduation grades before committing.
+     */
+    public function previewImport(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:15360',
+            'semester' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 422);
+        }
+
+        $file = $request->file('file');
+        $forcedSemester = $request->input('semester');
+
+        try {
+            $spreadsheet = IOFactory::load($file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
+            $data = $sheet->toArray(null, true, true, false);
+        } catch (\Throwable $e) {
+            return $this->error('Gagal membaca file Excel: ' . $e->getMessage(), 422);
+        }
+
+        if (empty($data) || count($data) < 3) {
+            return $this->error('File Excel kosong atau format tidak sesuai template.', 422);
+        }
+
+        // Find header row (the row containing NISN or NAMA SISWA)
+        $headerRowIdx = null;
+        $headerRow = [];
+        foreach ($data as $idx => $row) {
+            $rowStr = strtoupper(implode(' ', array_map('strval', $row)));
+            if (str_contains($rowStr, 'NISN') && (str_contains($rowStr, 'NAMA') || str_contains($rowStr, 'SISWA'))) {
+                $headerRowIdx = $idx;
+                $headerRow = $row;
+                break;
+            }
+        }
+
+        if ($headerRowIdx === null) {
+            return $this->error('Baris header kolom tidak ditemukan. Pastikan kolom NISN dan NAMA SISWA tersedia sesuai template.', 422);
+        }
+
+        $allSubjects = Subject::all(['id', 'name', 'code']);
+        $setting = GraduationSetting::getActiveSettings();
+
+        $nisnCol = null;
+        $nisCol = null;
+        $nameCol = null;
+        $subjectCols = [];
+
+        foreach ($headerRow as $cIdx => $rawHeader) {
+            $h = strtoupper(trim((string)$rawHeader));
+            if (empty($h)) continue;
+
+            if ($h === 'NISN' || str_contains($h, 'NISN')) {
+                $nisnCol = $cIdx;
+            } elseif ($h === 'NIS' || $h === 'N.I.S') {
+                $nisCol = $cIdx;
+            } elseif (str_contains($h, 'NAMA')) {
+                $nameCol = $cIdx;
+            } else {
+                foreach ($allSubjects as $sub) {
+                    $codeUpper = strtoupper(trim($sub->code));
+                    $nameUpper = strtoupper(trim($sub->name));
+
+                    $matchByCode = !empty($codeUpper) && str_contains($h, $codeUpper);
+                    $matchByName = str_contains($h, $nameUpper);
+
+                    if ($matchByCode || $matchByName) {
+                        $targetField = $forcedSemester ?: 'sem_1';
+
+                        if (str_contains($h, '(TEORI)')) {
+                            $targetField = 'exam_theory';
+                        } elseif (str_contains($h, '(PRAKTIK)')) {
+                            $targetField = 'exam_practice';
+                        } elseif (str_contains($h, '(NILAI AKHIR)') || str_contains($h, '(UJIAN)')) {
+                            $targetField = 'final_exam_score';
+                        } elseif (preg_match('/\(S([1-6])\)/i', $h, $m)) {
+                            $targetField = "sem_{$m[1]}";
+                        } elseif ($forcedSemester === 'exam') {
+                            $practicalIds = is_array($setting->practical_subject_ids) ? array_map('intval', $setting->practical_subject_ids) : [];
+                            if (in_array((int)$sub->id, $practicalIds)) {
+                                $targetField = 'exam_theory';
+                            } else {
+                                $targetField = 'final_exam_score';
+                            }
+                        }
+
+                        $subjectCols[] = [
+                            'col_idx' => $cIdx,
+                            'subject_id' => $sub->id,
+                            'target_field' => $targetField,
+                            'subject_name' => $sub->name,
+                            'subject_code' => $sub->code,
+                        ];
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (empty($subjectCols)) {
+            return $this->error('Kolom mata pelajaran tidak terdeteksi. Gunakan template resmi yang telah diunduh dari sistem.', 422);
+        }
+
+        $allStudents = Student::with('classRoom:id,name')->get(['id', 'nisn', 'nis', 'full_name', 'class_id']);
+        $studentsByNisn = [];
+        $studentsByNis = [];
+        $studentsByName = [];
+
+        foreach ($allStudents as $stu) {
+            if (!empty($stu->nisn)) $studentsByNisn[trim($stu->nisn)] = $stu;
+            if (!empty($stu->nis)) $studentsByNis[trim($stu->nis)] = $stu;
+            $studentsByName[strtolower(trim($stu->full_name))] = $stu;
+        }
+
+        $totalRows = 0;
+        $matchedStudents = [];
+        $unmatchedRows = [];
+        $previewSample = [];
+
+        for ($r = $headerRowIdx + 1; $r < count($data); $r++) {
+            $row = $data[$r];
+            $rawNisn = $nisnCol !== null ? trim((string)($row[$nisnCol] ?? '')) : '';
+            $rawNis = $nisCol !== null ? trim((string)($row[$nisCol] ?? '')) : '';
+            $rawName = $nameCol !== null ? trim((string)($row[$nameCol] ?? '')) : '';
+
+            if (empty($rawNisn) && empty($rawNis) && empty($rawName)) {
+                continue;
+            }
+
+            $totalRows++;
+
+            $student = null;
+            if (!empty($rawNisn) && isset($studentsByNisn[$rawNisn])) {
+                $student = $studentsByNisn[$rawNisn];
+            } elseif (!empty($rawNis) && isset($studentsByNis[$rawNis])) {
+                $student = $studentsByNis[$rawNis];
+            } elseif (!empty($rawName) && isset($studentsByName[strtolower($rawName)])) {
+                $student = $studentsByName[strtolower($rawName)];
+            }
+
+            if (!$student) {
+                if (count($unmatchedRows) < 15) {
+                    $unmatchedRows[] = [
+                        'row' => $r + 1,
+                        'nisn' => $rawNisn ?: '-',
+                        'nis' => $rawNis ?: '-',
+                        'name' => $rawName ?: '(Tanpa Nama)',
+                    ];
+                }
+                continue;
+            }
+
+            $matchedScores = [];
+            foreach ($subjectCols as $sc) {
+                $val = $row[$sc['col_idx']] ?? null;
+                if ($val === null || $val === '') continue;
+
+                $valStr = str_replace(',', '.', trim((string)$val));
+                if (!is_numeric($valStr)) continue;
+
+                $numVal = floatval($valStr);
+                if ($numVal >= 0 && $numVal <= 100) {
+                    $matchedScores[$sc['subject_code'] ?: $sc['subject_name']] = $numVal;
+                }
+            }
+
+            if (!isset($matchedStudents[$student->id])) {
+                $matchedStudents[$student->id] = true;
+
+                if (count($previewSample) < 8) {
+                    $previewSample[] = [
+                        'id' => $student->id,
+                        'nisn' => $student->nisn,
+                        'nis' => $student->nis,
+                        'name' => $student->full_name,
+                        'class_name' => $student->classRoom?->name ?? 'Kls 9',
+                        'valid_scores_count' => count($matchedScores),
+                        'sample_scores' => array_slice($matchedScores, 0, 5, true),
+                    ];
+                }
+            }
+        }
+
+        $matchedCount = count($matchedStudents);
+        $unmatchedCount = $totalRows - $matchedCount;
+
+        return $this->success([
+            'total_rows' => $totalRows,
+            'matched_count' => $matchedCount,
+            'unmatched_count' => max(0, $unmatchedCount),
+            'unmatched_items' => $unmatchedRows,
+            'detected_subjects' => array_map(fn($s) => [
+                'id' => $s['subject_id'],
+                'name' => $s['subject_name'],
+                'code' => $s['subject_code'],
+                'target_field' => $s['target_field'],
+            ], $subjectCols),
+            'sample_students' => $previewSample,
+            'can_import' => ($matchedCount > 0),
+        ], 'Verifikasi file Excel berhasil. Silakan tinjau sebelum disimpan.');
+    }
+
+    /**
      * Import Excel file containing graduation grades.
      */
     public function importGrades(Request $request)

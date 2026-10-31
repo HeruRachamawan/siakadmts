@@ -2422,6 +2422,18 @@
                     </div>
                   </div>
 
+                  <!-- QR Code Validasi Keaslian Dokumen SKL -->
+                  <div class="text-center flex flex-col items-center justify-center">
+                    <div v-if="sklQrCodes[printStu?.id]" class="w-[2.3cm] h-[2.3cm] p-1 bg-white border border-black flex items-center justify-center shadow-2xs">
+                      <img :src="sklQrCodes[printStu?.id]" alt="QR Validasi SKL" class="w-full h-full object-contain" />
+                    </div>
+                    <div v-else class="w-[2.3cm] h-[2.3cm] border border-dashed border-slate-400 flex items-center justify-center text-[9px] text-slate-400">
+                      QR Code
+                    </div>
+                    <span class="text-[8.5px] font-mono font-bold text-slate-800 mt-1 uppercase tracking-tighter">Validasi Dokumen</span>
+                    <span class="text-[7.5px] text-slate-500 font-sans">Scan untuk cek keaslian</span>
+                  </div>
+
                   <!-- Tanda Tangan Kepala Madrasah -->
                   <div class="text-center min-w-[220px] sm:min-w-[260px] space-y-1">
                     <p class="font-serif">
@@ -2779,16 +2791,20 @@
       v-if="showImportModal"
       class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto no-print"
     >
-      <div class="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+      <div :class="importStep === 2 ? 'max-w-3xl' : 'max-w-xl'" class="bg-white rounded-3xl w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-150 transition-all max-h-[92vh] flex flex-col">
         <!-- Header -->
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 flex-shrink-0">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shadow-xs">
               <Upload class="w-5 h-5 text-emerald-700" />
             </div>
             <div>
-              <h3 class="text-base font-black text-slate-800 font-lexend">Import Nilai Excel Massal</h3>
-              <p class="text-xs text-slate-400 font-medium">Unggah file Excel nilai ijazah untuk seluruh siswa sekaligus.</p>
+              <h3 class="text-base font-black text-slate-800 font-lexend">
+                {{ importStep === 2 ? 'Pratinjau & Verifikasi File Excel' : 'Import Nilai Excel Massal' }}
+              </h3>
+              <p class="text-xs text-slate-400 font-medium">
+                {{ importStep === 2 ? 'Periksa ringkasan data siswa sebelum disimpan ke database.' : 'Unggah file Excel nilai ijazah untuk seluruh siswa sekaligus.' }}
+              </p>
             </div>
           </div>
           <button
@@ -2799,8 +2815,8 @@
           </button>
         </div>
 
-        <!-- Form Target Semester -->
-        <div class="space-y-4">
+        <!-- STEP 1: Pilih File & Target Semester -->
+        <div v-if="importStep === 1" class="space-y-4 overflow-y-auto pr-1">
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1.5">Pilih Target Semester yang Diimpor:</label>
             <select
@@ -2876,25 +2892,138 @@
           </div>
         </div>
 
+        <!-- STEP 2: Pratinjau & Verifikasi Hasil -->
+        <div v-else-if="importStep === 2" class="space-y-4 overflow-y-auto pr-1">
+          <!-- Summary Badges -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Baris</span>
+              <span class="text-lg font-black text-slate-800 font-mono">{{ previewResult?.total_rows || 0 }}</span>
+            </div>
+            <div class="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-center">
+              <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Siswa Dikenali</span>
+              <span class="text-lg font-black text-emerald-800 font-mono">✅ {{ previewResult?.matched_count || 0 }}</span>
+            </div>
+            <div class="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-center">
+              <span class="text-[10px] font-bold text-rose-700 uppercase tracking-wider block">Tidak Cocok</span>
+              <span class="text-lg font-black text-rose-800 font-mono">
+                {{ previewResult?.unmatched_count > 0 ? `⚠️ ${previewResult?.unmatched_count}` : '0' }}
+              </span>
+            </div>
+            <div class="p-3 rounded-2xl bg-indigo-50 border border-indigo-200 text-center">
+              <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block">Mapel Terbaca</span>
+              <span class="text-lg font-black text-indigo-800 font-mono">📚 {{ previewResult?.detected_subjects?.length || 0 }}</span>
+            </div>
+          </div>
+
+          <!-- Unmatched Warning Alert -->
+          <div v-if="previewResult?.unmatched_items?.length" class="p-3 bg-amber-50 border border-amber-200 rounded-2xl space-y-1.5 text-xs">
+            <div class="flex items-center gap-1.5 text-amber-900 font-bold">
+              <AlertTriangle class="w-4 h-4 text-amber-600 flex-shrink-0" />
+              <span>Perhatian: {{ previewResult?.unmatched_count }} Baris Siswa Tidak Dikenali di Database</span>
+            </div>
+            <p class="text-[11px] text-amber-800 leading-relaxed">
+              Baris berikut akan dilewati saat proses import karena NISN/Nama tidak cocok dengan database kelas 9:
+            </p>
+            <div class="max-h-24 overflow-y-auto space-y-1 pt-1 font-mono text-[10px] text-amber-950">
+              <div v-for="item in previewResult.unmatched_items" :key="'unmatched-' + item.row" class="px-2 py-1 bg-white/70 rounded-lg flex items-center justify-between">
+                <span>Baris #{{ item.row }}: {{ item.name }} (NISN: {{ item.nisn }})</span>
+                <span class="text-rose-600 font-bold">Tidak Terdaftar</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sample Table Preview -->
+          <div class="space-y-1.5">
+            <span class="text-xs font-bold text-slate-700 block">Sampel Siswa & Nilai Terdeteksi:</span>
+            <div class="border border-slate-200 rounded-2xl overflow-hidden max-h-56 overflow-y-auto">
+              <table class="w-full text-xs text-left">
+                <thead class="bg-slate-100 text-[10.5px] uppercase font-bold text-slate-600 sticky top-0">
+                  <tr>
+                    <th class="p-2.5">Siswa</th>
+                    <th class="p-2.5">NISN</th>
+                    <th class="p-2.5">Kelas</th>
+                    <th class="p-2.5 text-center">Mapel Terisi</th>
+                    <th class="p-2.5">Cuplikan Nilai</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr v-for="stu in previewResult?.sample_students" :key="'prev-' + stu.id" class="hover:bg-slate-50/80">
+                    <td class="p-2.5 font-bold text-slate-800">{{ stu.name }}</td>
+                    <td class="p-2.5 font-mono text-slate-600 text-[11px]">{{ stu.nisn }}</td>
+                    <td class="p-2.5 text-slate-600">{{ stu.class_name }}</td>
+                    <td class="p-2.5 text-center">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                        {{ stu.valid_scores_count }} Mapel
+                      </span>
+                    </td>
+                    <td class="p-2.5">
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          v-for="(score, code) in stu.sample_scores"
+                          :key="code"
+                          class="px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded text-[9.5px] font-mono"
+                        >
+                          {{ code }}: <b>{{ score }}</b>
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <!-- Footer Actions -->
-        <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-          <button
-            type="button"
-            @click="showImportModal = false"
-            class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer transition-colors"
-          >
-            Batal
-          </button>
-          <button
-            type="button"
-            @click="submitImportExcel"
-            :disabled="!selectedImportFile || isImporting"
-            class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:shadow-none"
-          >
-            <RefreshCw v-if="isImporting" class="w-4 h-4 animate-spin" />
-            <Upload v-else class="w-4 h-4" />
-            <span>{{ isImporting ? 'Mengimpor Data...' : 'Unggah & Simpan Nilai' }}</span>
-          </button>
+        <div class="flex items-center justify-between gap-2.5 pt-3 border-t border-slate-100 flex-shrink-0">
+          <div>
+            <button
+              v-if="importStep === 2"
+              type="button"
+              @click="importStep = 1"
+              class="px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer transition-colors flex items-center gap-1.5"
+            >
+              <span>&larr; Ganti File</span>
+            </button>
+            <span v-else class="text-[11px] text-slate-400">Pastikan file sudah sesuai template.</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="showImportModal = false"
+              class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer transition-colors"
+            >
+              Tutup
+            </button>
+
+            <!-- Step 1 Button: Periksa & Pratinjau -->
+            <button
+              v-if="importStep === 1"
+              type="button"
+              @click="handlePreviewImport"
+              :disabled="!selectedImportFile || isPreviewing"
+              class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:shadow-none"
+            >
+              <RefreshCw v-if="isPreviewing" class="w-4 h-4 animate-spin" />
+              <Eye v-else class="w-4 h-4" />
+              <span>{{ isPreviewing ? 'Memverifikasi File...' : 'Periksa & Pratinjau File' }}</span>
+            </button>
+
+            <!-- Step 2 Button: Konfirmasi & Simpan -->
+            <button
+              v-else
+              type="button"
+              @click="submitImportExcel"
+              :disabled="!previewResult?.can_import || isImporting"
+              class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 active:scale-95 text-white text-xs font-black rounded-xl shadow-md shadow-emerald-600/30 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:shadow-none"
+            >
+              <RefreshCw v-if="isImporting" class="w-4 h-4 animate-spin" />
+              <CheckCircle2 v-else class="w-4 h-4" />
+              <span>{{ isImporting ? 'Menyimpan Nilai...' : `Konfirmasi & Simpan (${previewResult?.matched_count || 0} Siswa)` }}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2902,9 +3031,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { api } from '../api';
 import { useToast } from '../composables/useToast';
+import QRCode from 'qrcode';
 import {
   GraduationCap,
   Sliders,
@@ -2928,7 +3058,9 @@ import {
   Upload,
   FileUp,
   FileDown,
-  CheckCircle2
+  CheckCircle2,
+  Eye,
+  Check
 } from 'lucide-vue-next';
 
 // State
@@ -2973,13 +3105,18 @@ const semesterQuickScore = ref('');
 const showImportModal = ref(false);
 const isDownloadingTemplate = ref(false);
 const isImporting = ref(false);
+const isPreviewing = ref(false);
 const selectedImportFile = ref(null);
 const fileInputRef = ref(null);
 const importSemesterTarget = ref('sem_1');
+const importStep = ref(1); // 1: Select File, 2: Preview & Confirm
+const previewResult = ref(null);
 
 function openImportModal(semesterKey) {
   importSemesterTarget.value = semesterKey || inputSemesterKey.value || 'sem_1';
   selectedImportFile.value = null;
+  importStep.value = 1;
+  previewResult.value = null;
   if (fileInputRef.value) fileInputRef.value.value = '';
   showImportModal.value = true;
 }
@@ -2988,6 +3125,46 @@ function onImportFileSelected(event) {
   const file = event.target.files?.[0];
   if (file) {
     selectedImportFile.value = file;
+    importStep.value = 1;
+    previewResult.value = null;
+  }
+}
+
+async function handlePreviewImport() {
+  if (!selectedImportFile.value) {
+    toast.error('Pilih file Excel (.xlsx / .xls) terlebih dahulu');
+    return;
+  }
+
+  isPreviewing.value = true;
+  try {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('file', selectedImportFile.value);
+    formData.append('semester', importSemesterTarget.value);
+
+    const response = await fetch('/api/admin/graduation-grades/preview-import', {
+      method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Accept': 'application/json',
+      },
+      body: formData,
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Gagal memverifikasi file Excel');
+    }
+
+    previewResult.value = result.data;
+    importStep.value = 2;
+    toast.success('Verifikasi file Excel selesai! Silakan periksa pratinjau nilai.');
+  } catch (err) {
+    console.error(err);
+    toast.error('Verifikasi gagal: ' + (err.message || 'Format file tidak sesuai'));
+  } finally {
+    isPreviewing.value = false;
   }
 }
 
@@ -3845,11 +4022,36 @@ async function saveSettings() {
   }
 }
 
+// QR Code Validasi SKL Digital
+const sklQrCodes = ref({});
+
+async function generateSklQr(student) {
+  if (!student || !student.id) return;
+  if (sklQrCodes.value[student.id]) return;
+
+  const academicYear = settings.value?.academic_year || '2026/2027';
+  const yearStart = academicYear.split('/')[0] || '2026';
+  const noSkl = student.skl_number || `MTs.AH/PP.01.1/SKL/${yearStart}/${student.nis || student.nisn || '001'}`;
+  const payload = `VERIFIKASI RESMI SKL\nMadrasah: ${schoolSetting.value?.school_name || 'MTs Al-Hasanah'}\nNo. SKL: ${noSkl}\nNama: ${student.full_name}\nNISN: ${student.nisn || '-'}\nNIS: ${student.nis || '-'}\nStatus: LULUS\nTitimangsa: ${settings.value?.graduation_date || '-'}`;
+
+  try {
+    const url = await QRCode.toDataURL(payload, {
+      width: 140,
+      margin: 1,
+      color: { dark: '#000000', light: '#ffffff' },
+    });
+    sklQrCodes.value[student.id] = url;
+  } catch (err) {
+    console.error('QR code generation failed:', err);
+  }
+}
+
 // Print Modal Individual
 function openPrintModal(student, mode = 'both') {
   isBatchPrint.value = false;
   activePrintStudent.value = student;
   printMode.value = mode;
+  if (student) generateSklQr(student);
   showPrintModal.value = true;
 }
 
@@ -3862,6 +4064,7 @@ function openBatchPrintModal(mode = 'both') {
   isBatchPrint.value = true;
   batchPrintStudents.value = [...filteredTranscriptStudents.value];
   printMode.value = mode;
+  batchPrintStudents.value.forEach(stu => generateSklQr(stu));
   showPrintModal.value = true;
 }
 
