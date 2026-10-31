@@ -195,7 +195,7 @@
                 </div>
                 <select
                   v-model="selectedAcademicYearId"
-                  @change="academicYearStore.setAcademicYear(selectedAcademicYearId)"
+                  @change="academicYearStore.setAcademicYear(selectedAcademicYearId, false)"
                   class="form-input !pl-9 transition-all focus:border-slate-900 bg-white cursor-pointer text-xs font-medium"
                 >
                   <option 

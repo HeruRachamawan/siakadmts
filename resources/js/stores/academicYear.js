@@ -74,7 +74,7 @@ export const useAcademicYearStore = defineStore('academicYear', {
       }
     },
 
-    setAcademicYear(yearId) {
+    setAcademicYear(yearId, shouldReload = true) {
       const year = this.years.find((y) => y.id === yearId);
       if (!year) return;
 
@@ -91,11 +91,15 @@ export const useAcademicYearStore = defineStore('academicYear', {
           is_active: this.selectedId === this.activeId,
         }
       }));
+
+      if (shouldReload && typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        window.location.reload();
+      }
     },
 
     resetToActive() {
       if (this.activeId) {
-        this.setAcademicYear(this.activeId);
+        this.setAcademicYear(this.activeId, true);
       }
     }
   },

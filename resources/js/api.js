@@ -12,6 +12,12 @@ axios.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
+  // Attach active/selected academic year header for archive filtering
+  const selectedYearId = localStorage.getItem('selectedAcademicYearId');
+  if (selectedYearId) {
+    config.headers['X-Academic-Year-Id'] = selectedYearId;
+  }
+
   // Trigger loading animation for mutating requests (POST, PUT, PATCH, DELETE)
   const method = (config.method || '').toUpperCase();
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !config.hideLoading) {

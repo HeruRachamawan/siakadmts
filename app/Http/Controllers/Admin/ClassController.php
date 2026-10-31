@@ -17,7 +17,7 @@ class ClassController extends BaseController
         if ($request->filled('academic_year_id')) {
             $query->where('academic_year_id', $request->input('academic_year_id'));
         } else {
-            $activeYearId = \App\Models\AcademicYear::where('is_active', true)->value('id');
+            $activeYearId = \App\Models\AcademicYear::getSelectedOrActiveId($request);
             if ($activeYearId) {
                 $query->where('academic_year_id', $activeYearId);
             }

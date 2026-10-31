@@ -56,6 +56,30 @@
             @logout="handleLogout"
           />
 
+          <!-- Sticky Archive Mode Banner -->
+          <div
+            v-if="academicYearStore.isViewingArchive"
+            class="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 text-slate-950 px-4 py-2 border-b border-amber-600/40 flex items-center justify-between shadow-xs no-print flex-wrap gap-2 z-20"
+          >
+            <div class="flex items-center gap-2.5">
+              <span class="px-2 py-0.5 rounded-full bg-slate-950 text-amber-300 text-[10px] font-black uppercase tracking-wider shadow-xs">
+                MODE ARSIP AKTIF
+              </span>
+              <span class="text-xs font-bold text-slate-950">
+                Anda sedang melihat data lampau <u>Tahun Ajaran {{ academicYearStore.selectedLabel }}</u>. Data berstatus arsip (Hanya Lihat).
+              </span>
+            </div>
+            <button
+              type="button"
+              @click="academicYearStore.resetToActive()"
+              class="px-3 py-1 bg-slate-950 hover:bg-slate-900 active:scale-95 text-white rounded-lg text-xs font-black transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+              title="Kembali ke Tahun Ajaran yang sedang aktif saat ini"
+            >
+              <span>Kembali ke TA Aktif</span>
+              <span class="text-amber-400">&rarr;</span>
+            </button>
+          </div>
+
           <!-- Main Scrollable Content (Full-Width Workspace) -->
           <main class="flex-1 overflow-y-auto bg-slate-50/60">
             <div class="w-full px-3.5 sm:px-5 md:px-6 py-3 sm:py-5">
@@ -441,6 +465,7 @@ import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from './stores/auth';
+import { useAcademicYearStore } from './stores/academicYear';
 import Toast from './components/Toast.vue';
 import ConfirmDialog from './components/ConfirmDialog.vue';
 import GlobalLoadingOverlay from './components/GlobalLoadingOverlay.vue';
@@ -455,6 +480,7 @@ const toast = useToast();
 const router = useRouter();
 const route = useRoute();
 const auth = useAuthStore();
+const academicYearStore = useAcademicYearStore();
 const { user } = storeToRefs(auth);
 const currentRole = computed(() => auth.role);
 
