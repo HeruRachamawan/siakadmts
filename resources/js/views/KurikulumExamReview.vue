@@ -168,19 +168,43 @@
                   <div class="relative group">
                     <button
                       type="button"
-                      class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition"
+                      class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition"
                     >
                       <Printer class="w-3.5 h-3.5 text-slate-600" />
                       <span>Cetak</span>
-                      <ChevronDown class="w-3 h-3" />
+                      <ChevronDown class="w-3 h-3 text-slate-400 group-hover:rotate-180 transition duration-200" />
                     </button>
-                    <div class="hidden group-hover:block absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-20 py-1.5 text-left text-slate-700">
-                      <a :href="`/prints/exam/${pkg.id}/naskah?layout=2col`" target="_blank" class="block px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 font-medium">📄 Naskah 2 Kolom (Hemat)</a>
-                      <a :href="`/prints/exam/${pkg.id}/naskah?layout=1col`" target="_blank" class="block px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700">📄 Naskah 1 Kolom</a>
-                      <a :href="`/prints/exam/${pkg.id}/kisi-kisi`" target="_blank" class="block px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700">📊 Kisi-Kisi Resmi</a>
-                      <a :href="`/prints/exam/${pkg.id}/kartu-soal`" target="_blank" class="block px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700">🗂️ Kartu Soal</a>
-                      <a :href="`/prints/exam/${pkg.id}/telaah`" target="_blank" class="block px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700">📝 Berita Acara Telaah</a>
-                      <a :href="`/prints/exam/${pkg.id}/kunci`" target="_blank" class="block px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700">🔑 Kunci & Rubrik Nilai</a>
+                    <div class="hidden group-hover:block absolute right-0 top-full mt-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-xl z-30 py-1.5 text-left text-xs text-slate-700 divide-y divide-slate-100">
+                      <div class="py-1">
+                        <a :href="`/prints/exam/${pkg.id}/naskah?layout=2col`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 font-medium transition">
+                          <span>📄</span>
+                          <span>Naskah 2 Kolom (Hemat)</span>
+                        </a>
+                        <a :href="`/prints/exam/${pkg.id}/naskah?layout=1col`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                          <span>📄</span>
+                          <span>Naskah 1 Kolom</span>
+                        </a>
+                      </div>
+                      <div class="py-1">
+                        <a :href="`/prints/exam/${pkg.id}/kisi-kisi`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                          <span>📊</span>
+                          <span>Kisi-Kisi Resmi</span>
+                        </a>
+                        <a :href="`/prints/exam/${pkg.id}/kartu-soal`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                          <span>🗂️</span>
+                          <span>Kartu Soal</span>
+                        </a>
+                      </div>
+                      <div class="py-1">
+                        <a :href="`/prints/exam/${pkg.id}/telaah`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                          <span>📝</span>
+                          <span>Berita Acara Telaah</span>
+                        </a>
+                        <a :href="`/prints/exam/${pkg.id}/kunci`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                          <span>🔑</span>
+                          <span>Kunci & Rubrik Nilai</span>
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </div>
