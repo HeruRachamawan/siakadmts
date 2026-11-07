@@ -22,6 +22,12 @@ class ExamPackage extends Model
         'pg_weight',
         'essay_weight',
         'status',
+        'status_kurikulum',
+        'review_notes',
+        'reviewed_by',
+        'reviewed_at',
+        'academic_phase',
+        'curriculum_type',
         'description',
     ];
 
@@ -30,7 +36,13 @@ class ExamPackage extends Model
         'kkm' => 'float',
         'pg_weight' => 'float',
         'essay_weight' => 'float',
+        'reviewed_at' => 'datetime',
     ];
+
+    public function reviewedBy()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
 
     public function teacher()
     {
