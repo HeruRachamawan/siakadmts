@@ -61,6 +61,8 @@ const routes = [
     { path: '/kurikulum/dashboard', component: () => import('../views/KurikulumDashboard.vue'), meta: { requiresAuth: true, roles: ['kurikulum', 'admin'], title: 'Dashboard Waka Kurikulum' } },
     { path: '/kurikulum/letters', component: () => import('../views/AdminLetters.vue'), meta: { requiresAuth: true, roles: ['kurikulum', 'operator', 'admin', 'kepala_sekolah'], title: 'Buku Agenda Persuratan' } },
     { path: '/kurikulum/asts-monitoring', component: () => import('../views/KurikulumAstsMonitoring.vue'), meta: { requiresAuth: true, roles: ['kurikulum', 'admin', 'operator', 'kepala_sekolah'], title: 'Monitoring ASTS & Standar KKTP' } },
+    { path: '/kurikulum/exam-reviews', component: () => import('../views/KurikulumExamReview.vue'), meta: { requiresAuth: true, roles: ['kurikulum', 'admin', 'operator', 'kepala_sekolah'], title: 'Telaah & Review Soal' } },
+    { path: '/admin/exam-reviews', redirect: '/kurikulum/exam-reviews' },
     { path: '/admin/kktp-settings', redirect: '/kurikulum/asts-monitoring' },
     { path: '/admin/asts-monitoring', redirect: '/kurikulum/asts-monitoring' },
 
@@ -191,6 +193,7 @@ const routes = [
     { path: '/teacher/attendance-reports', component: () => import('../views/AdminAttendanceReports.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Laporan Rekap Presensi' } },
     { path: '/teacher/grades', component: () => import('../views/TeacherGrades.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Input Nilai Siswa' } },
     { path: '/teacher/asts-reports', component: () => import('../views/AstsReportCards.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum', 'kepala_sekolah'], title: 'Rapor Tengah Semester (ASTS)' } },
+    { path: '/teacher/exam-bank', component: () => import('../views/TeacherExamBank.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Bank Soal & Kisi-Kisi' } },
     { path: '/teacher/exam-corrections', component: () => import('../views/TeacherExamCorrection.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Koreksi Soal & Analisis' } },
     { path: '/teacher/schedules', component: () => import('../views/TeacherSchedules.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Jadwal Mengajar' } },
     { path: '/teacher/calendar', component: () => import('../views/TeacherCalendar.vue'), meta: { requiresAuth: true, roles: ['teacher', 'admin', 'operator', 'kurikulum'], title: 'Kalender Akademik' } },

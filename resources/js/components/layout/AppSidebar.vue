@@ -261,6 +261,20 @@
           <div v-else class="my-1 border-t border-slate-800"></div>
 
           <div v-show="isCollapsed || isSectionOpen('kurikulum_asesmen')" class="space-y-0.5">
+            <!-- Telaah & Review Soal Kurikulum -->
+            <RouterLink
+              to="/kurikulum/exam-reviews"
+              :title="isCollapsed ? 'Telaah & Review Soal' : ''"
+              class="nav-link"
+              :class="isCollapsed ? 'justify-center' : ''"
+              active-class="nav-link-active"
+            >
+              <ClipboardCheck class="w-4 h-4 flex-shrink-0" />
+              <Transition name="label-fade">
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Telaah & Review Soal</span>
+              </Transition>
+            </RouterLink>
+
             <RouterLink
               to="/admin/exam-corrections"
               :title="isCollapsed ? 'Monitoring Koreksi Ujian' : ''"
@@ -598,6 +612,21 @@
           <div v-else class="my-1 border-t border-slate-800"></div>
 
           <div v-show="isCollapsed || isSectionOpen('teacher_pembelajaran')" class="space-y-0.5">
+            <!-- Bank Soal & Kisi-Kisi Ujian -->
+            <RouterLink
+              v-if="isTeaching"
+              to="/teacher/exam-bank"
+              :title="isCollapsed ? 'Bank Soal & Kisi-Kisi' : ''"
+              class="nav-link"
+              :class="isCollapsed ? 'justify-center' : ''"
+              active-class="nav-link-active"
+            >
+              <BookOpen class="w-4 h-4 flex-shrink-0" />
+              <Transition name="label-fade">
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Bank Soal & Kisi-Kisi</span>
+              </Transition>
+            </RouterLink>
+
             <!-- Input Presensi Kelas -->
             <RouterLink
               v-if="isTeaching"
@@ -825,6 +854,20 @@
               <ClipboardList class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
                 <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Siswa</span>
+              </Transition>
+            </RouterLink>
+
+            <!-- Telaah & Review Soal Kurikulum -->
+            <RouterLink
+              to="/kurikulum/exam-reviews"
+              :title="isCollapsed ? 'Telaah & Review Soal' : ''"
+              class="nav-link"
+              :class="isCollapsed ? 'justify-center' : ''"
+              active-class="nav-link-active"
+            >
+              <ClipboardCheck class="w-4 h-4 flex-shrink-0" />
+              <Transition name="label-fade">
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Telaah & Review Soal</span>
               </Transition>
             </RouterLink>
 
@@ -1277,14 +1320,14 @@ const openSections = ref({});
 const routeSectionMap = {
   administrasi: ['/letters', '/print-center', '/graduation-grades', '/finance'],
   kurikulum_kbm: ['/admin/schedules', '/admin/subjects', '/admin/calendar-events'],
-  kurikulum_asesmen: ['/admin/exam-corrections', '/admin/grades', '/admin/ledger-monitoring', '/kurikulum/asts-monitoring'],
+  kurikulum_asesmen: ['/kurikulum/exam-reviews', '/admin/exam-reviews', '/admin/exam-corrections', '/admin/grades', '/admin/ledger-monitoring', '/kurikulum/asts-monitoring'],
   kurikulum_supervisi: ['/admin/teacher-presensi-monitoring'],
   data_master: ['/admin/students', '/admin/promotions', '/admin/alumni', '/admin/teachers', '/admin/classes', '/admin/academic-years', '/admin/extracurriculars', '/admin/ppdb'],
   teacher_presensi: ['/teacher/presensi', '/teacher/presensi-recap', '/teacher/schedules', '/teacher/calendar'],
-  teacher_pembelajaran: ['/teacher/attendance', '/teacher/exam-corrections', '/teacher/grades', '/teacher/extracurriculars'],
+  teacher_pembelajaran: ['/teacher/exam-bank', '/teacher/attendance', '/teacher/exam-corrections', '/teacher/grades', '/teacher/extracurriculars'],
   teacher_homeroom: ['/teacher/homeroom-attendance', '/teacher/students', '/teacher/asts-reports'],
   teacher_extra: ['/teacher/ppdb', '/teacher/profile'],
-  admin_supervisi: ['/admin/daily-student-attendance', '/admin/exam-corrections', '/admin/asts-reports', '/admin/ledger-monitoring', '/kurikulum/asts-monitoring', '/admin/attendance-reports', '/admin/schedules', '/admin/teacher-presensi-monitoring'],
+  admin_supervisi: ['/kurikulum/exam-reviews', '/admin/exam-reviews', '/admin/daily-student-attendance', '/admin/exam-corrections', '/admin/asts-reports', '/admin/ledger-monitoring', '/kurikulum/asts-monitoring', '/admin/attendance-reports', '/admin/schedules', '/admin/teacher-presensi-monitoring'],
   admin_website: ['/admin/posts', '/admin/galleries', '/admin/achievements', '/admin/facilities'],
   admin_sistem: ['/admin/calendar-events', '/admin/users', '/admin/settings', '/admin/database-backup']
 };
