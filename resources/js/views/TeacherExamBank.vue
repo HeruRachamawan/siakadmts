@@ -360,488 +360,650 @@
       </div>
     </div>
 
-    <!-- FULLSCREEN QUESTION & KISI-KISI EDITOR DRAWER -->
-    <div v-if="activePackage" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex flex-col justify-end lg:justify-center p-0 lg:p-6 overflow-hidden">
-      <div class="bg-white w-full h-full lg:max-w-6xl lg:h-[94vh] lg:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-        <!-- Editor Header -->
-        <div class="px-6 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0">
-          <div class="flex items-center gap-3">
-            <div class="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
-              <BookOpen class="w-5 h-5" />
-            </div>
-            <div>
-              <h2 class="text-base font-bold line-clamp-1">{{ activePackage.title }}</h2>
-              <p class="text-xs text-slate-400">
-                {{ activePackage.subject?.name }} &bull; Kelas {{ activePackage.class_room?.name }} &bull; {{ activeQuestions.length }} Butir Soal
-              </p>
-            </div>
+    <!-- FULLSCREEN QUESTION & KISI-KISI STUDIO WORKSPACE -->
+    <div v-if="activePackage" class="fixed inset-0 z-50 bg-slate-900 flex flex-col overflow-hidden">
+      <!-- 1. STUDIO TOP NAVBAR -->
+      <header class="h-14 px-4 sm:px-6 bg-slate-900 text-white flex items-center justify-between shrink-0 border-b border-slate-800 z-20">
+        <!-- Left: Back Button & Package Title Info -->
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            @click="closeEditor"
+            class="px-2.5 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition flex items-center gap-1.5"
+            title="Kembali ke Daftar Paket Soal"
+          >
+            <ArrowLeft class="w-3.5 h-3.5" />
+            <span class="hidden sm:inline">Kembali</span>
+          </button>
+          <div class="h-5 w-px bg-slate-750 hidden sm:block"></div>
+          <div class="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg shrink-0">
+            <BookOpen class="w-4 h-4" />
           </div>
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              @click="saveAllQuestions"
-              :disabled="savingQuestions"
-              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition"
-            >
-              <Save class="w-4 h-4" />
-              <span>{{ savingQuestions ? 'Menyimpan...' : 'Simpan Semua' }}</span>
-            </button>
-            <button
-              type="button"
-              @click="closeEditor"
-              class="p-1.5 text-slate-400 hover:text-white rounded-lg transition"
-            >
-              <X class="w-5 h-5" />
-            </button>
+          <div class="min-w-0">
+            <h2 class="text-sm font-bold truncate">{{ activePackage.title }}</h2>
+            <p class="text-[11px] text-slate-400 truncate">
+              {{ activePackage.subject?.name }} &bull; Kelas {{ activePackage.class_room?.name }} &bull; {{ activePackage.academic_phase || 'Fase D' }}
+            </p>
           </div>
         </div>
 
-        <!-- Editor Content (2 Columns: Navigation Pills & Question Form) -->
-        <div class="flex-1 flex flex-col lg:flex-row overflow-hidden bg-slate-50">
-          <!-- Left: Question Number Nav Pills -->
-          <div class="w-full lg:w-64 bg-white border-r border-slate-200 p-4 shrink-0 flex flex-col justify-between overflow-y-auto">
-            <div>
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Daftar Nomor Soal</span>
-                <button
-                  type="button"
-                  @click="addNewQuestion"
-                  class="text-xs text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1"
-                >
-                  <Plus class="w-3.5 h-3.5" /> Tambah
-                </button>
-              </div>
-              <div class="grid grid-cols-5 gap-2">
-                <button
-                  v-for="(q, idx) in activeQuestions"
-                  :key="q.question_number"
-                  type="button"
-                  @click="currentQuestionIndex = idx"
-                  class="h-10 rounded-xl text-xs font-bold border transition flex flex-col items-center justify-center relative"
-                  :class="[
-                    currentQuestionIndex === idx
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                      : q.correct_answer && q.indicator
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  ]"
-                >
-                  <span>{{ q.question_number }}</span>
-                  <span v-if="q.question_type === 'pg'" class="text-[9px] font-bold text-emerald-600 uppercase">
-                    {{ q.correct_answer || 'PG' }}
-                  </span>
-                  <span v-else-if="q.question_type === 'pg_complex'" class="text-[9px] font-bold text-indigo-600 uppercase">
-                    {{ q.correct_answer || 'PGK' }}
-                  </span>
-                  <span v-else-if="q.question_type === 'true_false'" class="text-[9px] font-bold text-purple-600 uppercase">
-                    B/S
-                  </span>
-                  <span v-else-if="q.question_type === 'matching'" class="text-[9px] font-bold text-teal-600 uppercase">
-                    Jod
-                  </span>
-                  <span v-else-if="q.question_type === 'short_answer'" class="text-[9px] font-bold text-amber-600 uppercase">
-                    Isi
-                  </span>
-                  <span v-else class="text-[9px] text-blue-600 font-semibold">
-                    Ess
-                  </span>
-                </button>
-              </div>
+        <!-- Center: Dynamic Progress Bar Pill -->
+        <div class="hidden md:flex items-center gap-3 px-3.5 py-1.5 bg-slate-800/80 border border-slate-700 rounded-xl text-xs">
+          <span class="text-slate-400 text-[11px]">Progres:</span>
+          <div class="w-28 bg-slate-750 h-2 rounded-full overflow-hidden">
+            <div
+              class="bg-emerald-500 h-full rounded-full transition-all duration-300"
+              :style="{ width: progressPercent + '%' }"
+            ></div>
+          </div>
+          <span class="font-bold text-emerald-400 text-[11px]">
+            {{ completedQuestionsCount }}/{{ activeQuestions.length }} Lengkap ({{ progressPercent }}%)
+          </span>
+        </div>
+
+        <!-- Right: Actions (Preview, Save, Close) -->
+        <div class="flex items-center gap-2">
+          <!-- Quick Print Preview -->
+          <div class="hidden sm:flex items-center gap-1.5">
+            <button
+              type="button"
+              @click="previewNaskah"
+              class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition flex items-center gap-1"
+              title="Preview Naskah Soal 2 Kolom"
+            >
+              <Eye class="w-3.5 h-3.5 text-slate-400" />
+              <span>Naskah</span>
+            </button>
+            <button
+              type="button"
+              @click="previewKisiKisi"
+              class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition flex items-center gap-1"
+              title="Preview Format Kisi-Kisi Standar Kemenag"
+            >
+              <TableProperties class="w-3.5 h-3.5 text-slate-400" />
+              <span>Kisi-Kisi</span>
+            </button>
+          </div>
+
+          <!-- Save All Button -->
+          <button
+            type="button"
+            @click="saveAllQuestions"
+            :disabled="savingQuestions"
+            class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50"
+          >
+            <Save class="w-3.5 h-3.5" />
+            <span>{{ savingQuestions ? 'Menyimpan...' : 'Simpan Semua' }}</span>
+          </button>
+
+          <!-- Close Icon -->
+          <button
+            type="button"
+            @click="closeEditor"
+            class="p-1.5 text-slate-400 hover:text-white rounded-lg transition"
+            title="Tutup Studio"
+          >
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+      </header>
+
+      <!-- 2. STUDIO WORKSPACE BODY (3 Panes: Nav Sidebar, Center Question Form, Right Kisi-Kisi Studio) -->
+      <div class="flex-1 flex overflow-hidden bg-slate-100">
+        <!-- PANE 1: LEFT NAVIGATION (Nomor Soal) -->
+        <aside class="w-56 xl:w-64 bg-white border-r border-slate-200 shrink-0 flex flex-col justify-between overflow-hidden shadow-2xs">
+          <!-- Sidebar Header -->
+          <div class="p-3.5 border-b border-slate-100 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                Nomor Soal
+              </span>
+              <button
+                type="button"
+                @click="addNewQuestion"
+                class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-bold rounded-md border border-emerald-200 flex items-center gap-1 transition"
+                title="Tambah 1 nomor soal di akhir"
+              >
+                <Plus class="w-3 h-3" /> Tambah
+              </button>
             </div>
 
-            <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-400 space-y-1">
-              <div class="flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                <span>Hijau: Soal & Kisi-kisi Terisi</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
-                <span>Putih: Belum Lengkap</span>
-              </div>
+            <!-- Quick Filter Tabs -->
+            <div class="grid grid-cols-2 gap-1 p-0.5 bg-slate-100 rounded-lg text-[11px]">
+              <button
+                type="button"
+                @click="questionFilter = 'all'"
+                class="py-1 font-semibold rounded-md transition text-center"
+                :class="questionFilter === 'all' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500 hover:text-slate-800'"
+              >
+                Semua ({{ activeQuestions.length }})
+              </button>
+              <button
+                type="button"
+                @click="questionFilter = 'incomplete'"
+                class="py-1 font-semibold rounded-md transition text-center"
+                :class="questionFilter === 'incomplete' ? 'bg-white text-amber-700 shadow-2xs' : 'text-slate-500 hover:text-amber-700'"
+              >
+                Belum ({{ activeQuestions.length - completedQuestionsCount }})
+              </button>
             </div>
           </div>
 
-          <!-- Right: Active Question Form -->
-          <div v-if="activeQuestions[currentQuestionIndex]" class="flex-1 p-6 overflow-y-auto space-y-5">
-            <!-- Question Meta Header -->
-            <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-              <div class="flex items-center gap-2">
-                <span class="px-3 py-1 bg-slate-900 text-white font-bold text-sm rounded-lg">
-                  Soal No. {{ activeQuestions[currentQuestionIndex].question_number }}
+          <!-- Number Grid -->
+          <div class="flex-1 overflow-y-auto p-3">
+            <div class="grid grid-cols-4 gap-1.5">
+              <button
+                v-for="(q, idx) in activeQuestions"
+                :key="q.question_number"
+                type="button"
+                v-show="questionFilter === 'all' || !isQuestionComplete(q)"
+                @click="currentQuestionIndex = idx"
+                class="h-11 rounded-lg text-xs font-bold border transition flex flex-col items-center justify-center relative select-none"
+                :class="[
+                  currentQuestionIndex === idx
+                    ? 'bg-slate-900 text-white border-slate-900 ring-2 ring-indigo-500 shadow-xs'
+                    : isQuestionComplete(q)
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                ]"
+              >
+                <span class="text-[12px] leading-tight">{{ q.question_number }}</span>
+                <span
+                  class="text-[8.5px] font-extrabold uppercase mt-0.5 tracking-tighter"
+                  :class="[
+                    currentQuestionIndex === idx
+                      ? 'text-indigo-300'
+                      : isQuestionComplete(q)
+                        ? 'text-emerald-600'
+                        : 'text-slate-400'
+                  ]"
+                >
+                  {{ getShortTypeLabel(q.question_type) }}
                 </span>
-                <select v-model="activeQuestions[currentQuestionIndex].question_type" class="form-select py-1 text-xs font-bold text-slate-800">
-                  <option value="pg">Pilihan Ganda (PG Tunggal)</option>
-                  <option value="pg_complex">Pilihan Ganda Kompleks (Multi Kunci)</option>
-                  <option value="true_false">Benar / Salah (Matriks Pernyataan)</option>
-                  <option value="matching">Menjodohkan (Matching Pairs)</option>
-                  <option value="short_answer">Isian Singkat (Short Answer)</option>
-                  <option value="essay">Uraian / Essay</option>
-                </select>
-              </div>
-              <div class="flex items-center gap-2">
+              </button>
+            </div>
+          </div>
+
+          <!-- Sidebar Footer / Legend -->
+          <div class="p-3 border-t border-slate-100 bg-slate-50/60 text-[11px] text-slate-500 space-y-1">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+              <span>Hijau: Lengkap & Siap Cetak</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-300 shrink-0"></span>
+              <span>Putih: Belum Lengkap</span>
+            </div>
+          </div>
+        </aside>
+
+        <!-- PANE 2: CENTER (Naskah Soal & Pilihan Jawaban AKM) -->
+        <main
+          v-if="activeQuestions[currentQuestionIndex]"
+          class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4"
+          :class="{ 'hidden lg:block': mobileStudioTab === 'kisi' }"
+        >
+          <!-- Mobile Tab Switcher (< lg only) -->
+          <div class="flex lg:hidden items-center justify-center p-1 bg-slate-200 rounded-xl text-xs mb-2">
+            <button
+              type="button"
+              @click="mobileStudioTab = 'soal'"
+              class="flex-1 py-1.5 rounded-lg font-bold transition"
+              :class="mobileStudioTab === 'soal' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'"
+            >
+              1. Naskah & Jawaban Soal
+            </button>
+            <button
+              type="button"
+              @click="mobileStudioTab = 'kisi'"
+              class="flex-1 py-1.5 rounded-lg font-bold transition"
+              :class="mobileStudioTab === 'kisi' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'"
+            >
+              2. Pemetaan Kisi-Kisi
+            </button>
+          </div>
+
+          <!-- Card 1: Question Meta Header -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <span class="px-3 py-1 bg-slate-900 text-white font-bold text-xs rounded-lg shadow-2xs">
+                Soal No. {{ activeQuestions[currentQuestionIndex].question_number }}
+              </span>
+              <select
+                v-model="activeQuestions[currentQuestionIndex].question_type"
+                class="form-select py-1 px-3 text-xs font-bold text-slate-800 bg-slate-50 border-slate-300"
+              >
+                <option value="pg">Pilihan Ganda (PG Tunggal)</option>
+                <option value="pg_complex">Pilihan Ganda Kompleks (Multi Kunci)</option>
+                <option value="true_false">Benar / Salah (Matriks Pernyataan)</option>
+                <option value="matching">Menjodohkan (Matching Pairs)</option>
+                <option value="short_answer">Isian Singkat (Short Answer)</option>
+                <option value="essay">Uraian / Essay</option>
+              </select>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-1.5">
                 <label class="text-xs text-slate-500 font-medium">Bobot Skor:</label>
                 <input
                   type="number"
                   v-model.number="activeQuestions[currentQuestionIndex].score_weight"
                   step="0.5"
                   min="0.5"
-                  class="form-input w-20 py-1 text-xs text-center font-bold"
+                  class="form-input w-20 py-1 text-xs text-center font-bold bg-slate-50 border-slate-300"
                 />
+              </div>
+
+              <button
+                type="button"
+                @click="removeQuestion(currentQuestionIndex)"
+                class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                title="Hapus butir soal ini"
+              >
+                <Trash2 class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 2: Question Narration & Stimulus -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Teks Soal / Narasi Stimulus *
+              </label>
+              <!-- Upload Image Trigger -->
+              <div>
+                <input
+                  type="file"
+                  :ref="'qImage_' + activeQuestions[currentQuestionIndex].question_number"
+                  accept="image/*"
+                  class="hidden"
+                  @change="handleQuestionImageUpload($event, activeQuestions[currentQuestionIndex])"
+                />
+                <button
+                  type="button"
+                  @click="$refs['qImage_' + activeQuestions[currentQuestionIndex].question_number][0]?.click()"
+                  class="text-xs text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition"
+                >
+                  <Image class="w-3.5 h-3.5" />
+                  <span>{{ activeQuestions[currentQuestionIndex].question_image ? 'Ganti Stimulus Gambar' : '+ Unggah Gambar / Diagram' }}</span>
+                </button>
               </div>
             </div>
 
-            <!-- Teks Soal & Stimulus -->
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-3">
-              <div class="flex items-center justify-between">
-                <label class="block text-xs font-bold text-slate-700">Teks Soal / Narasi Stimulus *</label>
-                <!-- Image upload trigger -->
-                <div>
-                  <input
-                    type="file"
-                    :ref="'qImage_' + activeQuestions[currentQuestionIndex].question_number"
-                    accept="image/*"
-                    class="hidden"
-                    @change="handleQuestionImageUpload($event, activeQuestions[currentQuestionIndex])"
-                  />
-                  <button
-                    type="button"
-                    @click="$refs['qImage_' + activeQuestions[currentQuestionIndex].question_number][0]?.click()"
-                    class="text-xs text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1"
-                  >
-                    <Image class="w-3.5 h-3.5" />
-                    <span>{{ activeQuestions[currentQuestionIndex].question_image ? 'Ganti Stimulus Gambar' : '+ Unggah Gambar/Diagram' }}</span>
-                  </button>
-                </div>
+            <textarea
+              v-model="activeQuestions[currentQuestionIndex].question_text"
+              rows="4"
+              placeholder="Tuliskan rumusan butir soal secara jelas, lugas, dan tegas di sini..."
+              class="form-textarea text-xs"
+            ></textarea>
+
+            <!-- Image Preview -->
+            <div v-if="activeQuestions[currentQuestionIndex].question_image" class="relative inline-block border border-slate-200 rounded-lg p-1 bg-slate-50">
+              <img :src="getStorageUrl(activeQuestions[currentQuestionIndex].question_image)" class="max-h-36 rounded" alt="Stimulus" />
+              <button
+                type="button"
+                @click="activeQuestions[currentQuestionIndex].question_image = null"
+                class="absolute -top-2 -right-2 p-1 bg-rose-600 text-white rounded-full shadow"
+                title="Hapus gambar"
+              >
+                <X class="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 3: Pilihan Jawaban & Kunci Berdasarkan Tipe AKM -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-3">
+            <!-- 1. PG TUNGGAL -->
+            <div v-if="activeQuestions[currentQuestionIndex].question_type === 'pg'" class="space-y-2">
+              <div class="text-xs font-bold text-slate-700 flex items-center justify-between pb-1 border-b border-slate-100">
+                <span>PILIHAN JAWABAN (A - D):</span>
+                <span class="text-[11px] text-emerald-600 font-semibold">Klik lingkaran huruf untuk memilih 1 Kunci Benar</span>
               </div>
 
-              <!-- Question text area -->
-              <textarea
-                v-model="activeQuestions[currentQuestionIndex].question_text"
-                rows="4"
-                placeholder="Tuliskan rumusan butir soal secara jelas dan tegas di sini..."
-                class="form-textarea"
-              ></textarea>
-
-              <!-- Image Preview if any -->
-              <div v-if="activeQuestions[currentQuestionIndex].question_image" class="relative inline-block border border-slate-200 rounded-lg p-1 bg-slate-50">
-                <img :src="getStorageUrl(activeQuestions[currentQuestionIndex].question_image)" class="max-h-36 rounded" alt="Stimulus" />
+              <div
+                v-for="opt in ['A', 'B', 'C', 'D']"
+                :key="opt"
+                class="flex items-center gap-2 p-2 rounded-xl border transition"
+                :class="activeQuestions[currentQuestionIndex].correct_answer === opt ? 'bg-emerald-50/70 border-emerald-300' : 'bg-slate-50 border-slate-200'"
+              >
                 <button
                   type="button"
-                  @click="activeQuestions[currentQuestionIndex].question_image = null"
-                  class="absolute -top-2 -right-2 p-1 bg-rose-600 text-white rounded-full shadow"
-                  title="Hapus gambar"
+                  @click="activeQuestions[currentQuestionIndex].correct_answer = opt"
+                  class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition"
+                  :class="activeQuestions[currentQuestionIndex].correct_answer === opt ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-300 hover:border-emerald-500'"
+                  :title="'Pilih ' + opt + ' sebagai Kunci Jawaban'"
                 >
-                  <X class="w-3 h-3" />
+                  {{ opt }}
+                </button>
+                <input
+                  type="text"
+                  v-model="ensureOptions(activeQuestions[currentQuestionIndex])[opt]"
+                  :placeholder="'Tulis isi pilihan ' + opt + '...'"
+                  class="form-input flex-1 py-1.5 text-xs bg-white"
+                />
+                <span v-if="activeQuestions[currentQuestionIndex].correct_answer === opt" class="text-xs font-bold text-emerald-700 px-2 py-0.5 bg-emerald-100 rounded">
+                  ✓ KUNCI
+                </span>
+              </div>
+            </div>
+
+            <!-- 2. PG KOMPLEKS (Multi Kunci) -->
+            <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'pg_complex'" class="space-y-2">
+              <div class="text-xs font-bold text-slate-700 flex items-center justify-between pb-1 border-b border-slate-100">
+                <span class="text-indigo-900 font-bold">PILIHAN GANDA KOMPLEKS (A - E):</span>
+                <span class="text-[11px] text-indigo-600 font-semibold">Klik kotak huruf untuk memilih beberapa kunci benar</span>
+              </div>
+
+              <div
+                v-for="opt in ['A', 'B', 'C', 'D', 'E']"
+                :key="opt"
+                class="flex items-center gap-2 p-2 rounded-xl border transition"
+                :class="isComplexKeySelected(activeQuestions[currentQuestionIndex], opt) ? 'bg-indigo-50/70 border-indigo-300' : 'bg-slate-50 border-slate-200'"
+              >
+                <button
+                  type="button"
+                  @click="toggleComplexKey(activeQuestions[currentQuestionIndex], opt)"
+                  class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition"
+                  :class="isComplexKeySelected(activeQuestions[currentQuestionIndex], opt) ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-300 hover:border-indigo-500'"
+                >
+                  {{ opt }}
+                </button>
+                <input
+                  type="text"
+                  v-model="ensureOptions(activeQuestions[currentQuestionIndex])[opt]"
+                  :placeholder="'Tulis opsi / pernyataan ' + opt + '...'"
+                  class="form-input flex-1 py-1.5 text-xs bg-white"
+                />
+                <span v-if="isComplexKeySelected(activeQuestions[currentQuestionIndex], opt)" class="text-xs font-bold text-indigo-700 px-2 py-0.5 bg-indigo-100 rounded">
+                  ✓ KUNCI
+                </span>
+              </div>
+              <div class="text-xs text-slate-400 italic pt-1">
+                Kunci Terpilih: <strong class="text-indigo-600">{{ activeQuestions[currentQuestionIndex].correct_answer || '(Belum ada kunci dipilih)' }}</strong>
+              </div>
+            </div>
+
+            <!-- 3. BENAR / SALAH (Matriks Pernyataan) -->
+            <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'true_false'" class="space-y-3">
+              <div class="flex items-center justify-between pb-1 border-b border-slate-100">
+                <span class="text-xs font-bold text-purple-900">MATRIKS PERNYATAAN BENAR / SALAH:</span>
+                <button
+                  type="button"
+                  @click="addTfStatement(activeQuestions[currentQuestionIndex])"
+                  class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold rounded-lg border border-purple-200 flex items-center gap-1 transition"
+                >
+                  <Plus class="w-3.5 h-3.5" /> Tambah Pernyataan
                 </button>
               </div>
 
-              <!-- 1. TIPE: PG TUNGGAL (Pilihan Ganda Biasa) -->
-              <div v-if="activeQuestions[currentQuestionIndex].question_type === 'pg'" class="space-y-2 pt-2">
-                <div class="text-xs font-bold text-slate-600 mb-1 flex items-center justify-between">
-                  <span>Pilihan Jawaban:</span>
-                  <span class="text-[11px] text-emerald-600 font-semibold">Klik lingkaran untuk memilih 1 Kunci Benar</span>
-                </div>
-
+              <div class="space-y-2">
                 <div
-                  v-for="opt in ['A', 'B', 'C', 'D']"
-                  :key="opt"
-                  class="flex items-center gap-2 p-2 rounded-xl border transition"
-                  :class="activeQuestions[currentQuestionIndex].correct_answer === opt ? 'bg-emerald-50/70 border-emerald-300' : 'bg-slate-50 border-slate-200'"
+                  v-for="(st, sIdx) in ensureTrueFalse(activeQuestions[currentQuestionIndex])"
+                  :key="sIdx"
+                  class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
                 >
-                  <button
-                    type="button"
-                    @click="activeQuestions[currentQuestionIndex].correct_answer = opt"
-                    class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition"
-                    :class="activeQuestions[currentQuestionIndex].correct_answer === opt ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600 border border-slate-300 hover:border-emerald-500'"
-                  >
-                    {{ opt }}
-                  </button>
+                  <span class="w-6 text-center font-bold text-xs text-slate-500">{{ sIdx + 1 }}.</span>
                   <input
                     type="text"
-                    v-model="ensureOptions(activeQuestions[currentQuestionIndex])[opt]"
-                    :placeholder="'Tulis pilihan ' + opt + '...'"
+                    v-model="st.text"
+                    :placeholder="'Tulis pernyataan ' + (sIdx + 1) + '...'"
                     class="form-input flex-1 py-1.5 text-xs bg-white"
                   />
-                  <span v-if="activeQuestions[currentQuestionIndex].correct_answer === opt" class="text-xs font-bold text-emerald-700 px-2 py-0.5 bg-emerald-100 rounded">
-                    KUNCI
-                  </span>
-                </div>
-              </div>
-
-              <!-- 2. TIPE: PG KOMPLEKS (Multi Kunci / Checkbox) -->
-              <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'pg_complex'" class="space-y-2 pt-2">
-                <div class="text-xs font-bold text-slate-600 mb-1 flex items-center justify-between">
-                  <span class="text-indigo-900 font-bold">Pilihan Ganda Kompleks (Bisa Pilih > 1 Kunci):</span>
-                  <span class="text-[11px] text-indigo-600 font-semibold">Klik kotak untuk memilih beberapa kunci benar</span>
-                </div>
-
-                <div
-                  v-for="opt in ['A', 'B', 'C', 'D', 'E']"
-                  :key="opt"
-                  class="flex items-center gap-2 p-2 rounded-xl border transition"
-                  :class="isComplexKeySelected(activeQuestions[currentQuestionIndex], opt) ? 'bg-indigo-50/70 border-indigo-300' : 'bg-slate-50 border-slate-200'"
-                >
-                  <button
-                    type="button"
-                    @click="toggleComplexKey(activeQuestions[currentQuestionIndex], opt)"
-                    class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition"
-                    :class="isComplexKeySelected(activeQuestions[currentQuestionIndex], opt) ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-300 hover:border-indigo-500'"
-                  >
-                    {{ opt }}
-                  </button>
-                  <input
-                    type="text"
-                    v-model="ensureOptions(activeQuestions[currentQuestionIndex])[opt]"
-                    :placeholder="'Tulis pernyataan / opsi ' + opt + '...'"
-                    class="form-input flex-1 py-1.5 text-xs bg-white"
-                  />
-                  <span v-if="isComplexKeySelected(activeQuestions[currentQuestionIndex], opt)" class="text-xs font-bold text-indigo-700 px-2 py-0.5 bg-indigo-100 rounded">
-                    ✓ KUNCI
-                  </span>
-                </div>
-                <div class="text-xs text-slate-400 italic">
-                  Kunci Terpilih: <strong class="text-indigo-600">{{ activeQuestions[currentQuestionIndex].correct_answer || '(Belum ada kunci dipilih)' }}</strong>
-                </div>
-              </div>
-
-              <!-- 3. TIPE: BENAR / SALAH (Matriks Pernyataan) -->
-              <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'true_false'" class="space-y-3 pt-2">
-                <div class="flex items-center justify-between text-xs font-bold text-slate-600">
-                  <span class="text-purple-900 font-bold">Matriks Pernyataan Benar / Salah:</span>
-                  <button
-                    type="button"
-                    @click="addTfStatement(activeQuestions[currentQuestionIndex])"
-                    class="text-xs text-purple-600 hover:text-purple-700 font-bold flex items-center gap-1"
-                  >
-                    <Plus class="w-3.5 h-3.5" /> + Tambah Pernyataan
-                  </button>
-                </div>
-
-                <div class="space-y-2">
-                  <div
-                    v-for="(st, sIdx) in ensureTrueFalse(activeQuestions[currentQuestionIndex])"
-                    :key="sIdx"
-                    class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-                  >
-                    <span class="w-6 text-center font-bold text-xs text-slate-500">{{ sIdx + 1 }}.</span>
-                    <input
-                      type="text"
-                      v-model="st.text"
-                      :placeholder="'Tulis pernyataan ' + (sIdx + 1) + '...'"
-                      class="form-input flex-1 py-1.5 text-xs bg-white"
-                    />
-                    <!-- Toggle Benar / Salah -->
-                    <div class="flex items-center bg-white border border-slate-200 rounded-lg p-0.5 shrink-0">
-                      <button
-                        type="button"
-                        @click="st.answer = 'B'; syncTfAnswer(activeQuestions[currentQuestionIndex])"
-                        class="px-2.5 py-1 text-xs font-bold rounded-md transition"
-                        :class="st.answer === 'B' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-100'"
-                      >
-                        Benar
-                      </button>
-                      <button
-                        type="button"
-                        @click="st.answer = 'S'; syncTfAnswer(activeQuestions[currentQuestionIndex])"
-                        class="px-2.5 py-1 text-xs font-bold rounded-md transition"
-                        :class="st.answer === 'S' ? 'bg-rose-600 text-white' : 'text-slate-600 hover:bg-slate-100'"
-                      >
-                        Salah
-                      </button>
-                    </div>
+                  <!-- Toggle Benar / Salah -->
+                  <div class="flex items-center bg-white border border-slate-200 rounded-lg p-0.5 shrink-0">
                     <button
                       type="button"
-                      @click="removeTfStatement(activeQuestions[currentQuestionIndex], sIdx)"
-                      class="p-1.5 text-slate-400 hover:text-rose-600"
-                      title="Hapus baris"
+                      @click="st.answer = 'B'; syncTfAnswer(activeQuestions[currentQuestionIndex])"
+                      class="px-2.5 py-1 text-xs font-bold rounded-md transition"
+                      :class="st.answer === 'B' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-100'"
+                    >
+                      Benar
+                    </button>
+                    <button
+                      type="button"
+                      @click="st.answer = 'S'; syncTfAnswer(activeQuestions[currentQuestionIndex])"
+                      class="px-2.5 py-1 text-xs font-bold rounded-md transition"
+                      :class="st.answer === 'S' ? 'bg-rose-600 text-white' : 'text-slate-600 hover:bg-slate-100'"
+                    >
+                      Salah
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    @click="removeTfStatement(activeQuestions[currentQuestionIndex], sIdx)"
+                    class="p-1.5 text-slate-400 hover:text-rose-600"
+                    title="Hapus baris pernyataan"
+                  >
+                    <Trash2 class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+              <div class="text-xs text-slate-400 italic">
+                Kunci Matriks: <strong class="text-purple-600">{{ activeQuestions[currentQuestionIndex].correct_answer }}</strong>
+              </div>
+            </div>
+
+            <!-- 4. MENJODOHKAN (Matching Pairs) -->
+            <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'matching'" class="space-y-3">
+              <div class="flex items-center justify-between pb-1 border-b border-slate-100">
+                <span class="text-xs font-bold text-teal-900">PASANGAN MENJODOHKAN:</span>
+                <button
+                  type="button"
+                  @click="addMatchingPair(activeQuestions[currentQuestionIndex])"
+                  class="px-2.5 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold rounded-lg border border-teal-200 flex items-center gap-1 transition"
+                >
+                  <Plus class="w-3.5 h-3.5" /> Tambah Pasangan
+                </button>
+              </div>
+
+              <div class="space-y-2">
+                <div
+                  v-for="(pair, pIdx) in ensureMatching(activeQuestions[currentQuestionIndex])"
+                  :key="pIdx"
+                  class="grid grid-cols-12 gap-2 items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                >
+                  <div class="col-span-5">
+                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Kolom Kiri (Premis {{ pIdx + 1 }})</label>
+                    <input
+                      type="text"
+                      v-model="pair.left"
+                      :placeholder="'Pernyataan ' + (pIdx + 1)"
+                      class="form-input py-1 text-xs bg-white"
+                    />
+                  </div>
+                  <div class="col-span-5">
+                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Kolom Kanan (Pilihan {{ String.fromCharCode(65 + pIdx) }})</label>
+                    <input
+                      type="text"
+                      v-model="pair.right"
+                      :placeholder="'Jawaban ' + String.fromCharCode(65 + pIdx)"
+                      class="form-input py-1 text-xs bg-white"
+                    />
+                  </div>
+                  <div class="col-span-2 flex items-center justify-end gap-1 pt-3">
+                    <select
+                      v-model="pair.key"
+                      @change="syncMatchingAnswer(activeQuestions[currentQuestionIndex])"
+                      class="form-select py-1 text-xs font-bold w-16 bg-white"
+                      title="Kunci Pasangan"
+                    >
+                      <option
+                        v-for="(_, oIdx) in ensureMatching(activeQuestions[currentQuestionIndex])"
+                        :key="oIdx"
+                        :value="String.fromCharCode(65 + oIdx)"
+                      >
+                        → {{ String.fromCharCode(65 + oIdx) }}
+                      </option>
+                    </select>
+                    <button
+                      type="button"
+                      @click="removeMatchingPair(activeQuestions[currentQuestionIndex], pIdx)"
+                      class="p-1 text-slate-400 hover:text-rose-600"
                     >
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
-                <div class="text-xs text-slate-400 italic">
-                  Kunci Terpilih: <strong class="text-purple-600">{{ activeQuestions[currentQuestionIndex].correct_answer }}</strong>
-                </div>
               </div>
-
-              <!-- 4. TIPE: MENJODOHKAN (Matching Pairs) -->
-              <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'matching'" class="space-y-3 pt-2">
-                <div class="flex items-center justify-between text-xs font-bold text-slate-600">
-                  <span class="text-teal-900 font-bold">Pasangan Menjodohkan:</span>
-                  <button
-                    type="button"
-                    @click="addMatchingPair(activeQuestions[currentQuestionIndex])"
-                    class="text-xs text-teal-600 hover:text-teal-700 font-bold flex items-center gap-1"
-                  >
-                    <Plus class="w-3.5 h-3.5" /> + Tambah Pasangan
-                  </button>
-                </div>
-
-                <div class="space-y-2">
-                  <div
-                    v-for="(pair, pIdx) in ensureMatching(activeQuestions[currentQuestionIndex])"
-                    :key="pIdx"
-                    class="grid grid-cols-12 gap-2 items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-                  >
-                    <div class="col-span-5">
-                      <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Kolom Kiri (Premis {{ pIdx + 1 }})</label>
-                      <input
-                        type="text"
-                        v-model="pair.left"
-                        :placeholder="'Pernyataan ' + (pIdx + 1)"
-                        class="form-input py-1 text-xs bg-white"
-                      />
-                    </div>
-                    <div class="col-span-5">
-                      <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Kolom Kanan (Pilihan {{ String.fromCharCode(65 + pIdx) }})</label>
-                      <input
-                        type="text"
-                        v-model="pair.right"
-                        :placeholder="'Jawaban ' + String.fromCharCode(65 + pIdx)"
-                        class="form-input py-1 text-xs bg-white"
-                      />
-                    </div>
-                    <div class="col-span-2 flex items-center justify-end gap-1 pt-3">
-                      <select
-                        v-model="pair.key"
-                        @change="syncMatchingAnswer(activeQuestions[currentQuestionIndex])"
-                        class="form-select py-1 text-xs font-bold w-16"
-                        title="Kunci Pasangan"
-                      >
-                        <option
-                          v-for="(_, oIdx) in ensureMatching(activeQuestions[currentQuestionIndex])"
-                          :key="oIdx"
-                          :value="String.fromCharCode(65 + oIdx)"
-                        >
-                          → {{ String.fromCharCode(65 + oIdx) }}
-                        </option>
-                      </select>
-                      <button
-                        type="button"
-                        @click="removeMatchingPair(activeQuestions[currentQuestionIndex], pIdx)"
-                        class="p-1 text-slate-400 hover:text-rose-600"
-                      >
-                        <Trash2 class="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div class="text-xs text-slate-400 italic">
-                  Kunci Pasangan: <strong class="text-teal-600">{{ activeQuestions[currentQuestionIndex].correct_answer }}</strong>
-                </div>
-              </div>
-
-              <!-- 5. TIPE: ISIAN SINGKAT -->
-              <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'short_answer'" class="space-y-2 pt-2">
-                <label class="block text-xs font-bold text-amber-900">Kunci Jawaban Singkat / Pasti *</label>
-                <input
-                  type="text"
-                  v-model="activeQuestions[currentQuestionIndex].correct_answer"
-                  placeholder="Contoh: 14 atau Fotosintesis atau Raden Patah"
-                  class="form-input text-xs font-bold text-slate-800"
-                />
-                <p class="text-[11px] text-slate-400">Tuliskan kata kunci jawaban eksak yang diharapkan diisi siswa.</p>
-              </div>
-
-              <!-- 6. TIPE: URAIAN / ESSAY -->
-              <div v-else class="space-y-2 pt-2">
-                <label class="block text-xs font-bold text-blue-900">Kunci Jawaban / Pedoman Penskoran Uraian</label>
-                <textarea
-                  v-model="activeQuestions[currentQuestionIndex].correct_answer"
-                  rows="3"
-                  placeholder="Tuliskan kata kunci jawaban yang diharapkan dan kriteria pemberian skor..."
-                  class="form-textarea"
-                ></textarea>
+              <div class="text-xs text-slate-400 italic">
+                Kunci Pasangan: <strong class="text-teal-600">{{ activeQuestions[currentQuestionIndex].correct_answer }}</strong>
               </div>
             </div>
 
-            <!-- Integrated Kisi-Kisi Card -->
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-4">
-              <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
-                <TableProperties class="w-4 h-4 text-emerald-600" />
-                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Pemetaan Kisi-Kisi Butir Soal</h4>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-600 mb-1">Materi Pokok / Topik *</label>
-                  <input
-                    type="text"
-                    v-model="activeQuestions[currentQuestionIndex].material"
-                    placeholder="Contoh: Operasi Aljabar, Fiqih Thaharah, dll."
-                    class="form-input text-xs"
-                  />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-slate-600 mb-1">Level Kognitif (Standar BSNP/Kemenag) *</label>
-                  <select v-model="activeQuestions[currentQuestionIndex].cognitive_level" class="form-select text-xs">
-                    <option v-for="l in options.cognitive_levels" :key="l.value" :value="l.value">{{ l.label }}</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Indikator Soal (Untuk Format Kisi-Kisi Resmi) *</label>
-                <textarea
-                  v-model="activeQuestions[currentQuestionIndex].indicator"
-                  rows="2"
-                  placeholder="Contoh: Disajikan tabel data, siswa dapat menganalisis dan menentukan rata-rata hitung dengan tepat."
-                  class="form-textarea text-xs"
-                ></textarea>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-600 mb-1">Capaian Pembelajaran (CP) / KD</label>
-                  <input
-                    type="text"
-                    v-model="activeQuestions[currentQuestionIndex].basic_competency"
-                    placeholder="Elemen CP / KD terkait"
-                    class="form-input text-xs"
-                  />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-slate-600 mb-1">Estimasi Tingkat Kesukaran</label>
-                  <select v-model="activeQuestions[currentQuestionIndex].difficulty_level" class="form-select text-xs">
-                    <option value="mudah">Mudah</option>
-                    <option value="sedang">Sedang</option>
-                    <option value="sukar">Sukar</option>
-                  </select>
-                </div>
-              </div>
+            <!-- 5. ISIAN SINGKAT -->
+            <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'short_answer'" class="space-y-2">
+              <label class="block text-xs font-bold text-amber-900">Kunci Jawaban Singkat / Pasti *</label>
+              <input
+                type="text"
+                v-model="activeQuestions[currentQuestionIndex].correct_answer"
+                placeholder="Contoh: 14 atau Fotosintesis atau Raden Patah"
+                class="form-input text-xs font-bold text-slate-800"
+              />
+              <p class="text-[11px] text-slate-400">Tuliskan kata kunci jawaban eksak yang diharapkan diisi siswa.</p>
             </div>
 
-            <!-- Bottom Navigation Bar inside drawer -->
-            <div class="flex items-center justify-between pt-2">
-              <button
-                type="button"
-                @click="prevQuestion"
-                :disabled="currentQuestionIndex === 0"
-                class="px-4 py-2 border border-slate-200 text-slate-700 disabled:opacity-40 rounded-xl text-xs font-semibold hover:bg-slate-50 transition"
-              >
-                &larr; Soal Sebelumnya
-              </button>
-              <div class="text-xs text-slate-400">
-                Nomor {{ currentQuestionIndex + 1 }} dari {{ activeQuestions.length }}
-              </div>
-              <button
-                type="button"
-                @click="nextQuestion"
-                :disabled="currentQuestionIndex === activeQuestions.length - 1"
-                class="px-4 py-2 bg-slate-900 text-white disabled:opacity-40 rounded-xl text-xs font-semibold hover:bg-slate-800 transition"
-              >
-                Soal Berikutnya &rarr;
-              </button>
+            <!-- 6. URAIAN / ESSAY -->
+            <div v-else class="space-y-2">
+              <label class="block text-xs font-bold text-blue-900">Kunci Jawaban / Pedoman Penskoran Uraian</label>
+              <textarea
+                v-model="activeQuestions[currentQuestionIndex].correct_answer"
+                rows="3"
+                placeholder="Tuliskan kata kunci jawaban yang diharapkan dan kriteria penskoran..."
+                class="form-textarea text-xs"
+              ></textarea>
             </div>
           </div>
-        </div>
+        </main>
+
+        <!-- PANE 3: RIGHT (Studio Pemetaan Kisi-Kisi Butir Soal) -->
+        <aside
+          v-if="activeQuestions[currentQuestionIndex]"
+          class="w-full lg:w-88 xl:w-[400px] 2xl:w-[450px] bg-white border-l border-slate-200 shrink-0 overflow-y-auto p-5 space-y-4 shadow-2xs"
+          :class="{ 'hidden lg:block': mobileStudioTab === 'soal' }"
+        >
+          <!-- Kisi-Kisi Header -->
+          <div class="flex items-center gap-2 pb-2.5 border-b border-slate-100">
+            <div class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg">
+              <TableProperties class="w-4 h-4" />
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Pemetaan Kisi-Kisi Butir Soal</h4>
+              <p class="text-[11px] text-slate-400">Terintegrasi langsung ke Format Cetak Resmi Kemenag</p>
+            </div>
+          </div>
+
+          <!-- Form Fields Kisi-Kisi -->
+          <div class="space-y-3.5 text-xs">
+            <!-- Materi Pokok -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Materi Pokok / Topik *</label>
+              <input
+                type="text"
+                v-model="activeQuestions[currentQuestionIndex].material"
+                placeholder="Contoh: Operasi Aljabar, Fiqih Thaharah, dll."
+                class="form-input text-xs"
+              />
+            </div>
+
+            <!-- Level Kognitif -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Level Kognitif (Standar BSNP/Kemenag) *</label>
+              <select v-model="activeQuestions[currentQuestionIndex].cognitive_level" class="form-select text-xs font-medium">
+                <option v-for="l in options.cognitive_levels" :key="l.value" :value="l.value">{{ l.label }}</option>
+              </select>
+            </div>
+
+            <!-- Indikator Soal -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Indikator Soal *</label>
+              <textarea
+                v-model="activeQuestions[currentQuestionIndex].indicator"
+                rows="3"
+                placeholder="Contoh: Disajikan teks stimulus masalah, siswa dapat menentukan solusi yang tepat."
+                class="form-textarea text-xs"
+              ></textarea>
+            </div>
+
+            <!-- Capaian Pembelajaran (CP) / KD -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Capaian Pembelajaran (CP) / Elemen KD</label>
+              <input
+                type="text"
+                v-model="activeQuestions[currentQuestionIndex].basic_competency"
+                placeholder="Elemen CP / KD terkait"
+                class="form-input text-xs"
+              />
+            </div>
+
+            <!-- Tingkat Kesukaran -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1.5">Estimasi Tingkat Kesukaran</label>
+              <div class="grid grid-cols-3 gap-1.5">
+                <button
+                  type="button"
+                  v-for="diff in [{ val: 'mudah', lbl: 'Mudah' }, { val: 'sedang', lbl: 'Sedang' }, { val: 'sukar', lbl: 'Sukar' }]"
+                  :key="diff.val"
+                  @click="activeQuestions[currentQuestionIndex].difficulty_level = diff.val"
+                  class="py-1.5 text-xs font-bold rounded-lg border transition text-center"
+                  :class="activeQuestions[currentQuestionIndex].difficulty_level === diff.val ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'"
+                >
+                  {{ diff.lbl }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quality Guide Card (Checklist Mandiri Guru) -->
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-[11px] text-slate-600">
+            <div class="font-bold text-slate-700 flex items-center gap-1">
+              <CheckCircle2 class="w-3.5 h-3.5 text-emerald-600" /> Kaidah Penulisan Butir
+            </div>
+            <p class="text-slate-500 leading-relaxed">
+              Pastikan rumusan soal tidak menimbulkan penafsiran ganda, pokok soal dirumuskan dengan tegas, dan pilihan jawaban homogen.
+            </p>
+          </div>
+        </aside>
       </div>
+
+      <!-- 3. STUDIO STICKY FOOTER NAVIGATION -->
+      <footer class="h-14 px-6 bg-white border-t border-slate-200 flex items-center justify-between shrink-0 shadow-md z-20">
+        <!-- Previous Question -->
+        <button
+          type="button"
+          @click="prevQuestion"
+          :disabled="currentQuestionIndex === 0"
+          class="px-4 py-2 border border-slate-200 text-slate-700 disabled:opacity-30 rounded-xl text-xs font-semibold hover:bg-slate-50 transition flex items-center gap-1.5"
+        >
+          <ChevronLeft class="w-4 h-4" />
+          <span>Soal Sebelumnya</span>
+        </button>
+
+        <!-- Current Question Info -->
+        <div class="text-xs font-medium text-slate-500">
+          Nomor <strong class="text-slate-900">{{ currentQuestionIndex + 1 }}</strong> dari {{ activeQuestions.length }} Butir Soal
+        </div>
+
+        <!-- Next Question & Add -->
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            @click="nextQuestion"
+            :disabled="currentQuestionIndex === activeQuestions.length - 1"
+            class="px-4 py-2 bg-slate-900 text-white disabled:opacity-30 rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center gap-1.5 shadow-xs"
+          >
+            <span>Soal Berikutnya</span>
+            <ChevronRight class="w-4 h-4" />
+          </button>
+        </div>
+      </footer>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import api, { getImageUrl } from '../api';
 import {
   BookOpen,
@@ -862,7 +1024,12 @@ import {
   X,
   Save,
   Image,
-  TableProperties
+  TableProperties,
+  ArrowLeft,
+  CheckCircle2,
+  Eye,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-vue-next';
 
 // Data State
@@ -910,11 +1077,64 @@ const targetImportPackage = ref(null);
 const selectedExcelFile = ref(null);
 const importing = ref(false);
 
-// Fullscreen Editor
+// Fullscreen Studio Workspace
 const activePackage = ref(null);
 const activeQuestions = ref([]);
 const currentQuestionIndex = ref(0);
 const savingQuestions = ref(false);
+const mobileStudioTab = ref('soal');
+const questionFilter = ref('all');
+
+const completedQuestionsCount = computed(() => {
+  return activeQuestions.value.filter(q => q.correct_answer && q.indicator && q.question_text).length;
+});
+
+const progressPercent = computed(() => {
+  if (!activeQuestions.value.length) return 0;
+  return Math.round((completedQuestionsCount.value / activeQuestions.value.length) * 100);
+});
+
+const isQuestionComplete = (q) => {
+  return Boolean(q.correct_answer && q.indicator && q.question_text);
+};
+
+const getShortTypeLabel = (type) => {
+  switch (type) {
+    case 'pg': return 'PG';
+    case 'pg_complex': return 'PGK';
+    case 'true_false': return 'B/S';
+    case 'matching': return 'JOD';
+    case 'short_answer': return 'ISI';
+    case 'essay': return 'ESS';
+    default: return 'PG';
+  }
+};
+
+const removeQuestion = (idx) => {
+  if (activeQuestions.value.length <= 1) {
+    alert('Paket soal harus memiliki minimal 1 butir soal.');
+    return;
+  }
+  const qNum = activeQuestions.value[idx].question_number;
+  if (!confirm(`Hapus butir soal nomor ${qNum}? Nomor soal setelahnya akan otomatis diurutkan ulang.`)) return;
+  activeQuestions.value.splice(idx, 1);
+  activeQuestions.value.forEach((q, i) => {
+    q.question_number = i + 1;
+  });
+  if (currentQuestionIndex.value >= activeQuestions.value.length) {
+    currentQuestionIndex.value = activeQuestions.value.length - 1;
+  }
+};
+
+const previewNaskah = () => {
+  if (!activePackage.value) return;
+  window.open(`/prints/exam/${activePackage.value.id}/naskah?layout=2col`, '_blank');
+};
+
+const previewKisiKisi = () => {
+  if (!activePackage.value) return;
+  window.open(`/prints/exam/${activePackage.value.id}/kisi-kisi`, '_blank');
+};
 
 // Methods
 const fetchOptions = async () => {
