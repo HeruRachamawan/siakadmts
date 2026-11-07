@@ -169,6 +169,12 @@ Route::middleware(['auth:sanctum', 'role:admin,operator,kurikulum,kepala_sekolah
     Route::post('kurikulum/kktp-matrix', [\App\Http\Controllers\Kurikulum\KurikulumAstsMonitoringController::class, 'saveKktpMatrix']);
     Route::get('kurikulum/asts-monitoring', [\App\Http\Controllers\Kurikulum\KurikulumAstsMonitoringController::class, 'getMonitoringOverview']);
 
+    // Kurikulum Review Soal, Telaah & Validasi (Kurikulum / Admin)
+    Route::get('exam-reviews', [\App\Http\Controllers\Kurikulum\KurikulumExamReviewController::class, 'index']);
+    Route::get('exam-reviews/{id}', [\App\Http\Controllers\Kurikulum\KurikulumExamReviewController::class, 'show']);
+    Route::post('exam-reviews/{packageId}/questions/{questionId}/review', [\App\Http\Controllers\Kurikulum\KurikulumExamReviewController::class, 'reviewQuestion']);
+    Route::post('exam-reviews/{packageId}/decision', [\App\Http\Controllers\Kurikulum\KurikulumExamReviewController::class, 'submitDecision']);
+
     // Manajemen Ekstrakurikuler (Admin & Staff)
     Route::get('extracurriculars', [\App\Http\Controllers\ExtracurricularController::class, 'index']);
     Route::post('extracurriculars', [\App\Http\Controllers\ExtracurricularController::class, 'store']);

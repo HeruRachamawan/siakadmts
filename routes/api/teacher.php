@@ -52,6 +52,19 @@ Route::middleware(['auth:sanctum', 'role:teacher,admin,operator,kurikulum,kepala
     Route::post('ppdb/{id}/process', [\App\Http\Controllers\Admin\PpdbController::class, 'process']);
     Route::post('ppdb/{id}/enroll', [\App\Http\Controllers\Admin\PpdbController::class, 'enroll']);
 
+    // Modul Bank Soal, Kisi-Kisi & Telaah Ujian (Teacher)
+    Route::get('exam-bank/options', [\App\Http\Controllers\Teacher\ExamBankController::class, 'options']);
+    Route::get('exam-bank/template', [\App\Http\Controllers\Teacher\ExamBankController::class, 'downloadTemplate']);
+    Route::get('exam-bank', [\App\Http\Controllers\Teacher\ExamBankController::class, 'index']);
+    Route::post('exam-bank', [\App\Http\Controllers\Teacher\ExamBankController::class, 'store']);
+    Route::get('exam-bank/{id}', [\App\Http\Controllers\Teacher\ExamBankController::class, 'show']);
+    Route::put('exam-bank/{id}', [\App\Http\Controllers\Teacher\ExamBankController::class, 'update']);
+    Route::delete('exam-bank/{id}', [\App\Http\Controllers\Teacher\ExamBankController::class, 'destroy']);
+    Route::post('exam-bank/{id}/questions', [\App\Http\Controllers\Teacher\ExamBankController::class, 'saveQuestions']);
+    Route::post('exam-bank/{id}/upload-image', [\App\Http\Controllers\Teacher\ExamBankController::class, 'uploadImage']);
+    Route::post('exam-bank/{id}/import-excel', [\App\Http\Controllers\Teacher\ExamBankController::class, 'importExcel']);
+    Route::post('exam-bank/{id}/submit-kurikulum', [\App\Http\Controllers\Teacher\ExamBankController::class, 'submitToKurikulum']);
+
     // Modul Koreksi Soal & Analisis Butir Soal (Teacher)
     Route::get('exam-corrections', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'index']);
     Route::get('exam-corrections/options', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'options']);
