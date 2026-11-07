@@ -616,18 +616,20 @@
               <div>
                 <input
                   type="file"
-                  :ref="'qImage_' + activeQuestions[currentQuestionIndex].question_number"
+                  ref="stimulusFileInput"
                   accept="image/*"
                   class="hidden"
                   @change="handleQuestionImageUpload($event, activeQuestions[currentQuestionIndex])"
                 />
                 <button
                   type="button"
-                  @click="$refs['qImage_' + activeQuestions[currentQuestionIndex].question_number][0]?.click()"
-                  class="text-xs text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition"
+                  @click="triggerStimulusUpload"
+                  :disabled="uploadingImage"
+                  class="text-xs text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition disabled:opacity-50"
+                  title="Klik untuk memilih file gambar dari komputer"
                 >
                   <Image class="w-3.5 h-3.5" />
-                  <span>{{ activeQuestions[currentQuestionIndex].question_image ? 'Ganti Stimulus Gambar' : '+ Unggah Gambar / Diagram' }}</span>
+                  <span>{{ uploadingImage ? 'Mengunggah...' : (activeQuestions[currentQuestionIndex].question_image ? 'Ganti Stimulus Gambar' : '+ Unggah Gambar / Diagram') }}</span>
                 </button>
               </div>
             </div>
@@ -1355,10 +1357,21 @@ const saveAllQuestions = async () => {
   }
 };
 
+const stimulusFileInput = ref(null);
+const uploadingImage = ref(false);
+
+const triggerStimulusUpload = () => {
+  if (stimulusFileInput.value) {
+    stimulusFileInput.value.value = '';
+    stimulusFileInput.value.click();
+  }
+};
+
 const handleQuestionImageUpload = async (event, question) => {
   const file = event.target.files[0];
   if (!file || !activePackage.value) return;
 
+  uploadingImage.value = true;
   const formData = new FormData();
   formData.append('image', file);
 
@@ -1370,6 +1383,8 @@ const handleQuestionImageUpload = async (event, question) => {
     }
   } catch (err) {
     alert(err.response?.data?.message || err.message || 'Gagal mengunggah gambar stimulus.');
+  } finally {
+    uploadingImage.value = false;
   }
 };
 
