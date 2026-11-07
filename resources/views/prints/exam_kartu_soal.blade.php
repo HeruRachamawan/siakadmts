@@ -103,11 +103,22 @@
         <h3>{{ $school->school_name ?? 'MTs AL-HASANAH' }} - TP {{ $package->academicYear->year ?? '2026/2027' }}</h3>
     </div>
 
+    @php
+        $typeLabels = [
+            'pg' => 'PILIHAN GANDA',
+            'pg_complex' => 'PILIHAN GANDA KOMPLEKS',
+            'true_false' => 'BENAR / SALAH',
+            'matching' => 'MENJODOHKAN',
+            'short_answer' => 'ISIAN SINGKAT',
+            'essay' => 'URAIAN / ESSAY'
+        ];
+    @endphp
+
     @foreach ($package->questions as $q)
         <div class="kartu-container">
             <div class="kartu-header">
                 <span>KARTU SOAL NOMOR : {{ $q->question_number }}</span>
-                <span>BENTUK SOAL : {{ strtoupper($q->question_type) }}</span>
+                <span>BENTUK SOAL : {{ $typeLabels[$q->question_type] ?? strtoupper($q->question_type) }}</span>
             </div>
 
             <table class="kartu-meta">
@@ -150,6 +161,8 @@
                 @php
                     $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
                 @endphp
+
+                <!-- PG Tunggal -->
                 @if (!empty($opts) && $q->question_type === 'pg')
                     <ul class="opts">
                         @foreach (['A', 'B', 'C', 'D'] as $key)
@@ -157,12 +170,66 @@
                                 <li>
                                     <strong>{{ $key }}.</strong> {{ $opts[$key] }}
                                     @if (strtoupper($q->correct_answer) === $key)
-                                        <span style="font-weight: bold; color: #059669;">✓</span>
+                                        <span style="font-weight: bold; color: #059669;">✓ (Kunci)</span>
                                     @endif
                                 </li>
                             @endif
                         @endforeach
                     </ul>
+                <!-- PG Kompleks -->
+                @elseif (!empty($opts) && $q->question_type === 'pg_complex')
+                    @php $cKeys = array_map('trim', explode(',', strtoupper($q->correct_answer ?? ''))); @endphp
+                    <ul class="opts">
+                        @foreach (['A', 'B', 'C', 'D', 'E'] as $key)
+                            @if (isset($opts[$key]) && $opts[$key] !== '')
+                                <li>
+                                    <span style="display:inline-block; width:12px; height:12px; border:1px solid #000; text-align:center; line-height:11px; font-size:8pt;">
+                                        {{ in_array($key, $cKeys) ? '✓' : '' }}
+                                    </span>
+                                    <strong>{{ $key }}.</strong> {{ $opts[$key] }}
+                                    @if (in_array($key, $cKeys))
+                                        <span style="font-weight: bold; color: #059669;">✓ (Kunci)</span>
+                                    @endif
+                                </li>
+                            @endif
+                        @endforeach
+                    </ul>
+                <!-- Benar / Salah -->
+                @elseif (!empty($opts['statements']) && $q->question_type === 'true_false')
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 8.5pt;">
+                        <tr style="background: #f1f5f9;">
+                            <th style="border: 1px solid #ccc; padding: 2px 5px; width: 25px;">No</th>
+                            <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: left;">Pernyataan</th>
+                            <th style="border: 1px solid #ccc; padding: 2px 5px; width: 45px; text-align: center;">Kunci</th>
+                        </tr>
+                        @foreach ($opts['statements'] as $sIdx => $st)
+                            <tr>
+                                <td style="border: 1px solid #ccc; padding: 2px 5px; text-align: center;">{{ $sIdx + 1 }}</td>
+                                <td style="border: 1px solid #ccc; padding: 2px 5px;">{{ $st['text'] }}</td>
+                                <td style="border: 1px solid #ccc; padding: 2px 5px; text-align: center; font-weight: bold; color: {{ ($st['answer'] ?? '') === 'B' ? '#059669' : '#dc2626' }};">
+                                    {{ ($st['answer'] ?? '') === 'B' ? 'Benar' : 'Salah' }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </table>
+                <!-- Menjodohkan -->
+                @elseif (!empty($opts['pairs']) && $q->question_type === 'matching')
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 8.5pt;">
+                        <tr style="background: #f1f5f9;">
+                            <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: left; width: 45%;">Premis Kiri</th>
+                            <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: left; width: 45%;">Pilihan Kanan</th>
+                            <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: center; width: 10%;">Kunci</th>
+                        </tr>
+                        @foreach ($opts['pairs'] as $pIdx => $pair)
+                            <tr>
+                                <td style="border: 1px solid #ccc; padding: 2px 5px;">{{ $pIdx + 1 }}. {{ $pair['left'] }}</td>
+                                <td style="border: 1px solid #ccc; padding: 2px 5px;">{{ chr(65 + $pIdx) }}. {{ $pair['right'] }}</td>
+                                <td style="border: 1px solid #ccc; padding: 2px 5px; text-align: center; font-weight: bold; color: #059669;">
+                                    → {{ $pair['key'] ?? chr(65 + $pIdx) }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </table>
                 @endif
             </div>
         </div>

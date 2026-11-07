@@ -212,10 +212,19 @@ class KurikulumExamReviewController extends Controller
         $layout = $request->query('layout', '2col'); // '1col' or '2col'
         $showKeys = $request->boolean('show_keys', false);
 
-        $pgQuestions = $package->questions->filter(fn($q) => $q->question_type === 'pg');
-        $essayQuestions = $package->questions->filter(fn($q) => $q->question_type === 'essay');
+        $allQuestions = $package->questions;
+        $pgQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'pg');
+        $pgComplexQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'pg_complex');
+        $trueFalseQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'true_false');
+        $matchingQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'matching');
+        $shortAnswerQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'short_answer');
+        $essayQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'essay');
 
-        return view('prints.exam_naskah', compact('package', 'school', 'layout', 'showKeys', 'pgQuestions', 'essayQuestions'));
+        return view('prints.exam_naskah', compact(
+            'package', 'school', 'layout', 'showKeys', 'allQuestions',
+            'pgQuestions', 'pgComplexQuestions', 'trueFalseQuestions',
+            'matchingQuestions', 'shortAnswerQuestions', 'essayQuestions'
+        ));
     }
 
     /**
@@ -270,9 +279,17 @@ class KurikulumExamReviewController extends Controller
         }])->findOrFail($packageId);
 
         $school = SchoolSetting::getSetting();
-        $pgQuestions = $package->questions->filter(fn($q) => $q->question_type === 'pg');
-        $essayQuestions = $package->questions->filter(fn($q) => $q->question_type === 'essay');
+        $allQuestions = $package->questions;
+        $pgQuestions = $allQuestions->filter(fn($q) => in_array($q->question_type, ['pg', 'pg_complex']));
+        $trueFalseQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'true_false');
+        $matchingQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'matching');
+        $shortAnswerQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'short_answer');
+        $essayQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'essay');
 
-        return view('prints.exam_kunci', compact('package', 'school', 'pgQuestions', 'essayQuestions'));
+        return view('prints.exam_kunci', compact(
+            'package', 'school', 'allQuestions',
+            'pgQuestions', 'trueFalseQuestions', 'matchingQuestions',
+            'shortAnswerQuestions', 'essayQuestions'
+        ));
     }
 }

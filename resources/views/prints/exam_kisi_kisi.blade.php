@@ -93,12 +93,29 @@
         <h3>{{ $school->school_name ?? 'MTs AL-HASANAH' }} - TAHUN PELAJARAN {{ $package->academicYear->year ?? '2026/2027' }}</h3>
     </div>
 
+    @php
+        $typeLabels = [
+            'pg' => 'PG',
+            'pg_complex' => 'PGK',
+            'true_false' => 'B/S',
+            'matching' => 'Menjodohkan',
+            'short_answer' => 'Isian',
+            'essay' => 'Uraian'
+        ];
+        $typeSummary = $package->questions->groupBy('question_type')->map->count();
+        $summaryParts = [];
+        foreach ($typeSummary as $t => $cnt) {
+            $summaryParts[] = ($typeLabels[$t] ?? strtoupper($t)) . ': ' . $cnt;
+        }
+        $summaryStr = implode(' | ', $summaryParts);
+    @endphp
+
     <table class="meta-table">
         <tr>
             <td width="18%"><strong>Satuan Pendidikan</strong></td>
             <td width="32%">: {{ $school->school_name ?? 'MTs AL-HASANAH' }}</td>
             <td width="18%"><strong>Bentuk / Jumlah Soal</strong></td>
-            <td width="32%">: PG: {{ $package->questions->where('question_type', 'pg')->count() }} / Essay: {{ $package->questions->where('question_type', 'essay')->count() }} (Total: {{ $package->questions->count() }})</td>
+            <td width="32%">: {{ $summaryStr ?: '-' }} (Total: {{ $package->questions->count() }})</td>
         </tr>
         <tr>
             <td><strong>Mata Pelajaran</strong></td>
@@ -135,7 +152,7 @@
                     <td>{{ $q->material ?: '-' }}</td>
                     <td>{{ $q->indicator ?: 'Disajikan masalah terkait ' . ($q->material ?? 'materi') . ', siswa dapat menyelesaikan dengan benar.' }}</td>
                     <td class="center">{{ $q->cognitive_level ?? 'L1' }}</td>
-                    <td class="center">{{ strtoupper($q->question_type) }}</td>
+                    <td class="center">{{ $typeLabels[$q->question_type] ?? strtoupper($q->question_type) }}</td>
                     <td class="center">{{ $q->question_number }}</td>
                     <td class="center">{{ $q->score_weight }}</td>
                 </tr>

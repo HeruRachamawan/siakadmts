@@ -108,8 +108,29 @@
             font-size: 10.5pt;
             border-bottom: 1px solid #000;
             padding-bottom: 2px;
-            margin: 16px 0 10px 0;
+            margin: 16px 0 8px 0;
             letter-spacing: 0.5px;
+        }
+        .section-desc {
+            font-size: 9.5pt;
+            font-style: italic;
+            margin: 0 0 8px 0;
+        }
+
+        .akm-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 6px 0 4px 0;
+            font-size: 9pt;
+        }
+        .akm-table th, .akm-table td {
+            border: 1px solid #000;
+            padding: 3px 6px;
+            vertical-align: top;
+        }
+        .akm-table th {
+            background-color: #f1f5f9;
+            text-align: center;
         }
 
         .no-print {
@@ -176,10 +197,16 @@
         </ol>
     </div>
 
+    @php
+        $secLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
+        $secIdx = 0;
+    @endphp
+
     <div class="content-container {{ $layout === '2col' ? 'col-2' : '' }}">
+        <!-- 1. BAGIAN: PILIHAN GANDA TUNGGAL -->
         @if ($pgQuestions->isNotEmpty())
-            <div class="section-title">A. Pilihan Ganda</div>
-            <p style="font-size: 9.5pt; font-style: italic; margin: 0 0 8px 0;">Pilihlah salah satu jawaban yang paling tepat dengan memberi tanda silang (X) pada huruf A, B, C, atau D!</p>
+            <div class="section-title">{{ $secLetters[$secIdx++] }}. Pilihan Ganda</div>
+            <p class="section-desc">Pilihlah salah satu jawaban yang paling tepat dengan memberi tanda silang (X) pada huruf A, B, C, atau D!</p>
 
             @foreach ($pgQuestions as $q)
                 <div class="question-item">
@@ -212,9 +239,171 @@
             @endforeach
         @endif
 
+        <!-- 2. BAGIAN: PILIHAN GANDA KOMPLEKS (AKM) -->
+        @if (isset($pgComplexQuestions) && $pgComplexQuestions->isNotEmpty())
+            <div class="section-title">{{ $secLetters[$secIdx++] }}. Pilihan Ganda Kompleks</div>
+            <p class="section-desc">Pilihlah lebih dari satu jawaban yang benar dengan memberi tanda centang (&check;) pada kotak yang tersedia!</p>
+
+            @foreach ($pgComplexQuestions as $q)
+                <div class="question-item">
+                    <span class="q-number">{{ $q->question_number }}.</span>
+                    <div class="q-text">{!! nl2br(e($q->question_text ?? 'Soal belum diisi.')) !!}</div>
+
+                    @if ($q->question_image)
+                        <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
+                    @endif
+
+                    @php
+                        $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
+                        $keys = array_map('trim', explode(',', strtoupper($q->correct_answer ?? '')));
+                    @endphp
+                    @if (!empty($opts))
+                        <ul class="options-list">
+                            @foreach (['A', 'B', 'C', 'D', 'E'] as $key)
+                                @if (isset($opts[$key]) && $opts[$key] !== '')
+                                    <li>
+                                        <span class="opt-label" style="display:inline-flex; align-items:center; gap:3px;">
+                                            <span style="display:inline-block; width:12px; height:12px; border:1px solid #000; text-align:center; line-height:11px; font-size:8pt;">
+                                                {{ ($showKeys && in_array($key, $keys)) ? '✓' : '' }}
+                                            </span>
+                                            {{ $key }}.
+                                        </span>
+                                        <span>{{ $opts[$key] }}</span>
+                                        @if ($showKeys && in_array($key, $keys))
+                                            <span class="key-badge">✓</span>
+                                        @endif
+                                    </li>
+                                @endif
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
+            @endforeach
+        @endif
+
+        <!-- 3. BAGIAN: BENAR / SALAH (AKM) -->
+        @if (isset($trueFalseQuestions) && $trueFalseQuestions->isNotEmpty())
+            <div class="section-title">{{ $secLetters[$secIdx++] }}. Pernyataan Benar - Salah</div>
+            <p class="section-desc">Tentukan apakah setiap pernyataan berikut bernilai <strong>Benar (B)</strong> atau <strong>Salah (S)</strong>!</p>
+
+            @foreach ($trueFalseQuestions as $q)
+                <div class="question-item">
+                    <span class="q-number">{{ $q->question_number }}.</span>
+                    <div class="q-text">{!! nl2br(e($q->question_text ?? 'Soal belum diisi.')) !!}</div>
+
+                    @if ($q->question_image)
+                        <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
+                    @endif
+
+                    @php
+                        $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
+                        $statements = $opts['statements'] ?? [];
+                    @endphp
+                    @if (!empty($statements))
+                        <table class="akm-table">
+                            <thead>
+                                <tr>
+                                    <th width="5%">No</th>
+                                    <th width="75%">Pernyataan</th>
+                                    <th width="10%">B</th>
+                                    <th width="10%">S</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($statements as $sIdx => $st)
+                                    <tr>
+                                        <td align="center">{{ $sIdx + 1 }}</td>
+                                        <td>{{ $st['text'] ?? '-' }}</td>
+                                        <td align="center" style="font-weight: bold;">
+                                            {{ ($showKeys && ($st['answer'] ?? '') === 'B') ? '✓' : '(   )' }}
+                                        </td>
+                                        <td align="center" style="font-weight: bold;">
+                                            {{ ($showKeys && ($st['answer'] ?? '') === 'S') ? '✓' : '(   )' }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @endif
+                </div>
+            @endforeach
+        @endif
+
+        <!-- 4. BAGIAN: MENJODOHKAN (AKM) -->
+        @if (isset($matchingQuestions) && $matchingQuestions->isNotEmpty())
+            <div class="section-title">{{ $secLetters[$secIdx++] }}. Menjodohkan</div>
+            <p class="section-desc">Jodohkanlah pernyataan pada Kolom Kiri dengan jawaban yang sesuai pada Kolom Kanan!</p>
+
+            @foreach ($matchingQuestions as $q)
+                <div class="question-item">
+                    <span class="q-number">{{ $q->question_number }}.</span>
+                    <div class="q-text">{!! nl2br(e($q->question_text ?? 'Soal belum diisi.')) !!}</div>
+
+                    @if ($q->question_image)
+                        <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
+                    @endif
+
+                    @php
+                        $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
+                        $pairs = $opts['pairs'] ?? [];
+                    @endphp
+                    @if (!empty($pairs))
+                        <table class="akm-table">
+                            <thead>
+                                <tr>
+                                    <th width="50%">Kolom Kiri (Pernyataan)</th>
+                                    <th width="50%">Kolom Kanan (Pilihan Jawaban)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($pairs as $pIdx => $pair)
+                                    <tr>
+                                        <td><strong>{{ $pIdx + 1 }}.</strong> {{ $pair['left'] ?? '-' }}</td>
+                                        <td><strong>{{ chr(65 + $pIdx) }}.</strong> {{ $pair['right'] ?? '-' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        @if ($showKeys && !empty($q->correct_answer))
+                            <div style="font-size: 8.5pt; color: #059669; font-weight: bold; margin-top: 3px;">
+                                Kunci Pasangan: {{ $q->correct_answer }}
+                            </div>
+                        @endif
+                    @endif
+                </div>
+            @endforeach
+        @endif
+
+        <!-- 5. BAGIAN: ISIAN SINGKAT -->
+        @if (isset($shortAnswerQuestions) && $shortAnswerQuestions->isNotEmpty())
+            <div class="section-title">{{ $secLetters[$secIdx++] }}. Isian Singkat</div>
+            <p class="section-desc">Jawablah pertanyaan berikut dengan singkat dan tepat!</p>
+
+            @foreach ($shortAnswerQuestions as $q)
+                <div class="question-item">
+                    <span class="q-number">{{ $q->question_number }}.</span>
+                    <div class="q-text">{!! nl2br(e($q->question_text ?? 'Soal belum diisi.')) !!}</div>
+
+                    @if ($q->question_image)
+                        <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
+                    @endif
+
+                    <div style="margin-top: 4px; font-size: 9.5pt;">
+                        <strong>Jawaban:</strong> ............................................................................................
+                    </div>
+                    @if ($showKeys && !empty($q->correct_answer))
+                        <div style="font-size: 8.5pt; color: #059669; font-weight: bold; margin-top: 2px;">
+                            Kunci: {{ $q->correct_answer }}
+                        </div>
+                    @endif
+                </div>
+            @endforeach
+        @endif
+
+        <!-- 6. BAGIAN: URAIAN / ESSAY -->
         @if ($essayQuestions->isNotEmpty())
-            <div class="section-title">B. Uraian / Essay</div>
-            <p style="font-size: 9.5pt; font-style: italic; margin: 0 0 8px 0;">Jawablah pertanyaan-pertanyaan berikut dengan jelas, tepat, dan lengkap!</p>
+            <div class="section-title">{{ $secLetters[$secIdx++] }}. Uraian / Essay</div>
+            <p class="section-desc">Jawablah pertanyaan-pertanyaan berikut dengan jelas, tepat, dan lengkap!</p>
 
             @foreach ($essayQuestions as $q)
                 <div class="question-item">
@@ -227,7 +416,7 @@
 
                     @if ($showKeys && !empty($q->correct_answer))
                         <div style="margin-top: 4px; padding: 4px 8px; background: #f0fdf4; border: 1px solid #bbf7d0; font-size: 9pt;">
-                            <strong>Kunci / Pedoman Penskoran:</strong> {{ $q->correct_answer }}
+                            <strong>Kunci / Pedoman Penskoran:</strong> {!! nl2br(e($q->correct_answer)) !!}
                         </div>
                     @endif
                 </div>

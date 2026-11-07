@@ -134,8 +134,13 @@
         </tr>
     </table>
 
+    @php
+        $secLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
+        $secIdx = 0;
+    @endphp
+
     @if ($pgQuestions->isNotEmpty())
-        <div class="section-title">A. KUNCI JAWABAN PILIHAN GANDA</div>
+        <div class="section-title">{{ $secLetters[$secIdx++] }}. KUNCI JAWABAN PILIHAN GANDA (TUNGGAL & KOMPLEKS)</div>
         
         @php
             $chunks = $pgQuestions->chunk(10);
@@ -161,7 +166,7 @@
                                 $item = $chunk->values()->get($r);
                             @endphp
                             @if ($item)
-                                <td><strong>{{ $item->question_number }}</strong></td>
+                                <td><strong>{{ $item->question_number }}</strong> ({{ strtoupper($item->question_type === 'pg_complex' ? 'PGK' : 'PG') }})</td>
                                 <td class="key-cell">{{ $item->correct_answer ?: '-' }}</td>
                             @else
                                 <td></td>
@@ -174,14 +179,100 @@
         </table>
     @endif
 
+    @if (isset($trueFalseQuestions) && $trueFalseQuestions->isNotEmpty())
+        <div class="section-title">{{ $secLetters[$secIdx++] }}. KUNCI JAWABAN PERNYATAAN BENAR / SALAH</div>
+        <table class="essay-table">
+            <thead>
+                <tr>
+                    <th width="8%">No. Soal</th>
+                    <th width="72%">Daftar Pernyataan & Kunci Kebenaran</th>
+                    <th width="20%">Kunci Ringkas</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($trueFalseQuestions as $q)
+                    @php
+                        $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
+                        $statements = $opts['statements'] ?? [];
+                    @endphp
+                    <tr>
+                        <td align="center"><strong>{{ $q->question_number }}</strong></td>
+                        <td>
+                            <ol style="margin: 0; padding-left: 18px;">
+                                @foreach ($statements as $sIdx => $st)
+                                    <li>{{ $st['text'] }} &rarr; <strong>{{ ($st['answer'] ?? '') === 'B' ? 'BENAR' : 'SALAH' }}</strong></li>
+                                @endforeach
+                            </ol>
+                        </td>
+                        <td align="center" style="font-weight: bold; color: #059669;">{{ $q->correct_answer }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+
+    @if (isset($matchingQuestions) && $matchingQuestions->isNotEmpty())
+        <div class="section-title">{{ $secLetters[$secIdx++] }}. KUNCI JAWABAN MENJODOHKAN</div>
+        <table class="essay-table">
+            <thead>
+                <tr>
+                    <th width="8%">No. Soal</th>
+                    <th width="72%">Pasangan Jawaban</th>
+                    <th width="20%">Kunci Ringkas</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($matchingQuestions as $q)
+                    @php
+                        $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
+                        $pairs = $opts['pairs'] ?? [];
+                    @endphp
+                    <tr>
+                        <td align="center"><strong>{{ $q->question_number }}</strong></td>
+                        <td>
+                            <ul style="margin: 0; padding-left: 16px; list-style-type: square;">
+                                @foreach ($pairs as $pIdx => $pair)
+                                    <li>Premis {{ $pIdx + 1 }} (<em>{{ $pair['left'] }}</em>) &rarr; Pilihan {{ $pair['key'] ?? chr(65 + $pIdx) }} (<em>{{ $pair['right'] }}</em>)</li>
+                                @endforeach
+                            </ul>
+                        </td>
+                        <td align="center" style="font-weight: bold; color: #059669;">{{ $q->correct_answer }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+
+    @if (isset($shortAnswerQuestions) && $shortAnswerQuestions->isNotEmpty())
+        <div class="section-title">{{ $secLetters[$secIdx++] }}. KUNCI JAWABAN ISIAN SINGKAT</div>
+        <table class="essay-table">
+            <thead>
+                <tr>
+                    <th width="8%">No. Soal</th>
+                    <th width="72%">Kata Kunci Jawaban</th>
+                    <th width="20%">Bobot Skor</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($shortAnswerQuestions as $q)
+                    <tr>
+                        <td align="center"><strong>{{ $q->question_number }}</strong></td>
+                        <td><strong style="color: #059669; font-size: 10pt;">{{ $q->correct_answer }}</strong></td>
+                        <td align="center">{{ $q->score_weight }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+
     @if ($essayQuestions->isNotEmpty())
-        <div class="section-title">B. PEDOMAN PENSKORAN SOAL URAIAN / ESSAY</div>
+        <div class="section-title">{{ $secLetters[$secIdx++] }}. PEDOMAN PENSKORAN SOAL URAIAN / ESSAY</div>
         <table class="essay-table">
             <thead>
                 <tr>
                     <th width="8%">No</th>
-                    <th width="62%">Kunci Jawaban / Kriteria Jawaban</th>
-                    <th width="15%">Bobot Maksimal</th>
+                    <th width="72%">Kunci Jawaban / Kriteria Rubrik Penilaian</th>
+                    <th width="20%">Bobot Maksimal</th>
                 </tr>
             </thead>
             <tbody>

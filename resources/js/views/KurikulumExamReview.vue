@@ -289,17 +289,51 @@
                 <img :src="getStorageUrl(activePackage.questions[selectedQuestionIndex].question_image)" class="max-h-48 border rounded p-1" alt="Stimulus" />
               </div>
 
-              <!-- Options -->
-              <div v-if="activePackage.questions[selectedQuestionIndex].question_type === 'pg' && activePackage.questions[selectedQuestionIndex].options" class="grid grid-cols-2 gap-2 pt-2">
+              <!-- Options / Answers Display based on AKM Type -->
+              <div v-if="(activePackage.questions[selectedQuestionIndex].question_type === 'pg' || activePackage.questions[selectedQuestionIndex].question_type === 'pg_complex') && activePackage.questions[selectedQuestionIndex].options" class="grid grid-cols-2 gap-2 pt-2">
                 <div
                   v-for="(val, key) in activePackage.questions[selectedQuestionIndex].options"
                   :key="key"
                   class="p-2 rounded-lg text-xs border"
-                  :class="activePackage.questions[selectedQuestionIndex].correct_answer === key ? 'bg-emerald-50 border-emerald-300 font-bold text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-700'"
+                  :class="isKeySelected(activePackage.questions[selectedQuestionIndex].correct_answer, key) ? 'bg-indigo-50 border-indigo-300 font-bold text-indigo-800' : 'bg-slate-50 border-slate-200 text-slate-700'"
                 >
                   <span class="font-bold mr-1">{{ key }}.</span> {{ val }}
-                  <span v-if="activePackage.questions[selectedQuestionIndex].correct_answer === key" class="text-[10px] text-emerald-600 ml-1">✓ (Kunci)</span>
+                  <span v-if="isKeySelected(activePackage.questions[selectedQuestionIndex].correct_answer, key)" class="text-[10px] text-indigo-600 ml-1">✓ (Kunci)</span>
                 </div>
+              </div>
+
+              <!-- True/False Statements Display -->
+              <div v-else-if="activePackage.questions[selectedQuestionIndex].question_type === 'true_false' && activePackage.questions[selectedQuestionIndex].options?.statements" class="space-y-1.5 pt-2">
+                <div
+                  v-for="(st, sIdx) in activePackage.questions[selectedQuestionIndex].options.statements"
+                  :key="sIdx"
+                  class="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                >
+                  <span>{{ sIdx + 1 }}. {{ st.text }}</span>
+                  <span class="px-2 py-0.5 rounded font-bold text-white text-[10px]" :class="st.answer === 'B' ? 'bg-emerald-600' : 'bg-rose-600'">
+                    {{ st.answer === 'B' ? 'Benar' : 'Salah' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Matching Pairs Display -->
+              <div v-else-if="activePackage.questions[selectedQuestionIndex].question_type === 'matching' && activePackage.questions[selectedQuestionIndex].options?.pairs" class="space-y-1.5 pt-2">
+                <div
+                  v-for="(pair, pIdx) in activePackage.questions[selectedQuestionIndex].options.pairs"
+                  :key="pIdx"
+                  class="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                >
+                  <span>{{ pIdx + 1 }}. {{ pair.left }}</span>
+                  <span class="font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                    Pasangan {{ pair.key }}: {{ pair.right }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Short Answer or Essay -->
+              <div v-else-if="activePackage.questions[selectedQuestionIndex].correct_answer" class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg text-xs">
+                <span class="font-bold text-emerald-800">Kunci / Pedoman Penskoran:</span>
+                <p class="mt-1 text-slate-800 whitespace-pre-line">{{ activePackage.questions[selectedQuestionIndex].correct_answer }}</p>
               </div>
 
               <!-- Kisi-kisi preview -->
@@ -620,6 +654,11 @@ const getStatusBadgeClass = (status) => {
     case 'approved': return 'bg-emerald-100 text-emerald-800';
     default: return 'bg-slate-100 text-slate-700';
   }
+};
+
+const isKeySelected = (correctAnswer, key) => {
+  if (!correctAnswer) return false;
+  return correctAnswer.toString().split(',').map(k => k.trim()).includes(key);
 };
 
 onMounted(async () => {

@@ -370,8 +370,8 @@ class ExamBankController extends Controller
             'questions.*.question_type' => 'required|string|in:pg,essay,pg_complex,true_false,matching,short_answer',
             'questions.*.question_text' => 'nullable|string',
             'questions.*.question_image' => 'nullable|string|max:255',
-            'questions.*.options' => 'nullable|array',
-            'questions.*.correct_answer' => 'nullable|string|max:50',
+            'questions.*.options' => 'nullable',
+            'questions.*.correct_answer' => 'nullable|string|max:2000',
             'questions.*.score_weight' => 'nullable|numeric|min:0.1',
             'questions.*.material' => 'nullable|string|max:255',
             'questions.*.basic_competency' => 'nullable|string|max:500',
@@ -405,7 +405,9 @@ class ExamBankController extends Controller
                         'question_text' => $qData['question_text'] ?? null,
                         'question_image' => $qData['question_image'] ?? null,
                         'options' => $options,
-                        'correct_answer' => !empty($qData['correct_answer']) ? trim(strtoupper($qData['correct_answer'])) : null,
+                        'correct_answer' => !empty($qData['correct_answer'])
+                            ? (in_array($qData['question_type'], ['essay', 'short_answer']) ? trim($qData['correct_answer']) : trim(strtoupper($qData['correct_answer'])))
+                            : null,
                         'score_weight' => $qData['score_weight'] ?? 1.00,
                         'material' => $qData['material'] ?? null,
                         'basic_competency' => $qData['basic_competency'] ?? null,
@@ -502,7 +504,7 @@ class ExamBankController extends Controller
         $missingKeys = [];
         $missingIndicators = [];
         foreach ($package->questions as $q) {
-            if ($q->question_type === 'pg' && empty($q->correct_answer)) {
+            if (in_array($q->question_type, ['pg', 'pg_complex', 'true_false', 'matching', 'short_answer']) && empty($q->correct_answer)) {
                 $missingKeys[] = $q->question_number;
             }
             if (empty($q->indicator)) {
