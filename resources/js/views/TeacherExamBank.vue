@@ -1382,13 +1382,13 @@
               ></textarea>
             </div>
 
-            <!-- Capaian Pembelajaran (CP) / KD -->
+            <!-- Tujuan Pembelajaran (TP) / CP -->
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Capaian Pembelajaran (CP) / Elemen KD</label>
+              <label class="block font-bold text-slate-700 mb-1">Tujuan Pembelajaran (TP) / CP</label>
               <input
                 type="text"
                 v-model="activeQuestions[currentQuestionIndex].basic_competency"
-                placeholder="Elemen CP / KD terkait"
+                placeholder="Contoh: Peserta didik mampu memahami antarmuka berbasis grafis (GUI)"
                 class="form-input text-xs"
               />
             </div>
