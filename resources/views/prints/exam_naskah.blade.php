@@ -104,6 +104,43 @@
             padding-left: 18px;
             margin: 4px 0;
         }
+        .q-text ol.list-paren-num {
+            counter-reset: item;
+            list-style: none !important;
+            padding-left: 20px;
+        }
+        .q-text ol.list-paren-num > li {
+            counter-increment: item;
+            position: relative;
+            margin-bottom: 2px;
+        }
+        .q-text ol.list-paren-num > li::before {
+            content: "(" counter(item) ") ";
+            font-weight: bold;
+            display: inline-block;
+            margin-left: -20px;
+            width: 20px;
+        }
+        .q-text ol.list-paren-alpha {
+            counter-reset: alpha-item;
+            list-style: none !important;
+            padding-left: 20px;
+        }
+        .q-text ol.list-paren-alpha > li {
+            counter-increment: alpha-item;
+            position: relative;
+            margin-bottom: 2px;
+        }
+        .q-text ol.list-paren-alpha > li::before {
+            content: "(" counter(alpha-item, lower-alpha) ") ";
+            font-weight: bold;
+            display: inline-block;
+            margin-left: -20px;
+            width: 20px;
+        }
+        .q-text ul.list-dash { list-style-type: '– '; }
+        .q-text ul.list-check { list-style-type: '✓ '; }
+        .q-text ul.list-arrow { list-style-type: '➢ '; }
         .q-img {
             display: block;
             max-width: 90%;

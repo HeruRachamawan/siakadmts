@@ -120,26 +120,96 @@
 
       <div class="w-px h-4 bg-slate-300 mx-0.5"></div>
 
-      <!-- 5. LISTS (BULLET & NUMBERING) -->
-      <button
-        type="button"
-        @click="exec('insertUnorderedList')"
-        class="w-7 h-7 flex items-center justify-center rounded-lg text-xs transition"
-        :class="activeFormats.insertUnorderedList ? 'bg-emerald-600 text-white' : 'hover:bg-slate-200 text-slate-700'"
-        title="Daftar Butir (Bullet List)"
-      >
-        <List class="w-3.5 h-3.5" />
-      </button>
+      <!-- 5. LISTS: NUMBERING & BULLETS & INDENTATION -->
+      <!-- 5.1 NUMBERING DROPDOWN -->
+      <div class="relative">
+        <button
+          type="button"
+          @click="toggleNumberingDropdown"
+          class="px-2 h-7 flex items-center gap-1 rounded-lg text-xs font-semibold transition"
+          :class="activeFormats.insertOrderedList || showNumberingDropdown ? 'bg-emerald-600 text-white shadow-2xs' : 'hover:bg-slate-200 text-slate-700 bg-slate-100'"
+          title="Pilihan Format Penomoran (Numbering)"
+        >
+          <ListOrdered class="w-3.5 h-3.5" />
+          <span class="text-[11px] font-bold hidden sm:inline">123</span>
+          <ChevronDown class="w-2.5 h-2.5 opacity-70" :class="{ 'rotate-180': showNumberingDropdown }" />
+        </button>
 
-      <button
-        type="button"
-        @click="exec('insertOrderedList')"
-        class="w-7 h-7 flex items-center justify-center rounded-lg text-xs transition"
-        :class="activeFormats.insertOrderedList ? 'bg-emerald-600 text-white' : 'hover:bg-slate-200 text-slate-700'"
-        title="Penomoran (1, 2, 3 List)"
-      >
-        <ListOrdered class="w-3.5 h-3.5" />
-      </button>
+        <!-- Numbering Dropdown Menu -->
+        <div
+          v-if="showNumberingDropdown"
+          class="absolute left-0 top-full mt-1.5 w-60 bg-white border border-slate-200 rounded-xl shadow-xl z-40 py-1.5 text-xs text-slate-700 animate-in fade-in zoom-in-95"
+        >
+          <div class="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+            Gaya Penomoran
+          </div>
+          <button
+            type="button"
+            v-for="item in numberingOptions"
+            :key="item.id"
+            @click="applyNumberingStyle(item)"
+            class="w-full px-3 py-1.5 text-left flex items-center justify-between hover:bg-emerald-50 hover:text-emerald-800 transition"
+          >
+            <span class="font-medium">{{ item.label }}</span>
+            <span class="font-mono text-emerald-600 font-bold text-[11px]">{{ item.preview }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 5.2 BULLETS DROPDOWN -->
+      <div class="relative">
+        <button
+          type="button"
+          @click="toggleBulletsDropdown"
+          class="px-2 h-7 flex items-center gap-1 rounded-lg text-xs font-semibold transition"
+          :class="activeFormats.insertUnorderedList || showBulletsDropdown ? 'bg-emerald-600 text-white shadow-2xs' : 'hover:bg-slate-200 text-slate-700 bg-slate-100'"
+          title="Pilihan Simbol Butir (Bullets)"
+        >
+          <List class="w-3.5 h-3.5" />
+          <span class="text-[11px] font-bold hidden sm:inline">• Poin</span>
+          <ChevronDown class="w-2.5 h-2.5 opacity-70" :class="{ 'rotate-180': showBulletsDropdown }" />
+        </button>
+
+        <!-- Bullets Dropdown Menu -->
+        <div
+          v-if="showBulletsDropdown"
+          class="absolute left-0 top-full mt-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-xl z-40 py-1.5 text-xs text-slate-700 animate-in fade-in zoom-in-95"
+        >
+          <div class="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+            Gaya Simbol Butir
+          </div>
+          <button
+            type="button"
+            v-for="item in bulletOptions"
+            :key="item.id"
+            @click="applyBulletStyle(item)"
+            class="w-full px-3 py-1.5 text-left flex items-center justify-between hover:bg-emerald-50 hover:text-emerald-800 transition"
+          >
+            <span class="font-medium">{{ item.label }}</span>
+            <span class="text-emerald-600 font-bold text-sm">{{ item.symbol }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 5.3 INDENT & OUTDENT (PENGATUR MENJOROK) -->
+      <div class="flex items-center gap-0.5 bg-slate-200/60 p-0.5 rounded-lg">
+        <button
+          type="button"
+          @click="exec('outdent')"
+          class="w-6 h-6 flex items-center justify-center rounded-md text-xs hover:bg-white text-slate-700 transition"
+          title="Kurangi Inden / Geser Kiri (Outdent)"
+        >
+          <Outdent class="w-3.5 h-3.5" />
+        </button>
+        <button
+          type="button"
+          @click="exec('indent')"
+          class="w-6 h-6 flex items-center justify-center rounded-md text-xs hover:bg-white text-slate-700 transition"
+          title="Tambah Inden / Geser Kanan (Indent)"
+        >
+          <Indent class="w-3.5 h-3.5" />
+        </button>
+      </div>
 
       <div class="w-px h-4 bg-slate-300 mx-0.5"></div>
 
@@ -147,7 +217,7 @@
       <div class="relative">
         <button
           type="button"
-          @click="showSymbolPalette = !showSymbolPalette"
+          @click="toggleSymbolPalette"
           class="px-2.5 h-7 flex items-center gap-1.5 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-800 hover:bg-amber-500/20 border border-amber-300 transition"
           title="Buka Palet Simbol Matematika & Sains"
         >
@@ -257,6 +327,7 @@
         v-show="!isSourceMode"
         ref="editorRef"
         contenteditable="true"
+        @click="closeAllDropdowns"
         @input="onEditorInput"
         @blur="onEditorBlur"
         @keyup="updateActiveFormats"
@@ -291,6 +362,8 @@ import {
   Subscript,
   List,
   ListOrdered,
+  Indent,
+  Outdent,
   Table,
   Sigma,
   ChevronDown,
@@ -317,6 +390,8 @@ const isSourceMode = ref(false);
 const sourceContent = ref('');
 const currentHeading = ref('p');
 const showSymbolPalette = ref(false);
+const showNumberingDropdown = ref(false);
+const showBulletsDropdown = ref(false);
 const activeCategory = ref('arithmetic');
 
 const activeFormats = reactive({
@@ -332,6 +407,51 @@ const activeFormats = reactive({
   insertUnorderedList: false,
   insertOrderedList: false
 });
+
+const closeAllDropdowns = () => {
+  showNumberingDropdown.value = false;
+  showBulletsDropdown.value = false;
+  showSymbolPalette.value = false;
+};
+
+const toggleNumberingDropdown = () => {
+  showNumberingDropdown.value = !showNumberingDropdown.value;
+  showBulletsDropdown.value = false;
+  showSymbolPalette.value = false;
+};
+
+const toggleBulletsDropdown = () => {
+  showBulletsDropdown.value = !showBulletsDropdown.value;
+  showNumberingDropdown.value = false;
+  showSymbolPalette.value = false;
+};
+
+const toggleSymbolPalette = () => {
+  showSymbolPalette.value = !showSymbolPalette.value;
+  showNumberingDropdown.value = false;
+  showBulletsDropdown.value = false;
+};
+
+// Numbering Styles Options
+const numberingOptions = [
+  { id: 'decimal', label: '1. 2. 3. (Angka Biasa)', preview: '1, 2, 3', type: 'decimal' },
+  { id: 'paren_num', label: '(1) (2) (3) (Format AKM)', preview: '(1), (2), (3)', customParen: true },
+  { id: 'lower_alpha', label: 'a. b. c. (Huruf Kecil)', preview: 'a, b, c', type: 'lower-alpha' },
+  { id: 'paren_alpha', label: '(a) (b) (c) (Huruf Kurung)', preview: '(a), (b), (c)', customParenAlpha: true },
+  { id: 'upper_alpha', label: 'A. B. C. (Huruf Besar)', preview: 'A, B, C', type: 'upper-alpha' },
+  { id: 'upper_roman', label: 'I. II. III. (Romawi Besar)', preview: 'I, II, III', type: 'upper-roman' },
+  { id: 'lower_roman', label: 'i. ii. iii. (Romawi Kecil)', preview: 'i, ii, iii', type: 'lower-roman' }
+];
+
+// Bullets Styles Options
+const bulletOptions = [
+  { id: 'disc', label: 'Bulat Penuh (Disc)', symbol: '•', type: 'disc' },
+  { id: 'dash', label: 'Garis / Strip Naskah', symbol: '–', customSymbol: '–' },
+  { id: 'square', label: 'Kotak Rapi (Square)', symbol: '▪', type: 'square' },
+  { id: 'circle', label: 'Lingkaran (Circle)', symbol: '○', type: 'circle' },
+  { id: 'check', label: 'Centang / Checklist', symbol: '✓', customSymbol: '✓' },
+  { id: 'arrow', label: 'Panah Poin', symbol: '➢', customSymbol: '➢' }
+];
 
 // Category symbols for Mathematics & Science
 const symbolCategories = [
@@ -462,6 +582,59 @@ const applyHeading = () => {
   exec('formatBlock', `<${tag}>`);
 };
 
+const applyNumberingStyle = (item) => {
+  exec('insertOrderedList');
+  nextTick(() => {
+    const sel = window.getSelection();
+    if (sel && sel.anchorNode) {
+      const node = sel.anchorNode.nodeType === 3 ? sel.anchorNode.parentElement : sel.anchorNode;
+      const ol = node.closest('ol');
+      if (ol) {
+        ol.classList.remove('list-paren-num', 'list-paren-alpha');
+        if (item.customParen) {
+          ol.classList.add('list-paren-num');
+          ol.style.listStyleType = 'none';
+        } else if (item.customParenAlpha) {
+          ol.classList.add('list-paren-alpha');
+          ol.style.listStyleType = 'none';
+        } else if (item.type) {
+          ol.style.listStyleType = item.type;
+        }
+      }
+    }
+    showNumberingDropdown.value = false;
+    emitContent();
+  });
+};
+
+const applyBulletStyle = (item) => {
+  exec('insertUnorderedList');
+  nextTick(() => {
+    const sel = window.getSelection();
+    if (sel && sel.anchorNode) {
+      const node = sel.anchorNode.nodeType === 3 ? sel.anchorNode.parentElement : sel.anchorNode;
+      const ul = node.closest('ul');
+      if (ul) {
+        ul.classList.remove('list-dash', 'list-check', 'list-arrow');
+        if (item.customSymbol === '–') {
+          ul.classList.add('list-dash');
+          ul.style.listStyleType = `"${item.customSymbol} "`;
+        } else if (item.customSymbol === '✓') {
+          ul.classList.add('list-check');
+          ul.style.listStyleType = `"${item.customSymbol} "`;
+        } else if (item.customSymbol === '➢') {
+          ul.classList.add('list-arrow');
+          ul.style.listStyleType = `"${item.customSymbol} "`;
+        } else if (item.type) {
+          ul.style.listStyleType = item.type;
+        }
+      }
+    }
+    showBulletsDropdown.value = false;
+    emitContent();
+  });
+};
+
 const updateActiveFormats = () => {
   if (isSourceMode.value) return;
   try {
@@ -477,7 +650,7 @@ const updateActiveFormats = () => {
     activeFormats.insertUnorderedList = document.queryCommandState('insertUnorderedList');
     activeFormats.insertOrderedList = document.queryCommandState('insertOrderedList');
   } catch {
-    // Ignore iframe/selection errors
+    // Ignore selection error
   }
 };
 
@@ -504,11 +677,9 @@ const onSourceInput = () => {
 
 const toggleSourceMode = () => {
   if (!isSourceMode.value) {
-    // Switching from WYSIWYG to HTML Source
     sourceContent.value = editorRef.value?.innerHTML || '';
     isSourceMode.value = true;
   } else {
-    // Switching from HTML Source to WYSIWYG
     isSourceMode.value = false;
     nextTick(() => {
       if (editorRef.value) {
@@ -614,14 +785,62 @@ onMounted(() => {
 .editable-content th {
   background-color: #f8fafc;
 }
-.editable-content ul {
-  list-style-type: disc;
+.editable-content ul,
+.editable-content ol {
   padding-left: 20px;
   margin: 6px 0;
 }
-.editable-content ol {
-  list-style-type: decimal;
-  padding-left: 20px;
-  margin: 6px 0;
+.editable-content ul li,
+.editable-content ol li {
+  margin-bottom: 2px;
+}
+
+/* Custom Paren AKM Numbering: (1), (2), (3) */
+.editable-content ol.list-paren-num {
+  counter-reset: item;
+  list-style: none !important;
+  padding-left: 24px;
+}
+.editable-content ol.list-paren-num > li {
+  counter-increment: item;
+  position: relative;
+}
+.editable-content ol.list-paren-num > li::before {
+  content: "(" counter(item) ") ";
+  font-weight: 700;
+  color: #1e293b;
+  display: inline-block;
+  margin-left: -24px;
+  width: 24px;
+}
+
+/* Custom Paren Alpha: (a), (b), (c) */
+.editable-content ol.list-paren-alpha {
+  counter-reset: alpha-item;
+  list-style: none !important;
+  padding-left: 24px;
+}
+.editable-content ol.list-paren-alpha > li {
+  counter-increment: alpha-item;
+  position: relative;
+}
+.editable-content ol.list-paren-alpha > li::before {
+  content: "(" counter(alpha-item, lower-alpha) ") ";
+  font-weight: 700;
+  color: #1e293b;
+  display: inline-block;
+  margin-left: -24px;
+  width: 24px;
+}
+
+/* Custom Bullet Styles */
+.editable-content ul.list-dash {
+  list-style-type: '– ';
+}
+.editable-content ul.list-check {
+  list-style-type: '✓ ';
+}
+.editable-content ul.list-arrow {
+  list-style-type: '➢ ';
 }
 </style>
