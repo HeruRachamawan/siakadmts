@@ -463,6 +463,15 @@
               <TableProperties class="w-3.5 h-3.5 text-slate-400" />
               <span class="hidden xl:inline">Kisi-Kisi</span>
             </button>
+            <button
+              type="button"
+              @click="previewTelaah"
+              class="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition flex items-center gap-1"
+              title="Preview Instrumen Telaah Soal HOTS"
+            >
+              <ClipboardCheck class="w-3.5 h-3.5 text-slate-400" />
+              <span class="hidden xl:inline">Telaah</span>
+            </button>
           </div>
 
           <!-- Save All Button -->
@@ -1675,7 +1684,8 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
-  Zap
+  Zap,
+  ClipboardCheck
 } from 'lucide-vue-next';
 
 // Data State
@@ -1895,6 +1905,11 @@ const previewNaskah = () => {
 const previewKisiKisi = () => {
   if (!activePackage.value) return;
   window.open(`/prints/exam/${activePackage.value.id}/kisi-kisi`, '_blank');
+};
+
+const previewTelaah = () => {
+  if (!activePackage.value) return;
+  window.open(`/prints/exam/${activePackage.value.id}/telaah`, '_blank');
 };
 
 // Methods
