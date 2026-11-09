@@ -255,41 +255,81 @@
                         @endforeach
                     </ul>
                 <!-- Benar / Salah -->
-                @elseif (!empty($opts['statements']) && $q->question_type === 'true_false')
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 8.5pt;">
-                        <tr style="background: #f1f5f9;">
-                            <th style="border: 1px solid #ccc; padding: 2px 5px; width: 25px;">No</th>
-                            <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: left;">Pernyataan</th>
-                            <th style="border: 1px solid #ccc; padding: 2px 5px; width: 45px; text-align: center;">Kunci</th>
-                        </tr>
-                        @foreach ($opts['statements'] as $sIdx => $st)
-                            <tr>
-                                <td style="border: 1px solid #ccc; padding: 2px 5px; text-align: center;">{{ $sIdx + 1 }}</td>
-                                <td style="border: 1px solid #ccc; padding: 2px 5px;">{{ $st['text'] }}</td>
-                                <td style="border: 1px solid #ccc; padding: 2px 5px; text-align: center; font-weight: bold; color: {{ ($st['answer'] ?? '') === 'B' ? '#059669' : '#dc2626' }};">
-                                    {{ ($st['answer'] ?? '') === 'B' ? 'Benar' : 'Salah' }}
-                                </td>
+                @elseif ($q->question_type === 'true_false')
+                    @php
+                        $statements = $opts['statements'] ?? [];
+                        $isSingle = ($opts['mode'] ?? '') === 'single' || empty($statements) || count($statements) <= 1;
+                    @endphp
+                    @if ($isSingle)
+                        <div style="margin-top: 6px; font-size: 9pt;">
+                            <span style="font-weight: bold;">Pilihan Kebenaran:</span> &nbsp;
+                            <span style="display: inline-block; padding: 2px 8px; border: 1px solid #444; border-radius: 4px; font-weight: bold; {{ strtoupper($q->correct_answer) === 'B' ? 'background: #d1fae5; color: #065f46;' : '' }}">
+                                {{ strtoupper($q->correct_answer) === 'B' ? '✓ ' : '' }}BENAR (B)
+                            </span>
+                            &nbsp;
+                            <span style="display: inline-block; padding: 2px 8px; border: 1px solid #444; border-radius: 4px; font-weight: bold; {{ strtoupper($q->correct_answer) === 'S' ? 'background: #fee2e2; color: #991b1b;' : '' }}">
+                                {{ strtoupper($q->correct_answer) === 'S' ? '✓ ' : '' }}SALAH (S)
+                            </span>
+                        </div>
+                    @elseif (!empty($statements))
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 8.5pt;">
+                            <tr style="background: #f1f5f9;">
+                                <th style="border: 1px solid #ccc; padding: 2px 5px; width: 25px;">No</th>
+                                <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: left;">Pernyataan</th>
+                                <th style="border: 1px solid #ccc; padding: 2px 5px; width: 45px; text-align: center;">Kunci</th>
                             </tr>
-                        @endforeach
-                    </table>
+                            @foreach ($statements as $sIdx => $st)
+                                <tr>
+                                    <td style="border: 1px solid #ccc; padding: 2px 5px; text-align: center;">{{ $sIdx + 1 }}</td>
+                                    <td style="border: 1px solid #ccc; padding: 2px 5px;">{{ $st['text'] }}</td>
+                                    <td style="border: 1px solid #ccc; padding: 2px 5px; text-align: center; font-weight: bold; color: {{ ($st['answer'] ?? '') === 'B' ? '#059669' : '#dc2626' }};">
+                                        {{ ($st['answer'] ?? '') === 'B' ? 'Benar' : 'Salah' }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </table>
+                    @endif
                 <!-- Menjodohkan -->
-                @elseif (!empty($opts['pairs']) && $q->question_type === 'matching')
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 8.5pt;">
-                        <tr style="background: #f1f5f9;">
-                            <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: left; width: 45%;">Premis Kiri</th>
-                            <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: left; width: 45%;">Pilihan Kanan</th>
-                            <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: center; width: 10%;">Kunci</th>
-                        </tr>
-                        @foreach ($opts['pairs'] as $pIdx => $pair)
+                @elseif ($q->question_type === 'matching')
+                    @php
+                        $pairs = $opts['pairs'] ?? [];
+                        $isSingle = ($opts['mode'] ?? '') === 'single' || empty($pairs) || count($pairs) <= 1;
+                    @endphp
+                    @if ($isSingle)
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 8.5pt;">
+                            <tr style="background: #f1f5f9;">
+                                <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: left; width: 45%;">Premis (Teks Soal)</th>
+                                <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: left; width: 45%;">Pasangan Jawaban</th>
+                                <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: center; width: 10%;">Kunci</th>
+                            </tr>
                             <tr>
-                                <td style="border: 1px solid #ccc; padding: 2px 5px;">{{ $pIdx + 1 }}. {{ $pair['left'] }}</td>
-                                <td style="border: 1px solid #ccc; padding: 2px 5px;">{{ chr(65 + $pIdx) }}. {{ $pair['right'] }}</td>
+                                <td style="border: 1px solid #ccc; padding: 2px 5px;">{!! strip_tags($q->question_text) !!}</td>
+                                <td style="border: 1px solid #ccc; padding: 2px 5px;">
+                                    <strong>{{ strtoupper($q->correct_answer ?: ($opts['key'] ?? 'A')) }}.</strong> {{ $opts['right_text'] ?? ($pairs[0]['right'] ?? '-') }}
+                                </td>
                                 <td style="border: 1px solid #ccc; padding: 2px 5px; text-align: center; font-weight: bold; color: #059669;">
-                                    → {{ $pair['key'] ?? chr(65 + $pIdx) }}
+                                    → {{ strtoupper($q->correct_answer ?: ($opts['key'] ?? 'A')) }}
                                 </td>
                             </tr>
-                        @endforeach
-                    </table>
+                        </table>
+                    @elseif (!empty($pairs))
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 8.5pt;">
+                            <tr style="background: #f1f5f9;">
+                                <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: left; width: 45%;">Premis Kiri</th>
+                                <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: left; width: 45%;">Pilihan Kanan</th>
+                                <th style="border: 1px solid #ccc; padding: 2px 5px; text-align: center; width: 10%;">Kunci</th>
+                            </tr>
+                            @foreach ($pairs as $pIdx => $pair)
+                                <tr>
+                                    <td style="border: 1px solid #ccc; padding: 2px 5px;">{{ $pIdx + 1 }}. {{ $pair['left'] }}</td>
+                                    <td style="border: 1px solid #ccc; padding: 2px 5px;">{{ chr(65 + $pIdx) }}. {{ $pair['right'] }}</td>
+                                    <td style="border: 1px solid #ccc; padding: 2px 5px; text-align: center; font-weight: bold; color: #059669;">
+                                        → {{ $pair['key'] ?? chr(65 + $pIdx) }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </table>
+                    @endif
                 @endif
             </div>
         </div>

@@ -194,17 +194,28 @@
                     @php
                         $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
                         $statements = $opts['statements'] ?? [];
+                        $isSingle = ($opts['mode'] ?? '') === 'single' || empty($statements) || count($statements) <= 1;
                     @endphp
                     <tr>
                         <td align="center"><strong>{{ $q->question_number }}</strong></td>
                         <td>
-                            <ol style="margin: 0; padding-left: 18px;">
-                                @foreach ($statements as $sIdx => $st)
-                                    <li>{{ $st['text'] }} &rarr; <strong>{{ ($st['answer'] ?? '') === 'B' ? 'BENAR' : 'SALAH' }}</strong></li>
-                                @endforeach
-                            </ol>
+                            @if ($isSingle)
+                                <div>{!! strip_tags($q->question_text) !!}</div>
+                            @else
+                                <ol style="margin: 0; padding-left: 18px;">
+                                    @foreach ($statements as $sIdx => $st)
+                                        <li>{{ $st['text'] }} &rarr; <strong>{{ ($st['answer'] ?? '') === 'B' ? 'BENAR' : 'SALAH' }}</strong></li>
+                                    @endforeach
+                                </ol>
+                            @endif
                         </td>
-                        <td align="center" style="font-weight: bold; color: #059669;">{{ $q->correct_answer }}</td>
+                        <td align="center" style="font-weight: bold; color: {{ strtoupper($q->correct_answer) === 'B' ? '#059669' : '#dc2626' }}; font-size: 10pt;">
+                            @if ($isSingle)
+                                {{ strtoupper($q->correct_answer) === 'B' ? 'BENAR (B)' : 'SALAH (S)' }}
+                            @else
+                                {{ $q->correct_answer }}
+                            @endif
+                        </td>
                     </tr>
                 @endforeach
             </tbody>
@@ -226,17 +237,31 @@
                     @php
                         $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
                         $pairs = $opts['pairs'] ?? [];
+                        $isSingle = ($opts['mode'] ?? '') === 'single' || empty($pairs) || count($pairs) <= 1;
                     @endphp
                     <tr>
                         <td align="center"><strong>{{ $q->question_number }}</strong></td>
                         <td>
-                            <ul style="margin: 0; padding-left: 16px; list-style-type: square;">
-                                @foreach ($pairs as $pIdx => $pair)
-                                    <li>Premis {{ $pIdx + 1 }} (<em>{{ $pair['left'] }}</em>) &rarr; Pilihan {{ $pair['key'] ?? chr(65 + $pIdx) }} (<em>{{ $pair['right'] }}</em>)</li>
-                                @endforeach
-                            </ul>
+                            @if ($isSingle)
+                                <div>Premis: <strong>{!! strip_tags($q->question_text) !!}</strong></div>
+                                <div style="color: #4b5563; font-size: 8.5pt; margin-top: 2px;">
+                                    Pasangan: <em>{{ $opts['right_text'] ?? ($pairs[0]['right'] ?? '-') }}</em>
+                                </div>
+                            @else
+                                <ul style="margin: 0; padding-left: 16px; list-style-type: square;">
+                                    @foreach ($pairs as $pIdx => $pair)
+                                        <li>Premis {{ $pIdx + 1 }} (<em>{{ $pair['left'] }}</em>) &rarr; Pilihan {{ $pair['key'] ?? chr(65 + $pIdx) }} (<em>{{ $pair['right'] }}</em>)</li>
+                                    @endforeach
+                                </ul>
+                            @endif
                         </td>
-                        <td align="center" style="font-weight: bold; color: #059669;">{{ $q->correct_answer }}</td>
+                        <td align="center" style="font-weight: bold; color: #059669; font-size: 10pt;">
+                            @if ($isSingle)
+                                &rarr; {{ strtoupper($q->correct_answer ?: ($opts['key'] ?? 'A')) }}
+                            @else
+                                {{ $q->correct_answer }}
+                            @endif
+                        </td>
                     </tr>
                 @endforeach
             </tbody>

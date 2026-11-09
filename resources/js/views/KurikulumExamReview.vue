@@ -328,30 +328,54 @@
               </div>
 
               <!-- True/False Statements Display -->
-              <div v-else-if="activePackage.questions[selectedQuestionIndex].question_type === 'true_false' && activePackage.questions[selectedQuestionIndex].options?.statements" class="space-y-1.5 pt-2">
-                <div
-                  v-for="(st, sIdx) in activePackage.questions[selectedQuestionIndex].options.statements"
-                  :key="sIdx"
-                  class="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs"
-                >
-                  <span>{{ sIdx + 1 }}. {{ st.text }}</span>
-                  <span class="px-2 py-0.5 rounded font-bold text-white text-[10px]" :class="st.answer === 'B' ? 'bg-emerald-600' : 'bg-rose-600'">
-                    {{ st.answer === 'B' ? 'Benar' : 'Salah' }}
+              <div v-else-if="activePackage.questions[selectedQuestionIndex].question_type === 'true_false'" class="space-y-1.5 pt-2">
+                <div v-if="activePackage.questions[selectedQuestionIndex].options?.statements?.length > 1" class="space-y-1.5">
+                  <div
+                    v-for="(st, sIdx) in activePackage.questions[selectedQuestionIndex].options.statements"
+                    :key="sIdx"
+                    class="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                  >
+                    <span>{{ sIdx + 1 }}. {{ st.text }}</span>
+                    <span class="px-2 py-0.5 rounded font-bold text-white text-[10px]" :class="st.answer === 'B' ? 'bg-emerald-600' : 'bg-rose-600'">
+                      {{ st.answer === 'B' ? 'Benar' : 'Salah' }}
+                    </span>
+                  </div>
+                </div>
+                <div v-else class="p-2.5 bg-purple-50/70 border border-purple-200 rounded-lg text-xs flex items-center justify-between">
+                  <span class="font-bold text-purple-900">Kunci Benar / Salah (Mode Per-Nomor):</span>
+                  <span
+                    class="px-2.5 py-1 rounded-md font-bold text-white text-xs"
+                    :class="activePackage.questions[selectedQuestionIndex].correct_answer === 'B' ? 'bg-emerald-600' : 'bg-rose-600'"
+                  >
+                    {{ activePackage.questions[selectedQuestionIndex].correct_answer === 'B' ? '✓ BENAR (B)' : '✗ SALAH (S)' }}
                   </span>
                 </div>
               </div>
 
               <!-- Matching Pairs Display -->
-              <div v-else-if="activePackage.questions[selectedQuestionIndex].question_type === 'matching' && activePackage.questions[selectedQuestionIndex].options?.pairs" class="space-y-1.5 pt-2">
-                <div
-                  v-for="(pair, pIdx) in activePackage.questions[selectedQuestionIndex].options.pairs"
-                  :key="pIdx"
-                  class="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs"
-                >
-                  <span>{{ pIdx + 1 }}. {{ pair.left }}</span>
-                  <span class="font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                    Pasangan {{ pair.key }}: {{ pair.right }}
-                  </span>
+              <div v-else-if="activePackage.questions[selectedQuestionIndex].question_type === 'matching'" class="space-y-1.5 pt-2">
+                <div v-if="activePackage.questions[selectedQuestionIndex].options?.pairs?.length > 1" class="space-y-1.5">
+                  <div
+                    v-for="(pair, pIdx) in activePackage.questions[selectedQuestionIndex].options.pairs"
+                    :key="pIdx"
+                    class="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                  >
+                    <span>{{ pIdx + 1 }}. {{ pair.left }}</span>
+                    <span class="font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                      Pasangan {{ pair.key }}: {{ pair.right }}
+                    </span>
+                  </div>
+                </div>
+                <div v-else class="p-2.5 bg-teal-50/70 border border-teal-200 rounded-lg text-xs space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-teal-900">Pasangan Menjodohkan (Mode Per-Nomor):</span>
+                    <span class="px-2 py-0.5 rounded font-bold text-white bg-teal-600 text-xs">
+                      Kunci: &rarr; Pilihan {{ activePackage.questions[selectedQuestionIndex].correct_answer || 'A' }}
+                    </span>
+                  </div>
+                  <div v-if="activePackage.questions[selectedQuestionIndex].options?.right_text" class="text-slate-700 text-xs italic">
+                    Teks Pasangan: "{{ activePackage.questions[selectedQuestionIndex].options.right_text }}"
+                  </div>
                 </div>
               </div>
 

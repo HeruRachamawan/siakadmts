@@ -741,12 +741,13 @@
               </span>
               <select
                 v-model="activeQuestions[currentQuestionIndex].question_type"
+                @change="handleTypeChange(activeQuestions[currentQuestionIndex])"
                 class="form-select py-1 px-2.5 text-xs font-bold text-slate-800 bg-slate-50 border-slate-300 rounded-lg max-w-[240px] sm:max-w-none"
               >
                 <option value="pg">Pilihan Ganda (PG Tunggal)</option>
                 <option value="pg_complex">Pilihan Ganda Kompleks (Multi Kunci)</option>
-                <option value="true_false">Benar / Salah (Matriks Pernyataan)</option>
-                <option value="matching">Menjodohkan (Matching Pairs)</option>
+                <option value="true_false">Benar / Salah (True / False)</option>
+                <option value="matching">Menjodohkan (Matching)</option>
                 <option value="short_answer">Isian Singkat (Short Answer)</option>
                 <option value="essay">Uraian / Essay</option>
               </select>
@@ -948,136 +949,329 @@
               </div>
             </div>
 
-            <!-- 3. BENAR / SALAH (Matriks Pernyataan) -->
+            <!-- 3. BENAR / SALAH (Dual Mode: Mandiri Per-Nomor vs Matriks AKM) -->
             <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'true_false'" class="space-y-3">
-              <div class="flex items-center justify-between pb-1 border-b border-slate-100">
-                <span class="text-xs font-bold text-purple-900">MATRIKS PERNYATAAN B / S:</span>
-                <button
-                  type="button"
-                  @click="addTfStatement(activeQuestions[currentQuestionIndex])"
-                  class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold rounded-lg border border-purple-200 flex items-center gap-1 transition"
-                >
-                  <Plus class="w-3.5 h-3.5" /> Tambah Pernyataan
-                </button>
-              </div>
-
-              <div class="space-y-2">
-                <div
-                  v-for="(st, sIdx) in ensureTrueFalse(activeQuestions[currentQuestionIndex])"
-                  :key="sIdx"
-                  class="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-                >
-                  <span class="w-5 text-center font-bold text-xs text-slate-500 shrink-0">{{ sIdx + 1 }}.</span>
-                  <input
-                    type="text"
-                    v-model="st.text"
-                    @paste="handleGenericTextPaste($event, st, 'text')"
-                    @blur="st.text = cleanOptionPrefix(st.text)"
-                    :placeholder="'Tulis pernyataan ' + (sIdx + 1) + '...'"
-                    class="form-input flex-1 py-1.5 text-xs bg-white min-w-[180px]"
-                  />
-                  <!-- Toggle Benar / Salah -->
-                  <div class="flex items-center bg-white border border-slate-200 rounded-lg p-0.5 shrink-0 ml-auto sm:ml-0">
-                    <button
-                      type="button"
-                      @click="st.answer = 'B'; syncTfAnswer(activeQuestions[currentQuestionIndex])"
-                      class="px-2.5 py-1 text-xs font-bold rounded-md transition"
-                      :class="st.answer === 'B' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-100'"
-                    >
-                      Benar
-                    </button>
-                    <button
-                      type="button"
-                      @click="st.answer = 'S'; syncTfAnswer(activeQuestions[currentQuestionIndex])"
-                      class="px-2.5 py-1 text-xs font-bold rounded-md transition"
-                      :class="st.answer === 'S' ? 'bg-rose-600 text-white' : 'text-slate-600 hover:bg-slate-100'"
-                    >
-                      Salah
-                    </button>
-                  </div>
+              <!-- Switcher Header -->
+              <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-purple-900 uppercase tracking-wide">Kunci Benar / Salah:</span>
+                  <span
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    :class="isTfSingleMode(activeQuestions[currentQuestionIndex]) ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'"
+                  >
+                    {{ isTfSingleMode(activeQuestions[currentQuestionIndex]) ? 'Mode Per-Nomor (Tunggal)' : 'Mode Tabel Matriks (AKM)' }}
+                  </span>
+                </div>
+                <!-- Dual Mode Toggle -->
+                <div class="inline-flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs">
                   <button
                     type="button"
-                    @click="removeTfStatement(activeQuestions[currentQuestionIndex], sIdx)"
-                    class="p-1.5 text-slate-400 hover:text-rose-600 shrink-0"
-                    title="Hapus baris pernyataan"
+                    @click="setTfMode(activeQuestions[currentQuestionIndex], 'single')"
+                    class="px-2.5 py-1 rounded-md font-bold transition flex items-center gap-1.5"
+                    :class="isTfSingleMode(activeQuestions[currentQuestionIndex]) ? 'bg-white text-purple-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
                   >
-                    <Trash2 class="w-3.5 h-3.5" />
+                    <span>1 Soal 1 Kunci (Standar)</span>
+                  </button>
+                  <button
+                    type="button"
+                    @click="setTfMode(activeQuestions[currentQuestionIndex], 'matrix')"
+                    class="px-2.5 py-1 rounded-md font-bold transition flex items-center gap-1.5"
+                    :class="!isTfSingleMode(activeQuestions[currentQuestionIndex]) ? 'bg-white text-purple-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                  >
+                    <span>Tabel Matriks (1 Soal Banyak Pernyataan)</span>
                   </button>
                 </div>
               </div>
-              <div class="text-xs text-slate-400 italic">
-                Kunci Matriks: <strong class="text-purple-600">{{ activeQuestions[currentQuestionIndex].correct_answer }}</strong>
-              </div>
-            </div>
 
-            <!-- 4. MENJODOHKAN (Matching Pairs) -->
-            <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'matching'" class="space-y-3">
-              <div class="flex items-center justify-between pb-1 border-b border-slate-100">
-                <span class="text-xs font-bold text-teal-900">PASANGAN MENJODOHKAN:</span>
-                <button
-                  type="button"
-                  @click="addMatchingPair(activeQuestions[currentQuestionIndex])"
-                  class="px-2.5 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold rounded-lg border border-teal-200 flex items-center gap-1 transition"
-                >
-                  <Plus class="w-3.5 h-3.5" /> Tambah Pasangan
-                </button>
-              </div>
+              <!-- MODE A: SINGLE (1 Soal = 1 Kunci, misal No. 31 s/d 35) -->
+              <div v-if="isTfSingleMode(activeQuestions[currentQuestionIndex])" class="space-y-3">
+                <p class="text-xs text-slate-500">
+                  Tuliskan bunyi pernyataan pada kotak <strong>Teks Soal / Narasi Stimulus</strong> di atas, lalu tentukan apakah pernyataan tersebut bernilai <strong>Benar (B)</strong> atau <strong>Salah (S)</strong>:
+                </p>
 
-              <div class="space-y-2">
-                <div
-                  v-for="(pair, pIdx) in ensureMatching(activeQuestions[currentQuestionIndex])"
-                  :key="pIdx"
-                  class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-                >
-                  <div class="sm:col-span-5">
-                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Kolom Kiri (Premis {{ pIdx + 1 }})</label>
-                    <input
-                      type="text"
-                      v-model="pair.left"
-                      @paste="handleGenericTextPaste($event, pair, 'left')"
-                      @blur="pair.left = cleanOptionPrefix(pair.left)"
-                      :placeholder="'Pernyataan ' + (pIdx + 1)"
-                      class="form-input py-1.5 text-xs bg-white w-full"
-                    />
-                  </div>
-                  <div class="sm:col-span-5">
-                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Kolom Kanan (Pilihan {{ String.fromCharCode(65 + pIdx) }})</label>
-                    <input
-                      type="text"
-                      v-model="pair.right"
-                      @paste="handleGenericTextPaste($event, pair, 'right')"
-                      @blur="pair.right = cleanOptionPrefix(pair.right)"
-                      :placeholder="'Jawaban ' + String.fromCharCode(65 + pIdx)"
-                      class="form-input py-1.5 text-xs bg-white w-full"
-                    />
-                  </div>
-                  <div class="sm:col-span-2 flex items-center justify-between sm:justify-end gap-1.5 pt-1 sm:pt-3">
-                    <select
-                      v-model="pair.key"
-                      @change="syncMatchingAnswer(activeQuestions[currentQuestionIndex])"
-                      class="form-select py-1 text-xs font-bold w-20 sm:w-16 bg-white"
-                      title="Kunci Pasangan"
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
+                  <!-- Tombol BENAR -->
+                  <button
+                    type="button"
+                    @click="setSingleTfKey(activeQuestions[currentQuestionIndex], 'B')"
+                    class="p-3.5 rounded-xl border-2 text-left transition flex items-center gap-3 cursor-pointer"
+                    :class="activeQuestions[currentQuestionIndex].correct_answer === 'B'
+                      ? 'border-emerald-500 bg-emerald-50/80 text-emerald-900 shadow-sm ring-2 ring-emerald-400/30'
+                      : 'border-slate-200 bg-white hover:border-emerald-300 hover:bg-slate-50 text-slate-700'"
+                  >
+                    <div
+                      class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 transition"
+                      :class="activeQuestions[currentQuestionIndex].correct_answer === 'B' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 border border-slate-300'"
                     >
-                      <option
-                        v-for="(_, oIdx) in ensureMatching(activeQuestions[currentQuestionIndex])"
-                        :key="oIdx"
-                        :value="String.fromCharCode(65 + oIdx)"
+                      B
+                    </div>
+                    <div class="min-w-0">
+                      <div class="font-bold text-sm">BENAR (B)</div>
+                      <div class="text-[11px] text-slate-500">Pernyataan bernilai tepat / valid</div>
+                    </div>
+                  </button>
+
+                  <!-- Tombol SALAH -->
+                  <button
+                    type="button"
+                    @click="setSingleTfKey(activeQuestions[currentQuestionIndex], 'S')"
+                    class="p-3.5 rounded-xl border-2 text-left transition flex items-center gap-3 cursor-pointer"
+                    :class="activeQuestions[currentQuestionIndex].correct_answer === 'S'
+                      ? 'border-rose-500 bg-rose-50/80 text-rose-900 shadow-sm ring-2 ring-rose-400/30'
+                      : 'border-slate-200 bg-white hover:border-rose-300 hover:bg-slate-50 text-slate-700'"
+                  >
+                    <div
+                      class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 transition"
+                      :class="activeQuestions[currentQuestionIndex].correct_answer === 'S' ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-500 border border-slate-300'"
+                    >
+                      S
+                    </div>
+                    <div class="min-w-0">
+                      <div class="font-bold text-sm">SALAH (S)</div>
+                      <div class="text-[11px] text-slate-500">Pernyataan bernilai keliru / tidak valid</div>
+                    </div>
+                  </button>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs text-slate-500 pt-1">
+                  <span>Kunci Terpilih Soal No. {{ activeQuestions[currentQuestionIndex].question_number }}:</span>
+                  <strong
+                    class="px-2 py-0.5 rounded font-bold"
+                    :class="activeQuestions[currentQuestionIndex].correct_answer === 'B' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'"
+                  >
+                    {{ activeQuestions[currentQuestionIndex].correct_answer === 'B' ? '✓ BENAR (B)' : (activeQuestions[currentQuestionIndex].correct_answer === 'S' ? '✗ SALAH (S)' : 'Belum dipilih') }}
+                  </strong>
+                  <span class="text-slate-400">| Bobot: {{ activeQuestions[currentQuestionIndex].score_weight || 1 }} Poin</span>
+                </div>
+              </div>
+
+              <!-- MODE B: MATRIX (1 Soal = Banyak Baris Pernyataan AKM) -->
+              <div v-else class="space-y-3">
+                <div class="flex items-center justify-between pb-1">
+                  <span class="text-xs font-semibold text-slate-600">Daftar Baris Pernyataan dalam Soal No. {{ activeQuestions[currentQuestionIndex].question_number }}:</span>
+                  <button
+                    type="button"
+                    @click="addTfStatement(activeQuestions[currentQuestionIndex])"
+                    class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold rounded-lg border border-purple-200 flex items-center gap-1 transition"
+                  >
+                    <Plus class="w-3.5 h-3.5" /> Tambah Pernyataan
+                  </button>
+                </div>
+
+                <div class="space-y-2">
+                  <div
+                    v-for="(st, sIdx) in ensureTrueFalse(activeQuestions[currentQuestionIndex])"
+                    :key="sIdx"
+                    class="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                  >
+                    <span class="w-5 text-center font-bold text-xs text-slate-500 shrink-0">{{ sIdx + 1 }}.</span>
+                    <input
+                      type="text"
+                      v-model="st.text"
+                      @paste="handleGenericTextPaste($event, st, 'text')"
+                      @blur="st.text = cleanOptionPrefix(st.text)"
+                      :placeholder="'Tulis pernyataan ' + (sIdx + 1) + '...'"
+                      class="form-input flex-1 py-1.5 text-xs bg-white min-w-[180px]"
+                    />
+                    <!-- Toggle Benar / Salah -->
+                    <div class="flex items-center bg-white border border-slate-200 rounded-lg p-0.5 shrink-0 ml-auto sm:ml-0">
+                      <button
+                        type="button"
+                        @click="st.answer = 'B'; syncTfAnswer(activeQuestions[currentQuestionIndex])"
+                        class="px-2.5 py-1 text-xs font-bold rounded-md transition"
+                        :class="st.answer === 'B' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-100'"
                       >
-                        → {{ String.fromCharCode(65 + oIdx) }}
-                      </option>
-                    </select>
+                        Benar
+                      </button>
+                      <button
+                        type="button"
+                        @click="st.answer = 'S'; syncTfAnswer(activeQuestions[currentQuestionIndex])"
+                        class="px-2.5 py-1 text-xs font-bold rounded-md transition"
+                        :class="st.answer === 'S' ? 'bg-rose-600 text-white' : 'text-slate-600 hover:bg-slate-100'"
+                      >
+                        Salah
+                      </button>
+                    </div>
                     <button
                       type="button"
-                      @click="removeMatchingPair(activeQuestions[currentQuestionIndex], pIdx)"
-                      class="p-1.5 text-slate-400 hover:text-rose-600 rounded"
+                      @click="removeTfStatement(activeQuestions[currentQuestionIndex], sIdx)"
+                      class="p-1.5 text-slate-400 hover:text-rose-600 shrink-0"
+                      title="Hapus baris pernyataan"
                     >
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
+                <div class="text-xs text-slate-400 italic">
+                  Kunci Matriks: <strong class="text-purple-600">{{ activeQuestions[currentQuestionIndex].correct_answer }}</strong>
+                </div>
               </div>
-              <div class="text-xs text-slate-400 italic">
-                Kunci Pasangan: <strong class="text-teal-600">{{ activeQuestions[currentQuestionIndex].correct_answer }}</strong>
+            </div>
+
+            <!-- 4. MENJODOHKAN (Dual Mode: Mandiri Per-Nomor vs Matriks AKM) -->
+            <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'matching'" class="space-y-3">
+              <!-- Switcher Header -->
+              <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-teal-900 uppercase tracking-wide">Pasangan Menjodohkan:</span>
+                  <span
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    :class="isMatchingSingleMode(activeQuestions[currentQuestionIndex]) ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-600'"
+                  >
+                    {{ isMatchingSingleMode(activeQuestions[currentQuestionIndex]) ? 'Mode Per-Nomor (Tunggal)' : 'Mode Tabel Matriks (AKM)' }}
+                  </span>
+                </div>
+                <!-- Dual Mode Toggle -->
+                <div class="inline-flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs">
+                  <button
+                    type="button"
+                    @click="setMatchingMode(activeQuestions[currentQuestionIndex], 'single')"
+                    class="px-2.5 py-1 rounded-md font-bold transition flex items-center gap-1.5"
+                    :class="isMatchingSingleMode(activeQuestions[currentQuestionIndex]) ? 'bg-white text-teal-800 shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                  >
+                    <span>1 Soal 1 Pasangan (Standar No. {{ activeQuestions[currentQuestionIndex].question_number }})</span>
+                  </button>
+                  <button
+                    type="button"
+                    @click="setMatchingMode(activeQuestions[currentQuestionIndex], 'matrix')"
+                    class="px-2.5 py-1 rounded-md font-bold transition flex items-center gap-1.5"
+                    :class="!isMatchingSingleMode(activeQuestions[currentQuestionIndex]) ? 'bg-white text-teal-800 shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                  >
+                    <span>Tabel Matriks (1 Soal Banyak Pasangan)</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- MODE A: SINGLE (1 Soal = 1 Pasangan Menjodohkan, misal No. 36 s/d 40) -->
+              <div v-if="isMatchingSingleMode(activeQuestions[currentQuestionIndex])" class="space-y-3">
+                <div class="p-3 bg-teal-50/60 border border-teal-200 rounded-xl space-y-2">
+                  <div class="text-xs text-teal-900 font-semibold flex items-center gap-1.5">
+                    <span>💡 <strong>Cara Pengisian Soal No. {{ activeQuestions[currentQuestionIndex].question_number }}:</strong></span>
+                  </div>
+                  <ul class="text-[11px] text-teal-800 list-disc list-inside space-y-0.5">
+                    <li><strong>Kolom Kiri (Premis):</strong> Tuliskan istilah atau pernyataan pada kotak <strong>Teks Soal / Narasi Stimulus</strong> di atas (misal: <em>Mouse (Tetikus)</em>).</li>
+                    <li><strong>Kolom Kanan (Pasangan Jawaban):</strong> Masukkan teks pilihan jawaban pasangannya dan tentukan huruf kuncinya di bawah ini:</li>
+                  </ul>
+                </div>
+
+                <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">
+                      Teks Jawaban Pasangan (Kolom Kanan) *
+                    </label>
+                    <input
+                      type="text"
+                      v-model="ensureSingleMatching(activeQuestions[currentQuestionIndex]).right_text"
+                      @paste="handleGenericTextPaste($event, ensureSingleMatching(activeQuestions[currentQuestionIndex]), 'right_text')"
+                      @blur="ensureSingleMatching(activeQuestions[currentQuestionIndex]).right_text = cleanOptionPrefix(ensureSingleMatching(activeQuestions[currentQuestionIndex]).right_text)"
+                      placeholder="Contoh: Perangkat penunjuk untuk menggerakkan kursor di layar..."
+                      class="form-input text-xs bg-white w-full font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                      Pilih Huruf Kunci Pasangan (Kunci Benar di Kolom Kanan):
+                    </label>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      <button
+                        v-for="letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']"
+                        :key="letter"
+                        type="button"
+                        @click="setSingleMatchingKey(activeQuestions[currentQuestionIndex], letter)"
+                        class="w-9 h-8 rounded-lg font-bold text-xs transition border flex items-center justify-center cursor-pointer"
+                        :class="activeQuestions[currentQuestionIndex].correct_answer === letter
+                          ? 'bg-teal-600 text-white border-teal-600 shadow-sm ring-2 ring-teal-400/30'
+                          : 'bg-white text-slate-700 border-slate-300 hover:border-teal-400 hover:bg-teal-50/50'"
+                      >
+                        {{ letter }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="pt-2 border-t border-slate-200/70 flex flex-wrap items-center justify-between text-xs text-slate-500">
+                    <div>
+                      Kunci Terpilih Soal No. {{ activeQuestions[currentQuestionIndex].question_number }}:
+                      <strong class="text-teal-700 text-sm font-bold ml-1">
+                        → Pilihan {{ activeQuestions[currentQuestionIndex].correct_answer || 'A' }}
+                      </strong>
+                    </div>
+                    <div class="text-[11px] text-slate-400 italic">
+                      * Saat dicetak, nomor 36-40 otomatis digabung menjadi satu tabel penjodohan rapi.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- MODE B: MATRIX (1 Soal = Banyak Pasangan AKM) -->
+              <div v-else class="space-y-3">
+                <div class="flex items-center justify-between pb-1">
+                  <span class="text-xs font-semibold text-slate-600">Daftar Pasangan dalam Butir Soal No. {{ activeQuestions[currentQuestionIndex].question_number }}:</span>
+                  <button
+                    type="button"
+                    @click="addMatchingPair(activeQuestions[currentQuestionIndex])"
+                    class="px-2.5 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold rounded-lg border border-teal-200 flex items-center gap-1 transition"
+                  >
+                    <Plus class="w-3.5 h-3.5" /> Tambah Pasangan
+                  </button>
+                </div>
+
+                <div class="space-y-2">
+                  <div
+                    v-for="(pair, pIdx) in ensureMatching(activeQuestions[currentQuestionIndex])"
+                    :key="pIdx"
+                    class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                  >
+                    <div class="sm:col-span-5">
+                      <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Kolom Kiri (Premis {{ pIdx + 1 }})</label>
+                      <input
+                        type="text"
+                        v-model="pair.left"
+                        @paste="handleGenericTextPaste($event, pair, 'left')"
+                        @blur="pair.left = cleanOptionPrefix(pair.left)"
+                        :placeholder="'Pernyataan ' + (pIdx + 1)"
+                        class="form-input py-1.5 text-xs bg-white w-full"
+                      />
+                    </div>
+                    <div class="sm:col-span-5">
+                      <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Kolom Kanan (Pilihan {{ String.fromCharCode(65 + pIdx) }})</label>
+                      <input
+                        type="text"
+                        v-model="pair.right"
+                        @paste="handleGenericTextPaste($event, pair, 'right')"
+                        @blur="pair.right = cleanOptionPrefix(pair.right)"
+                        :placeholder="'Jawaban ' + String.fromCharCode(65 + pIdx)"
+                        class="form-input py-1.5 text-xs bg-white w-full"
+                      />
+                    </div>
+                    <div class="sm:col-span-2 flex items-center justify-between sm:justify-end gap-1.5 pt-1 sm:pt-3">
+                      <select
+                        v-model="pair.key"
+                        @change="syncMatchingAnswer(activeQuestions[currentQuestionIndex])"
+                        class="form-select py-1 text-xs font-bold w-20 sm:w-16 bg-white"
+                        title="Kunci Pasangan"
+                      >
+                        <option
+                          v-for="(_, oIdx) in ensureMatching(activeQuestions[currentQuestionIndex])"
+                          :key="oIdx"
+                          :value="String.fromCharCode(65 + oIdx)"
+                        >
+                          → {{ String.fromCharCode(65 + oIdx) }}
+                        </option>
+                      </select>
+                      <button
+                        type="button"
+                        @click="removeMatchingPair(activeQuestions[currentQuestionIndex], pIdx)"
+                        class="p-1.5 text-slate-400 hover:text-rose-600 rounded"
+                      >
+                        <Trash2 class="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-xs text-slate-400 italic">
+                  Kunci Pasangan: <strong class="text-teal-600">{{ activeQuestions[currentQuestionIndex].correct_answer }}</strong>
+                </div>
               </div>
             </div>
 
@@ -1595,27 +1789,162 @@ const sanitizeAllQuestionsBeforeSave = () => {
         .replace(/margin-left\s*:\s*-[^;"]+;?/gi, 'margin-left: 0;');
     }
     // 2. Sanitize options for pg & pg_complex
-    if (q.options && typeof q.options === 'object' && !Array.isArray(q.options)) {
+    if (q.options && typeof q.options === 'object' && !Array.isArray(q.options) && ['pg', 'pg_complex'].includes(q.question_type)) {
       ['A', 'B', 'C', 'D', 'E'].forEach(letter => {
         if (q.options[letter]) {
           q.options[letter] = cleanOptionPrefix(q.options[letter]);
         }
       });
     }
-    // 3. Sanitize true_false statements
-    if (q.options?.statements && Array.isArray(q.options.statements)) {
-      q.options.statements.forEach(st => {
-        if (st.text) st.text = cleanOptionPrefix(st.text);
-      });
+    // 3. Sanitize true_false
+    if (q.question_type === 'true_false') {
+      if (isTfSingleMode(q)) {
+        if (!q.correct_answer || (q.correct_answer !== 'B' && q.correct_answer !== 'S')) {
+          q.correct_answer = 'B';
+        }
+        q.options = { mode: 'single', answer: q.correct_answer };
+      } else if (q.options?.statements && Array.isArray(q.options.statements)) {
+        q.options.mode = 'matrix';
+        q.options.statements.forEach(st => {
+          if (st.text) st.text = cleanOptionPrefix(st.text);
+        });
+        syncTfAnswer(q);
+      }
     }
-    // 4. Sanitize matching pairs
-    if (q.options?.pairs && Array.isArray(q.options.pairs)) {
-      q.options.pairs.forEach(pair => {
-        if (pair.left) pair.left = cleanOptionPrefix(pair.left);
-        if (pair.right) pair.right = cleanOptionPrefix(pair.right);
-      });
+    // 4. Sanitize matching
+    if (q.question_type === 'matching') {
+      if (isMatchingSingleMode(q)) {
+        const single = ensureSingleMatching(q);
+        if (single.right_text) single.right_text = cleanOptionPrefix(single.right_text);
+        q.correct_answer = single.key || 'A';
+        q.options = {
+          mode: 'single',
+          right_text: single.right_text,
+          key: single.key || 'A'
+        };
+      } else if (q.options?.pairs && Array.isArray(q.options.pairs)) {
+        q.options.mode = 'matrix';
+        q.options.pairs.forEach(pair => {
+          if (pair.left) pair.left = cleanOptionPrefix(pair.left);
+          if (pair.right) pair.right = cleanOptionPrefix(pair.right);
+        });
+        syncMatchingAnswer(q);
+      }
     }
   });
+};
+
+const handleTypeChange = (q) => {
+  if (q.question_type === 'true_false') {
+    if (!q.correct_answer || (q.correct_answer !== 'B' && q.correct_answer !== 'S')) {
+      q.correct_answer = 'B';
+    }
+    if (!q.options || typeof q.options !== 'object' || Array.isArray(q.options)) {
+      q.options = { mode: 'single', answer: 'B' };
+    }
+  } else if (q.question_type === 'matching') {
+    if (!q.correct_answer) {
+      q.correct_answer = 'A';
+    }
+    ensureSingleMatching(q);
+  } else if (q.question_type === 'pg') {
+    ensureOptions(q);
+  }
+};
+
+const isTfSingleMode = (q) => {
+  if (!q) return true;
+  if (q.options?.mode === 'matrix') return false;
+  if (q.options?.mode === 'single') return true;
+  if (Array.isArray(q.options?.statements) && q.options.statements.length > 1) return false;
+  return true;
+};
+
+const setTfMode = (q, mode) => {
+  if (!q.options || typeof q.options !== 'object' || Array.isArray(q.options)) {
+    q.options = {};
+  }
+  q.options.mode = mode;
+  if (mode === 'single') {
+    if (q.correct_answer !== 'B' && q.correct_answer !== 'S') {
+      q.correct_answer = 'B';
+    }
+    q.options.answer = q.correct_answer;
+  } else {
+    if (!Array.isArray(q.options.statements) || q.options.statements.length === 0) {
+      q.options.statements = [
+        { text: '', answer: 'B' },
+        { text: '', answer: 'S' },
+        { text: '', answer: 'B' }
+      ];
+    }
+    syncTfAnswer(q);
+  }
+};
+
+const setSingleTfKey = (q, ans) => {
+  q.correct_answer = ans;
+  if (!q.options || typeof q.options !== 'object' || Array.isArray(q.options)) {
+    q.options = {};
+  }
+  q.options.mode = 'single';
+  q.options.answer = ans;
+};
+
+const isMatchingSingleMode = (q) => {
+  if (!q) return true;
+  if (q.options?.mode === 'matrix') return false;
+  if (q.options?.mode === 'single') return true;
+  if (Array.isArray(q.options?.pairs) && q.options.pairs.length > 1) return false;
+  return true;
+};
+
+const ensureSingleMatching = (q) => {
+  if (!q.options || typeof q.options !== 'object' || Array.isArray(q.options)) {
+    q.options = { mode: 'single', right_text: '', key: q.correct_answer || 'A' };
+  }
+  if (q.options.mode !== 'single') {
+    q.options.mode = 'single';
+  }
+  if (q.options.right_text === undefined) {
+    const firstPair = Array.isArray(q.options.pairs) && q.options.pairs.length > 0 ? q.options.pairs[0] : null;
+    q.options.right_text = firstPair?.right || '';
+    q.options.key = firstPair?.key || q.correct_answer || 'A';
+    if ((!q.question_text || q.question_text.trim() === '') && firstPair?.left) {
+      q.question_text = firstPair.left;
+    }
+  }
+  if (!q.options.key) {
+    q.options.key = q.correct_answer || 'A';
+  }
+  if (!q.correct_answer) {
+    q.correct_answer = q.options.key || 'A';
+  }
+  return q.options;
+};
+
+const setMatchingMode = (q, mode) => {
+  if (!q.options || typeof q.options !== 'object' || Array.isArray(q.options)) {
+    q.options = {};
+  }
+  q.options.mode = mode;
+  if (mode === 'single') {
+    ensureSingleMatching(q);
+  } else {
+    if (!Array.isArray(q.options.pairs) || q.options.pairs.length === 0) {
+      q.options.pairs = [
+        { left: '', right: q.options.right_text || '', key: q.options.key || 'A' },
+        { left: '', right: '', key: 'B' }
+      ];
+    }
+    syncMatchingAnswer(q);
+  }
+};
+
+const setSingleMatchingKey = (q, letter) => {
+  const opts = ensureSingleMatching(q);
+  opts.key = letter;
+  q.correct_answer = letter;
 };
 
 // --- AKM Diversity Helpers ---

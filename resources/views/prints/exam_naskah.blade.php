@@ -367,12 +367,17 @@
             @endforeach
         @endif
 
-        <!-- 3. BAGIAN: BENAR / SALAH (AKM) -->
+        <!-- 3. BAGIAN: BENAR / SALAH -->
         @if (isset($trueFalseQuestions) && $trueFalseQuestions->isNotEmpty())
             <div class="section-title">{{ $secLetters[$secIdx++] }}. Pernyataan Benar - Salah</div>
-            <p class="section-desc">Tentukan apakah setiap pernyataan berikut bernilai <strong>Benar (B)</strong> atau <strong>Salah (S)</strong>!</p>
+            <p class="section-desc">Tentukan apakah setiap butir pernyataan berikut bernilai <strong>Benar (B)</strong> atau <strong>Salah (S)</strong>!</p>
 
             @foreach ($trueFalseQuestions as $q)
+                @php
+                    $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
+                    $statements = $opts['statements'] ?? [];
+                    $isSingle = ($opts['mode'] ?? '') === 'single' || empty($statements) || count($statements) <= 1;
+                @endphp
                 <div class="question-item">
                     <span class="q-number">{{ $q->question_number }}.</span>
                     <div class="q-text">{!! render_exam_question_html($q->question_text) !!}</div>
@@ -381,11 +386,21 @@
                         <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
                     @endif
 
-                    @php
-                        $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
-                        $statements = $opts['statements'] ?? [];
-                    @endphp
-                    @if (!empty($statements))
+                    @if ($isSingle)
+                        <!-- Mode Mandiri Per-Nomor (No. 31 - 35) -->
+                        <div style="margin: 4px 0 6px 18px; font-size: 9pt;">
+                            @if ($showKeys)
+                                <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: bold; background: {{ strtoupper($q->correct_answer) === 'B' ? '#d1fae5' : '#fee2e2' }}; color: {{ strtoupper($q->correct_answer) === 'B' ? '#065f46' : '#991b1b' }}; border: 1px solid {{ strtoupper($q->correct_answer) === 'B' ? '#6ee7b7' : '#fca5a5' }};">
+                                    Kunci: {{ strtoupper($q->correct_answer) === 'B' ? '[ ✓ ] BENAR (B)' : '[ ✓ ] SALAH (S)' }}
+                                </span>
+                            @else
+                                <span style="font-weight: bold; color: #444;">Pilihan:</span> &nbsp;
+                                <span style="border: 1px solid #000; padding: 1px 7px; border-radius: 3px; font-weight: bold; margin-right: 8px;">( &nbsp;&nbsp; ) BENAR</span>
+                                <span style="border: 1px solid #000; padding: 1px 7px; border-radius: 3px; font-weight: bold;">( &nbsp;&nbsp; ) SALAH</span>
+                            @endif
+                        </div>
+                    @else
+                        <!-- Mode Matriks Tabel AKM -->
                         <table class="akm-table">
                             <thead>
                                 <tr>
@@ -415,49 +430,135 @@
             @endforeach
         @endif
 
-        <!-- 4. BAGIAN: MENJODOHKAN (AKM) -->
+        <!-- 4. BAGIAN: MENJODOHKAN -->
         @if (isset($matchingQuestions) && $matchingQuestions->isNotEmpty())
             <div class="section-title">{{ $secLetters[$secIdx++] }}. Menjodohkan</div>
             <p class="section-desc">Jodohkanlah pernyataan pada Kolom Kiri dengan jawaban yang sesuai pada Kolom Kanan!</p>
 
-            @foreach ($matchingQuestions as $q)
-                <div class="question-item">
-                    <span class="q-number">{{ $q->question_number }}.</span>
-                    <div class="q-text">{!! render_exam_question_html($q->question_text) !!}</div>
+            @php
+                // Pisahkan antara soal mode mandiri (No. 36-40) dan mode matriks
+                $singleMatchingList = [];
+                $matrixMatchingList = [];
 
-                    @if ($q->question_image)
-                        <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
-                    @endif
+                foreach ($matchingQuestions as $mq) {
+                    $mOpts = is_array($mq->options) ? $mq->options : json_decode($mq->options, true);
+                    $pairs = $mOpts['pairs'] ?? [];
+                    $isMat = ($mOpts['mode'] ?? '') === 'matrix' || count($pairs) > 1;
+                    if ($isMat) {
+                        $matrixMatchingList[] = $mq;
+                    } else {
+                        $singleMatchingList[] = $mq;
+                    }
+                }
+            @endphp
 
-                    @php
-                        $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
-                        $pairs = $opts['pairs'] ?? [];
-                    @endphp
-                    @if (!empty($pairs))
-                        <table class="akm-table">
-                            <thead>
-                                <tr>
-                                    <th width="50%">Kolom Kiri (Pernyataan)</th>
-                                    <th width="50%">Kolom Kanan (Pilihan Jawaban)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($pairs as $pIdx => $pair)
-                                    <tr>
-                                        <td><strong>{{ $pIdx + 1 }}.</strong> {{ $pair['left'] ?? '-' }}</td>
-                                        <td><strong>{{ chr(65 + $pIdx) }}.</strong> {{ $pair['right'] ?? '-' }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                        @if ($showKeys && !empty($q->correct_answer))
-                            <div style="font-size: 8.5pt; color: #059669; font-weight: bold; margin-top: 3px;">
-                                Kunci Pasangan: {{ $q->correct_answer }}
-                            </div>
+            {{-- 4A. JIKA ADA SOAL MENJODOHKAN MODE MANDIRI PER-NOMOR (No. 36 s/d 40) --}}
+            @if (!empty($singleMatchingList))
+                @php
+                    // Kumpulkan semua pilihan kanan yang unik, diurutkan berdasarkan huruf A, B, C...
+                    $rightOptions = [];
+                    foreach ($singleMatchingList as $sq) {
+                        $sOpts = is_array($sq->options) ? $sq->options : json_decode($sq->options, true);
+                        $rText = $sOpts['right_text'] ?? ($sOpts['pairs'][0]['right'] ?? '');
+                        $rKey = strtoupper($sq->correct_answer ?: ($sOpts['key'] ?? 'A'));
+                        if (!empty($rText)) {
+                            $rightOptions[$rKey] = $rText;
+                        }
+                    }
+                    ksort($rightOptions);
+                    $rightList = [];
+                    foreach ($rightOptions as $k => $text) {
+                        $rightList[] = ['key' => $k, 'text' => $text];
+                    }
+                    $maxRows = max(count($singleMatchingList), count($rightList));
+                @endphp
+
+                <table class="akm-table" style="margin-bottom: 14px;">
+                    <thead>
+                        <tr>
+                            <th width="48%">Kolom Kiri (Pernyataan / Premis)</th>
+                            <th width="8%" style="text-align: center;">Kunci</th>
+                            <th width="44%">Kolom Kanan (Pilihan Jawaban)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for ($r = 0; $r < $maxRows; $r++)
+                            @php
+                                $leftQ = $singleMatchingList[$r] ?? null;
+                                $rightItem = $rightList[$r] ?? null;
+                            @endphp
+                            <tr>
+                                <td style="vertical-align: top;">
+                                    @if ($leftQ)
+                                        <strong>{{ $leftQ->question_number }}.</strong> {!! render_exam_question_html($leftQ->question_text) !!}
+                                        @if ($leftQ->question_image)
+                                            <div style="margin-top: 3px;">
+                                                <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $leftQ->question_image)) }}" style="max-height: 70px;" alt="Stimulus">
+                                            </div>
+                                        @endif
+                                    @endif
+                                </td>
+                                <td align="center" style="font-weight: bold; font-size: 9pt; vertical-align: top; padding-top: 5px;">
+                                    @if ($leftQ)
+                                        @if ($showKeys)
+                                            <span style="color: #059669; font-weight: bold;">[ {{ strtoupper($leftQ->correct_answer ?: '-') }} ]</span>
+                                        @else
+                                            ( &nbsp;&nbsp;&nbsp; )
+                                        @endif
+                                    @endif
+                                </td>
+                                <td style="vertical-align: top;">
+                                    @if ($rightItem)
+                                        <strong>{{ $rightItem['key'] }}.</strong> {{ $rightItem['text'] }}
+                                    @endif
+                                </td>
+                            </tr>
+                        @endfor
+                    </tbody>
+                </table>
+            @endif
+
+            {{-- 4B. JIKA ADA SOAL MENJODOHKAN MODE MATRIKS (1 Soal Banyak Pasangan) --}}
+            @if (!empty($matrixMatchingList))
+                @foreach ($matrixMatchingList as $q)
+                    <div class="question-item">
+                        <span class="q-number">{{ $q->question_number }}.</span>
+                        <div class="q-text">{!! render_exam_question_html($q->question_text) !!}</div>
+
+                        @if ($q->question_image)
+                            <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
                         @endif
-                    @endif
-                </div>
-            @endforeach
+
+                        @php
+                            $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
+                            $pairs = $opts['pairs'] ?? [];
+                        @endphp
+                        @if (!empty($pairs))
+                            <table class="akm-table">
+                                <thead>
+                                    <tr>
+                                        <th width="50%">Kolom Kiri (Pernyataan)</th>
+                                        <th width="50%">Kolom Kanan (Pilihan Jawaban)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($pairs as $pIdx => $pair)
+                                        <tr>
+                                            <td><strong>{{ $pIdx + 1 }}.</strong> {{ $pair['left'] ?? '-' }}</td>
+                                            <td><strong>{{ chr(65 + $pIdx) }}.</strong> {{ $pair['right'] ?? '-' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                            @if ($showKeys && !empty($q->correct_answer))
+                                <div style="font-size: 8.5pt; color: #059669; font-weight: bold; margin-top: 3px;">
+                                    Kunci Pasangan: {{ $q->correct_answer }}
+                                </div>
+                            @endif
+                        @endif
+                    </div>
+                @endforeach
+            @endif
         @endif
 
         <!-- 5. BAGIAN: ISIAN SINGKAT -->
