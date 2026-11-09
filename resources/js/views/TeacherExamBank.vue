@@ -391,34 +391,34 @@
     <!-- FULLSCREEN QUESTION & KISI-KISI STUDIO WORKSPACE -->
     <div v-if="activePackage" class="fixed inset-0 z-50 bg-slate-900 flex flex-col overflow-hidden">
       <!-- 1. STUDIO TOP NAVBAR -->
-      <header class="h-14 px-4 sm:px-6 bg-slate-900 text-white flex items-center justify-between shrink-0 border-b border-slate-800 z-20">
+      <header class="h-14 px-3 sm:px-6 bg-slate-900 text-white flex items-center justify-between shrink-0 border-b border-slate-800 z-20">
         <!-- Left: Back Button & Package Title Info -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
             @click="closeEditor"
-            class="px-2.5 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition flex items-center gap-1.5"
+            class="px-2.5 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition flex items-center gap-1.5 shrink-0"
             title="Kembali ke Daftar Paket Soal"
           >
             <ArrowLeft class="w-3.5 h-3.5" />
             <span class="hidden sm:inline">Kembali</span>
           </button>
           <div class="h-5 w-px bg-slate-750 hidden sm:block"></div>
-          <div class="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg shrink-0">
+          <div class="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg shrink-0 hidden sm:block">
             <BookOpen class="w-4 h-4" />
           </div>
           <div class="min-w-0">
-            <h2 class="text-sm font-bold truncate">{{ activePackage.title }}</h2>
-            <p class="text-[11px] text-slate-400 truncate">
+            <h2 class="text-xs sm:text-sm font-bold truncate">{{ activePackage.title }}</h2>
+            <p class="text-[10px] sm:text-[11px] text-slate-400 truncate">
               {{ activePackage.subject?.name }} &bull; Kelas {{ activePackage.class_room?.name }} &bull; {{ activePackage.academic_phase || 'Fase D' }}
             </p>
           </div>
         </div>
 
-        <!-- Center: Dynamic Progress Bar Pill -->
-        <div class="hidden md:flex items-center gap-3 px-3.5 py-1.5 bg-slate-800/80 border border-slate-700 rounded-xl text-xs">
+        <!-- Center: Dynamic Progress Bar Pill (Desktop) -->
+        <div class="hidden xl:flex items-center gap-3 px-3.5 py-1.5 bg-slate-800/80 border border-slate-700 rounded-xl text-xs">
           <span class="text-slate-400 text-[11px]">Progres:</span>
-          <div class="w-28 bg-slate-750 h-2 rounded-full overflow-hidden">
+          <div class="w-24 2xl:w-32 bg-slate-750 h-2 rounded-full overflow-hidden">
             <div
               class="bg-emerald-500 h-full rounded-full transition-all duration-300"
               :style="{ width: progressPercent + '%' }"
@@ -429,27 +429,39 @@
           </span>
         </div>
 
-        <!-- Right: Actions (Preview, Save, Close) -->
-        <div class="flex items-center gap-2">
-          <!-- Quick Print Preview -->
-          <div class="hidden sm:flex items-center gap-1.5">
+        <!-- Right: Actions (Preview, Toggle, Save, Close) -->
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <!-- Toggle Panel Kisi-Kisi on Desktop -->
+          <button
+            type="button"
+            @click="showRightPane = !showRightPane"
+            class="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg border transition"
+            :class="showRightPane ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'"
+            title="Tampilkan / Sembunyikan Panel Kisi-Kisi"
+          >
+            <TableProperties class="w-3.5 h-3.5" />
+            <span class="hidden xl:inline">Kisi-Kisi</span>
+          </button>
+
+          <!-- Quick Print Preview (Desktop) -->
+          <div class="hidden md:flex items-center gap-1">
             <button
               type="button"
               @click="previewNaskah"
-              class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition flex items-center gap-1"
+              class="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition flex items-center gap-1"
               title="Preview Naskah Soal 2 Kolom"
             >
               <Eye class="w-3.5 h-3.5 text-slate-400" />
-              <span>Naskah</span>
+              <span class="hidden xl:inline">Naskah</span>
             </button>
             <button
               type="button"
               @click="previewKisiKisi"
-              class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition flex items-center gap-1"
+              class="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition flex items-center gap-1"
               title="Preview Format Kisi-Kisi Standar Kemenag"
             >
               <TableProperties class="w-3.5 h-3.5 text-slate-400" />
-              <span>Kisi-Kisi</span>
+              <span class="hidden xl:inline">Kisi-Kisi</span>
             </button>
           </div>
 
@@ -458,7 +470,8 @@
             type="button"
             @click="saveAllQuestions"
             :disabled="savingQuestions"
-            class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50"
+            title="Simpan Semua (Ctrl+S)"
           >
             <Save class="w-3.5 h-3.5" />
             <span>{{ savingQuestions ? 'Menyimpan...' : 'Simpan Semua' }}</span>
@@ -476,10 +489,44 @@
         </div>
       </header>
 
+      <!-- 1.1 MOBILE SUBNAV / TAB BAR (< lg only) -->
+      <div class="lg:hidden flex items-center bg-slate-900 border-b border-slate-800 px-3 py-1.5 gap-1.5 shrink-0 z-10">
+        <button
+          type="button"
+          @click="mobileStudioTab = 'soal'"
+          class="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5"
+          :class="mobileStudioTab === 'soal' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-800 text-slate-300 hover:bg-slate-750'"
+        >
+          <Edit3 class="w-3.5 h-3.5" />
+          <span>1. Naskah</span>
+        </button>
+        <button
+          type="button"
+          @click="mobileStudioTab = 'kisi'"
+          class="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5"
+          :class="mobileStudioTab === 'kisi' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-800 text-slate-300 hover:bg-slate-750'"
+        >
+          <TableProperties class="w-3.5 h-3.5" />
+          <span>2. Kisi-Kisi</span>
+        </button>
+        <button
+          type="button"
+          @click="mobileStudioTab = 'nomor'"
+          class="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5"
+          :class="mobileStudioTab === 'nomor' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-800 text-slate-300 hover:bg-slate-750'"
+        >
+          <span class="w-2 h-2 rounded-full" :class="isQuestionComplete(activeQuestions[currentQuestionIndex]) ? 'bg-emerald-400' : 'bg-amber-400'"></span>
+          <span>3. No. {{ currentQuestionIndex + 1 }}</span>
+        </button>
+      </div>
+
       <!-- 2. STUDIO WORKSPACE BODY (3 Panes: Nav Sidebar, Center Question Form, Right Kisi-Kisi Studio) -->
       <div class="flex-1 flex overflow-hidden bg-slate-100">
-        <!-- PANE 1: LEFT NAVIGATION (Nomor Soal) -->
-        <aside class="w-56 xl:w-64 bg-white border-r border-slate-200 shrink-0 flex flex-col justify-between overflow-hidden shadow-2xs">
+        <!-- PANE 1: LEFT NAVIGATION (Nomor Soal) - Desktop only (hidden on < lg) -->
+        <aside
+          v-if="showLeftSidebar"
+          class="hidden lg:flex w-56 xl:w-60 bg-white border-r border-slate-200 shrink-0 flex-col justify-between overflow-hidden shadow-2xs transition-all duration-200"
+        >
           <!-- Sidebar Header -->
           <div class="p-3.5 border-b border-slate-100 space-y-2.5">
             <div class="flex items-center justify-between">
@@ -487,14 +534,24 @@
                 <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
                 Nomor Soal
               </span>
-              <button
-                type="button"
-                @click="addNewQuestion"
-                class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-bold rounded-md border border-emerald-200 flex items-center gap-1 transition"
-                title="Tambah 1 nomor soal di akhir"
-              >
-                <Plus class="w-3 h-3" /> Tambah
-              </button>
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  @click="addNewQuestion"
+                  class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-bold rounded-md border border-emerald-200 flex items-center gap-1 transition"
+                  title="Tambah 1 nomor soal di akhir"
+                >
+                  <Plus class="w-3 h-3" /> Tambah
+                </button>
+                <button
+                  type="button"
+                  @click="showLeftSidebar = false"
+                  class="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-slate-100 transition"
+                  title="Ciutkan Panel Nomor Soal"
+                >
+                  <ChevronLeft class="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
             <!-- Quick Filter Tabs -->
@@ -566,41 +623,125 @@
           </div>
         </aside>
 
+        <!-- Collapsed Mini Sidebar Button (Desktop only when collapsed) -->
+        <div v-else class="hidden lg:flex flex-col items-center py-3 px-1.5 bg-white border-r border-slate-200 shrink-0">
+          <button
+            type="button"
+            @click="showLeftSidebar = true"
+            class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition"
+            title="Buka Panel Nomor Soal"
+          >
+            <ChevronRight class="w-4 h-4" />
+          </button>
+          <span class="[writing-mode:vertical-lr] rotate-180 text-[11px] font-bold text-slate-400 tracking-wider mt-4">
+            No. Soal
+          </span>
+        </div>
+
+        <!-- MOBILE VIEW FOR TAB 3: DAFTAR NOMOR SOAL (lg:hidden) -->
+        <div
+          v-if="mobileStudioTab === 'nomor'"
+          class="flex-1 lg:hidden flex flex-col justify-between overflow-hidden bg-white"
+        >
+          <div class="p-4 border-b border-slate-100 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                Daftar Nomor Soal ({{ activeQuestions.length }})
+              </span>
+              <button
+                type="button"
+                @click="addNewQuestion"
+                class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-200 flex items-center gap-1 transition"
+              >
+                <Plus class="w-3.5 h-3.5" /> Tambah Soal
+              </button>
+            </div>
+
+            <!-- Quick Filter Tabs -->
+            <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl text-xs">
+              <button
+                type="button"
+                @click="questionFilter = 'all'"
+                class="py-1.5 font-bold rounded-lg transition text-center"
+                :class="questionFilter === 'all' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'"
+              >
+                Semua ({{ activeQuestions.length }})
+              </button>
+              <button
+                type="button"
+                @click="questionFilter = 'incomplete'"
+                class="py-1.5 font-bold rounded-lg transition text-center"
+                :class="questionFilter === 'incomplete' ? 'bg-white text-amber-700 shadow-2xs' : 'text-slate-500'"
+              >
+                Belum Lengkap ({{ activeQuestions.length - completedQuestionsCount }})
+              </button>
+            </div>
+          </div>
+
+          <!-- Number Grid Mobile (5 cols) -->
+          <div class="flex-1 overflow-y-auto p-4">
+            <div class="grid grid-cols-5 sm:grid-cols-6 gap-2">
+              <button
+                v-for="(q, idx) in activeQuestions"
+                :key="q.question_number"
+                type="button"
+                v-show="questionFilter === 'all' || !isQuestionComplete(q)"
+                @click="currentQuestionIndex = idx; mobileStudioTab = 'soal'"
+                class="h-14 rounded-xl text-xs font-bold border transition flex flex-col items-center justify-center relative select-none"
+                :class="[
+                  currentQuestionIndex === idx
+                    ? 'bg-slate-900 text-white border-slate-900 ring-2 ring-indigo-500 shadow-xs'
+                    : isQuestionComplete(q)
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                ]"
+              >
+                <span class="text-sm font-bold leading-tight">{{ q.question_number }}</span>
+                <span
+                  class="text-[9px] font-extrabold uppercase mt-0.5 tracking-tighter"
+                  :class="[
+                    currentQuestionIndex === idx
+                      ? 'text-indigo-300'
+                      : isQuestionComplete(q)
+                        ? 'text-emerald-600'
+                        : 'text-slate-400'
+                  ]"
+                >
+                  {{ getShortTypeLabel(q.question_type) }}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div class="p-3.5 border-t border-slate-100 bg-slate-50 text-xs text-slate-500 flex items-center justify-around">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+              <span>Hijau: Lengkap</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-300 shrink-0"></span>
+              <span>Putih: Belum Lengkap</span>
+            </div>
+          </div>
+        </div>
+
         <!-- PANE 2: CENTER (Naskah Soal & Pilihan Jawaban AKM) -->
         <main
           v-if="activeQuestions[currentQuestionIndex]"
-          class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4"
-          :class="{ 'hidden lg:block': mobileStudioTab === 'kisi' }"
+          class="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-4"
+          :class="{ 'hidden lg:block': mobileStudioTab !== 'soal' }"
         >
-          <!-- Mobile Tab Switcher (< lg only) -->
-          <div class="flex lg:hidden items-center justify-center p-1 bg-slate-200 rounded-xl text-xs mb-2">
-            <button
-              type="button"
-              @click="mobileStudioTab = 'soal'"
-              class="flex-1 py-1.5 rounded-lg font-bold transition"
-              :class="mobileStudioTab === 'soal' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'"
-            >
-              1. Naskah & Jawaban Soal
-            </button>
-            <button
-              type="button"
-              @click="mobileStudioTab = 'kisi'"
-              class="flex-1 py-1.5 rounded-lg font-bold transition"
-              :class="mobileStudioTab === 'kisi' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'"
-            >
-              2. Pemetaan Kisi-Kisi
-            </button>
-          </div>
-
           <!-- Card 1: Question Meta Header -->
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5">
-              <span class="px-3 py-1 bg-slate-900 text-white font-bold text-xs rounded-lg shadow-2xs">
+          <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <span class="px-2.5 py-1 bg-slate-900 text-white font-bold text-xs rounded-lg shadow-2xs shrink-0">
                 Soal No. {{ activeQuestions[currentQuestionIndex].question_number }}
               </span>
               <select
                 v-model="activeQuestions[currentQuestionIndex].question_type"
-                class="form-select py-1 px-3 text-xs font-bold text-slate-800 bg-slate-50 border-slate-300"
+                class="form-select py-1 px-2.5 text-xs font-bold text-slate-800 bg-slate-50 border-slate-300 rounded-lg max-w-[240px] sm:max-w-none"
               >
                 <option value="pg">Pilihan Ganda (PG Tunggal)</option>
                 <option value="pg_complex">Pilihan Ganda Kompleks (Multi Kunci)</option>
@@ -611,15 +752,15 @@
               </select>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2.5 ml-auto sm:ml-0">
               <div class="flex items-center gap-1.5">
-                <label class="text-xs text-slate-500 font-medium">Bobot Skor:</label>
+                <label class="text-xs text-slate-500 font-medium">Bobot:</label>
                 <input
                   type="number"
                   v-model.number="activeQuestions[currentQuestionIndex].score_weight"
                   step="0.5"
                   min="0.5"
-                  class="form-input w-20 py-1 text-xs text-center font-bold bg-slate-50 border-slate-300"
+                  class="form-input w-16 sm:w-20 py-1 text-xs text-center font-bold bg-slate-50 border-slate-300 rounded-lg"
                 />
               </div>
 
@@ -635,8 +776,8 @@
           </div>
 
           <!-- Card 2: Question Narration & Stimulus -->
-          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-3">
-            <div class="flex items-center justify-between">
+          <div class="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-2xs space-y-3">
+            <div class="flex items-center justify-between flex-wrap gap-2">
               <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Teks Soal / Narasi Stimulus *
               </label>
@@ -653,11 +794,13 @@
                   type="button"
                   @click="triggerStimulusUpload"
                   :disabled="uploadingImage"
-                  class="text-xs text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition disabled:opacity-50"
-                  title="Klik untuk memilih file gambar dari komputer"
+                  class="text-xs text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition disabled:opacity-50"
+                  title="Klik untuk memilih file gambar stimulus"
                 >
                   <Image class="w-3.5 h-3.5" />
-                  <span>{{ uploadingImage ? 'Mengunggah...' : (activeQuestions[currentQuestionIndex].question_image ? 'Ganti Stimulus Gambar' : '+ Unggah Gambar / Diagram') }}</span>
+                  <span class="text-[11px] sm:text-xs">
+                    {{ uploadingImage ? 'Mengunggah...' : (activeQuestions[currentQuestionIndex].question_image ? 'Ganti Gambar' : '+ Unggah Gambar') }}
+                  </span>
                 </button>
               </div>
             </div>
@@ -666,16 +809,16 @@
               v-model="activeQuestions[currentQuestionIndex].question_text"
               rows="4"
               placeholder="Tuliskan rumusan butir soal secara jelas, lugas, dan tegas di sini..."
-              class="form-textarea text-xs"
+              class="form-textarea text-xs w-full rounded-xl"
             ></textarea>
 
             <!-- Image Preview -->
             <div v-if="activeQuestions[currentQuestionIndex].question_image" class="relative inline-block border border-slate-200 rounded-lg p-1 bg-slate-50">
-              <img :src="getStorageUrl(activeQuestions[currentQuestionIndex].question_image)" class="max-h-36 rounded" alt="Stimulus" />
+              <img :src="getStorageUrl(activeQuestions[currentQuestionIndex].question_image)" class="max-h-36 sm:max-h-48 rounded object-contain" alt="Stimulus" />
               <button
                 type="button"
                 @click="activeQuestions[currentQuestionIndex].question_image = null"
-                class="absolute -top-2 -right-2 p-1 bg-rose-600 text-white rounded-full shadow"
+                class="absolute -top-2 -right-2 p-1 bg-rose-600 text-white rounded-full shadow hover:bg-rose-700 transition"
                 title="Hapus gambar"
               >
                 <X class="w-3 h-3" />
@@ -684,10 +827,10 @@
           </div>
 
           <!-- Card 3: Pilihan Jawaban & Kunci Berdasarkan Tipe AKM -->
-          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-3">
+          <div class="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-2xs space-y-3">
             <!-- 1. PG TUNGGAL -->
             <div v-if="activeQuestions[currentQuestionIndex].question_type === 'pg'" class="space-y-2">
-              <div class="text-xs font-bold text-slate-700 flex items-center justify-between pb-1 border-b border-slate-100">
+              <div class="text-xs font-bold text-slate-700 flex flex-wrap items-center justify-between gap-1 pb-1 border-b border-slate-100">
                 <span>PILIHAN JAWABAN (A - D):</span>
                 <span class="text-[11px] text-emerald-600 font-semibold">Klik lingkaran huruf untuk memilih 1 Kunci Benar</span>
               </div>
@@ -711,9 +854,9 @@
                   type="text"
                   v-model="ensureOptions(activeQuestions[currentQuestionIndex])[opt]"
                   :placeholder="'Tulis isi pilihan ' + opt + '...'"
-                  class="form-input flex-1 py-1.5 text-xs bg-white"
+                  class="form-input flex-1 py-1.5 text-xs bg-white min-w-0"
                 />
-                <span v-if="activeQuestions[currentQuestionIndex].correct_answer === opt" class="text-xs font-bold text-emerald-700 px-2 py-0.5 bg-emerald-100 rounded">
+                <span v-if="activeQuestions[currentQuestionIndex].correct_answer === opt" class="text-[11px] font-bold text-emerald-700 px-1.5 py-0.5 bg-emerald-100 rounded shrink-0">
                   ✓ KUNCI
                 </span>
               </div>
@@ -721,9 +864,9 @@
 
             <!-- 2. PG KOMPLEKS (Multi Kunci) -->
             <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'pg_complex'" class="space-y-2">
-              <div class="text-xs font-bold text-slate-700 flex items-center justify-between pb-1 border-b border-slate-100">
+              <div class="text-xs font-bold text-slate-700 flex flex-wrap items-center justify-between gap-1 pb-1 border-b border-slate-100">
                 <span class="text-indigo-900 font-bold">PILIHAN GANDA KOMPLEKS (A - E):</span>
-                <span class="text-[11px] text-indigo-600 font-semibold">Klik kotak huruf untuk memilih beberapa kunci benar</span>
+                <span class="text-[11px] text-indigo-600 font-semibold">Klik kotak huruf untuk memilih beberapa kunci</span>
               </div>
 
               <div
@@ -744,9 +887,9 @@
                   type="text"
                   v-model="ensureOptions(activeQuestions[currentQuestionIndex])[opt]"
                   :placeholder="'Tulis opsi / pernyataan ' + opt + '...'"
-                  class="form-input flex-1 py-1.5 text-xs bg-white"
+                  class="form-input flex-1 py-1.5 text-xs bg-white min-w-0"
                 />
-                <span v-if="isComplexKeySelected(activeQuestions[currentQuestionIndex], opt)" class="text-xs font-bold text-indigo-700 px-2 py-0.5 bg-indigo-100 rounded">
+                <span v-if="isComplexKeySelected(activeQuestions[currentQuestionIndex], opt)" class="text-[11px] font-bold text-indigo-700 px-1.5 py-0.5 bg-indigo-100 rounded shrink-0">
                   ✓ KUNCI
                 </span>
               </div>
@@ -758,7 +901,7 @@
             <!-- 3. BENAR / SALAH (Matriks Pernyataan) -->
             <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'true_false'" class="space-y-3">
               <div class="flex items-center justify-between pb-1 border-b border-slate-100">
-                <span class="text-xs font-bold text-purple-900">MATRIKS PERNYATAAN BENAR / SALAH:</span>
+                <span class="text-xs font-bold text-purple-900">MATRIKS PERNYATAAN B / S:</span>
                 <button
                   type="button"
                   @click="addTfStatement(activeQuestions[currentQuestionIndex])"
@@ -772,17 +915,17 @@
                 <div
                   v-for="(st, sIdx) in ensureTrueFalse(activeQuestions[currentQuestionIndex])"
                   :key="sIdx"
-                  class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                  class="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
                 >
-                  <span class="w-6 text-center font-bold text-xs text-slate-500">{{ sIdx + 1 }}.</span>
+                  <span class="w-5 text-center font-bold text-xs text-slate-500 shrink-0">{{ sIdx + 1 }}.</span>
                   <input
                     type="text"
                     v-model="st.text"
                     :placeholder="'Tulis pernyataan ' + (sIdx + 1) + '...'"
-                    class="form-input flex-1 py-1.5 text-xs bg-white"
+                    class="form-input flex-1 py-1.5 text-xs bg-white min-w-[180px]"
                   />
                   <!-- Toggle Benar / Salah -->
-                  <div class="flex items-center bg-white border border-slate-200 rounded-lg p-0.5 shrink-0">
+                  <div class="flex items-center bg-white border border-slate-200 rounded-lg p-0.5 shrink-0 ml-auto sm:ml-0">
                     <button
                       type="button"
                       @click="st.answer = 'B'; syncTfAnswer(activeQuestions[currentQuestionIndex])"
@@ -803,7 +946,7 @@
                   <button
                     type="button"
                     @click="removeTfStatement(activeQuestions[currentQuestionIndex], sIdx)"
-                    class="p-1.5 text-slate-400 hover:text-rose-600"
+                    class="p-1.5 text-slate-400 hover:text-rose-600 shrink-0"
                     title="Hapus baris pernyataan"
                   >
                     <Trash2 class="w-3.5 h-3.5" />
@@ -832,31 +975,31 @@
                 <div
                   v-for="(pair, pIdx) in ensureMatching(activeQuestions[currentQuestionIndex])"
                   :key="pIdx"
-                  class="grid grid-cols-12 gap-2 items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                  class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
                 >
-                  <div class="col-span-5">
+                  <div class="sm:col-span-5">
                     <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Kolom Kiri (Premis {{ pIdx + 1 }})</label>
                     <input
                       type="text"
                       v-model="pair.left"
                       :placeholder="'Pernyataan ' + (pIdx + 1)"
-                      class="form-input py-1 text-xs bg-white"
+                      class="form-input py-1.5 text-xs bg-white w-full"
                     />
                   </div>
-                  <div class="col-span-5">
+                  <div class="sm:col-span-5">
                     <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Kolom Kanan (Pilihan {{ String.fromCharCode(65 + pIdx) }})</label>
                     <input
                       type="text"
                       v-model="pair.right"
                       :placeholder="'Jawaban ' + String.fromCharCode(65 + pIdx)"
-                      class="form-input py-1 text-xs bg-white"
+                      class="form-input py-1.5 text-xs bg-white w-full"
                     />
                   </div>
-                  <div class="col-span-2 flex items-center justify-end gap-1 pt-3">
+                  <div class="sm:col-span-2 flex items-center justify-between sm:justify-end gap-1.5 pt-1 sm:pt-3">
                     <select
                       v-model="pair.key"
                       @change="syncMatchingAnswer(activeQuestions[currentQuestionIndex])"
-                      class="form-select py-1 text-xs font-bold w-16 bg-white"
+                      class="form-select py-1 text-xs font-bold w-20 sm:w-16 bg-white"
                       title="Kunci Pasangan"
                     >
                       <option
@@ -870,7 +1013,7 @@
                     <button
                       type="button"
                       @click="removeMatchingPair(activeQuestions[currentQuestionIndex], pIdx)"
-                      class="p-1 text-slate-400 hover:text-rose-600"
+                      class="p-1.5 text-slate-400 hover:text-rose-600 rounded"
                     >
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>
@@ -901,7 +1044,7 @@
                 v-model="activeQuestions[currentQuestionIndex].correct_answer"
                 rows="3"
                 placeholder="Tuliskan kata kunci jawaban yang diharapkan dan kriteria penskoran..."
-                class="form-textarea text-xs"
+                class="form-textarea text-xs w-full"
               ></textarea>
             </div>
           </div>
@@ -909,23 +1052,23 @@
 
         <!-- PANE 3: RIGHT (Studio Pemetaan Kisi-Kisi Butir Soal) -->
         <aside
-          v-if="activeQuestions[currentQuestionIndex]"
-          class="w-full lg:w-88 xl:w-[400px] 2xl:w-[450px] bg-white border-l border-slate-200 shrink-0 overflow-y-auto p-5 space-y-4 shadow-2xs"
-          :class="{ 'hidden lg:block': mobileStudioTab === 'soal' }"
+          v-if="activeQuestions[currentQuestionIndex] && showRightPane"
+          class="w-full lg:w-80 xl:w-96 2xl:w-[420px] bg-white border-l border-slate-200 shrink-0 overflow-y-auto p-4 sm:p-5 space-y-4 shadow-2xs transition-all duration-200"
+          :class="{ 'hidden lg:block': mobileStudioTab !== 'kisi' }"
         >
           <!-- Kisi-Kisi Header -->
           <div class="flex items-center gap-2 pb-2.5 border-b border-slate-100">
-            <div class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg">
+            <div class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg shrink-0">
               <TableProperties class="w-4 h-4" />
             </div>
-            <div>
-              <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Pemetaan Kisi-Kisi Butir Soal</h4>
-              <p class="text-[11px] text-slate-400">Terintegrasi langsung ke Format Cetak Resmi Kemenag</p>
+            <div class="min-w-0">
+              <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider truncate">Pemetaan Kisi-Kisi Butir Soal</h4>
+              <p class="text-[11px] text-slate-400 truncate">Terintegrasi langsung ke Format Cetak Resmi Kemenag</p>
             </div>
           </div>
 
           <!-- Form Fields Kisi-Kisi -->
-          <div class="space-y-3.5 text-xs">
+          <div class="space-y-3 text-xs">
             <!-- Materi Pokok -->
             <div>
               <label class="block font-bold text-slate-700 mb-1">Materi Pokok / Topik *</label>
@@ -998,32 +1141,44 @@
       </div>
 
       <!-- 3. STUDIO STICKY FOOTER NAVIGATION -->
-      <footer class="h-14 px-6 bg-white border-t border-slate-200 flex items-center justify-between shrink-0 shadow-md z-20">
+      <footer class="h-14 px-3 sm:px-6 bg-white border-t border-slate-200 flex items-center justify-between shrink-0 shadow-md z-20">
         <!-- Previous Question -->
         <button
           type="button"
           @click="prevQuestion"
           :disabled="currentQuestionIndex === 0"
-          class="px-4 py-2 border border-slate-200 text-slate-700 disabled:opacity-30 rounded-xl text-xs font-semibold hover:bg-slate-50 transition flex items-center gap-1.5"
+          class="px-2.5 sm:px-4 py-2 border border-slate-200 text-slate-700 disabled:opacity-30 rounded-xl text-xs font-semibold hover:bg-slate-50 transition flex items-center gap-1 sm:gap-1.5"
         >
           <ChevronLeft class="w-4 h-4" />
-          <span>Soal Sebelumnya</span>
+          <span class="hidden sm:inline">Soal Sebelumnya</span>
+          <span class="sm:hidden">Prev</span>
         </button>
 
         <!-- Current Question Info -->
-        <div class="text-xs font-medium text-slate-500">
+        <!-- Desktop: Text Counter -->
+        <div class="hidden sm:block text-xs font-medium text-slate-500">
           Nomor <strong class="text-slate-900">{{ currentQuestionIndex + 1 }}</strong> dari {{ activeQuestions.length }} Butir Soal
         </div>
+        <!-- Mobile: Clickable Indicator that switches to Tab 3 (Nomor Soal) -->
+        <button
+          type="button"
+          @click="mobileStudioTab = 'nomor'"
+          class="sm:hidden px-3 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 flex items-center gap-1 transition"
+        >
+          <span>No. {{ currentQuestionIndex + 1 }}/{{ activeQuestions.length }}</span>
+          <ChevronDown class="w-3.5 h-3.5 text-slate-500" />
+        </button>
 
-        <!-- Next Question & Add -->
+        <!-- Next Question -->
         <div class="flex items-center gap-2">
           <button
             type="button"
             @click="nextQuestion"
             :disabled="currentQuestionIndex === activeQuestions.length - 1"
-            class="px-4 py-2 bg-slate-900 text-white disabled:opacity-30 rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center gap-1.5 shadow-xs"
+            class="px-2.5 sm:px-4 py-2 bg-slate-900 text-white disabled:opacity-30 rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center gap-1 sm:gap-1.5 shadow-xs"
           >
-            <span>Soal Berikutnya</span>
+            <span class="hidden sm:inline">Soal Berikutnya</span>
+            <span class="sm:hidden">Next</span>
             <ChevronRight class="w-4 h-4" />
           </button>
         </div>
@@ -1033,7 +1188,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import api, { getImageUrl } from '../api';
 import {
   BookOpen,
@@ -1114,6 +1269,8 @@ const currentQuestionIndex = ref(0);
 const savingQuestions = ref(false);
 const mobileStudioTab = ref('soal');
 const questionFilter = ref('all');
+const showLeftSidebar = ref(true);
+const showRightPane = ref(true);
 
 const completedQuestionsCount = computed(() => {
   return activeQuestions.value.filter(q => q.correct_answer && q.indicator && q.question_text).length;
@@ -1501,9 +1658,22 @@ const getStatusBadgeClass = (status) => {
   }
 };
 
+const handleKeyDown = (e) => {
+  if (!activePackage.value) return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault();
+    saveAllQuestions();
+  }
+};
+
 onMounted(async () => {
+  window.addEventListener('keydown', handleKeyDown);
   await fetchOptions();
   await fetchPackages();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
 });
 </script>
 
