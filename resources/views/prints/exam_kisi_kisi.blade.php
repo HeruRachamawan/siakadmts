@@ -19,21 +19,26 @@
         }
         .header {
             text-align: center;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
+            font-family: Arial, Helvetica, sans-serif;
         }
         .header h2 { 
             margin: 0; 
-            font-size: 13pt; 
-            font-weight: bold; 
+            font-size: 11.5pt; 
+            font-weight: 800; 
             text-transform: uppercase; 
             letter-spacing: 0.5px;
+            line-height: 1.35;
+            color: #000;
         }
         .header h3 { 
             margin: 3px 0 0 0; 
-            font-size: 12pt; 
-            font-weight: bold; 
+            font-size: 11.5pt; 
+            font-weight: 800; 
             text-transform: uppercase; 
             letter-spacing: 0.5px;
+            line-height: 1.35;
+            color: #000;
         }
 
         .meta-table {

@@ -2,16 +2,16 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>Telaah Butir Soal - {{ $package->title }}</title>
+    <title>Instrumen Telaah Soal HOTS - {{ $package->title }}</title>
     <style>
         @page {
-            size: A4 portrait;
-            margin: 1.5cm 1.2cm 1.5cm 1.2cm;
+            size: A4 landscape;
+            margin: 0.8cm 1cm 0.8cm 1cm;
         }
         body {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 10pt;
-            line-height: 1.3;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 8.5pt;
+            line-height: 1.25;
             color: #000;
             margin: 0;
             padding: 0;
@@ -19,206 +19,312 @@
         }
         .header {
             text-align: center;
-            border-bottom: 2px solid #000;
-            padding-bottom: 4px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
-        .header h2 { margin: 0; font-size: 13pt; text-transform: uppercase; }
-        .header h3 { margin: 2px 0; font-size: 11pt; text-transform: uppercase; }
+        .header .title-main { 
+            font-size: 11pt; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+        .header .title-sub { 
+            font-size: 9.5pt; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            margin: 1px 0;
+        }
 
-        .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9.5pt; }
-        .meta-table td { padding: 2px 4px; }
+        .meta-table { 
+            border-collapse: collapse; 
+            margin-bottom: 6px; 
+            font-size: 8.5pt; 
+        }
+        .meta-table td { 
+            padding: 1px 4px; 
+            vertical-align: top;
+        }
 
-        .table-data {
+        .matrix-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 9pt;
-            margin-top: 8px;
+            font-size: 7.5pt;
+            table-layout: fixed;
         }
-        .table-data th, .table-data td {
+        .matrix-table th, .matrix-table td {
             border: 1px solid #000;
-            padding: 4px 6px;
+            padding: 2px 1px;
+            vertical-align: middle;
         }
-        .table-data th {
-            background-color: #f2f2f2;
+        .matrix-table th {
+            background-color: #ffffff;
             text-align: center;
             font-weight: bold;
         }
-        .center { text-align: center; }
-
-        .rekap-box {
-            border: 1px solid #000;
-            padding: 8px 12px;
-            margin-top: 14px;
-            background: #fafafa;
-            font-size: 9.5pt;
+        .matrix-table td.col-v {
+            text-align: center;
+            font-weight: bold;
+            font-size: 8pt;
         }
-        .rekap-box strong { font-size: 10pt; }
+        .center { text-align: center; }
 
         .signatures {
             width: 100%;
-            margin-top: 25px;
+            margin-top: 14px;
             page-break-inside: avoid;
-            font-size: 10pt;
+            font-size: 9pt;
+            border-collapse: collapse;
         }
         .signatures td {
-            text-align: center;
+            border: none;
+            padding: 2px 4px;
             vertical-align: top;
-            width: 50%;
+        }
+        .sig-container {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            margin: 2px 0;
+        }
+        .sig-img {
+            max-height: 48px;
+            max-width: 150px;
+            object-fit: contain;
+            display: block;
+        }
+        .sig-space {
+            height: 50px;
         }
 
         .no-print {
             position: fixed;
-            top: 15px;
-            right: 15px;
+            top: 12px;
+            right: 12px;
             background: #059669;
             color: white;
-            padding: 8px 16px;
+            padding: 7px 14px;
             border-radius: 6px;
             font-family: sans-serif;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             border: none;
             z-index: 9999;
         }
+        .no-print:hover { background: #047857; }
         @media print {
             .no-print { display: none !important; }
+            body { margin: 0; }
         }
     </style>
 </head>
 <body>
-    <button class="no-print" onclick="window.print()">🖨️ Cetak Berita Acara Telaah</button>
+    <button class="no-print" onclick="window.print()">🖨️ Cetak Instrumen Telaah (HOTS)</button>
 
+    @php
+        // Judul Asesmen
+        $examTitle = 'ASESMEN SUMATIF AKHIR SEMESTER (ASAS)';
+        if (!empty($package->exam_type)) {
+            $t = strtoupper($package->exam_type);
+            if (str_contains($t, 'TENGAH') || str_contains($t, 'ASTS') || str_contains($t, 'PTS')) {
+                $examTitle = 'ASESMEN SUMATIF TENGAH SEMESTER (ASTS)';
+            } elseif (str_contains($t, 'MADRASAH') || str_contains($t, 'AM') || str_contains($t, 'UM')) {
+                $examTitle = 'ASESMEN MADRASAH (AM)';
+            }
+        }
+
+        // Teks Kelas Terbilang
+        $cleanClassName = strtoupper(trim($package->classRoom->name ?? 'VII'));
+        if (str_contains($cleanClassName, '7') || str_contains($cleanClassName, 'VII')) {
+            $classDisplay = 'VII (TUJUH)';
+        } elseif (str_contains($cleanClassName, '8') || str_contains($cleanClassName, 'VIII')) {
+            $classDisplay = 'VIII (DELAPAN)';
+        } elseif (str_contains($cleanClassName, '9') || str_contains($cleanClassName, 'IX')) {
+            $classDisplay = 'IX (SEMBILAN)';
+        } else {
+            $classDisplay = $cleanClassName;
+        }
+
+        // Total Soal (Default 45 sesuai data Excel)
+        $totalQ = max($package->questions->count(), 45);
+        $questionsByNum = $package->questions->keyBy('question_number');
+
+        // Signature image Base64
+        $sigPath = public_path('images/signatures/kepala_madrasah.png');
+        $sigBase64 = file_exists($sigPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($sigPath)) : null;
+
+        // Logika checkmark V matriks HOTS berdasar Excel data resmi
+        $isV = function($aspectKey, $qNum) use ($questionsByNum) {
+            $q = $questionsByNum->get($qNum);
+            $qType = $q ? $q->question_type : '';
+            $cog = $q ? strtoupper($q->cognitive_level ?? '') : '';
+
+            if ($aspectKey === 'stimulus_menarik' || $aspectKey === 'stimulus_kontekstual' || $aspectKey === 'memproses_info' || $aspectKey === 'tersirat_stimulus') {
+                return true;
+            }
+            if ($aspectKey === 'transfer_konsep') {
+                return in_array($qNum, [3, 10, 25, 27, 30, 33, 34, 35, 41, 44]) || $cog === 'L3';
+            }
+            if ($aspectKey === 'mencari_kaitan') {
+                return in_array($qNum, [5, 9]) || ($qNum >= 21 && $qNum <= 45) || in_array($qType, ['pg_complex', 'matching', 'essay']);
+            }
+            if ($aspectKey === 'menyelesaikan_masalah') {
+                return in_array($qNum, [8, 16, 17, 18, 19, 20, 22, 23, 25, 27, 28, 29, 30, 44, 45]) || $cog === 'L2' || $cog === 'L3';
+            }
+            if ($aspectKey === 'menelaah_kritis') {
+                return in_array($qNum, [3, 10, 25, 27, 30, 31, 32, 33, 34, 35, 41, 44]) || in_array($qType, ['true_false', 'essay']) || $cog === 'L3';
+            }
+            return false;
+        };
+    @endphp
+
+    <!-- HEADER / KOP TELAAH -->
     <div class="header">
-        <h2>INSTRUMEN DAN BERITA ACARA TELAAH BUTIR SOAL</h2>
-        <h3>{{ $school->school_name ?? 'MTs AL-HASANAH' }} - TP {{ $package->academicYear->year ?? '2026/2027' }}</h3>
+        <div class="title-main">INSTRUMEN TELAAH SOAL {{ $examTitle }} (HOTS)</div>
+        <div class="title-sub">BENTUK TES HOTS</div>
+        <div class="title-sub">{{ strtoupper($school->school_name ?? 'MADRASAH TSANAWIYAH AL-HASANAH') }}</div>
+        <div class="title-sub">TAHUN PELAJARAN {{ $package->academicYear->year ?? '2026/2027' }}</div>
     </div>
 
+    <!-- IDENTITAS TELAAH -->
     <table class="meta-table">
         <tr>
-            <td width="18%"><strong>Mata Pelajaran</strong></td>
-            <td width="32%">: {{ $package->subject->name ?? '-' }}</td>
-            <td width="18%"><strong>Bentuk Ujian</strong></td>
-            <td width="32%">: {{ strtoupper($package->exam_type) }} - {{ $package->title }}</td>
+            <td style="width: 170px; font-weight: bold;">NAMA PENGEMBANG SOAL</td>
+            <td style="width: 8px;">:</td>
+            <td>{{ $package->teacher->user->name ?? ($package->teacher->name ?? 'Heru Rachmawan') }}</td>
         </tr>
         <tr>
-            <td><strong>Kelas / Fase</strong></td>
-            <td>: {{ $package->classRoom->name ?? '-' }} / {{ $package->academic_phase ?? 'Fase D' }}</td>
-            <td><strong>Guru Penyusun</strong></td>
-            <td>: {{ $package->teacher->user->name ?? ($package->teacher->name ?? '-') }}</td>
+            <td style="font-weight: bold;">MATA PELAJARAN</td>
+            <td>:</td>
+            <td>{{ $package->subject->name ?? 'Informatika' }}</td>
         </tr>
         <tr>
-            <td><strong>Penelaah Kurikulum</strong></td>
-            <td>: {{ $package->reviewedBy->name ?? 'Tim Kurikulum Madrasah' }}</td>
-            <td><strong>Tanggal Telaah</strong></td>
-            <td>: {{ $package->reviewed_at ? $package->reviewed_at->format('d F Y') : date('d F Y') }}</td>
+            <td style="font-weight: bold;">KELAS</td>
+            <td>:</td>
+            <td>{{ $classDisplay }}</td>
         </tr>
     </table>
 
-    <table class="table-data">
+    <!-- TABEL MATRIKS 45 BUTIR SOAL -->
+    <table class="matrix-table">
         <thead>
             <tr>
-                <th width="5%">No</th>
-                <th width="35%">Aspek yang Ditelaah</th>
-                <th width="45%">Kaidah Penulisan Butir Soal</th>
-                <th width="15%">Hasil Telaah</th>
+                <th rowspan="2" style="width: 20px;">NO</th>
+                <th rowspan="2" style="width: 250px; text-align: left; padding-left: 4px;">Aspek yang ditelaah</th>
+                <th colspan="{{ $totalQ }}">Butir Soal</th>
+            </tr>
+            <tr>
+                @for ($n = 1; $n <= $totalQ; $n++)
+                    <th style="font-size: 7pt; width: 15px;">{{ $n }}</th>
+                @endfor
             </tr>
         </thead>
         <tbody>
-            <!-- Materi -->
+            <!-- 1. Stimulus Menarik -->
             <tr>
-                <td class="center" rowspan="4" style="background:#f9f9f9;"><strong>I</strong></td>
-                <td rowspan="4"><strong>A. ASPEK MATERI</strong></td>
-                <td>1. Soal sesuai dengan indikator pada kisi-kisi.</td>
-                <td class="center" style="color: #059669; font-weight: bold;">Memenuhi (✓)</td>
-            </tr>
-            <tr>
-                <td>2. Materi yang diukur sesuai dengan kompetensi dan fase jenjang kelas.</td>
-                <td class="center" style="color: #059669; font-weight: bold;">Memenuhi (✓)</td>
-            </tr>
-            <tr>
-                <td>3. Pilihan jawaban homogen dan logis ditinjau dari segi materi.</td>
-                <td class="center" style="color: #059669; font-weight: bold;">Memenuhi (✓)</td>
-            </tr>
-            <tr>
-                <td>4. Hanya ada satu kunci jawaban yang paling tepat dan benar.</td>
-                <td class="center" style="color: #059669; font-weight: bold;">Memenuhi (✓)</td>
+                <td class="center">1</td>
+                <td style="padding-left: 4px;">Soal menggunakan stimulus yang menarik (baru, mendorong peserta didik untuk membaca).</td>
+                @for ($n = 1; $n <= $totalQ; $n++)
+                    <td class="col-v">{{ $isV('stimulus_menarik', $n) ? 'V' : '' }}</td>
+                @endfor
             </tr>
 
-            <!-- Konstruksi -->
+            <!-- 2. Stimulus Kontekstual -->
             <tr>
-                <td class="center" rowspan="5" style="background:#f9f9f9;"><strong>II</strong></td>
-                <td rowspan="5"><strong>B. ASPEK KONSTRUKSI</strong></td>
-                <td>5. Pokok soal dirumuskan dengan singkat, jelas, dan tegas.</td>
-                <td class="center" style="color: #059669; font-weight: bold;">Memenuhi (✓)</td>
-            </tr>
-            <tr>
-                <td>6. Rumusan pokok soal tidak memberi petunjuk ke arah kunci jawaban.</td>
-                <td class="center" style="color: #059669; font-weight: bold;">Memenuhi (✓)</td>
-            </tr>
-            <tr>
-                <td>7. Pokok soal tidak mengandung pernyataan negatif ganda.</td>
-                <td class="center" style="color: #059669; font-weight: bold;">Memenuhi (✓)</td>
-            </tr>
-            <tr>
-                <td>8. Panjang rumusan pilihan jawaban relatif sama.</td>
-                <td class="center" style="color: #059669; font-weight: bold;">Memenuhi (✓)</td>
-            </tr>
-            <tr>
-                <td>9. Gambar, grafik, tabel, atau diagram berfungsi jelas dan terbaca.</td>
-                <td class="center" style="color: #059669; font-weight: bold;">Memenuhi (✓)</td>
+                <td class="center">2</td>
+                <td style="padding-left: 4px;">soal menggunakan stimulus yang kontekstual (gambar/grafik, teks, visualisasi, dll, sesuai dengan dunia nyata)</td>
+                @for ($n = 1; $n <= $totalQ; $n++)
+                    <td class="col-v">{{ $isV('stimulus_kontekstual', $n) ? 'V' : '' }}</td>
+                @endfor
             </tr>
 
-            <!-- Bahasa -->
-            <tr>
-                <td class="center" rowspan="3" style="background:#f9f9f9;"><strong>III</strong></td>
-                <td rowspan="3"><strong>C. ASPEK BAHASA</strong></td>
-                <td>10. Menggunakan bahasa yang sesuai dengan kaidah Bahasa Indonesia (EYD).</td>
-                <td class="center" style="color: #059669; font-weight: bold;">Memenuhi (✓)</td>
+            <!-- 3. Header Level Kognitif Penalaran -->
+            <tr style="background: #fafafa;">
+                <td class="center">3</td>
+                <td style="padding-left: 4px; font-weight: bold;">soal mengukur level kognitif penaralan menganalisis, mengevaluasi, mencipta) yang dalam penyelesaian nya dicirikan dengan salah satu atau lebih tahapan proses berfikir berikut :</td>
+                @for ($n = 1; $n <= $totalQ; $n++)
+                    <td></td>
+                @endfor
             </tr>
+
+            <!-- 3.1 Transfer satu konsep -->
             <tr>
-                <td>11. Menggunakan bahasa yang komunikatif dan tidak menimbulkan penafsiran ganda.</td>
-                <td class="center" style="color: #059669; font-weight: bold;">Memenuhi (✓)</td>
+                <td class="center"></td>
+                <td style="padding-left: 12px;">● Transfer satu konsep ke konsep lainnya</td>
+                @for ($n = 1; $n <= $totalQ; $n++)
+                    <td class="col-v">{{ $isV('transfer_konsep', $n) ? 'V' : '' }}</td>
+                @endfor
             </tr>
+
+            <!-- 3.2 Memproses dan menerapkan informasi -->
             <tr>
-                <td>12. Tidak menggunakan bahasa yang berlaku setempat/tabu dan bebas muatan SARA.</td>
-                <td class="center" style="color: #059669; font-weight: bold;">Memenuhi (✓)</td>
+                <td class="center"></td>
+                <td style="padding-left: 12px;">● memproses dan menerapkan informasi</td>
+                @for ($n = 1; $n <= $totalQ; $n++)
+                    <td class="col-v">{{ $isV('memproses_info', $n) ? 'V' : '' }}</td>
+                @endfor
+            </tr>
+
+            <!-- 3.3 Mencari kaitan dari berbagai informasi -->
+            <tr>
+                <td class="center"></td>
+                <td style="padding-left: 12px;">● mencari kaitan dari berbagai informasi yang berbeda-beda</td>
+                @for ($n = 1; $n <= $totalQ; $n++)
+                    <td class="col-v">{{ $isV('mencari_kaitan', $n) ? 'V' : '' }}</td>
+                @endfor
+            </tr>
+
+            <!-- 3.4 Menggunakan informasi untuk menyelesaikan masalah -->
+            <tr>
+                <td class="center"></td>
+                <td style="padding-left: 12px;">● menggunakan informasi untuk menyelesaikan masalah</td>
+                @for ($n = 1; $n <= $totalQ; $n++)
+                    <td class="col-v">{{ $isV('menyelesaikan_masalah', $n) ? 'V' : '' }}</td>
+                @endfor
+            </tr>
+
+            <!-- 3.5 Menelaah ide dan informasi secara kritis -->
+            <tr>
+                <td class="center"></td>
+                <td style="padding-left: 12px;">● Menelaah ide dan informasi secara kritis</td>
+                @for ($n = 1; $n <= $totalQ; $n++)
+                    <td class="col-v">{{ $isV('menelaah_kritis', $n) ? 'V' : '' }}</td>
+                @endfor
+            </tr>
+
+            <!-- 4. Jawaban tersirat pada stimulus -->
+            <tr>
+                <td class="center">4</td>
+                <td style="padding-left: 4px;">Jawaban tersirat pada stimulus</td>
+                @for ($n = 1; $n <= $totalQ; $n++)
+                    <td class="col-v">{{ $isV('tersirat_stimulus', $n) ? 'V' : '' }}</td>
+                @endfor
             </tr>
         </tbody>
     </table>
 
-    <div class="rekap-box">
-        <strong>REKOMENDASI & KEPUTUSAN TIM TELAAH KURIKULUM:</strong>
-        <p style="margin: 4px 0 0 0;">
-            Status Validasi: 
-            @if ($package->status_kurikulum === 'approved')
-                <strong style="color: #059669; font-size: 11pt;">[ DITERIMA TANPA REVISI / SIAP UJI ]</strong>
-            @elseif ($package->status_kurikulum === 'revision_needed')
-                <strong style="color: #d97706; font-size: 11pt;">[ DITERIMA DENGAN PERBAIKAN / REVISI ]</strong>
-            @else
-                <strong style="color: #4b5563; font-size: 11pt;">[ DALAM PROSES PENELAAHAN ]</strong>
-            @endif
-        </p>
-        @if ($package->review_notes)
-            <p style="margin: 4px 0 0 0;"><strong>Catatan Penelaah:</strong> <em>{{ $package->review_notes }}</em></p>
-        @endif
-    </div>
-
+    <!-- TANDA TANGAN PENGESAHAN -->
     <table class="signatures">
         <tr>
-            <td>
-                Menyetujui,<br>
-                <strong>Penelaah (Waka Kurikulum)</strong><br><br><br><br>
-                <u>{{ $package->reviewedBy->name ?? '...................................................' }}</u><br>
-                NIP/NUPTK: ...........................................
+            <td style="width: 50%; text-align: left; padding-left: 40px;">
+                Mengetahui,<br>
+                <strong>Kepala Madrasah</strong><br>
+                @if($sigBase64)
+                    <div class="sig-container">
+                        <img src="{{ $sigBase64 }}" alt="Tanda Tangan Kepala Madrasah" class="sig-img">
+                    </div>
+                @else
+                    <div class="sig-space"></div>
+                @endif
+                <strong><u>H. Umar Usman Ali, S.Pd.,S.Pd.I</u></strong>
             </td>
-            <td>
-                {{ date('d F Y') }}<br>
-                <strong>Guru Penyusun Soal</strong><br><br><br><br>
-                <u>{{ $package->teacher->user->name ?? ($package->teacher->name ?? '...................................................') }}</u><br>
-                NIP/NUPTK: {{ $package->teacher->nip ?? '...........................................' }}
+            <td style="width: 50%; text-align: left; padding-left: 160px;">
+                Bogor, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}<br>
+                <strong>Guru Mapel</strong><br>
+                <div class="sig-space"></div>
+                <strong><u>{{ $package->teacher->user->name ?? ($package->teacher->name ?? 'Heru Rachmawan') }}</u></strong>
             </td>
         </tr>
     </table>

@@ -239,41 +239,88 @@
 <body>
     <button class="no-print" onclick="window.print()">🖨️ Cetak Naskah Soal</button>
 
-    <div class="header">
-        <h2>KEMENTERIAN AGAMA REPUBLIK INDONESIA</h2>
-        <h3>{{ $school->school_name ?? 'MTs AL-HASANAH' }}</h3>
-        <p>PENILAIAN / ASESMEN SEMESTER {{ strtoupper($package->semester) }} TAHUN PELAJARAN {{ $package->academicYear->year ?? '2026/2027' }}</p>
+    @php
+        $logoPath = public_path('images/logo_madrasah_yaspih.png');
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : null;
+
+        $cleanClassName = strtoupper(trim($package->classRoom->name ?? 'VII'));
+        if (str_contains($cleanClassName, '7') || str_contains($cleanClassName, 'VII')) {
+            $classDisplay = 'VII(TUJUH) A/B*  Fase D';
+        } elseif (str_contains($cleanClassName, '8') || str_contains($cleanClassName, 'VIII')) {
+            $classDisplay = 'VIII(DELAPAN) A/B*  Fase D';
+        } elseif (str_contains($cleanClassName, '9') || str_contains($cleanClassName, 'IX')) {
+            $classDisplay = 'IX(SEMBILAN) A/B*  Fase D';
+        } else {
+            $classDisplay = $cleanClassName . '  ' . ($package->academic_phase ?? 'Fase D');
+        }
+
+        $semNum = ($package->semester == 'genap' || $package->semester == '2') ? '2' : '1';
+        $yearShort = '26/27';
+        if (!empty($package->academicYear->year)) {
+            $parts = explode('/', $package->academicYear->year);
+            if (count($parts) === 2) {
+                $yearShort = substr(trim($parts[0]), -2) . '/' . substr(trim($parts[1]), -2);
+            }
+        }
+        $subjCode = strtoupper(substr($package->subject->code ?? ($package->subject->name ?? 'INF'), 0, 3));
+        $examCode = strtoupper($package->exam_type ?? 'ASAS') . '-' . $semNum . '.' . $yearShort . '- ' . $subjCode;
+    @endphp
+
+    <div style="display: flex; justify-content: flex-end; font-size: 8.5pt; font-family: Arial, sans-serif; font-weight: bold; margin-bottom: 2px;">
+        {{ $examCode }}
     </div>
 
-    <table class="meta-table">
+    <div class="header-kop" style="display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 10px;">
+        @if($logoBase64)
+            <div style="position: absolute; left: 10px; top: 0;">
+                <img src="{{ $logoBase64 }}" alt="Logo Madrasah" style="height: 72px; width: auto; object-fit: contain;">
+            </div>
+        @endif
+        <div style="text-align: center; width: 100%; padding: 0 80px;">
+            <div style="font-size: 13pt; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif; line-height: 1.2;">
+                MADRASAH TSANAWIYAH AL HASANAH
+            </div>
+            <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif; line-height: 1.2; margin-top: 2px;">
+                KECAMATAN CIOMAS KABUPATEN BOGOR
+            </div>
+            <div style="font-size: 11.5pt; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif; line-height: 1.2; margin-top: 2px;">
+                ASESMEN SUMATIF AKHIR SEMESTER (ASAS)
+            </div>
+            <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif; line-height: 1.2; margin-top: 2px;">
+                TAHUN PELAJARAN {{ $package->academicYear->year ?? '2026/2027' }}
+            </div>
+        </div>
+    </div>
+
+    <table class="meta-table" style="font-size: 9.5pt; margin-bottom: 8px;">
         <tr>
-            <td width="15%"><strong>Mata Pelajaran</strong></td>
-            <td width="35%">: {{ $package->subject->name ?? '-' }}</td>
-            <td width="15%"><strong>Kelas / Fase</strong></td>
-            <td width="35%">: {{ $package->classRoom->name ?? '-' }} ({{ $package->academic_phase ?? 'Fase D' }})</td>
+            <td width="18%"><strong>MATA PELAJARAN</strong></td>
+            <td width="35%">: {{ strtoupper($package->subject->name ?? 'INFORMATIKA') }}</td>
+            <td width="18%"><strong>HARI/TANGGAL</strong></td>
+            <td width="29%">: ________________</td>
         </tr>
         <tr>
-            <td><strong>Jenis Ujian</strong></td>
-            <td>: {{ strtoupper($package->exam_type) }} - {{ $package->title }}</td>
-            <td><strong>Hari / Tanggal</strong></td>
-            <td>: ...............................................</td>
+            <td><strong>NAMA</strong></td>
+            <td>: ______________________</td>
+            <td><strong>WAKTU</strong></td>
+            <td>: 90  Menit</td>
         </tr>
         <tr>
-            <td><strong>Guru Pengampu</strong></td>
-            <td>: {{ $package->teacher->user->name ?? ($package->teacher->name ?? '-') }}</td>
-            <td><strong>Alokasi Waktu</strong></td>
-            <td>: 90 Menit</td>
+            <td><strong>KELAS/FASE</strong></td>
+            <td>: {{ $classDisplay }}</td>
+            <td><strong>PUKUL</strong></td>
+            <td>: ____ – ____</td>
         </tr>
     </table>
 
-    <div class="petunjuk">
-        <strong>Petunjuk Umum:</strong>
-        <ol>
-            <li>Berdoalah sebelum mengerjakan soal.</li>
-            <li>Tuliskan nama, nomor peserta, dan kelas pada lembar jawaban yang telah disediakan.</li>
-            <li>Periksa dan bacalah setiap butir soal dengan teliti sebelum menjawab.</li>
-            <li>Dahulukan menjawab soal-soal yang Anda anggap mudah.</li>
-            <li>Laporkan kepada pengawas jika terdapat tulisan yang kurang jelas, rusak, atau jumlah soal kurang.</li>
+    <div class="petunjuk" style="margin-bottom: 12px; font-size: 8.5pt; padding: 5px 10px;">
+        <strong>PETUNJUK UMUM :</strong>
+        <ol style="margin: 2px 0 0 16px; padding: 0;">
+            <li>Bacalah Do’a sebelum dan sesudah mengerjakan Soal</li>
+            <li>Jawaban di kerjakan langsung pada Soal</li>
+            <li>Isilah nama dengan lengkap dan jelas, lalu lingkari dalam satu pilihan kelas</li>
+            <li>Pergunakan ballpoint untuk mengisi</li>
+            <li>Dahulukan menjawab soal – soal yang anda anggap mudah</li>
         </ol>
     </div>
 
@@ -299,7 +346,7 @@
         <!-- 1. BAGIAN: PILIHAN GANDA TUNGGAL -->
         @if ($pgQuestions->isNotEmpty())
             <div class="section-title">{{ $secLetters[$secIdx++] }}. Pilihan Ganda</div>
-            <p class="section-desc">Pilihlah salah satu jawaban yang paling tepat dengan memberi tanda silang (X) pada huruf pilihan yang tersedia!</p>
+            <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Pilihlah jawaban dibawah ini dengan tepat!!</p>
 
             @foreach ($pgQuestions as $q)
                 <div class="question-item">
@@ -335,7 +382,7 @@
         <!-- 2. BAGIAN: PILIHAN GANDA KOMPLEKS (AKM) -->
         @if (isset($pgComplexQuestions) && $pgComplexQuestions->isNotEmpty())
             <div class="section-title">{{ $secLetters[$secIdx++] }}. Pilihan Ganda Kompleks</div>
-            <p class="section-desc">Pilihlah lebih dari satu jawaban yang benar dengan memberi tanda centang (&check;) pada kotak yang tersedia!</p>
+            <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Jawablah pernyatan dibawah ini dengan mengisi lebih dari pada 1 pilihan!!!</p>
 
             @foreach ($pgComplexQuestions as $q)
                 <div class="question-item">
@@ -395,7 +442,7 @@
 
             {{-- 3A. TABEL UTUH BENAR / SALAH MODE PER-NOMOR (No. 31 s/d 35) --}}
             @if (!empty($singleTfList))
-                <p class="section-desc">Berilah tanda centang (✓) pada kolom <strong>Benar</strong> jika pernyataan sesuai, atau pada kolom <strong>Salah</strong> jika pernyataan tidak sesuai!</p>
+                <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Bacalah setiap pernyataan dibawah ini dengan teliti, kemudian berilah tadna centang (√) pada kolom Benar jika pernyataan sesuai dengan materi buku, atau pada kolom salah jika pernyataan tidak sesuai!!!!</p>
 
                 <table class="akm-table" style="margin-bottom: 14px;">
                     <thead>
@@ -503,7 +550,7 @@
 
             {{-- 4A. TABEL UTUH MENJODOHKAN MODE MANDIRI (No. 36 s/d 40) DENGAN KOLOM JAWABAN DI TENGAH --}}
             @if (!empty($singleMatchingList))
-                <p class="section-desc">Jodohkanlah istilah pada Kolom Kiri dengan pilihan jawaban yang tepat pada Kolom Kanan dengan menuliskan hurufnya (A, B, C, D, atau E) pada kolom <strong>Jawaban</strong> di tengah!</p>
+                <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Pasangkan nama perangkat keras komputer pada Lajur Kiri (Nomor 1-5) dengan fungsi atau pengertiannya yang paling tepat pada Lajur Kanan (Huru A-F)! Tuliskan huruf pilihannya saja (A, B, C, D, E, atau F) pada kolom Jawaban di tengah!</p>
 
                 @php
                     // Kumpulkan semua pilihan kanan yang unik, diurutkan berdasarkan huruf A, B, C...
@@ -658,8 +705,8 @@
 
         <!-- 6. BAGIAN: URAIAN / ESSAY -->
         @if ($essayQuestions->isNotEmpty())
-            <div class="section-title">{{ $secLetters[$secIdx++] }}. Uraian / Essay</div>
-            <p class="section-desc">Jawablah pertanyaan-pertanyaan berikut dengan jelas, tepat, dan lengkap!</p>
+            <div class="section-title">{{ $secLetters[$secIdx++] }}. Uraian</div>
+            <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Jawabalah pertanyaan di bawah ini dengan benar!!!</p>
 
             @foreach ($essayQuestions as $q)
                 <div class="question-item">
@@ -678,6 +725,11 @@
                 </div>
             @endforeach
         @endif
+    </div>
+
+    <!-- RUNNING FOOTER -->
+    <div style="text-align: center; font-style: italic; font-size: 9pt; margin-top: 20px; color: #111; border-top: 1px dotted #888; padding-top: 6px;">
+        Kerjakan lah soal dengan teliti dan benar, jangan terburu-buru
     </div>
 </body>
 </html>
