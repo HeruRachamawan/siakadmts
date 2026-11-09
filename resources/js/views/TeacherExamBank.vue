@@ -554,23 +554,35 @@
               </div>
             </div>
 
-            <!-- Quick Filter Tabs -->
-            <div class="grid grid-cols-2 gap-1 p-0.5 bg-slate-100 rounded-lg text-[11px]">
+            <!-- Quick Filter Tabs & Batch Button -->
+            <div class="space-y-1.5">
+              <div class="grid grid-cols-2 gap-1 p-0.5 bg-slate-100 rounded-lg text-[11px]">
+                <button
+                  type="button"
+                  @click="questionFilter = 'all'"
+                  class="py-1 font-semibold rounded-md transition text-center"
+                  :class="questionFilter === 'all' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500 hover:text-slate-800'"
+                >
+                  Semua ({{ activeQuestions.length }})
+                </button>
+                <button
+                  type="button"
+                  @click="questionFilter = 'incomplete'"
+                  class="py-1 font-semibold rounded-md transition text-center"
+                  :class="questionFilter === 'incomplete' ? 'bg-white text-amber-700 shadow-2xs' : 'text-slate-500 hover:text-amber-700'"
+                >
+                  Belum ({{ activeQuestions.length - completedQuestionsCount }})
+                </button>
+              </div>
+
               <button
                 type="button"
-                @click="questionFilter = 'all'"
-                class="py-1 font-semibold rounded-md transition text-center"
-                :class="questionFilter === 'all' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500 hover:text-slate-800'"
+                @click="openBatchTypeModal"
+                class="w-full py-1 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold rounded-lg border border-indigo-200 flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer"
+                title="Atur tipe soal untuk rentang nomor tertentu sekaligus (misal No. 31-35 Benar/Salah)"
               >
-                Semua ({{ activeQuestions.length }})
-              </button>
-              <button
-                type="button"
-                @click="questionFilter = 'incomplete'"
-                class="py-1 font-semibold rounded-md transition text-center"
-                :class="questionFilter === 'incomplete' ? 'bg-white text-amber-700 shadow-2xs' : 'text-slate-500 hover:text-amber-700'"
-              >
-                Belum ({{ activeQuestions.length - completedQuestionsCount }})
+                <Zap class="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                <span>Atur Rentang Tipe Soal</span>
               </button>
             </div>
           </div>
@@ -658,23 +670,34 @@
               </button>
             </div>
 
-            <!-- Quick Filter Tabs -->
-            <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl text-xs">
+            <!-- Quick Filter Tabs & Batch Button -->
+            <div class="space-y-2">
+              <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl text-xs">
+                <button
+                  type="button"
+                  @click="questionFilter = 'all'"
+                  class="py-1.5 font-bold rounded-lg transition text-center"
+                  :class="questionFilter === 'all' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'"
+                >
+                  Semua ({{ activeQuestions.length }})
+                </button>
+                <button
+                  type="button"
+                  @click="questionFilter = 'incomplete'"
+                  class="py-1.5 font-bold rounded-lg transition text-center"
+                  :class="questionFilter === 'incomplete' ? 'bg-white text-amber-700 shadow-2xs' : 'text-slate-500'"
+                >
+                  Belum Lengkap ({{ activeQuestions.length - completedQuestionsCount }})
+                </button>
+              </div>
+
               <button
                 type="button"
-                @click="questionFilter = 'all'"
-                class="py-1.5 font-bold rounded-lg transition text-center"
-                :class="questionFilter === 'all' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'"
+                @click="openBatchTypeModal"
+                class="w-full py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 flex items-center justify-center gap-1.5 transition"
               >
-                Semua ({{ activeQuestions.length }})
-              </button>
-              <button
-                type="button"
-                @click="questionFilter = 'incomplete'"
-                class="py-1.5 font-bold rounded-lg transition text-center"
-                :class="questionFilter === 'incomplete' ? 'bg-white text-amber-700 shadow-2xs' : 'text-slate-500'"
-              >
-                Belum Lengkap ({{ activeQuestions.length - completedQuestionsCount }})
+                <Zap class="w-4 h-4 text-indigo-600" />
+                <span>Atur Rentang Tipe Soal (Batch)</span>
               </button>
             </div>
           </div>
@@ -751,6 +774,16 @@
                 <option value="short_answer">Isian Singkat (Short Answer)</option>
                 <option value="essay">Uraian / Essay</option>
               </select>
+
+              <button
+                type="button"
+                @click="openBatchTypeModal"
+                class="px-2.5 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 flex items-center gap-1 transition shrink-0 cursor-pointer"
+                title="Atur tipe soal untuk rentang nomor tertentu sekaligus (misal No. 31-35 Benar/Salah)"
+              >
+                <Zap class="w-3.5 h-3.5 text-indigo-600" />
+                <span class="hidden sm:inline">Atur Rentang Tipe</span>
+              </button>
             </div>
 
             <div class="flex items-center gap-2.5 ml-auto sm:ml-0">
@@ -1433,6 +1466,182 @@
           </button>
         </div>
       </footer>
+
+      <!-- Modal Batch Set Tipe Soal (Rentang Nomor) -->
+      <div
+        v-if="showBatchModal"
+        class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto"
+      >
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-8">
+          <!-- Header -->
+          <div class="px-6 py-4 text-white flex items-center justify-between" style="background: linear-gradient(135deg, #3730a3, #4338ca);">
+            <div class="flex items-center gap-2.5">
+              <div class="p-1.5 bg-white/10 rounded-lg">
+                <Zap class="w-5 h-5 text-amber-300" />
+              </div>
+              <div>
+                <h3 class="text-sm font-bold">Atur Rentang Tipe Soal (Batch)</h3>
+                <p class="text-[11px] text-indigo-200">Ubah tipe & bobot untuk beberapa nomor soal sekaligus</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="showBatchModal = false"
+              class="p-1 rounded-lg hover:bg-white/10 text-white/80 hover:text-white transition cursor-pointer"
+            >
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+
+          <!-- Body -->
+          <form @submit.prevent="applyBatchType" class="p-6 space-y-4">
+            <!-- Preset Cepat -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Preset Populer 1-Klik:</label>
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  @click="applyBatchPreset(31, 35, 'true_false', 1.0)"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer"
+                  :class="batchForm.fromNumber === 31 && batchForm.toNumber === 35 && batchForm.targetType === 'true_false'
+                    ? 'bg-purple-100 text-purple-800 border-purple-300 font-bold'
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200'"
+                >
+                  <span>🎯 No. 31–35: Benar / Salah</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="applyBatchPreset(36, 40, 'matching', 1.0)"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer"
+                  :class="batchForm.fromNumber === 36 && batchForm.toNumber === 40 && batchForm.targetType === 'matching'
+                    ? 'bg-teal-100 text-teal-800 border-teal-300 font-bold'
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200'"
+                >
+                  <span>🔗 No. 36–40: Menjodohkan</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="applyBatchPreset(41, 45, 'essay', 2.0)"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer"
+                  :class="batchForm.fromNumber === 41 && batchForm.toNumber === 45 && batchForm.targetType === 'essay'
+                    ? 'bg-blue-100 text-blue-800 border-blue-300 font-bold'
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200'"
+                >
+                  <span>📝 No. 41–45: Uraian / Essay</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="applyBatchPreset(1, 30, 'pg', 1.0)"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer"
+                  :class="batchForm.fromNumber === 1 && batchForm.toNumber === 30 && batchForm.targetType === 'pg'
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200'"
+                >
+                  <span>🔘 No. 1–30: PG Tunggal</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="applyBatchPreset(21, 30, 'pg_complex', 1.0)"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer"
+                  :class="batchForm.fromNumber === 21 && batchForm.toNumber === 30 && batchForm.targetType === 'pg_complex'
+                    ? 'bg-indigo-100 text-indigo-800 border-indigo-300 font-bold'
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200'"
+                >
+                  <span>🔲 No. 21–30: PG Kompleks</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Input Rentang Nomor -->
+            <div class="grid grid-cols-2 gap-3 pt-1">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Dari Nomor Soal *</label>
+                <input
+                  type="number"
+                  v-model.number="batchForm.fromNumber"
+                  min="1"
+                  :max="activeQuestions.length"
+                  required
+                  class="form-input font-bold text-center text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Sampai Nomor Soal *</label>
+                <input
+                  type="number"
+                  v-model.number="batchForm.toNumber"
+                  :min="batchForm.fromNumber"
+                  :max="activeQuestions.length"
+                  required
+                  class="form-input font-bold text-center text-sm"
+                />
+              </div>
+            </div>
+
+            <!-- Tipe Soal Target -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Ubah Menjadi Tipe Soal *</label>
+              <select v-model="batchForm.targetType" class="form-select font-bold text-xs" required>
+                <option value="true_false">Benar / Salah (Mode Mandiri 1 Kunci - Standar No. 31-35)</option>
+                <option value="matching">Menjodohkan (Mode Mandiri 1 Pasangan - Standar No. 36-40)</option>
+                <option value="pg">Pilihan Ganda (PG Tunggal Opsi A-D)</option>
+                <option value="pg_complex">Pilihan Ganda Kompleks (Multi Kunci)</option>
+                <option value="short_answer">Isian Singkat (Short Answer)</option>
+                <option value="essay">Uraian / Essay</option>
+              </select>
+            </div>
+
+            <!-- Bobot Nilai -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Bobot Nilai per Butir Soal *</label>
+              <div class="flex items-center gap-2">
+                <input
+                  type="number"
+                  v-model.number="batchForm.scoreWeight"
+                  step="0.5"
+                  min="0.5"
+                  max="100"
+                  required
+                  class="form-input w-28 font-bold text-center text-xs"
+                />
+                <span class="text-xs text-slate-500 font-medium">Poin per nomor (Total bobot rentang: <strong>{{ Math.max(0, (batchForm.toNumber - batchForm.fromNumber + 1)) * (batchForm.scoreWeight || 0) }} Poin</strong>)</span>
+              </div>
+            </div>
+
+            <!-- Preview Ringkasan -->
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1 text-slate-600">
+              <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                <span>📋 Ringkasan Perubahan:</span>
+              </div>
+              <p>
+                Akan mengubah total <strong class="text-indigo-700">{{ Math.max(0, (batchForm.toNumber - batchForm.fromNumber + 1)) }} butir soal</strong> (Nomor <strong>{{ batchForm.fromNumber }}</strong> s/d <strong>{{ batchForm.toNumber }}</strong>) menjadi tipe <strong class="text-slate-900">{{ getQuestionTypeLabel(batchForm.targetType) }}</strong> dengan bobot <strong class="text-emerald-700">{{ batchForm.scoreWeight }} poin</strong>.
+              </p>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+              <button
+                type="button"
+                @click="showBatchModal = false"
+                class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <Zap class="w-3.5 h-3.5 text-amber-300" />
+                <span>Terapkan ke Nomor {{ batchForm.fromNumber }} s/d {{ batchForm.toNumber }}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -1465,7 +1674,8 @@ import {
   CheckCircle2,
   Eye,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Zap
 } from 'lucide-vue-next';
 
 // Data State
@@ -1549,6 +1759,116 @@ const getShortTypeLabel = (type) => {
     case 'essay': return 'ESS';
     default: return 'PG';
   }
+};
+
+// Batch Type Setter State & Methods
+const showBatchModal = ref(false);
+const batchForm = reactive({
+  fromNumber: 31,
+  toNumber: 35,
+  targetType: 'true_false',
+  scoreWeight: 1.0,
+});
+
+const openBatchTypeModal = () => {
+  const currNum = activeQuestions.value[currentQuestionIndex.value]?.question_number || 1;
+  if (currNum >= 41) {
+    batchForm.fromNumber = 41;
+    batchForm.toNumber = Math.min(45, activeQuestions.value.length);
+    batchForm.targetType = 'essay';
+    batchForm.scoreWeight = 2.0;
+  } else if (currNum >= 36) {
+    batchForm.fromNumber = 36;
+    batchForm.toNumber = Math.min(40, activeQuestions.value.length);
+    batchForm.targetType = 'matching';
+    batchForm.scoreWeight = 1.0;
+  } else if (currNum >= 31) {
+    batchForm.fromNumber = 31;
+    batchForm.toNumber = Math.min(35, activeQuestions.value.length);
+    batchForm.targetType = 'true_false';
+    batchForm.scoreWeight = 1.0;
+  } else if (currNum >= 21) {
+    batchForm.fromNumber = 21;
+    batchForm.toNumber = Math.min(30, activeQuestions.value.length);
+    batchForm.targetType = 'pg_complex';
+    batchForm.scoreWeight = 1.0;
+  } else {
+    batchForm.fromNumber = 1;
+    batchForm.toNumber = Math.min(30, activeQuestions.value.length);
+    batchForm.targetType = 'pg';
+    batchForm.scoreWeight = 1.0;
+  }
+  showBatchModal.value = true;
+};
+
+const applyBatchPreset = (from, to, type, weight = 1.0) => {
+  batchForm.fromNumber = from;
+  batchForm.toNumber = Math.min(to, activeQuestions.value.length);
+  batchForm.targetType = type;
+  batchForm.scoreWeight = weight;
+};
+
+const getQuestionTypeLabel = (type) => {
+  switch (type) {
+    case 'pg': return 'Pilihan Ganda (PG Tunggal)';
+    case 'pg_complex': return 'Pilihan Ganda Kompleks (PGK)';
+    case 'true_false': return 'Benar / Salah (Mode Mandiri)';
+    case 'matching': return 'Menjodohkan (Mode Mandiri)';
+    case 'short_answer': return 'Isian Singkat';
+    case 'essay': return 'Uraian / Essay';
+    default: return type;
+  }
+};
+
+const applyBatchType = () => {
+  const from = Math.max(1, parseInt(batchForm.fromNumber) || 1);
+  const to = Math.min(activeQuestions.value.length, parseInt(batchForm.toNumber) || from);
+
+  if (from > to) {
+    alert('Nomor awal tidak boleh lebih besar dari nomor akhir!');
+    return;
+  }
+
+  let count = 0;
+  activeQuestions.value.forEach(q => {
+    if (q.question_number >= from && q.question_number <= to) {
+      q.question_type = batchForm.targetType;
+      if (batchForm.scoreWeight !== undefined && batchForm.scoreWeight !== null) {
+        q.score_weight = Number(batchForm.scoreWeight) || 1.0;
+      }
+
+      if (q.question_type === 'true_false') {
+        q.options = { mode: 'single', answer: q.correct_answer || 'B' };
+        if (!q.correct_answer || (q.correct_answer !== 'B' && q.correct_answer !== 'S')) {
+          q.correct_answer = 'B';
+        }
+      } else if (q.question_type === 'matching') {
+        const single = ensureSingleMatching(q);
+        q.options = {
+          mode: 'single',
+          right_text: single.right_text || '',
+          key: single.key || 'A'
+        };
+        if (!q.correct_answer) {
+          q.correct_answer = q.options.key || 'A';
+        }
+      } else if (q.question_type === 'pg') {
+        ensureOptions(q);
+      } else if (q.question_type === 'pg_complex') {
+        ensureOptions(q);
+      }
+      count++;
+    }
+  });
+
+  // Switch to first affected question
+  const targetIdx = activeQuestions.value.findIndex(q => q.question_number === from);
+  if (targetIdx !== -1) {
+    currentQuestionIndex.value = targetIdx;
+  }
+
+  showBatchModal.value = false;
+  alert(`Berhasil! ${count} butir soal (Nomor ${from} s/d ${to}) telah diubah menjadi tipe "${getQuestionTypeLabel(batchForm.targetType)}" dengan bobot ${batchForm.scoreWeight} poin.`);
 };
 
 const removeQuestion = (idx) => {
