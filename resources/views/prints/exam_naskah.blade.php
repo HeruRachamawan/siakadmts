@@ -193,17 +193,24 @@
         .akm-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 6px 0 4px 0;
+            margin: 6px 0 10px 0;
             font-size: 9pt;
+            page-break-inside: auto;
+        }
+        .akm-table tr {
+            page-break-inside: avoid;
         }
         .akm-table th, .akm-table td {
             border: 1px solid #000;
-            padding: 3px 6px;
+            padding: 4px 6px;
             vertical-align: top;
         }
         .akm-table th {
             background-color: #f1f5f9;
             text-align: center;
+            font-weight: bold;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         .no-print {
@@ -370,70 +377,112 @@
         <!-- 3. BAGIAN: BENAR / SALAH -->
         @if (isset($trueFalseQuestions) && $trueFalseQuestions->isNotEmpty())
             <div class="section-title">{{ $secLetters[$secIdx++] }}. Pernyataan Benar - Salah</div>
-            <p class="section-desc">Tentukan apakah setiap butir pernyataan berikut bernilai <strong>Benar (B)</strong> atau <strong>Salah (S)</strong>!</p>
 
-            @foreach ($trueFalseQuestions as $q)
-                @php
+            @php
+                $singleTfList = [];
+                $matrixTfList = [];
+                foreach ($trueFalseQuestions as $q) {
                     $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
                     $statements = $opts['statements'] ?? [];
-                    $isSingle = ($opts['mode'] ?? '') === 'single' || empty($statements) || count($statements) <= 1;
-                @endphp
-                <div class="question-item">
-                    <span class="q-number">{{ $q->question_number }}.</span>
-                    <div class="q-text">{!! render_exam_question_html($q->question_text) !!}</div>
+                    $isMat = ($opts['mode'] ?? '') === 'matrix' || count($statements) > 1;
+                    if ($isMat) {
+                        $matrixTfList[] = $q;
+                    } else {
+                        $singleTfList[] = $q;
+                    }
+                }
+            @endphp
 
-                    @if ($q->question_image)
-                        <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
-                    @endif
+            {{-- 3A. TABEL UTUH BENAR / SALAH MODE PER-NOMOR (No. 31 s/d 35) --}}
+            @if (!empty($singleTfList))
+                <p class="section-desc">Berilah tanda centang (✓) pada kolom <strong>Benar</strong> jika pernyataan sesuai, atau pada kolom <strong>Salah</strong> jika pernyataan tidak sesuai!</p>
 
-                    @if ($isSingle)
-                        <!-- Mode Mandiri Per-Nomor (No. 31 - 35) -->
-                        <div style="margin: 4px 0 6px 18px; font-size: 9pt;">
-                            @if ($showKeys)
-                                <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: bold; background: {{ strtoupper($q->correct_answer) === 'B' ? '#d1fae5' : '#fee2e2' }}; color: {{ strtoupper($q->correct_answer) === 'B' ? '#065f46' : '#991b1b' }}; border: 1px solid {{ strtoupper($q->correct_answer) === 'B' ? '#6ee7b7' : '#fca5a5' }};">
-                                    Kunci: {{ strtoupper($q->correct_answer) === 'B' ? '[ ✓ ] BENAR (B)' : '[ ✓ ] SALAH (S)' }}
-                                </span>
-                            @else
-                                <span style="font-weight: bold; color: #444;">Pilihan:</span> &nbsp;
-                                <span style="border: 1px solid #000; padding: 1px 7px; border-radius: 3px; font-weight: bold; margin-right: 8px;">( &nbsp;&nbsp; ) BENAR</span>
-                                <span style="border: 1px solid #000; padding: 1px 7px; border-radius: 3px; font-weight: bold;">( &nbsp;&nbsp; ) SALAH</span>
-                            @endif
-                        </div>
-                    @else
-                        <!-- Mode Matriks Tabel AKM -->
-                        <table class="akm-table">
-                            <thead>
-                                <tr>
-                                    <th width="5%">No</th>
-                                    <th width="75%">Pernyataan</th>
-                                    <th width="10%">B</th>
-                                    <th width="10%">S</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($statements as $sIdx => $st)
+                <table class="akm-table" style="margin-bottom: 14px;">
+                    <thead>
+                        <tr>
+                            <th width="6%" style="text-align: center;">No</th>
+                            <th width="74%" style="text-align: left;">Pernyataan</th>
+                            <th width="10%" style="text-align: center;">Benar</th>
+                            <th width="10%" style="text-align: center;">Salah</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($singleTfList as $q)
+                            <tr>
+                                <td align="center" style="font-weight: bold; vertical-align: top;">{{ $q->question_number }}.</td>
+                                <td style="vertical-align: top;">
+                                    {!! render_exam_question_html($q->question_text) !!}
+                                    @if ($q->question_image)
+                                        <div style="margin-top: 3px;">
+                                            <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" style="max-height: 80px;" alt="Stimulus">
+                                        </div>
+                                    @endif
+                                </td>
+                                <td align="center" style="vertical-align: middle; font-weight: bold; font-size: 11pt; color: #059669;">
+                                    @if ($showKeys && strtoupper($q->correct_answer) === 'B')
+                                        ✓
+                                    @endif
+                                </td>
+                                <td align="center" style="vertical-align: middle; font-weight: bold; font-size: 11pt; color: #dc2626;">
+                                    @if ($showKeys && strtoupper($q->correct_answer) === 'S')
+                                        ✓
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+
+            {{-- 3B. JIKA ADA SOAL MODE MATRIKS AKM (1 Soal Banyak Pernyataan) --}}
+            @if (!empty($matrixTfList))
+                @foreach ($matrixTfList as $q)
+                    <div class="question-item">
+                        <span class="q-number">{{ $q->question_number }}.</span>
+                        <div class="q-text">{!! render_exam_question_html($q->question_text) !!}</div>
+
+                        @if ($q->question_image)
+                            <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
+                        @endif
+
+                        @php
+                            $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
+                            $statements = $opts['statements'] ?? [];
+                        @endphp
+                        @if (!empty($statements))
+                            <table class="akm-table">
+                                <thead>
                                     <tr>
-                                        <td align="center">{{ $sIdx + 1 }}</td>
-                                        <td>{{ $st['text'] ?? '-' }}</td>
-                                        <td align="center" style="font-weight: bold;">
-                                            {{ ($showKeys && ($st['answer'] ?? '') === 'B') ? '✓' : '(   )' }}
-                                        </td>
-                                        <td align="center" style="font-weight: bold;">
-                                            {{ ($showKeys && ($st['answer'] ?? '') === 'S') ? '✓' : '(   )' }}
-                                        </td>
+                                        <th width="6%">No</th>
+                                        <th width="74%">Pernyataan</th>
+                                        <th width="10%">B</th>
+                                        <th width="10%">S</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    @endif
-                </div>
-            @endforeach
+                                </thead>
+                                <tbody>
+                                    @foreach ($statements as $sIdx => $st)
+                                        <tr>
+                                            <td align="center">{{ $sIdx + 1 }}</td>
+                                            <td>{{ $st['text'] ?? '-' }}</td>
+                                            <td align="center" style="font-weight: bold;">
+                                                {{ ($showKeys && ($st['answer'] ?? '') === 'B') ? '✓' : '' }}
+                                            </td>
+                                            <td align="center" style="font-weight: bold;">
+                                                {{ ($showKeys && ($st['answer'] ?? '') === 'S') ? '✓' : '' }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @endif
+                    </div>
+                @endforeach
+            @endif
         @endif
 
         <!-- 4. BAGIAN: MENJODOHKAN -->
         @if (isset($matchingQuestions) && $matchingQuestions->isNotEmpty())
             <div class="section-title">{{ $secLetters[$secIdx++] }}. Menjodohkan</div>
-            <p class="section-desc">Jodohkanlah pernyataan pada Kolom Kiri dengan jawaban yang sesuai pada Kolom Kanan!</p>
 
             @php
                 // Pisahkan antara soal mode mandiri (No. 36-40) dan mode matriks
@@ -452,17 +501,31 @@
                 }
             @endphp
 
-            {{-- 4A. JIKA ADA SOAL MENJODOHKAN MODE MANDIRI PER-NOMOR (No. 36 s/d 40) --}}
+            {{-- 4A. TABEL UTUH MENJODOHKAN MODE MANDIRI (No. 36 s/d 40) DENGAN KOLOM JAWABAN DI TENGAH --}}
             @if (!empty($singleMatchingList))
+                <p class="section-desc">Jodohkanlah istilah pada Kolom Kiri dengan pilihan jawaban yang tepat pada Kolom Kanan dengan menuliskan hurufnya (A, B, C, D, atau E) pada kolom <strong>Jawaban</strong> di tengah!</p>
+
                 @php
                     // Kumpulkan semua pilihan kanan yang unik, diurutkan berdasarkan huruf A, B, C...
                     $rightOptions = [];
-                    foreach ($singleMatchingList as $sq) {
+                    foreach ($singleMatchingList as $sqIdx => $sq) {
                         $sOpts = is_array($sq->options) ? $sq->options : json_decode($sq->options, true);
                         $rText = $sOpts['right_text'] ?? ($sOpts['pairs'][0]['right'] ?? '');
-                        $rKey = strtoupper($sq->correct_answer ?: ($sOpts['key'] ?? 'A'));
+                        $rawKey = strtoupper($sq->correct_answer ?: ($sOpts['key'] ?? chr(65 + $sqIdx)));
                         if (!empty($rText)) {
-                            $rightOptions[$rKey] = $rText;
+                            if (!isset($rightOptions[$rawKey])) {
+                                $rightOptions[$rawKey] = $rText;
+                            } else {
+                                $candKey = $rawKey;
+                                for ($k = 0; $k < 26; $k++) {
+                                    $c = chr(65 + $k);
+                                    if (!isset($rightOptions[$c])) {
+                                        $candKey = $c;
+                                        break;
+                                    }
+                                }
+                                $rightOptions[$candKey] = $rText;
+                            }
                         }
                     }
                     ksort($rightOptions);
@@ -476,9 +539,10 @@
                 <table class="akm-table" style="margin-bottom: 14px;">
                     <thead>
                         <tr>
-                            <th width="48%">Kolom Kiri (Pernyataan / Premis)</th>
-                            <th width="8%" style="text-align: center;">Kunci</th>
-                            <th width="44%">Kolom Kanan (Pilihan Jawaban)</th>
+                            <th width="6%" style="text-align: center;">No</th>
+                            <th width="38%" style="text-align: left;">Pernyataan / Istilah</th>
+                            <th width="10%" style="text-align: center;">Jawaban</th>
+                            <th width="46%" style="text-align: left;">Pilihan Pasangan Jawaban</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -488,9 +552,14 @@
                                 $rightItem = $rightList[$r] ?? null;
                             @endphp
                             <tr>
+                                <td align="center" style="font-weight: bold; vertical-align: top;">
+                                    @if ($leftQ)
+                                        {{ $leftQ->question_number }}.
+                                    @endif
+                                </td>
                                 <td style="vertical-align: top;">
                                     @if ($leftQ)
-                                        <strong>{{ $leftQ->question_number }}.</strong> {!! render_exam_question_html($leftQ->question_text) !!}
+                                        {!! render_exam_question_html($leftQ->question_text) !!}
                                         @if ($leftQ->question_image)
                                             <div style="margin-top: 3px;">
                                                 <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $leftQ->question_image)) }}" style="max-height: 70px;" alt="Stimulus">
@@ -498,12 +567,12 @@
                                         @endif
                                     @endif
                                 </td>
-                                <td align="center" style="font-weight: bold; font-size: 9pt; vertical-align: top; padding-top: 5px;">
+                                <td align="center" style="vertical-align: middle; font-weight: bold; font-size: 11pt;">
                                     @if ($leftQ)
                                         @if ($showKeys)
-                                            <span style="color: #059669; font-weight: bold;">[ {{ strtoupper($leftQ->correct_answer ?: '-') }} ]</span>
+                                            <span style="color: #059669; font-weight: bold;">{{ strtoupper($leftQ->correct_answer ?: '-') }}</span>
                                         @else
-                                            ( &nbsp;&nbsp;&nbsp; )
+                                            &nbsp;
                                         @endif
                                     @endif
                                 </td>
