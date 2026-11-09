@@ -830,16 +830,27 @@
             <div v-if="activeQuestions[currentQuestionIndex].question_type === 'pg'" class="space-y-2">
               <div class="text-xs font-bold text-slate-700 flex flex-wrap items-center justify-between gap-1 pb-1 border-b border-slate-100">
                 <span class="flex items-center gap-1.5">
-                  <span>PILIHAN JAWABAN (A - D):</span>
-                  <span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-medium hidden sm:inline">💡 Bisa copy A-D sekaligus dari Word, nomor otomatis bersih!</span>
+                  <span>PILIHAN JAWABAN ({{ getOptionRangeLabel(activeQuestions[currentQuestionIndex]) }}):</span>
+                  <span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-medium hidden sm:inline">💡 Bisa copy sekaligus dari Word, nomor otomatis bersih!</span>
                 </span>
-                <span class="text-[11px] text-emerald-600 font-semibold">Klik lingkaran huruf untuk memilih 1 Kunci Benar</span>
+                <div class="flex items-center gap-2">
+                  <button
+                    v-if="canAddOption(activeQuestions[currentQuestionIndex])"
+                    type="button"
+                    @click="addOption(activeQuestions[currentQuestionIndex])"
+                    class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold flex items-center gap-1 transition"
+                    title="Tambah Opsi Pilihan Jawaban"
+                  >
+                    <Plus class="w-3 h-3" /> Tambah Opsi
+                  </button>
+                  <span class="text-[11px] text-emerald-600 font-semibold hidden md:inline">Klik lingkaran huruf untuk memilih 1 Kunci</span>
+                </div>
               </div>
 
               <div
-                v-for="opt in ['A', 'B', 'C', 'D']"
+                v-for="opt in getOptionKeys(activeQuestions[currentQuestionIndex])"
                 :key="opt"
-                class="flex items-center gap-2 p-2 rounded-xl border transition"
+                class="flex items-center gap-2 p-2 rounded-xl border transition group"
                 :class="activeQuestions[currentQuestionIndex].correct_answer === opt ? 'bg-emerald-50/70 border-emerald-300' : 'bg-slate-50 border-slate-200'"
               >
                 <button
@@ -858,11 +869,20 @@
                   @blur="ensureOptions(activeQuestions[currentQuestionIndex])[opt] = cleanOptionPrefix(ensureOptions(activeQuestions[currentQuestionIndex])[opt])"
                   :placeholder="'Tulis isi pilihan ' + opt + '...'"
                   class="form-input flex-1 py-1.5 text-xs bg-white min-w-0"
-                  :title="'Ketik pilihan ' + opt + ' atau paste (bisa paste 4 opsi sekaligus dari Word)'"
+                  :title="'Ketik pilihan ' + opt + ' atau paste (bisa paste opsi sekaligus dari Word)'"
                 />
                 <span v-if="activeQuestions[currentQuestionIndex].correct_answer === opt" class="text-[11px] font-bold text-emerald-700 px-1.5 py-0.5 bg-emerald-100 rounded shrink-0">
                   ✓ KUNCI
                 </span>
+                <button
+                  v-if="canRemoveOption(activeQuestions[currentQuestionIndex], opt)"
+                  type="button"
+                  @click="removeOption(activeQuestions[currentQuestionIndex], opt)"
+                  class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition shrink-0"
+                  :title="'Hapus Opsi ' + opt"
+                >
+                  <Trash2 class="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
 
@@ -870,16 +890,27 @@
             <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'pg_complex'" class="space-y-2">
               <div class="text-xs font-bold text-slate-700 flex flex-wrap items-center justify-between gap-1 pb-1 border-b border-slate-100">
                 <span class="flex items-center gap-1.5">
-                  <span class="text-indigo-900 font-bold">PILIHAN GANDA KOMPLEKS (A - E):</span>
+                  <span class="text-indigo-900 font-bold">PILIHAN GANDA KOMPLEKS ({{ getOptionRangeLabel(activeQuestions[currentQuestionIndex]) }}):</span>
                   <span class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full font-medium hidden sm:inline">💡 Bisa copy sekaligus dari Word, nomor otomatis bersih!</span>
                 </span>
-                <span class="text-[11px] text-indigo-600 font-semibold">Klik kotak huruf untuk memilih beberapa kunci</span>
+                <div class="flex items-center gap-2">
+                  <button
+                    v-if="canAddOption(activeQuestions[currentQuestionIndex])"
+                    type="button"
+                    @click="addOption(activeQuestions[currentQuestionIndex])"
+                    class="px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold flex items-center gap-1 transition"
+                    title="Tambah Opsi Pilihan Ganda Kompleks"
+                  >
+                    <Plus class="w-3 h-3" /> Tambah Opsi
+                  </button>
+                  <span class="text-[11px] text-indigo-600 font-semibold hidden md:inline">Klik kotak huruf untuk memilih beberapa kunci</span>
+                </div>
               </div>
 
               <div
-                v-for="opt in ['A', 'B', 'C', 'D', 'E']"
+                v-for="opt in getOptionKeys(activeQuestions[currentQuestionIndex])"
                 :key="opt"
-                class="flex items-center gap-2 p-2 rounded-xl border transition"
+                class="flex items-center gap-2 p-2 rounded-xl border transition group"
                 :class="isComplexKeySelected(activeQuestions[currentQuestionIndex], opt) ? 'bg-indigo-50/70 border-indigo-300' : 'bg-slate-50 border-slate-200'"
               >
                 <button
@@ -897,11 +928,20 @@
                   @blur="ensureOptions(activeQuestions[currentQuestionIndex])[opt] = cleanOptionPrefix(ensureOptions(activeQuestions[currentQuestionIndex])[opt])"
                   :placeholder="'Tulis opsi / pernyataan ' + opt + '...'"
                   class="form-input flex-1 py-1.5 text-xs bg-white min-w-0"
-                  :title="'Ketik opsi ' + opt + ' atau paste (bisa paste sekaligus dari Word)'"
+                  :title="'Ketik opsi ' + opt + ' atau paste (bisa paste opsi sekaligus dari Word)'"
                 />
                 <span v-if="isComplexKeySelected(activeQuestions[currentQuestionIndex], opt)" class="text-[11px] font-bold text-indigo-700 px-1.5 py-0.5 bg-indigo-100 rounded shrink-0">
                   ✓ KUNCI
                 </span>
+                <button
+                  v-if="canRemoveOption(activeQuestions[currentQuestionIndex], opt)"
+                  type="button"
+                  @click="removeOption(activeQuestions[currentQuestionIndex], opt)"
+                  class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition shrink-0"
+                  :title="'Hapus Opsi ' + opt"
+                >
+                  <Trash2 class="w-3.5 h-3.5" />
+                </button>
               </div>
               <div class="text-xs text-slate-400 italic pt-1">
                 Kunci Terpilih: <strong class="text-indigo-600">{{ activeQuestions[currentQuestionIndex].correct_answer || '(Belum ada kunci dipilih)' }}</strong>
@@ -1424,11 +1464,75 @@ const closeEditor = () => {
   fetchPackages();
 };
 
+const ALL_OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
+
 const ensureOptions = (q) => {
-  if (!q.options || typeof q.options !== 'object') {
+  if (!q.options || typeof q.options !== 'object' || Array.isArray(q.options)) {
     q.options = { A: '', B: '', C: '', D: '' };
+  } else {
+    // If q has legacy empty E and E is not in correct_answer, clean it up so it defaults to A-D for MTs
+    if (q.options.E !== undefined && q.options.E === '' && (!q.correct_answer || !q.correct_answer.includes('E'))) {
+      delete q.options.E;
+    }
   }
   return q.options;
+};
+
+const getOptionKeys = (q) => {
+  const opts = ensureOptions(q);
+  const keys = Object.keys(opts)
+    .filter(k => ALL_OPTION_LETTERS.includes(k))
+    .sort();
+  if (keys.length === 0) {
+    ['A', 'B', 'C', 'D'].forEach(k => { opts[k] = ''; });
+    return ['A', 'B', 'C', 'D'];
+  }
+  return keys;
+};
+
+const getOptionRangeLabel = (q) => {
+  const keys = getOptionKeys(q);
+  if (keys.length === 0) return 'A - D';
+  return `${keys[0]} - ${keys[keys.length - 1]}`;
+};
+
+const canAddOption = (q) => {
+  const keys = getOptionKeys(q);
+  return keys.length < ALL_OPTION_LETTERS.length;
+};
+
+const canRemoveOption = (q, opt) => {
+  const keys = getOptionKeys(q);
+  // Keep minimum 2 options (A, B) and only allow removing the last option in sequence (e.g. remove E, or remove D)
+  return keys.length > 2 && opt === keys[keys.length - 1];
+};
+
+const addOption = (q) => {
+  const opts = ensureOptions(q);
+  const keys = getOptionKeys(q);
+  const nextLetter = ALL_OPTION_LETTERS.find(l => !keys.includes(l));
+  if (nextLetter) {
+    opts[nextLetter] = '';
+  }
+};
+
+const removeOption = (q, opt) => {
+  const opts = ensureOptions(q);
+  const keys = getOptionKeys(q);
+  if (keys.length <= 2) {
+    alert('Pilihan jawaban minimal harus memiliki 2 opsi!');
+    return;
+  }
+  
+  delete opts[opt];
+  
+  // Clean up correct_answer if this option was selected
+  if (q.question_type === 'pg' && q.correct_answer === opt) {
+    q.correct_answer = '';
+  } else if (q.question_type === 'pg_complex' && q.correct_answer) {
+    let currentKeys = q.correct_answer.split(',').map(k => k.trim()).filter(k => k !== opt && k !== '');
+    q.correct_answer = currentKeys.join(',');
+  }
 };
 
 // --- Word Paste & Option Prefix Sanitizers ---

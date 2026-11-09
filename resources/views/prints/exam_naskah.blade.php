@@ -292,7 +292,7 @@
         <!-- 1. BAGIAN: PILIHAN GANDA TUNGGAL -->
         @if ($pgQuestions->isNotEmpty())
             <div class="section-title">{{ $secLetters[$secIdx++] }}. Pilihan Ganda</div>
-            <p class="section-desc">Pilihlah salah satu jawaban yang paling tepat dengan memberi tanda silang (X) pada huruf A, B, C, atau D!</p>
+            <p class="section-desc">Pilihlah salah satu jawaban yang paling tepat dengan memberi tanda silang (X) pada huruf pilihan yang tersedia!</p>
 
             @foreach ($pgQuestions as $q)
                 <div class="question-item">
@@ -308,7 +308,7 @@
                     @endphp
                     @if (!empty($opts))
                         <ul class="options-list">
-                            @foreach (['A', 'B', 'C', 'D'] as $key)
+                            @foreach (['A', 'B', 'C', 'D', 'E'] as $key)
                                 @if (isset($opts[$key]) && $opts[$key] !== '')
                                     <li>
                                         <span class="opt-label">{{ $key }}.</span>

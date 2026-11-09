@@ -225,7 +225,7 @@
                 <!-- PG Tunggal -->
                 @if (!empty($opts) && $q->question_type === 'pg')
                     <ul class="opts">
-                        @foreach (['A', 'B', 'C', 'D'] as $key)
+                        @foreach (['A', 'B', 'C', 'D', 'E'] as $key)
                             @if (isset($opts[$key]) && $opts[$key] !== '')
                                 <li>
                                     <strong>{{ $key }}.</strong> {{ $opts[$key] }}
