@@ -1350,41 +1350,11 @@
             </div>
           </div>
 
-          <!-- Form Fields Kisi-Kisi -->
+          <!-- Form Fields Kisi-Kisi (Urutan Sinkron dengan Kolom Tabel Cetak Kisi-Kisi) -->
           <div class="space-y-3 text-xs">
-            <!-- Materi Pokok -->
+            <!-- 1. Tujuan Pembelajaran (TP) / CP (Kolom 2 Cetak) -->
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Materi Pokok / Topik *</label>
-              <input
-                type="text"
-                v-model="activeQuestions[currentQuestionIndex].material"
-                placeholder="Contoh: Operasi Aljabar, Fiqih Thaharah, dll."
-                class="form-input text-xs"
-              />
-            </div>
-
-            <!-- Level Kognitif -->
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Level Kognitif (Standar BSNP/Kemenag) *</label>
-              <select v-model="activeQuestions[currentQuestionIndex].cognitive_level" class="form-select text-xs font-medium">
-                <option v-for="l in options.cognitive_levels" :key="l.value" :value="l.value">{{ l.label }}</option>
-              </select>
-            </div>
-
-            <!-- Indikator Soal -->
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Indikator Soal *</label>
-              <textarea
-                v-model="activeQuestions[currentQuestionIndex].indicator"
-                rows="3"
-                placeholder="Contoh: Disajikan teks stimulus masalah, siswa dapat menentukan solusi yang tepat."
-                class="form-textarea text-xs"
-              ></textarea>
-            </div>
-
-            <!-- Tujuan Pembelajaran (TP) / CP -->
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Tujuan Pembelajaran (TP) / CP</label>
+              <label class="block font-bold text-slate-700 mb-1">Tujuan Pembelajaran (TP) / CP *</label>
               <input
                 type="text"
                 v-model="activeQuestions[currentQuestionIndex].basic_competency"
@@ -1393,7 +1363,37 @@
               />
             </div>
 
-            <!-- Tingkat Kesukaran -->
+            <!-- 2. Materi Pokok (Kolom 3 Cetak) -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Materi Pokok / Topik *</label>
+              <input
+                type="text"
+                v-model="activeQuestions[currentQuestionIndex].material"
+                placeholder="Contoh: Antarmuka Pengguna (GUI), Operasi Aljabar, dll."
+                class="form-input text-xs"
+              />
+            </div>
+
+            <!-- 3. Indikator Soal (Kolom 4 Cetak) -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Indikator Soal *</label>
+              <textarea
+                v-model="activeQuestions[currentQuestionIndex].indicator"
+                rows="3"
+                placeholder="Contoh: Disajikan deskripsi tentang antarmuka berbasis ikon/grafis, peserta didik dapat menentukan kepanjangan dari GUI."
+                class="form-textarea text-xs"
+              ></textarea>
+            </div>
+
+            <!-- 4. Level Kognitif (Kolom 5 Cetak) -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Level Kognitif (Standar BSNP/Kemenag) *</label>
+              <select v-model="activeQuestions[currentQuestionIndex].cognitive_level" class="form-select text-xs font-medium">
+                <option v-for="l in options.cognitive_levels" :key="l.value" :value="l.value">{{ l.label }}</option>
+              </select>
+            </div>
+
+            <!-- 5. Tingkat Kesukaran (Untuk Kartu Soal & Analisis Butir) -->
             <div>
               <label class="block font-bold text-slate-700 mb-1.5">Estimasi Tingkat Kesukaran</label>
               <div class="grid grid-cols-3 gap-1.5">
