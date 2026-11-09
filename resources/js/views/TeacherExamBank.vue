@@ -805,12 +805,10 @@
               </div>
             </div>
 
-            <textarea
+            <QuestionRichEditor
               v-model="activeQuestions[currentQuestionIndex].question_text"
-              rows="4"
               placeholder="Tuliskan rumusan butir soal secara jelas, lugas, dan tegas di sini..."
-              class="form-textarea text-xs w-full rounded-xl"
-            ></textarea>
+            />
 
             <!-- Image Preview -->
             <div v-if="activeQuestions[currentQuestionIndex].question_image" class="relative inline-block border border-slate-200 rounded-lg p-1 bg-slate-50">
@@ -1190,6 +1188,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import api, { getImageUrl } from '../api';
+import QuestionRichEditor from '../components/QuestionRichEditor.vue';
 import {
   BookOpen,
   Plus,
@@ -1282,7 +1281,10 @@ const progressPercent = computed(() => {
 });
 
 const isQuestionComplete = (q) => {
-  return Boolean(q.correct_answer && q.indicator && q.question_text);
+  if (!q.correct_answer || !q.indicator) return false;
+  const clean = q.question_text ? q.question_text.replace(/<[^>]*>/g, '').trim() : '';
+  const hasMediaOrTable = q.question_text ? (q.question_text.includes('<img') || q.question_text.includes('<table')) : false;
+  return clean.length > 0 || hasMediaOrTable;
 };
 
 const getShortTypeLabel = (type) => {

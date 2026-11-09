@@ -64,19 +64,51 @@
             page-break-inside: avoid;
             margin-bottom: 14px;
         }
+        .question-item::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
         .q-number {
             font-weight: bold;
-            display: inline-block;
-            width: 20px;
+            float: left;
+            width: 22px;
         }
         .q-text {
-            display: inline;
+            margin-left: 24px;
+            display: block;
+        }
+        .q-text p {
+            margin: 0 0 4px 0;
+        }
+        .q-text table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 6px 0;
+            font-size: 9pt;
+        }
+        .q-text th, .q-text td {
+            border: 1px solid #444;
+            padding: 3px 6px;
+        }
+        .q-text th {
+            background-color: #f2f2f2;
+        }
+        .q-text ul {
+            list-style-type: disc;
+            padding-left: 18px;
+            margin: 4px 0;
+        }
+        .q-text ol {
+            list-style-type: decimal;
+            padding-left: 18px;
+            margin: 4px 0;
         }
         .q-img {
             display: block;
             max-width: 90%;
             max-height: 160px;
-            margin: 6px auto;
+            margin: 6px 0 6px 24px;
             border: 1px solid #ccc;
             padding: 2px;
         }
@@ -200,6 +232,15 @@
     @php
         $secLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
         $secIdx = 0;
+        if (!function_exists('render_exam_question_html')) {
+            function render_exam_question_html($text) {
+                if (!$text) return 'Soal belum diisi.';
+                if (strip_tags($text) !== $text) {
+                    return strip_tags($text, '<b><strong><i><em><u><s><strike><sub><sup><span><p><div><br><table><thead><tbody><tr><th><td><ul><ol><li>');
+                }
+                return nl2br(e($text));
+            }
+        }
     @endphp
 
     <div class="content-container {{ $layout === '2col' ? 'col-2' : '' }}">
@@ -211,7 +252,7 @@
             @foreach ($pgQuestions as $q)
                 <div class="question-item">
                     <span class="q-number">{{ $q->question_number }}.</span>
-                    <div class="q-text">{!! nl2br(e($q->question_text ?? 'Soal belum diisi.')) !!}</div>
+                    <div class="q-text">{!! render_exam_question_html($q->question_text) !!}</div>
 
                     @if ($q->question_image)
                         <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
@@ -247,7 +288,7 @@
             @foreach ($pgComplexQuestions as $q)
                 <div class="question-item">
                     <span class="q-number">{{ $q->question_number }}.</span>
-                    <div class="q-text">{!! nl2br(e($q->question_text ?? 'Soal belum diisi.')) !!}</div>
+                    <div class="q-text">{!! render_exam_question_html($q->question_text) !!}</div>
 
                     @if ($q->question_image)
                         <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
@@ -289,7 +330,7 @@
             @foreach ($trueFalseQuestions as $q)
                 <div class="question-item">
                     <span class="q-number">{{ $q->question_number }}.</span>
-                    <div class="q-text">{!! nl2br(e($q->question_text ?? 'Soal belum diisi.')) !!}</div>
+                    <div class="q-text">{!! render_exam_question_html($q->question_text) !!}</div>
 
                     @if ($q->question_image)
                         <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
@@ -337,7 +378,7 @@
             @foreach ($matchingQuestions as $q)
                 <div class="question-item">
                     <span class="q-number">{{ $q->question_number }}.</span>
-                    <div class="q-text">{!! nl2br(e($q->question_text ?? 'Soal belum diisi.')) !!}</div>
+                    <div class="q-text">{!! render_exam_question_html($q->question_text) !!}</div>
 
                     @if ($q->question_image)
                         <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
@@ -382,7 +423,7 @@
             @foreach ($shortAnswerQuestions as $q)
                 <div class="question-item">
                     <span class="q-number">{{ $q->question_number }}.</span>
-                    <div class="q-text">{!! nl2br(e($q->question_text ?? 'Soal belum diisi.')) !!}</div>
+                    <div class="q-text">{!! render_exam_question_html($q->question_text) !!}</div>
 
                     @if ($q->question_image)
                         <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">
@@ -408,7 +449,7 @@
             @foreach ($essayQuestions as $q)
                 <div class="question-item">
                     <span class="q-number">{{ $q->question_number }}.</span>
-                    <div class="q-text">{!! nl2br(e($q->question_text ?? 'Soal belum diisi.')) !!}</div>
+                    <div class="q-text">{!! render_exam_question_html($q->question_text) !!}</div>
 
                     @if ($q->question_image)
                         <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus No {{ $q->question_number }}">

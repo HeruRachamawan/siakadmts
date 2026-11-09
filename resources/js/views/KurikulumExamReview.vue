@@ -304,9 +304,10 @@
               </div>
 
               <!-- Question text -->
-              <div class="text-sm text-slate-800 leading-relaxed font-serif">
-                {{ activePackage.questions[selectedQuestionIndex].question_text || 'Teks soal kosong.' }}
-              </div>
+              <div
+                class="text-sm text-slate-800 leading-relaxed font-serif break-words"
+                v-html="activePackage.questions[selectedQuestionIndex].question_text || 'Teks soal kosong.'"
+              ></div>
 
               <!-- Question image if any -->
               <div v-if="activePackage.questions[selectedQuestionIndex].question_image" class="mt-2">

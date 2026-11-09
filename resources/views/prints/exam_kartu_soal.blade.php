@@ -90,6 +90,29 @@
             border: none;
             z-index: 9999;
         }
+        .rumusan-box table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 6px 0;
+            font-size: 9.5pt;
+        }
+        .rumusan-box th, .rumusan-box td {
+            border: 1px solid #444;
+            padding: 3px 6px;
+        }
+        .rumusan-box th {
+            background-color: #f2f2f2;
+        }
+        .rumusan-box ul {
+            list-style-type: disc;
+            padding-left: 18px;
+            margin: 4px 0;
+        }
+        .rumusan-box ol {
+            list-style-type: decimal;
+            padding-left: 18px;
+            margin: 4px 0;
+        }
         @media print {
             .no-print { display: none !important; }
         }
@@ -152,7 +175,7 @@
 
             <div class="rumusan-box">
                 <div class="rumusan-title">RUMUSAN BUTIR SOAL:</div>
-                <div>{!! nl2br(e($q->question_text ?? 'Soal belum diisi.')) !!}</div>
+                <div>{!! (strip_tags($q->question_text) !== $q->question_text) ? strip_tags($q->question_text, '<b><strong><i><em><u><s><strike><sub><sup><span><p><div><br><table><thead><tbody><tr><th><td><ul><ol><li>') : nl2br(e($q->question_text ?? 'Soal belum diisi.')) !!}</div>
 
                 @if ($q->question_image)
                     <img src="{{ asset('storage/' . str_replace('exam-questions/', '', $q->question_image)) }}" class="q-img" alt="Stimulus">
