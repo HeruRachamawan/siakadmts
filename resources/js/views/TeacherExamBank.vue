@@ -474,6 +474,17 @@
             </button>
           </div>
 
+          <!-- Auto-Fill All Kisi-Kisi Button -->
+          <button
+            type="button"
+            @click="autoGenerateAllKisiKisi"
+            class="hidden sm:inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 text-xs font-bold rounded-lg shadow-sm transition"
+            title="Otomatis rumuskan Kisi-Kisi (TP, Materi, Indikator, Level Kognitif) untuk semua nomor soal"
+          >
+            <Sparkles class="w-3.5 h-3.5 text-slate-950" />
+            <span>Auto-Kisi</span>
+          </button>
+
           <!-- Save All Button -->
           <button
             type="button"
@@ -1349,14 +1360,42 @@
           :class="{ 'hidden lg:block': mobileStudioTab !== 'kisi' }"
         >
           <!-- Kisi-Kisi Header -->
-          <div class="flex items-center gap-2 pb-2.5 border-b border-slate-100">
-            <div class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg shrink-0">
-              <TableProperties class="w-4 h-4" />
+          <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg shrink-0">
+                <TableProperties class="w-4 h-4" />
+              </div>
+              <div class="min-w-0">
+                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider truncate">Pemetaan Kisi-Kisi Butir Soal</h4>
+                <p class="text-[11px] text-slate-400 truncate">Terintegrasi langsung ke Format Cetak Resmi</p>
+              </div>
             </div>
-            <div class="min-w-0">
-              <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider truncate">Pemetaan Kisi-Kisi Butir Soal</h4>
-              <p class="text-[11px] text-slate-400 truncate">Terintegrasi langsung ke Format Cetak Resmi Kemenag</p>
-            </div>
+
+            <!-- Single Question Auto-Generate Button -->
+            <button
+              type="button"
+              @click="autoGenerateSingleKisiKisi(currentQuestionIndex)"
+              class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-[11px] font-bold rounded-lg shadow-2xs transition"
+              title="Otomatis rumuskan TP, Materi, Indikator, dan Level Kognitif dari teks soal ini"
+            >
+              <Sparkles class="w-3.5 h-3.5 text-amber-300" />
+              <span>Auto-Fill</span>
+            </button>
+          </div>
+
+          <!-- Quick Inherit from previous question -->
+          <div
+            v-if="currentQuestionIndex > 0 && (!activeQuestions[currentQuestionIndex].material || !activeQuestions[currentQuestionIndex].basic_competency)"
+            class="flex items-center justify-between p-2 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-800"
+          >
+            <span class="truncate">Samakan materi dengan Soal No. {{ activeQuestions[currentQuestionIndex - 1].question_number }}?</span>
+            <button
+              type="button"
+              @click="copyKisiFromPrev(currentQuestionIndex)"
+              class="shrink-0 font-bold text-amber-700 hover:text-amber-900 underline ml-2 cursor-pointer"
+            >
+              Salin TP & Materi
+            </button>
           </div>
 
           <!-- Form Fields Kisi-Kisi (Urutan Sinkron dengan Kolom Tabel Cetak Kisi-Kisi) -->
@@ -1685,7 +1724,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
-  ClipboardCheck
+  ClipboardCheck,
+  Sparkles
 } from 'lucide-vue-next';
 
 // Data State
@@ -1910,6 +1950,189 @@ const previewKisiKisi = () => {
 const previewTelaah = () => {
   if (!activePackage.value) return;
   window.open(`/prints/exam/${activePackage.value.id}/telaah`, '_blank');
+};
+
+// Smart Auto-Generate Kisi-Kisi Engine
+const analyzeQuestionContent = (q, prevQ = null) => {
+  const cleanHtml = (q.question_text || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  const lowerText = cleanHtml.toLowerCase();
+
+  // 1. Determine Topic / Material
+  let topic = q.material || '';
+  if (!topic) {
+    if (lowerText.match(/gui|grafis|antarmuka grafis|ikon|icon|simbol visual/)) {
+      topic = 'Antarmuka Pengguna (GUI)';
+    } else if (lowerText.match(/cli|command line|baris perintah/)) {
+      topic = 'Interaksi Pengguna (CLI)';
+    } else if (lowerText.match(/vui|voice|suara|siri|alexa|google assistant|bixby/)) {
+      topic = 'Voice User Interface (VUI)';
+    } else if (lowerText.match(/remote|kendali jarak jauh|alat pengendali/)) {
+      topic = 'Alat Pengendali Perangkat';
+    } else if (lowerText.match(/kalkulator|calculator|\b2\s*\+\s*7/)) {
+      topic = 'Aplikasi Perhitungan Sederhana';
+    } else if (lowerText.match(/windows|jendela/)) {
+      topic = 'Manajemen Jendela Aplikasi';
+    } else if (lowerText.match(/file explorer|folder|direktori|map dokumen|pengelolaan file/)) {
+      topic = 'Pengelolaan File dan Folder';
+    } else if (lowerText.match(/hard disk|flash drive|flashdisk|kartu memori|media simpan/)) {
+      topic = 'Media Penyimpanan Elektronik';
+    } else if (lowerText.match(/ekstensi|\.jpg|\.png|\.doc|\.docx|format file/)) {
+      topic = 'Format dan Ekstensi File';
+    } else if (lowerText.match(/finder|macos|macintosh/)) {
+      topic = 'Pengelolaan File di Berbagai OS';
+    } else if (lowerText.match(/ctrl-c|ctrl-v|shortcut|tombol pintas|salin|tempel/)) {
+      topic = 'Tombol Pintas (Shortcut)';
+    } else if (lowerText.match(/peramban|browser|chrome|firefox|safari|edge/)) {
+      topic = 'Peramban Web (Web Browser)';
+    } else if (lowerText.match(/bookmark|penanda halaman|favorit/)) {
+      topic = 'Fitur Penanda (Bookmark)';
+    } else if (lowerText.match(/mesin pencari|search engine|google|bing|yahoo/)) {
+      topic = 'Mesin Pencari (Search Engine)';
+    } else if (lowerText.match(/kata kunci|keyword|operator and|operator logika/)) {
+      topic = 'Teknik Pencarian Internet';
+    } else if (lowerText.match(/surel|email|gmail|surat elektronik|inbox|spam/)) {
+      topic = 'Surel (Electronic Mail)';
+    } else if (lowerText.match(/keyboard|papan tombol|function keys|f1|f12|qwerty/)) {
+      topic = 'Perangkat Keras (Keyboard)';
+    } else if (lowerText.match(/ram|rom|random access memory|volatile|mainboard/)) {
+      topic = 'Memori Komputer (RAM dan ROM)';
+    } else if (lowerText.match(/cloud storage|penyimpanan awan/)) {
+      topic = 'Penyimpanan Awan (Cloud Storage)';
+    } else if (lowerText.match(/mouse|tetikus|cpu|central processing|monitor|printer|input devices|output devices|hardware/)) {
+      topic = 'Perangkat Keras Komputer';
+    } else if (lowerText.match(/software|perangkat lunak/)) {
+      topic = 'Perangkat Lunak Komputer';
+    } else if (prevQ && prevQ.material) {
+      topic = prevQ.material;
+    } else {
+      const subjectName = activePackage.value?.subject?.name || 'Informatika';
+      topic = 'Materi Pokok ' + subjectName;
+    }
+  }
+
+  // 2. Determine Indikator Soal
+  let indicator = q.indicator || '';
+  if (!indicator) {
+    const qType = q.question_type || 'pg';
+    if (qType === 'pg') {
+      if (lowerText.match(/kepanjangan|singkatan|arti/)) {
+        indicator = `Disajikan deskripsi tentang ${topic}, peserta didik dapat menentukan kepanjangan atau definisinya secara tepat.`;
+      } else if (lowerText.match(/dinamakan|disebut|istilah|pengertian/)) {
+        indicator = `Disajikan pengertian atau simbol visual pada ${topic}, peserta didik dapat mengidentifikasi istilah yang tepat.`;
+      } else if (lowerText.match(/mengapa|alasan|keunggulan|keuntungan/)) {
+        indicator = `Disajikan permasalahan terkait ${topic}, peserta didik dapat menjelaskan karakteristik/keunggulannya dengan tepat.`;
+      } else if (lowerText.match(/langkah|cara|prosedur|menu|perintah/)) {
+        indicator = `Disajikan skenario aktivitas pada ${topic}, peserta didik dapat menentukan langkah menu yang digunakan.`;
+      } else if (lowerText.match(/hitung|hasil|kalkulasi/)) {
+        indicator = `Disajikan studi kasus operasi perhitungan pada ${topic}, peserta didik dapat menentukan hasil kalkulasi yang tepat.`;
+      } else if (lowerText.match(/contoh|macam|daftar/)) {
+        indicator = `Disajikan daftar pilihan, peserta didik dapat menentukan contoh media atau perangkat terkait ${topic} dengan benar.`;
+      } else {
+        indicator = `Disajikan pertanyaan mengenai ${topic}, peserta didik dapat menentukan jawaban yang tepat.`;
+      }
+    } else if (qType === 'pg_complex') {
+      indicator = `Disajikan ragam pernyataan terkait ${topic}, peserta didik dapat memilih beberapa pilihan/pernyataan yang benar.`;
+    } else if (qType === 'true_false') {
+      indicator = `Disajikan pernyataan mengenai ${topic}, peserta didik dapat memvalidasi kebenaran pernyataan tersebut secara tepat.`;
+    } else if (qType === 'matching') {
+      indicator = `Disajikan komponen atau istilah ${topic}, peserta didik dapat menjodohkan dengan fungsi atau pasangannya yang sesuai.`;
+    } else if (qType === 'short_answer') {
+      indicator = `Disajikan pertanyaan ringkas terkait ${topic}, peserta didik dapat menuliskan jawaban yang tepat.`;
+    } else if (qType === 'essay') {
+      indicator = `Disajikan pertanyaan konseptual terkait ${topic}, peserta didik dapat menjelaskan konsep dan penerapannya secara jelas dan terperinci.`;
+    }
+  }
+
+  // 3. Determine Tujuan Pembelajaran (TP) / CP
+  let tp = q.basic_competency || '';
+  if (!tp) {
+    if (prevQ && prevQ.basic_competency && prevQ.material === topic) {
+      tp = prevQ.basic_competency;
+    } else {
+      tp = `Peserta didik mampu memahami dan menganalisis konsep ${topic} beserta penerapannya.`;
+    }
+  }
+
+  // 4. Determine Level Kognitif
+  let cognitive = q.cognitive_level || '';
+  if (!cognitive) {
+    const qType = q.question_type || 'pg';
+    if (qType === 'pg_complex' || lowerText.match(/mengapa|analisis|faktor|kendala|perbedaan nasib|keunggulan dibanding/)) {
+      cognitive = 'L3';
+    } else if (qType === 'matching' || qType === 'true_false' || lowerText.match(/langkah|cara|prosedur|shortcut|fungsi|bagaimana|hitung|membedakan/)) {
+      cognitive = 'L2';
+    } else {
+      cognitive = 'L1';
+    }
+  }
+
+  // 5. Determine Tingkat Kesukaran
+  let diff = q.difficulty_level || '';
+  if (!diff) {
+    if (cognitive === 'L3') diff = 'sukar';
+    else if (cognitive === 'L2') diff = 'sedang';
+    else diff = 'mudah';
+  }
+
+  return {
+    material: topic,
+    indicator: indicator,
+    basic_competency: tp,
+    cognitive_level: cognitive,
+    difficulty_level: diff,
+  };
+};
+
+const autoGenerateSingleKisiKisi = (index) => {
+  const q = activeQuestions.value[index];
+  if (!q) return;
+  const prevQ = index > 0 ? activeQuestions.value[index - 1] : null;
+  const res = analyzeQuestionContent(q, prevQ);
+
+  q.material = res.material;
+  q.indicator = res.indicator;
+  q.basic_competency = res.basic_competency;
+  q.cognitive_level = res.cognitive_level;
+  q.difficulty_level = res.difficulty_level;
+};
+
+const autoGenerateAllKisiKisi = () => {
+  if (!activeQuestions.value || activeQuestions.value.length === 0) return;
+
+  const countEmpty = activeQuestions.value.filter(q => !q.indicator || !q.material || !q.basic_competency).length;
+  const confirmMsg = countEmpty > 0
+    ? `Generate kisi-kisi otomatis untuk ${countEmpty} butir soal yang kisi-kisinya belum lengkap?`
+    : `Semua butir soal sudah memiliki kisi-kisi. Apakah Anda ingin meng-generate ulang kisi-kisi untuk seluruh ${activeQuestions.value.length} butir soal?`;
+
+  if (!confirm(confirmMsg)) return;
+
+  let generated = 0;
+  for (let i = 0; i < activeQuestions.value.length; i++) {
+    const q = activeQuestions.value[i];
+    const prevQ = i > 0 ? activeQuestions.value[i - 1] : null;
+    const res = analyzeQuestionContent(q, prevQ);
+
+    if (!q.material || countEmpty === 0) q.material = res.material;
+    if (!q.indicator || countEmpty === 0) q.indicator = res.indicator;
+    if (!q.basic_competency || countEmpty === 0) q.basic_competency = res.basic_competency;
+    if (!q.cognitive_level || countEmpty === 0) q.cognitive_level = res.cognitive_level;
+    if (!q.difficulty_level || countEmpty === 0) q.difficulty_level = res.difficulty_level;
+    generated++;
+  }
+
+  alert(`Alhamdulillah! Kisi-kisi untuk ${generated} butir soal berhasil diisi otomatis. Jangan lupa klik tombol "Simpan Semua".`);
+};
+
+const copyKisiFromPrev = (index) => {
+  if (index <= 0) return;
+  const curQ = activeQuestions.value[index];
+  const prevQ = activeQuestions.value[index - 1];
+  if (!curQ || !prevQ) return;
+
+  curQ.basic_competency = prevQ.basic_competency || curQ.basic_competency;
+  curQ.material = prevQ.material || curQ.material;
+  if (!curQ.cognitive_level && prevQ.cognitive_level) curQ.cognitive_level = prevQ.cognitive_level;
+  if (!curQ.difficulty_level && prevQ.difficulty_level) curQ.difficulty_level = prevQ.difficulty_level;
 };
 
 // Methods
