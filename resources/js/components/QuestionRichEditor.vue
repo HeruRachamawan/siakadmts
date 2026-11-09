@@ -1,7 +1,7 @@
 <template>
-  <div class="rich-question-editor border border-slate-300 rounded-xl overflow-hidden focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 shadow-2xs transition bg-white flex flex-col">
+  <div class="rich-question-editor border border-slate-300 rounded-xl overflow-visible focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 shadow-2xs transition bg-white flex flex-col relative">
     <!-- TOOLBAR -->
-    <div class="bg-slate-50/90 border-b border-slate-200 px-2 py-1.5 flex flex-wrap items-center gap-1 text-slate-700 select-none shrink-0">
+    <div class="bg-slate-50/90 border-b border-slate-200 px-2 py-1.5 flex flex-wrap items-center gap-1 text-slate-700 select-none shrink-0 rounded-t-xl">
       <!-- 1. FONT SIZE SELECTOR -->
       <div class="flex items-center">
         <select
@@ -226,62 +226,176 @@
           <ChevronDown class="w-3 h-3 text-amber-600 transition" :class="{ 'rotate-180': showSymbolPalette }" />
         </button>
 
-        <!-- PALETTE POPUP DROPDOWN -->
+        <!-- Backdrop to close on click outside -->
         <div
           v-if="showSymbolPalette"
-          class="absolute left-0 sm:left-auto sm:right-0 top-full mt-1.5 w-72 sm:w-84 bg-white border border-slate-200 rounded-2xl shadow-2xl z-40 p-3 animate-in fade-in zoom-in-95 text-slate-800"
+          class="fixed inset-0 z-40"
+          @click="showSymbolPalette = false"
+        ></div>
+
+        <!-- PALETTE POPUP DROPDOWN (Studio Palet Simbol MTK) -->
+        <div
+          v-if="showSymbolPalette"
+          class="absolute right-0 top-full mt-2 w-[340px] sm:w-[450px] max-w-[calc(100vw-24px)] bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-3 sm:p-4 animate-in fade-in zoom-in-95 text-slate-800"
         >
-          <div class="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
+          <!-- Header -->
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 mb-2.5">
             <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
               <Sigma class="w-4 h-4 text-amber-600" />
-              <span>Palet Simbol Rumus & Sains</span>
+              <span>Studio Simbol Rumus MTK & Sains</span>
             </span>
             <button
               type="button"
               @click="showSymbolPalette = false"
-              class="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+              class="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition"
+              title="Tutup Palet"
             >
               <X class="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <!-- Category Tabs -->
-          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-[11px] mb-2.5 overflow-x-auto">
+          <!-- Quick Search Filter -->
+          <div class="relative mb-2.5">
+            <input
+              type="text"
+              v-model="symbolSearch"
+              placeholder="Cari simbol... (misal: akar, derajat, pi, sigma, x², pecahan)"
+              class="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:bg-white focus:border-amber-400 transition placeholder:text-slate-400"
+            />
+            <Search class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <button
+              v-if="symbolSearch"
+              type="button"
+              @click="symbolSearch = ''"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+            >
+              <X class="w-3 h-3" />
+            </button>
+          </div>
+
+          <!-- Category Tabs (Shown when not searching) -->
+          <div v-if="!symbolSearch" class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-[11px] mb-2.5 overflow-x-auto">
             <button
               type="button"
               v-for="cat in symbolCategories"
               :key="cat.id"
               @click="activeCategory = cat.id"
-              class="px-2 py-1 rounded-lg font-semibold shrink-0 transition"
-              :class="activeCategory === cat.id ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'"
+              class="px-2.5 py-1 rounded-lg font-semibold shrink-0 transition text-xs whitespace-nowrap"
+              :class="activeCategory === cat.id ? 'bg-white text-amber-900 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900'"
             >
               {{ cat.name }}
             </button>
           </div>
 
-          <!-- Symbol Grid -->
-          <div class="grid grid-cols-6 sm:grid-cols-7 gap-1.5 max-h-48 overflow-y-auto p-1">
-            <button
-              type="button"
-              v-for="item in currentSymbols"
-              :key="item.symbol"
-              @click="insertSymbol(item.insert || item.symbol)"
-              class="h-9 rounded-lg border border-slate-200 hover:border-amber-400 hover:bg-amber-50 flex items-center justify-center text-sm font-bold text-slate-800 transition active:scale-95 bg-slate-50/50"
-              :title="item.label"
-            >
-              <span v-html="item.display || item.symbol"></span>
-            </button>
+          <!-- When Search active: Result Title -->
+          <div v-else class="text-[11px] font-bold text-amber-800 mb-1.5 px-1 flex items-center justify-between">
+            <span>Hasil Pencarian: "{{ symbolSearch }}"</span>
+            <span class="text-slate-400 font-normal">{{ currentSymbols.length }} simbol</span>
           </div>
 
-          <!-- Quick Fractions Template -->
-          <div v-if="activeCategory === 'fractions'" class="mt-2 pt-2 border-t border-slate-100">
+          <!-- 1. Template Rumus View -->
+          <div v-if="!symbolSearch && activeCategory === 'templates'" class="space-y-1.5 max-h-60 overflow-y-auto p-0.5">
             <button
               type="button"
               @click="insertFractionTemplate"
-              class="w-full py-1.5 px-3 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs rounded-xl border border-amber-200 flex items-center justify-center gap-1.5 transition"
+              class="w-full p-2 bg-amber-50/70 hover:bg-amber-100/80 text-left border border-amber-200/80 rounded-xl flex items-center justify-between transition group"
             >
-              <span>+ Sisipkan Format Pecahan Bertingkat (a/b)</span>
+              <div>
+                <div class="text-xs font-bold text-amber-950">Pecahan Bertingkat Biasa</div>
+                <div class="text-[11px] text-amber-700">Format atas/bawah bertingkat (a/b) dengan garis pembagi</div>
+              </div>
+              <span class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-bold text-xs text-amber-800 shadow-2xs group-hover:scale-105 transition">a/b</span>
             </button>
+
+            <button
+              type="button"
+              @click="insertMixedFractionTemplate"
+              class="w-full p-2 bg-amber-50/70 hover:bg-amber-100/80 text-left border border-amber-200/80 rounded-xl flex items-center justify-between transition group"
+            >
+              <div>
+                <div class="text-xs font-bold text-amber-950">Pecahan Campuran</div>
+                <div class="text-[11px] text-amber-700">Bilangan bulat dengan pecahan bertingkat (contoh: 2 ½)</div>
+              </div>
+              <span class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-bold text-xs text-amber-800 shadow-2xs group-hover:scale-105 transition">2 ½</span>
+            </button>
+
+            <button
+              type="button"
+              @click="insertRootTemplate"
+              class="w-full p-2 bg-amber-50/70 hover:bg-amber-100/80 text-left border border-amber-200/80 rounded-xl flex items-center justify-between transition group"
+            >
+              <div>
+                <div class="text-xs font-bold text-amber-950">Bentuk Akar Bergaris Atas</div>
+                <div class="text-[11px] text-amber-700">Akar dengan garis penutup rumus di atas isian (√(b²-4ac))</div>
+              </div>
+              <span class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-bold text-xs text-amber-800 shadow-2xs group-hover:scale-105 transition">√(x)</span>
+            </button>
+
+            <button
+              type="button"
+              @click="insertLinearSystemTemplate"
+              class="w-full p-2 bg-amber-50/70 hover:bg-amber-100/80 text-left border border-amber-200/80 rounded-xl flex items-center justify-between transition group"
+            >
+              <div>
+                <div class="text-xs font-bold text-amber-950">Sistem Persamaan Linear (SPLDV)</div>
+                <div class="text-[11px] text-amber-700">Persamaan 2 baris berkurung kurawal { ...</div>
+              </div>
+              <span class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-bold text-xs text-amber-800 shadow-2xs group-hover:scale-105 transition">{ SPL</span>
+            </button>
+
+            <button
+              type="button"
+              @click="insertStatsMeanTemplate"
+              class="w-full p-2 bg-amber-50/70 hover:bg-amber-100/80 text-left border border-amber-200/80 rounded-xl flex items-center justify-between transition group"
+            >
+              <div>
+                <div class="text-xs font-bold text-amber-950">Rumus Rata-Rata Statistika</div>
+                <div class="text-[11px] text-amber-700">x̄ = (∑ fᵢ·xᵢ) / (∑ fᵢ)</div>
+              </div>
+              <span class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-bold text-xs text-amber-800 shadow-2xs group-hover:scale-105 transition">x̄ = ∑/n</span>
+            </button>
+
+            <button
+              type="button"
+              @click="insertMatrixTemplate"
+              class="w-full p-2 bg-amber-50/70 hover:bg-amber-100/80 text-left border border-amber-200/80 rounded-xl flex items-center justify-between transition group"
+            >
+              <div>
+                <div class="text-xs font-bold text-amber-950">Matriks Ordo 2x2</div>
+                <div class="text-[11px] text-amber-700">Matriks 2 baris 2 kolom dengan kurung siku [ a b ; c d ]</div>
+              </div>
+              <span class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-bold text-xs text-amber-800 shadow-2xs group-hover:scale-105 transition">[ 2x2 ]</span>
+            </button>
+          </div>
+
+          <!-- 2. Symbol Grid (Normal / Search) -->
+          <div v-else>
+            <div v-if="currentSymbols.length === 0" class="py-8 text-center text-xs text-slate-400">
+              Tidak ada simbol yang cocok dengan "{{ symbolSearch }}".
+            </div>
+            <div v-else class="grid grid-cols-6 sm:grid-cols-7 gap-1.5 max-h-56 overflow-y-auto p-1">
+              <button
+                type="button"
+                v-for="item in currentSymbols"
+                :key="item.symbol"
+                @click="insertSymbol(item.insert || item.symbol)"
+                class="h-9 rounded-lg border border-slate-200 hover:border-amber-400 hover:bg-amber-50 flex items-center justify-center text-sm font-bold text-slate-800 transition active:scale-95 bg-slate-50/50"
+                :title="item.label"
+              >
+                <span v-html="item.display || item.symbol"></span>
+              </button>
+            </div>
+
+            <!-- Quick Template Hint in Fractions -->
+            <div v-if="activeCategory === 'fractions' && !symbolSearch" class="mt-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                @click="insertFractionTemplate"
+                class="w-full py-1.5 px-3 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs rounded-xl border border-amber-200 flex items-center justify-center gap-1.5 transition"
+              >
+                <span>+ Sisipkan Format Pecahan Bertingkat (a/b)</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -321,7 +435,7 @@
     </div>
 
     <!-- EDITOR BODY -->
-    <div class="relative flex-1 bg-white">
+    <div class="relative flex-1 bg-white rounded-b-xl">
       <!-- WYSIWYG Editable Area -->
       <div
         v-show="!isSourceMode"
@@ -333,7 +447,7 @@
         @paste="onEditorPaste"
         @keyup="updateActiveFormats"
         @mouseup="updateActiveFormats"
-        class="editable-content p-3.5 sm:p-4 text-xs sm:text-sm text-slate-800 leading-relaxed focus:outline-none min-h-[140px] max-h-[400px] overflow-y-auto"
+        class="editable-content p-3.5 sm:p-4 text-xs sm:text-sm text-slate-800 leading-relaxed focus:outline-none min-h-[140px] max-h-[400px] overflow-y-auto rounded-b-xl"
         :data-placeholder="placeholder"
       ></div>
 
@@ -342,7 +456,7 @@
         v-if="isSourceMode"
         v-model="sourceContent"
         @input="onSourceInput"
-        class="w-full p-3.5 sm:p-4 text-xs font-mono text-slate-800 bg-slate-900 text-emerald-300 leading-relaxed focus:outline-none min-h-[140px] max-h-[400px] resize-y"
+        class="w-full p-3.5 sm:p-4 text-xs font-mono text-slate-800 bg-slate-900 text-emerald-300 leading-relaxed focus:outline-none min-h-[140px] max-h-[400px] resize-y rounded-b-xl"
         placeholder="Kode HTML soal..."
       ></textarea>
     </div>
@@ -370,7 +484,8 @@ import {
   ChevronDown,
   X,
   Eraser,
-  Code
+  Code,
+  Search
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -393,7 +508,8 @@ const currentHeading = ref('p');
 const showSymbolPalette = ref(false);
 const showNumberingDropdown = ref(false);
 const showBulletsDropdown = ref(false);
-const activeCategory = ref('arithmetic');
+const activeCategory = ref('templates');
+const symbolSearch = ref('');
 
 const activeFormats = reactive({
   bold: false,
@@ -413,6 +529,7 @@ const closeAllDropdowns = () => {
   showNumberingDropdown.value = false;
   showBulletsDropdown.value = false;
   showSymbolPalette.value = false;
+  symbolSearch.value = '';
 };
 
 const toggleNumberingDropdown = () => {
@@ -456,34 +573,39 @@ const bulletOptions = [
 
 // Category symbols for Mathematics & Science
 const symbolCategories = [
+  { id: 'templates', name: '⭐ Template Rumus' },
   { id: 'arithmetic', name: 'Aljabar & Hitung' },
-  { id: 'fractions', name: 'Pecahan' },
+  { id: 'fractions', name: 'Pecahan & Akar' },
+  { id: 'exponents', name: 'Pangkat & Indeks' },
+  { id: 'statistics', name: 'Statistika' },
   { id: 'geometry', name: 'Geometri & Sudut' },
-  { id: 'greek', name: 'Yunani & Fisika' },
-  { id: 'relations', name: 'Himpunan' },
-  { id: 'chemistry', name: 'Kimia & Panah' }
+  { id: 'relations', name: 'Himpunan & Logika' },
+  { id: 'trigonometry', name: 'Trigo & Kalkulus' },
+  { id: 'greek', name: 'Yunani & Sains' }
 ];
 
 const symbolsDatabase = {
   arithmetic: [
+    { symbol: '+', label: 'Tambah (+)' },
+    { symbol: '−', label: 'Kurang / Minus (−)' },
     { symbol: '×', label: 'Kali (×)' },
     { symbol: '÷', label: 'Bagi (÷)' },
-    { symbol: '±', label: 'Kurang Lebih (±)' },
+    { symbol: '±', label: 'Plus Minus (±)' },
     { symbol: '∓', label: 'Minus Plus (∓)' },
+    { symbol: '·', label: 'Titik Perkalian (·)' },
+    { symbol: '=', label: 'Sama Dengan (=)' },
     { symbol: '≠', label: 'Tidak Sama Dengan (≠)' },
-    { symbol: '≤', label: 'Kurang Dari atau Sama Dengan (≤)' },
-    { symbol: '≥', label: 'Lebih Dari atau Sama Dengan (≥)' },
     { symbol: '≈', label: 'Mendekati / Kira-kira (≈)' },
     { symbol: '≡', label: 'Identik / Kongruen (≡)' },
-    { symbol: '√', label: 'Akar Kuadrat (√)', insert: '√' },
-    { symbol: '∛', label: 'Akar Pangkat Tiga (∛)' },
-    { symbol: '∞', label: 'Tak Terhingga (∞)' },
+    { symbol: '<', label: 'Kurang Dari (<)' },
+    { symbol: '>', label: 'Lebih Dari (>)' },
+    { symbol: '≤', label: 'Kurang Dari atau Sama Dengan (≤)' },
+    { symbol: '≥', label: 'Lebih Dari atau Sama Dengan (≥)' },
+    { symbol: '∝', label: 'Sebanding / Proporsional (∝)' },
     { symbol: '%', label: 'Persen (%)' },
     { symbol: '‰', label: 'Permil (‰)' },
-    { symbol: '·', label: 'Titik Perkalian (·)' },
-    { symbol: '²', label: 'Pangkat 2 (²)' },
-    { symbol: '³', label: 'Pangkat 3 (³)' },
-    { symbol: 'ⁿ', label: 'Pangkat n (ⁿ)' }
+    { symbol: '∞', label: 'Tak Terhingga (∞)' },
+    { symbol: '|x|', insert: '|x|', label: 'Nilai Mutlak (|x|)' }
   ],
   fractions: [
     { symbol: '½', label: 'Satu Perdua (½)' },
@@ -494,19 +616,113 @@ const symbolsDatabase = {
     { symbol: '⅛', label: 'Satu Perdelapan (⅛)' },
     { symbol: '⅜', label: 'Tiga Perdelapan (⅜)' },
     { symbol: '⅝', label: 'Lima Perdelapan (⅝)' },
-    { symbol: '⅞', label: 'Tujuh Perdelapan (⅞)' }
+    { symbol: '⅞', label: 'Tujuh Perdelapan (⅞)' },
+    { symbol: '√', label: 'Akar Kuadrat (√)' },
+    { symbol: '∛', label: 'Akar Pangkat Tiga (∛)' },
+    { symbol: '∜', label: 'Akar Pangkat Empat (∜)' }
+  ],
+  exponents: [
+    { symbol: '²', label: 'Pangkat 2 (²)' },
+    { symbol: '³', label: 'Pangkat 3 (³)' },
+    { symbol: '⁴', label: 'Pangkat 4 (⁴)' },
+    { symbol: '⁵', label: 'Pangkat 5 (⁵)' },
+    { symbol: 'ⁿ', label: 'Pangkat n (ⁿ)' },
+    { symbol: '⁰', label: 'Pangkat 0 (⁰)' },
+    { symbol: '⁻¹', label: 'Pangkat minus 1 (⁻¹)' },
+    { symbol: '⁺¹', label: 'Pangkat plus 1 (⁺¹)' },
+    { symbol: 'x²', label: 'x kuadrat (x²)' },
+    { symbol: 'y²', label: 'y kuadrat (y²)' },
+    { symbol: 'xⁿ', label: 'x pangkat n (xⁿ)' },
+    { symbol: 'x₁', label: 'x indeks 1 (x₁)' },
+    { symbol: 'x₂', label: 'x indeks 2 (x₂)' },
+    { symbol: 'xₙ', label: 'x indeks n (xₙ)' },
+    { symbol: '₀', label: 'Indeks 0 (₀)' },
+    { symbol: '₁', label: 'Indeks 1 (₁)' },
+    { symbol: '₂', label: 'Indeks 2 (₂)' },
+    { symbol: '₃', label: 'Indeks 3 (₃)' },
+    { symbol: '₄', label: 'Indeks 4 (₄)' },
+    { symbol: 'ᵢ', label: 'Indeks i (ᵢ)' },
+    { symbol: 'ⱼ', label: 'Indeks j (ⱼ)' }
+  ],
+  statistics: [
+    { symbol: 'x̄', label: 'Rata-rata x (x̄)' },
+    { symbol: 'ȳ', label: 'Rata-rata y (ȳ)' },
+    { symbol: '∑', label: 'Sigma / Penjumlahan (∑)' },
+    { symbol: '∏', label: 'Produk / Perkalian (∏)' },
+    { symbol: 'Me', label: 'Median (Me)' },
+    { symbol: 'Mo', label: 'Modus (Mo)' },
+    { symbol: 's', label: 'Standar Deviasi Sampel (s)' },
+    { symbol: 's²', label: 'Varians Sampel (s²)' },
+    { symbol: 'σ', label: 'Standar Deviasi Populasi (σ)' },
+    { symbol: 'σ²', label: 'Varians Populasi (σ²)' },
+    { symbol: 'μ', label: 'Rata-rata Populasi (μ)' },
+    { symbol: 'fᵢ', label: 'Frekuensi ke-i (fᵢ)' },
+    { symbol: 'xᵢ', label: 'Nilai data ke-i (xᵢ)' },
+    { symbol: 'P(A)', label: 'Peluang Kejadian A' },
+    { symbol: 'n(S)', label: 'Banyak Ruang Sampel' },
+    { symbol: 'n(A)', label: 'Banyak Titik Sampel' }
   ],
   geometry: [
     { symbol: '°', label: 'Derajat (°)' },
+    { symbol: '′', label: 'Menit Sudut (′)' },
+    { symbol: '″', label: 'Detik Sudut (″)' },
     { symbol: '∠', label: 'Sudut (∠)' },
+    { symbol: '∡', label: 'Sudut Terukur (∡)' },
     { symbol: '△', label: 'Segitiga (△)' },
+    { symbol: '□', label: 'Persegi / Segiempat (□)' },
+    { symbol: '⊙', label: 'Lingkaran (⊙)' },
     { symbol: '⊥', label: 'Tegak Lurus (⊥)' },
     { symbol: '∥', label: 'Sejajar (∥)' },
-    { symbol: 'π', label: 'Pi (π)' },
-    { symbol: '≅', label: 'Kongruen Geometri (≅)' },
+    { symbol: '∦', label: 'Tidak Sejajar (∦)' },
+    { symbol: '≅', label: 'Kongruen (≅)' },
     { symbol: '∼', label: 'Sebangun (∼)' },
-    { symbol: '⊙', label: 'Lingkaran (⊙)' },
-    { symbol: 'rad', label: 'Radian (rad)' }
+    { symbol: 'π', label: 'Pi 3.14 (π)' },
+    { symbol: 'rad', label: 'Radian (rad)' },
+    { symbol: 'cm²', label: 'Sentimeter persegi (cm²)' },
+    { symbol: 'cm³', label: 'Sentimeter kubik (cm³)' },
+    { symbol: 'm²', label: 'Meter persegi (m²)' },
+    { symbol: 'm³', label: 'Meter kubik (m³)' },
+    { symbol: 'dm³', label: 'Desimeter kubik / Liter (dm³)' }
+  ],
+  relations: [
+    { symbol: '∈', label: 'Anggota Himpunan (∈)' },
+    { symbol: '∉', label: 'Bukan Anggota Himpunan (∉)' },
+    { symbol: '⊂', label: 'Himpunan Bagian Murni (⊂)' },
+    { symbol: '⊃', label: 'Memuat Murni (⊃)' },
+    { symbol: '⊆', label: 'Himpunan Bagian atau Sama (⊆)' },
+    { symbol: '⊇', label: 'Memuat atau Sama (⊇)' },
+    { symbol: '∪', label: 'Gabungan / Union (∪)' },
+    { symbol: '∩', label: 'Irisan / Intersection (∩)' },
+    { symbol: '∅', label: 'Himpunan Kosong (∅)' },
+    { symbol: 'A′', label: 'Komplemen A (A′)' },
+    { symbol: '∀', label: 'Untuk Semua / Semesta (∀)' },
+    { symbol: '∃', label: 'Terdapat / Ada (∃)' },
+    { symbol: '∧', label: 'Konjungsi / Dan (∧)' },
+    { symbol: '∨', label: 'Disjungsi / Atau (∨)' },
+    { symbol: '~', label: 'Negasi / Ingkaran (~)' },
+    { symbol: '¬', label: 'Negasi Not (¬)' },
+    { symbol: '⇒', label: 'Implikasi (⇒)' },
+    { symbol: '⇔', label: 'Biimplikasi (⇔)' },
+    { symbol: '∴', label: 'Kesimpulan / Jadi (∴)' },
+    { symbol: '∵', label: 'Karena (∵)' }
+  ],
+  trigonometry: [
+    { symbol: 'sin', label: 'Sinus (sin)' },
+    { symbol: 'cos', label: 'Cosinus (cos)' },
+    { symbol: 'tan', label: 'Tangen (tan)' },
+    { symbol: 'sec', label: 'Secan (sec)' },
+    { symbol: 'csc', label: 'Cosecan (csc)' },
+    { symbol: 'cot', label: 'Cotangen (cot)' },
+    { symbol: 'log', label: 'Logaritma basis 10 (log)' },
+    { symbol: 'ln', label: 'Logaritma Natural (ln)' },
+    { symbol: 'lim', label: 'Limit (lim)' },
+    { symbol: '∫', label: 'Integral (∫)' },
+    { symbol: '∬', label: 'Integral Lipat Dua (∬)' },
+    { symbol: 'dx', label: 'Diferensial x (dx)' },
+    { symbol: 'dy', label: 'Diferensial y (dy)' },
+    { symbol: 'dt', label: 'Diferensial t (dt)' },
+    { symbol: 'Δ', label: 'Delta Perubahan (Δ)' },
+    { symbol: '∂', label: 'Turunan Parsial (∂)' }
   ],
   greek: [
     { symbol: 'α', label: 'Alpha (α)' },
@@ -514,43 +730,47 @@ const symbolsDatabase = {
     { symbol: 'γ', label: 'Gamma (γ)' },
     { symbol: 'δ', label: 'Delta kecil (δ)' },
     { symbol: 'Δ', label: 'Delta besar (Δ)' },
-    { symbol: 'θ', label: 'Theta (θ)' },
-    { symbol: 'λ', label: 'Lambda (λ)' },
+    { symbol: 'ε', label: 'Epsilon (ε)' },
+    { symbol: 'θ', label: 'Theta sudut (θ)' },
+    { symbol: 'λ', label: 'Lambda panjang gelombang (λ)' },
     { symbol: 'μ', label: 'Mu / Mikro (μ)' },
     { symbol: 'π', label: 'Pi (π)' },
     { symbol: 'ρ', label: 'Rho / Massa Jenis (ρ)' },
     { symbol: 'σ', label: 'Sigma kecil (σ)' },
-    { symbol: 'Σ', label: 'Sigma besar / Jumlah (Σ)' },
-    { symbol: 'Ω', label: 'Omega / Ohm (Ω)' },
-    { symbol: 'ω', label: 'Omega kecil (ω)' }
-  ],
-  relations: [
-    { symbol: '∈', label: 'Anggota Himpunan (∈)' },
-    { symbol: '∉', label: 'Bukan Anggota Himpunan (∉)' },
-    { symbol: '⊂', label: 'Himpunan Bagian (⊂)' },
-    { symbol: '⊃', label: 'Memuat (⊃)' },
-    { symbol: '⊆', label: 'Bagian atau Sama (⊆)' },
-    { symbol: '⊇', label: 'Memuat atau Sama (⊇)' },
-    { symbol: '∪', label: 'Gabungan (∪)' },
-    { symbol: '∩', label: 'Irisan (∩)' },
-    { symbol: '∅', label: 'Himpunan Kosong (∅)' },
-    { symbol: '∀', label: 'Untuk Semua (∀)' },
-    { symbol: '∃', label: 'Terdapat (∃)' },
-    { symbol: '⇒', label: 'Maka / Implikasi (⇒)' },
-    { symbol: '⇔', label: 'Jika dan Hanya Jika (⇔)' }
-  ],
-  chemistry: [
-    { symbol: '→', label: 'Panah Reaksi Kanan (→)' },
-    { symbol: '←', label: 'Panah Reaksi Kiri (←)' },
-    { symbol: '↔', label: 'Panah Bolak Balik (↔)' },
-    { symbol: '⇌', label: 'Kesetimbangan Reaksi (⇌)' },
+    { symbol: 'Σ', label: 'Sigma besar (Σ)' },
+    { symbol: 'τ', label: 'Tau / Torsi (τ)' },
+    { symbol: 'φ', label: 'Phi (φ)' },
+    { symbol: 'ω', label: 'Omega kecil / Kecepatan Sudut (ω)' },
+    { symbol: 'Ω', label: 'Omega besar / Hambatan Ohm (Ω)' },
+    { symbol: '°C', label: 'Derajat Celcius (°C)' },
+    { symbol: '°F', label: 'Derajat Fahrenheit (°F)' },
+    { symbol: 'K', label: 'Kelvin (K)' },
+    { symbol: '→', label: 'Panah Reaksi (→)' },
+    { symbol: '⇄', label: 'Reaksi Bolak Balik (⇄)' },
+    { symbol: '⇌', label: 'Kesetimbangan Kimia (⇌)' },
     { symbol: '↑', label: 'Gas Terbentuk (↑)' },
-    { symbol: '↓', label: 'Endapan (↓)' },
-    { symbol: '⇄', label: 'Reaksi Reversibel (⇄)' }
+    { symbol: '↓', label: 'Endapan (↓)' }
   ]
 };
 
 const currentSymbols = computed(() => {
+  if (symbolSearch.value.trim()) {
+    const q = symbolSearch.value.toLowerCase().trim();
+    const results = [];
+    Object.values(symbolsDatabase).forEach(list => {
+      list.forEach(item => {
+        if (
+          item.symbol.toLowerCase().includes(q) ||
+          (item.label && item.label.toLowerCase().includes(q))
+        ) {
+          if (!results.some(r => r.symbol === item.symbol)) {
+            results.push(item);
+          }
+        }
+      });
+    });
+    return results;
+  }
   return symbolsDatabase[activeCategory.value] || [];
 });
 
@@ -819,8 +1039,38 @@ const insertSymbol = (sym) => {
 };
 
 const insertFractionTemplate = () => {
-  const fractionHtml = `<span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.85em; line-height:1; margin:0 2px;"><span style="border-bottom:1px solid currentColor; padding:0 3px;">1</span><span style="padding:0 3px;">2</span></span>&nbsp;`;
+  const fractionHtml = `<span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.9em; line-height:1.1; margin:0 3px;"><span style="border-bottom:1px solid currentColor; padding:0 4px; min-width:14px;">a</span><span style="padding:0 4px; min-width:14px;">b</span></span>&nbsp;`;
   insertHtml(fractionHtml);
+  showSymbolPalette.value = false;
+};
+
+const insertMixedFractionTemplate = () => {
+  const mixedHtml = `2<span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.9em; line-height:1.1; margin:0 3px;"><span style="border-bottom:1px solid currentColor; padding:0 4px; min-width:14px;">1</span><span style="padding:0 4px; min-width:14px;">2</span></span>&nbsp;`;
+  insertHtml(mixedHtml);
+  showSymbolPalette.value = false;
+};
+
+const insertRootTemplate = () => {
+  const rootHtml = `<span style="white-space:nowrap; vertical-align:middle;">&radic;<span style="border-top:1px solid currentColor; padding-top:1px; margin-left:1px; display:inline-block;">b&sup2; - 4ac</span></span>&nbsp;`;
+  insertHtml(rootHtml);
+  showSymbolPalette.value = false;
+};
+
+const insertLinearSystemTemplate = () => {
+  const spldvHtml = `<span style="display:inline-flex; align-items:center; vertical-align:middle; margin:4px 0;"><span style="font-size:2em; font-weight:300; line-height:1; margin-right:3px;">{</span><span style="display:flex; flex-direction:column; font-size:0.9em; line-height:1.3;"><span>2x + 3y = 8</span><span>x - 2y = 1</span></span></span>&nbsp;`;
+  insertHtml(spldvHtml);
+  showSymbolPalette.value = false;
+};
+
+const insertStatsMeanTemplate = () => {
+  const meanHtml = `<span style="white-space:nowrap; vertical-align:middle;">x&#772; = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.85em; line-height:1.1; margin:0 2px;"><span style="border-bottom:1px solid currentColor; padding:0 3px;">&sum; f&#7522;&middot;x&#7522;</span><span style="padding:0 3px;">&sum; f&#7522;</span></span></span>&nbsp;`;
+  insertHtml(meanHtml);
+  showSymbolPalette.value = false;
+};
+
+const insertMatrixTemplate = () => {
+  const matrixHtml = `<span style="display:inline-flex; align-items:center; vertical-align:middle; margin:4px 0;"><span style="border-left:2px solid currentColor; border-top:2px solid currentColor; border-bottom:2px solid currentColor; width:4px; height:2.2em; display:inline-block; margin-right:2px;"></span><table style="display:inline-table; border-collapse:collapse; text-align:center; font-size:0.9em; margin:0 2px;"><tr><td style="padding:1px 6px; border:none;">a</td><td style="padding:1px 6px; border:none;">b</td></tr><tr><td style="padding:1px 6px; border:none;">c</td><td style="padding:1px 6px; border:none;">d</td></tr></table><span style="border-right:2px solid currentColor; border-top:2px solid currentColor; border-bottom:2px solid currentColor; width:4px; height:2.2em; display:inline-block; margin-left:2px;"></span></span>&nbsp;`;
+  insertHtml(matrixHtml);
   showSymbolPalette.value = false;
 };
 
