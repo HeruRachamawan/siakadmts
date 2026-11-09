@@ -829,7 +829,10 @@
             <!-- 1. PG TUNGGAL -->
             <div v-if="activeQuestions[currentQuestionIndex].question_type === 'pg'" class="space-y-2">
               <div class="text-xs font-bold text-slate-700 flex flex-wrap items-center justify-between gap-1 pb-1 border-b border-slate-100">
-                <span>PILIHAN JAWABAN (A - D):</span>
+                <span class="flex items-center gap-1.5">
+                  <span>PILIHAN JAWABAN (A - D):</span>
+                  <span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-medium hidden sm:inline">💡 Bisa copy A-D sekaligus dari Word, nomor otomatis bersih!</span>
+                </span>
                 <span class="text-[11px] text-emerald-600 font-semibold">Klik lingkaran huruf untuk memilih 1 Kunci Benar</span>
               </div>
 
@@ -851,8 +854,11 @@
                 <input
                   type="text"
                   v-model="ensureOptions(activeQuestions[currentQuestionIndex])[opt]"
+                  @paste="handleOptionPaste($event, activeQuestions[currentQuestionIndex], opt)"
+                  @blur="ensureOptions(activeQuestions[currentQuestionIndex])[opt] = cleanOptionPrefix(ensureOptions(activeQuestions[currentQuestionIndex])[opt])"
                   :placeholder="'Tulis isi pilihan ' + opt + '...'"
                   class="form-input flex-1 py-1.5 text-xs bg-white min-w-0"
+                  :title="'Ketik pilihan ' + opt + ' atau paste (bisa paste 4 opsi sekaligus dari Word)'"
                 />
                 <span v-if="activeQuestions[currentQuestionIndex].correct_answer === opt" class="text-[11px] font-bold text-emerald-700 px-1.5 py-0.5 bg-emerald-100 rounded shrink-0">
                   ✓ KUNCI
@@ -863,7 +869,10 @@
             <!-- 2. PG KOMPLEKS (Multi Kunci) -->
             <div v-else-if="activeQuestions[currentQuestionIndex].question_type === 'pg_complex'" class="space-y-2">
               <div class="text-xs font-bold text-slate-700 flex flex-wrap items-center justify-between gap-1 pb-1 border-b border-slate-100">
-                <span class="text-indigo-900 font-bold">PILIHAN GANDA KOMPLEKS (A - E):</span>
+                <span class="flex items-center gap-1.5">
+                  <span class="text-indigo-900 font-bold">PILIHAN GANDA KOMPLEKS (A - E):</span>
+                  <span class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full font-medium hidden sm:inline">💡 Bisa copy sekaligus dari Word, nomor otomatis bersih!</span>
+                </span>
                 <span class="text-[11px] text-indigo-600 font-semibold">Klik kotak huruf untuk memilih beberapa kunci</span>
               </div>
 
@@ -884,8 +893,11 @@
                 <input
                   type="text"
                   v-model="ensureOptions(activeQuestions[currentQuestionIndex])[opt]"
+                  @paste="handleOptionPaste($event, activeQuestions[currentQuestionIndex], opt)"
+                  @blur="ensureOptions(activeQuestions[currentQuestionIndex])[opt] = cleanOptionPrefix(ensureOptions(activeQuestions[currentQuestionIndex])[opt])"
                   :placeholder="'Tulis opsi / pernyataan ' + opt + '...'"
                   class="form-input flex-1 py-1.5 text-xs bg-white min-w-0"
+                  :title="'Ketik opsi ' + opt + ' atau paste (bisa paste sekaligus dari Word)'"
                 />
                 <span v-if="isComplexKeySelected(activeQuestions[currentQuestionIndex], opt)" class="text-[11px] font-bold text-indigo-700 px-1.5 py-0.5 bg-indigo-100 rounded shrink-0">
                   ✓ KUNCI
@@ -919,6 +931,8 @@
                   <input
                     type="text"
                     v-model="st.text"
+                    @paste="handleGenericTextPaste($event, st, 'text')"
+                    @blur="st.text = cleanOptionPrefix(st.text)"
                     :placeholder="'Tulis pernyataan ' + (sIdx + 1) + '...'"
                     class="form-input flex-1 py-1.5 text-xs bg-white min-w-[180px]"
                   />
@@ -980,6 +994,8 @@
                     <input
                       type="text"
                       v-model="pair.left"
+                      @paste="handleGenericTextPaste($event, pair, 'left')"
+                      @blur="pair.left = cleanOptionPrefix(pair.left)"
                       :placeholder="'Pernyataan ' + (pIdx + 1)"
                       class="form-input py-1.5 text-xs bg-white w-full"
                     />
@@ -989,6 +1005,8 @@
                     <input
                       type="text"
                       v-model="pair.right"
+                      @paste="handleGenericTextPaste($event, pair, 'right')"
+                      @blur="pair.right = cleanOptionPrefix(pair.right)"
                       :placeholder="'Jawaban ' + String.fromCharCode(65 + pIdx)"
                       class="form-input py-1.5 text-xs bg-white w-full"
                     />
@@ -1413,6 +1431,89 @@ const ensureOptions = (q) => {
   return q.options;
 };
 
+// --- Word Paste & Option Prefix Sanitizers ---
+const cleanOptionPrefix = (str) => {
+  if (!str || typeof str !== 'string') return '';
+  // Strips leading option prefixes: "a. ", "a.", "b. ", "B) ", "(b) ", "b: ", "b - ", "1. ", etc.
+  return str.replace(/^(\(?[a-eA-E0-9]\)?[\.\:\-\)]\s*)/, '').trim();
+};
+
+const handleOptionPaste = (e, q, currentOpt) => {
+  const clipboardData = e.clipboardData || window.clipboardData;
+  if (!clipboardData) return;
+  const text = clipboardData.getData('text/plain') || '';
+  if (!text) return;
+
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const opts = ensureOptions(q);
+
+  if (lines.length > 1) {
+    // Multi-line paste from Word: automatically distribute across options (A, B, C, D, E)
+    e.preventDefault();
+    const letters = ['A', 'B', 'C', 'D', 'E'];
+    const startIndex = letters.indexOf(currentOpt);
+    if (startIndex !== -1) {
+      lines.forEach((line, idx) => {
+        const targetLetter = letters[startIndex + idx];
+        if (targetLetter) {
+          opts[targetLetter] = cleanOptionPrefix(line);
+        }
+      });
+    }
+  } else {
+    // Single line paste: if it has an option prefix, strip it automatically!
+    if (/^(\(?[a-eA-E0-9]\)?[\.\:\-\)]\s*)/.test(text.trim())) {
+      e.preventDefault();
+      opts[currentOpt] = cleanOptionPrefix(text.trim());
+    }
+  }
+};
+
+const handleGenericTextPaste = (e, obj, field) => {
+  const clipboardData = e.clipboardData || window.clipboardData;
+  if (!clipboardData) return;
+  const text = clipboardData.getData('text/plain') || '';
+  if (!text) return;
+
+  if (/^(\(?[a-eA-E0-9]\)?[\.\:\-\)]\s*)/.test(text.trim())) {
+    e.preventDefault();
+    obj[field] = cleanOptionPrefix(text.trim());
+  }
+};
+
+const sanitizeAllQuestionsBeforeSave = () => {
+  if (!Array.isArray(activeQuestions.value)) return;
+  activeQuestions.value.forEach(q => {
+    // 1. Sanitize question_text
+    if (q.question_text && typeof q.question_text === 'string') {
+      q.question_text = q.question_text
+        .replace(/text-indent\s*:\s*-[^;"]+;?/gi, 'text-indent: 0;')
+        .replace(/margin-left\s*:\s*-[^;"]+;?/gi, 'margin-left: 0;');
+    }
+    // 2. Sanitize options for pg & pg_complex
+    if (q.options && typeof q.options === 'object' && !Array.isArray(q.options)) {
+      ['A', 'B', 'C', 'D', 'E'].forEach(letter => {
+        if (q.options[letter]) {
+          q.options[letter] = cleanOptionPrefix(q.options[letter]);
+        }
+      });
+    }
+    // 3. Sanitize true_false statements
+    if (q.options?.statements && Array.isArray(q.options.statements)) {
+      q.options.statements.forEach(st => {
+        if (st.text) st.text = cleanOptionPrefix(st.text);
+      });
+    }
+    // 4. Sanitize matching pairs
+    if (q.options?.pairs && Array.isArray(q.options.pairs)) {
+      q.options.pairs.forEach(pair => {
+        if (pair.left) pair.left = cleanOptionPrefix(pair.left);
+        if (pair.right) pair.right = cleanOptionPrefix(pair.right);
+      });
+    }
+  });
+};
+
 // --- AKM Diversity Helpers ---
 const toggleComplexKey = (q, opt) => {
   let keys = q.correct_answer ? q.correct_answer.split(',').map(k => k.trim()).filter(Boolean) : [];
@@ -1528,6 +1629,7 @@ const nextQuestion = () => {
 
 const saveAllQuestions = async () => {
   if (!activePackage.value) return;
+  sanitizeAllQuestionsBeforeSave();
   savingQuestions.value = true;
   try {
     const res = await api.post(`/teacher/exam-bank/${activePackage.value.id}/questions`, {

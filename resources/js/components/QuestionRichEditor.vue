@@ -330,6 +330,7 @@
         @click="closeAllDropdowns"
         @input="onEditorInput"
         @blur="onEditorBlur"
+        @paste="onEditorPaste"
         @keyup="updateActiveFormats"
         @mouseup="updateActiveFormats"
         class="editable-content p-3.5 sm:p-4 text-xs sm:text-sm text-slate-800 leading-relaxed focus:outline-none min-h-[140px] max-h-[400px] overflow-y-auto"
@@ -671,6 +672,95 @@ const onEditorBlur = () => {
   emitContent();
 };
 
+// Word Paste Sanitizer & Prefix Stripper
+const cleanQuestionNumberPrefix = (text) => {
+  if (!text) return '';
+  // Strips leading question number prefixes like: "9. ", "9) ", "No. 9. ", "Soal No. 9: ", "9 - "
+  return text.replace(/^(\s*(?:no\.?|soal)?\s*\(?\d+\)?[\.\:\-\)]\s*)/i, '');
+};
+
+const getFirstTextNode = (node) => {
+  if (!node) return null;
+  if (node.nodeType === 3 && node.nodeValue && node.nodeValue.trim()) {
+    return node;
+  }
+  for (let i = 0; i < node.childNodes.length; i++) {
+    const res = getFirstTextNode(node.childNodes[i]);
+    if (res) return res;
+  }
+  return null;
+};
+
+const onEditorPaste = (e) => {
+  e.preventDefault();
+  const clipboardData = e.clipboardData || window.clipboardData;
+  if (!clipboardData) return;
+
+  const htmlData = clipboardData.getData('text/html');
+  const textData = clipboardData.getData('text/plain') || '';
+
+  if (htmlData) {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlData, 'text/html');
+
+      // 1. Remove Word list ignore markers & Word bullet spans
+      doc.querySelectorAll('[style*="mso-list:Ignore"], span.MsoListBullet').forEach(el => {
+        el.remove();
+      });
+
+      // 2. Remove negative text-indent and negative margin-left on all elements
+      doc.querySelectorAll('*').forEach(el => {
+        if (el.style) {
+          if (el.style.textIndent && el.style.textIndent.includes('-')) {
+            el.style.textIndent = '0px';
+          }
+          if (el.style.marginLeft && el.style.marginLeft.includes('-')) {
+            el.style.marginLeft = '0px';
+          }
+        }
+        if (el.className && typeof el.className === 'string') {
+          el.className = el.className.replace(/\bMso\w+\b/g, '').trim();
+        }
+      });
+
+      // 3. Strip leading question number from first text node
+      const firstText = getFirstTextNode(doc.body);
+      if (firstText && firstText.nodeValue) {
+        firstText.nodeValue = cleanQuestionNumberPrefix(firstText.nodeValue);
+      }
+
+      let cleanedHtml = doc.body.innerHTML;
+      // Defensive regex to clean any remaining negative text-indent or negative margin in inline styles
+      cleanedHtml = cleanedHtml
+        .replace(/text-indent\s*:\s*-[^;"]+;?/gi, 'text-indent: 0;')
+        .replace(/margin-left\s*:\s*-[^;"]+;?/gi, 'margin-left: 0;')
+        .replace(/<!--[\s\S]*?-->/gi, '')
+        .replace(/<o:p>[\s\S]*?<\/o:p>/gi, '');
+
+      insertHtml(cleanedHtml);
+    } catch {
+      // Fallback to textData if parsing fails
+      const cleaned = cleanQuestionNumberPrefix(textData);
+      insertHtml(cleaned.replace(/\r?\n/g, '<br>'));
+    }
+  } else {
+    // Plain text paste: clean leading question number
+    const cleaned = cleanQuestionNumberPrefix(textData);
+    const formatted = cleaned
+      .split(/\r?\n\r?\n/)
+      .map(p => p.trim())
+      .filter(Boolean)
+      .map(p => `<p>${p.replace(/\r?\n/g, '<br>')}</p>`)
+      .join('');
+    insertHtml(formatted || cleaned);
+  }
+
+  nextTick(() => {
+    emitContent();
+  });
+};
+
 const onSourceInput = () => {
   emit('update:modelValue', sourceContent.value);
 };
@@ -768,6 +858,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Word & Rich Text Paste Fixes: Neutralize negative text-indent from Word to prevent text cutoff on the left */
+.editable-content,
+.editable-content * {
+  text-indent: 0 !important;
+}
+.editable-content p,
+.editable-content div,
+.editable-content span {
+  text-indent: 0 !important;
+}
+
 .editable-content:empty:before {
   content: attr(data-placeholder);
   color: #94a3b8;

@@ -77,6 +77,10 @@
         .q-text {
             margin-left: 24px;
             display: block;
+            text-indent: 0 !important;
+        }
+        .q-text p, .q-text div, .q-text span {
+            text-indent: 0 !important;
         }
         .q-text p {
             margin: 0 0 4px 0;
@@ -273,7 +277,11 @@
             function render_exam_question_html($text) {
                 if (!$text) return 'Soal belum diisi.';
                 if (strip_tags($text) !== $text) {
-                    return strip_tags($text, '<b><strong><i><em><u><s><strike><sub><sup><span><p><div><br><table><thead><tbody><tr><th><td><ul><ol><li>');
+                    $allowed = '<b><strong><i><em><u><s><strike><sub><sup><span><p><div><br><table><thead><tbody><tr><th><td><ul><ol><li>';
+                    $cleaned = strip_tags($text, $allowed);
+                    $cleaned = preg_replace('/text-indent\s*:\s*-[^;"]+;?/i', 'text-indent:0;', $cleaned);
+                    $cleaned = preg_replace('/margin-left\s*:\s*-[^;"]+;?/i', 'margin-left:0;', $cleaned);
+                    return $cleaned;
                 }
                 return nl2br(e($text));
             }
