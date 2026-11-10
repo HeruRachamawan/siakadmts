@@ -2403,25 +2403,33 @@ const analyzeQuestionContent = (q, prevQ = null) => {
     }
   }
 
-  // 4. Determine Level Kognitif
-  let cognitive = q.cognitive_level || '';
-  if (!cognitive) {
-    const qType = q.question_type || 'pg';
-    if (qType === 'pg_complex' || lowerText.match(/mengapa|analisis|faktor|kendala|perbedaan nasib|keunggulan dibanding/)) {
-      cognitive = 'L3';
-    } else if (qType === 'matching' || qType === 'true_false' || lowerText.match(/langkah|cara|prosedur|shortcut|fungsi|bagaimana|hitung|membedakan/)) {
-      cognitive = 'L2';
-    } else {
-      cognitive = 'L1';
-    }
+  // 4. Determine Level Kognitif & Tingkat Kesukaran cerdas sesuai materi dan isi soal
+  let cognitive = 'L1';
+  const qType = q.question_type || 'pg';
+
+  if (
+    qType === 'pg_complex' ||
+    lowerText.match(/mengapa|analisis|evaluasi|simpulkan|faktor|kendala|dampak|solusi|perbedaan|membandingkan|kombinasi|strategi|merancang|buatlah|penyebab|akibat/i)
+  ) {
+    cognitive = 'L3';
+  } else if (
+    qType === 'matching' ||
+    qType === 'true_false' ||
+    lowerText.match(/langkah|cara|prosedur|shortcut|fungsi|kegunaan|bagaimana|hitung|mengurutkan|terapkan|gunakan|tentukan|hasil dari|pasangkan|manfaat/i)
+  ) {
+    cognitive = 'L2';
+  } else {
+    cognitive = 'L1';
   }
 
-  // 5. Determine Tingkat Kesukaran
-  let diff = q.difficulty_level || '';
-  if (!diff) {
-    if (cognitive === 'L3') diff = 'sukar';
-    else if (cognitive === 'L2') diff = 'sedang';
-    else diff = 'mudah';
+  // 5. Determine Tingkat Kesukaran (selaras dengan level kognitif)
+  let diff = 'mudah';
+  if (cognitive === 'L3') {
+    diff = 'sukar';
+  } else if (cognitive === 'L2') {
+    diff = 'sedang';
+  } else {
+    diff = 'mudah';
   }
 
   return {
@@ -2451,8 +2459,8 @@ const autoGenerateAllKisiKisi = () => {
 
   const countEmpty = activeQuestions.value.filter(q => !q.indicator || !q.material || !q.basic_competency).length;
   const confirmMsg = countEmpty > 0
-    ? `Generate kisi-kisi otomatis untuk ${countEmpty} butir soal yang kisi-kisinya belum lengkap?`
-    : `Semua butir soal sudah memiliki kisi-kisi. Apakah Anda ingin meng-generate ulang kisi-kisi untuk seluruh ${activeQuestions.value.length} butir soal?`;
+    ? `Generate kisi-kisi otomatis untuk ${countEmpty} butir soal yang kisi-kisinya belum lengkap? Level kognitif dan tingkat kesukaran akan dianalisis otomatis sesuai isi soal.`
+    : `Semua butir soal sudah memiliki kisi-kisi. Apakah Anda ingin meng-generate ulang kisi-kisi, level kognitif, dan tingkat kesukaran untuk seluruh ${activeQuestions.value.length} butir soal?`;
 
   if (!confirm(confirmMsg)) return;
 
@@ -2465,12 +2473,12 @@ const autoGenerateAllKisiKisi = () => {
     if (!q.material || countEmpty === 0) q.material = res.material;
     if (!q.indicator || countEmpty === 0) q.indicator = res.indicator;
     if (!q.basic_competency || countEmpty === 0) q.basic_competency = res.basic_competency;
-    if (!q.cognitive_level || countEmpty === 0) q.cognitive_level = res.cognitive_level;
-    if (!q.difficulty_level || countEmpty === 0) q.difficulty_level = res.difficulty_level;
+    q.cognitive_level = res.cognitive_level;
+    q.difficulty_level = res.difficulty_level;
     generated++;
   }
 
-  alert(`Alhamdulillah! Kisi-kisi untuk ${generated} butir soal berhasil diisi otomatis. Jangan lupa klik tombol "Simpan Semua".`);
+  alert(`Alhamdulillah! Kisi-kisi, Level Kognitif, dan Tingkat Kesukaran untuk ${generated} butir soal berhasil diisi otomatis. Jangan lupa klik tombol "Simpan Semua".`);
 };
 
 const copyKisiFromPrev = (index) => {
@@ -2481,8 +2489,8 @@ const copyKisiFromPrev = (index) => {
 
   curQ.basic_competency = prevQ.basic_competency || curQ.basic_competency;
   curQ.material = prevQ.material || curQ.material;
-  if (!curQ.cognitive_level && prevQ.cognitive_level) curQ.cognitive_level = prevQ.cognitive_level;
-  if (!curQ.difficulty_level && prevQ.difficulty_level) curQ.difficulty_level = prevQ.difficulty_level;
+  if (prevQ.cognitive_level) curQ.cognitive_level = prevQ.cognitive_level;
+  if (prevQ.difficulty_level) curQ.difficulty_level = prevQ.difficulty_level;
 };
 
 const onCognitiveLevelChange = (idx) => {
