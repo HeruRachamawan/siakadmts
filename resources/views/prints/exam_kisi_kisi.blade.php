@@ -381,10 +381,16 @@
     @endphp
 
     <!-- HEADER / KOP -->
+    @php
+        $schoolTitle = strtoupper(trim($school->school_name ?? ''));
+        if (empty($schoolTitle) || str_contains($schoolTitle, 'YASPIN') || str_contains($schoolTitle, 'SMK')) {
+            $schoolTitle = 'MTS AL - HASANAH';
+        }
+    @endphp
     <div class="header">
         <h2>KISI-KISI SOAL {{ $examTitle }}</h2>
         <h3>TAHUN PELAJARAN {{ $package->academicYear->year ?? '2026/2027' }}</h3>
-        <h3>{{ strtoupper($school->school_name ?? 'MTS. AL-HASANAH') }}</h3>
+        <h3>{{ $schoolTitle }}</h3>
     </div>
 
     <!-- IDENTITAS / METADATA -->

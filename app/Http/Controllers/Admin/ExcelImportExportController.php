@@ -134,7 +134,7 @@ class ExcelImportExportController extends Controller
             }
 
             $writer = new Xlsx($spreadsheet);
-            $fileName = "Template_Import_{$type}_YASPIN.xlsx";
+            $fileName = "Template_Import_{$type}_MTS_AL_HASANAH.xlsx";
 
             return response()->streamDownload(function () use ($writer) {
                 $writer->save('php://output');
@@ -146,7 +146,7 @@ class ExcelImportExportController extends Controller
         }
 
         // CSV Fallback
-        $fileName = "Template_Import_{$type}_YASPIN.csv";
+        $fileName = "Template_Import_{$type}_MTS_AL_HASANAH.csv";
         return response()->streamDownload(function () use ($type) {
             $output = fopen('php://output', 'w');
             fputs($output, "\xEF\xBB\xBF");
@@ -1007,7 +1007,7 @@ class ExcelImportExportController extends Controller
             }
 
             $writer = new Xlsx($spreadsheet);
-            $fileName = $customFileName ? "{$customFileName}.xlsx" : "Data_Export_{$type}_YASPIN.xlsx";
+            $fileName = $customFileName ? "{$customFileName}.xlsx" : "Data_Export_{$type}_MTS_AL_HASANAH.xlsx";
 
             return response()->streamDownload(function () use ($writer) {
                 $writer->save('php://output');
@@ -1021,7 +1021,7 @@ class ExcelImportExportController extends Controller
         }
 
         // CSV Fallback
-        $fileName = $customFileName ? "{$customFileName}.csv" : "Data_Export_{$type}_YASPIN.csv";
+        $fileName = $customFileName ? "{$customFileName}.csv" : "Data_Export_{$type}_MTS_AL_HASANAH.csv";
         return response()->streamDownload(function () use ($type, $studentExportData, $teacherExportData, $classExportData) {
             $output = fopen('php://output', 'w');
             fputs($output, "\xEF\xBB\xBF");

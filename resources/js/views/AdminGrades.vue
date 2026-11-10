@@ -118,7 +118,7 @@ const exportExcelFile = async (type) => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Data_Export_${type}_YASPIN.xlsx`;
+    a.download = `Data_Export_${type}_MTS_AL_HASANAH.xlsx`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

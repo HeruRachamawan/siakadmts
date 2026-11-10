@@ -189,7 +189,7 @@ async function downloadTemplate() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Template_Import_${props.type}_YASPIN.xlsx`;
+    a.download = `Template_Import_${props.type}_MTS_AL_HASANAH.xlsx`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

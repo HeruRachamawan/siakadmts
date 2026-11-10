@@ -15,7 +15,7 @@ return new class extends Migration
         if (!Schema::hasTable('school_settings')) {
             Schema::create('school_settings', function (Blueprint $table) {
                 $table->id();
-                $table->string('school_name')->default('YASPIN');
+                $table->string('school_name')->default('MTs AL - HASANAH');
                 $table->decimal('latitude', 10, 8)->nullable()->default(-6.20880000);
                 $table->decimal('longitude', 11, 8)->nullable()->default(106.84560000);
                 $table->integer('max_radius_meters')->default(100);
@@ -27,7 +27,7 @@ return new class extends Migration
 
             // Insert initial default setting
             DB::table('school_settings')->insert([
-                'school_name' => 'SMK YASPIN',
+                'school_name' => 'MTs AL - HASANAH',
                 'latitude' => -6.20880000,
                 'longitude' => 106.84560000,
                 'max_radius_meters' => 100,

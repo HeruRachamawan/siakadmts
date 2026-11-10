@@ -108,9 +108,15 @@
 <body>
     <button class="no-print" onclick="window.print()">🖨️ Cetak Kunci & Pedoman Penskoran</button>
 
+    @php
+        $schoolTitle = strtoupper(trim($school->school_name ?? ''));
+        if (empty($schoolTitle) || str_contains($schoolTitle, 'YASPIN') || str_contains($schoolTitle, 'SMK')) {
+            $schoolTitle = 'MTS AL - HASANAH';
+        }
+    @endphp
     <div class="header">
         <h2>KUNCI JAWABAN & PEDOMAN PENSKORAN</h2>
-        <h3>{{ $school->school_name ?? 'MTs AL-HASANAH' }} - TP {{ $package->academicYear->year ?? '2026/2027' }}</h3>
+        <h3>{{ $schoolTitle }} - TP {{ $package->academicYear->year ?? '2026/2027' }}</h3>
     </div>
 
     <table class="meta-table">

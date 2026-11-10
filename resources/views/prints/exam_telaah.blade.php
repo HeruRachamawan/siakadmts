@@ -354,10 +354,16 @@
     @endphp
 
     <!-- HEADER / KOP TELAAH -->
+    @php
+        $schoolTitle = strtoupper(trim($school->school_name ?? ''));
+        if (empty($schoolTitle) || str_contains($schoolTitle, 'YASPIN') || str_contains($schoolTitle, 'SMK')) {
+            $schoolTitle = 'MADRASAH TSANAWIYAH AL-HASANAH';
+        }
+    @endphp
     <div class="header">
         <div class="title-main">INSTRUMEN TELAAH SOAL {{ $examTitle }} (HOTS)</div>
         <div class="title-sub">BENTUK TES HOTS</div>
-        <div class="title-sub">{{ strtoupper($school->school_name ?? 'MADRASAH TSANAWIYAH AL-HASANAH') }}</div>
+        <div class="title-sub">{{ $schoolTitle }}</div>
         <div class="title-sub">TAHUN PELAJARAN {{ $package->academicYear->year ?? '2026/2027' }}</div>
     </div>
 
