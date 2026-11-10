@@ -3,50 +3,150 @@
 <head>
     <meta charset="utf-8">
     <title>Naskah Soal - {{ $package->title }}</title>
-    <style>
+    <style id="page-size-style">
         @page {
-            size: A4;
-            margin: 1.5cm 1.2cm 1.5cm 1.2cm;
+            size: 215mm 330mm; /* Standar F4 / Folio Portrait Indonesia */
+            margin: 10mm 12mm 10mm 12mm;
         }
+    </style>
+    <style>
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 11pt;
-            line-height: 1.35;
+            font-size: 9.5pt;
+            line-height: 1.18;
             color: #000;
             margin: 0;
             padding: 0;
-            background: #fff;
+            background: #e2e8f0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
-        .header {
-            text-align: center;
-            border-bottom: 3px double #000;
+
+        /* Screen Sheet Container with realistic Paper preview */
+        .print-sheet {
+            background: #fff;
+            max-width: 215mm;
+            min-height: 330mm;
+            margin: 110px auto 30px auto;
+            padding: 12mm 14mm;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+            border-radius: 4px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+
+        /* DENSITY: KOMPAK (DEFAULT FIT MAKSIMAL 2 LEMBAR / 4 MUKA) */
+        body.density-compact .print-sheet {
+            font-size: 9.5pt;
+            line-height: 1.18;
+        }
+        body.density-compact .header-kop {
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+        }
+        body.density-compact .meta-table {
+            font-size: 8.5pt !important;
+            margin-bottom: 5px !important;
+        }
+        body.density-compact .meta-table td {
+            padding: 1px 3px !important;
+        }
+        body.density-compact .petunjuk {
+            font-size: 7.5pt !important;
+            padding: 3px 8px !important;
+            margin-bottom: 6px !important;
+        }
+        body.density-compact .petunjuk ol {
+            margin: 2px 0 0 14px !important;
+        }
+        body.density-compact .section-title {
+            margin: 8px 0 3px 0 !important;
+            padding-bottom: 1px !important;
+            font-size: 9.5pt !important;
+        }
+        body.density-compact .section-desc {
+            margin: 2px 0 4px 0 !important;
+            font-size: 8.5pt !important;
+        }
+        body.density-compact .question-item {
+            margin-bottom: 7px !important;
+        }
+        body.density-compact .q-text p {
+            margin: 0 0 2px 0 !important;
+        }
+        body.density-compact .options-list {
+            margin: 2px 0 0 0 !important;
+            padding-left: 20px !important;
+        }
+        body.density-compact .options-list li {
+            margin-bottom: 1px !important;
+        }
+        body.density-compact .akm-table {
+            font-size: 8.5pt !important;
+            margin: 4px 0 6px 0 !important;
+        }
+        body.density-compact .akm-table th, 
+        body.density-compact .akm-table td {
+            padding: 2.5px 4px !important;
+        }
+        body.density-compact .q-img {
+            max-height: 100px !important;
+            margin: 4px 0 4px 20px !important;
+        }
+
+        /* DENSITY: NORMAL (UNTUK SOAL SEDIKIT / 20 SOAL) */
+        body.density-normal .print-sheet {
+            font-size: 10.5pt;
+            line-height: 1.32;
+        }
+        body.density-normal .header-kop {
             padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+        body.density-normal .meta-table {
+            font-size: 9.5pt;
+            margin-bottom: 8px;
+        }
+        body.density-normal .meta-table td {
+            padding: 2px 4px;
+        }
+        body.density-normal .petunjuk {
+            font-size: 8.5pt;
+            padding: 5px 10px;
+            margin-bottom: 10px;
+        }
+        body.density-normal .section-title {
+            margin: 12px 0 6px 0;
+            font-size: 10.5pt;
+        }
+        body.density-normal .question-item {
             margin-bottom: 12px;
         }
-        .header h2 { margin: 0; font-size: 14pt; text-transform: uppercase; letter-spacing: 0.5px; }
-        .header h3 { margin: 2px 0; font-size: 12pt; text-transform: uppercase; }
-        .header p { margin: 1px 0; font-size: 9.5pt; }
+        body.density-normal .q-img {
+            max-height: 140px;
+            margin: 6px 0 6px 24px;
+        }
+
+        /* SCALING ZOOM PRESETS */
+        body.scale-100 .print-sheet { zoom: 1; }
+        body.scale-95 .print-sheet { zoom: 0.95; }
+        body.scale-90 .print-sheet { zoom: 0.90; }
+        body.scale-85 .print-sheet { zoom: 0.85; }
 
         .meta-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 12px;
-            font-size: 10pt;
+            font-size: 9pt;
         }
         .meta-table td {
-            padding: 2px 4px;
             vertical-align: top;
         }
 
         .petunjuk {
             border: 1px solid #000;
-            padding: 6px 10px;
-            margin-bottom: 14px;
-            font-size: 9pt;
             background-color: #fafafa;
         }
-        .petunjuk strong { text-transform: uppercase; font-size: 9.5pt; }
-        .petunjuk ol { margin: 3px 0 0 18px; padding: 0; }
+        .petunjuk strong { text-transform: uppercase; }
 
         /* Multi-column layout */
         .content-container {
@@ -54,15 +154,17 @@
         }
         .col-2 {
             column-count: 2;
-            column-gap: 24px;
-            column-rule: 1px dashed #bbb;
+            column-gap: 18px;
+            column-rule: 1px dashed #cbd5e1;
             text-align: justify;
         }
 
+        /* Anti-clipping protections */
         .question-item {
             break-inside: avoid;
             page-break-inside: avoid;
-            margin-bottom: 14px;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
         .question-item::after {
             content: "";
@@ -72,10 +174,10 @@
         .q-number {
             font-weight: bold;
             float: left;
-            width: 22px;
+            width: 20px;
         }
         .q-text {
-            margin-left: 24px;
+            margin-left: 22px;
             display: block;
             text-indent: 0 !important;
         }
@@ -83,126 +185,119 @@
             text-indent: 0 !important;
         }
         .q-text p {
-            margin: 0 0 4px 0;
+            margin: 0 0 3px 0;
         }
         .q-text table {
             border-collapse: collapse;
             width: 100%;
-            margin: 6px 0;
-            font-size: 9pt;
+            margin: 4px 0;
+            font-size: 8.5pt;
         }
         .q-text th, .q-text td {
             border: 1px solid #444;
-            padding: 3px 6px;
+            padding: 2.5px 5px;
         }
         .q-text th {
             background-color: #f2f2f2;
         }
         .q-text ul {
             list-style-type: disc;
-            padding-left: 18px;
-            margin: 4px 0;
+            padding-left: 16px;
+            margin: 3px 0;
         }
         .q-text ol {
             list-style-type: decimal;
-            padding-left: 18px;
-            margin: 4px 0;
+            padding-left: 16px;
+            margin: 3px 0;
         }
         .q-text ol.list-paren-num {
             counter-reset: item;
             list-style: none !important;
-            padding-left: 20px;
+            padding-left: 18px;
         }
         .q-text ol.list-paren-num > li {
             counter-increment: item;
             position: relative;
-            margin-bottom: 2px;
+            margin-bottom: 1.5px;
         }
         .q-text ol.list-paren-num > li::before {
             content: "(" counter(item) ") ";
             font-weight: bold;
             display: inline-block;
-            margin-left: -20px;
-            width: 20px;
+            margin-left: -18px;
+            width: 18px;
         }
         .q-text ol.list-paren-alpha {
             counter-reset: alpha-item;
             list-style: none !important;
-            padding-left: 20px;
+            padding-left: 18px;
         }
         .q-text ol.list-paren-alpha > li {
             counter-increment: alpha-item;
             position: relative;
-            margin-bottom: 2px;
+            margin-bottom: 1.5px;
         }
         .q-text ol.list-paren-alpha > li::before {
             content: "(" counter(alpha-item, lower-alpha) ") ";
             font-weight: bold;
             display: inline-block;
-            margin-left: -20px;
-            width: 20px;
+            margin-left: -18px;
+            width: 18px;
         }
         .q-text ul.list-dash { list-style-type: '– '; }
         .q-text ul.list-check { list-style-type: '✓ '; }
         .q-text ul.list-arrow { list-style-type: '➢ '; }
         .q-img {
             display: block;
-            max-width: 90%;
-            max-height: 160px;
-            margin: 6px 0 6px 24px;
+            max-width: 95%;
             border: 1px solid #ccc;
             padding: 2px;
+            break-inside: avoid;
+            page-break-inside: avoid;
         }
         .options-list {
             list-style-type: none;
-            padding-left: 24px;
-            margin: 4px 0 0 0;
+            padding-left: 22px;
+            margin: 3px 0 0 0;
         }
         .options-list li {
-            margin-bottom: 2px;
+            margin-bottom: 1.5px;
             display: flex;
             align-items: baseline;
+            break-inside: avoid;
         }
         .opt-label {
             font-weight: bold;
-            width: 22px;
+            width: 20px;
             flex-shrink: 0;
         }
         .key-badge {
             color: #059669;
             font-weight: bold;
             margin-left: 6px;
-            font-size: 9pt;
+            font-size: 8.5pt;
         }
 
         .section-title {
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 10.5pt;
             border-bottom: 1px solid #000;
-            padding-bottom: 2px;
-            margin: 16px 0 8px 0;
             letter-spacing: 0.5px;
         }
         .section-desc {
-            font-size: 9.5pt;
             font-style: italic;
-            margin: 0 0 8px 0;
         }
 
         .akm-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 6px 0 10px 0;
-            font-size: 9pt;
-            page-break-inside: auto;
         }
         .akm-table tr {
+            break-inside: avoid;
             page-break-inside: avoid;
         }
         .akm-table th, .akm-table td {
             border: 1px solid #000;
-            padding: 4px 6px;
             vertical-align: top;
         }
         .akm-table th {
@@ -213,31 +308,204 @@
             print-color-adjust: exact;
         }
 
-        .no-print {
+        /* FLOATING PRINT TOOLBAR (SCREEN ONLY) */
+        .print-toolbar {
             position: fixed;
-            top: 15px;
-            right: 15px;
-            background: #059669;
-            color: white;
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-family: sans-serif;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            border: none;
-            z-index: 9999;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 10px 16px;
+            z-index: 99999;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 12px;
         }
-        .no-print:hover { background: #047857; }
+        .toolbar-wrapper {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .toolbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toolbar-badge {
+            background: #f59e0b;
+            color: #78350f;
+            font-weight: 800;
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .toolbar-title {
+            font-weight: 700;
+            font-size: 13px;
+            color: #ffffff;
+        }
+        .toolbar-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            background: #1e293b;
+            padding: 2px 4px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            gap: 2px;
+        }
+        .group-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #94a3b8;
+            padding: 0 6px;
+            text-transform: uppercase;
+        }
+        .btn-tool {
+            background: transparent;
+            color: #cbd5e1;
+            border: none;
+            padding: 4px 9px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-tool:hover {
+            color: #ffffff;
+            background: #334155;
+        }
+        .btn-tool.active {
+            background: #0284c7;
+            color: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .btn-tool.active-green {
+            background: #059669;
+            color: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .btn-print {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #ffffff;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+            transition: all 0.15s ease;
+        }
+        .btn-print:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.6);
+        }
+        .toolbar-tips {
+            max-width: 1280px;
+            margin: 6px auto 0 auto;
+            font-size: 10.5px;
+            color: #cbd5e1;
+            padding-top: 4px;
+            border-top: 1px solid #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
 
+        /* PRINT STYLES */
         @media print {
-            .no-print { display: none !important; }
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: #fff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .print-sheet {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                max-width: none !important;
+                min-height: auto !important;
+                border-radius: 0 !important;
+            }
+            body.scale-95 .print-sheet { zoom: 0.95; }
+            body.scale-90 .print-sheet { zoom: 0.90; }
+            body.scale-85 .print-sheet { zoom: 0.85; }
         }
     </style>
 </head>
-<body>
-    <button class="no-print" onclick="window.print()">🖨️ Cetak Naskah Soal</button>
+<body class="density-compact scale-100 paper-f4">
+    <!-- FLOATING INTERACTIVE CONTROLLER (SCREEN ONLY) -->
+    <div class="no-print print-toolbar">
+        <div class="toolbar-wrapper">
+            <div class="toolbar-brand">
+                <span class="toolbar-badge">F4 Folio</span>
+                <span class="toolbar-title">Naskah Soal Siswa (Target: Maks 2 Lembar)</span>
+            </div>
+
+            <div class="toolbar-controls">
+                <!-- Paper Size Selector -->
+                <div class="toolbar-group">
+                    <span class="group-label">Kertas:</span>
+                    <button type="button" class="btn-tool active" id="btn-paper-f4" onclick="setPaper('f4')">F4 (21.5 × 33 cm)</button>
+                    <button type="button" class="btn-tool" id="btn-paper-a4" onclick="setPaper('a4')">A4 (21 × 29.7 cm)</button>
+                </div>
+
+                <!-- Density Preset -->
+                <div class="toolbar-group">
+                    <span class="group-label">Kepadatan:</span>
+                    <button type="button" class="btn-tool active active-green" id="btn-den-compact" onclick="setDensity('compact')">⚡ Fit 2 Lembar</button>
+                    <button type="button" class="btn-tool" id="btn-den-normal" onclick="setDensity('normal')">Standar</button>
+                </div>
+
+                <!-- Scaling Zoom -->
+                <div class="toolbar-group">
+                    <span class="group-label">Skala:</span>
+                    <button type="button" class="btn-tool active" id="btn-scale-100" onclick="setScale(100)">100%</button>
+                    <button type="button" class="btn-tool" id="btn-scale-95" onclick="setScale(95)">95%</button>
+                    <button type="button" class="btn-tool" id="btn-scale-90" onclick="setScale(90)">90%</button>
+                    <button type="button" class="btn-tool" id="btn-scale-85" onclick="setScale(85)">85%</button>
+                </div>
+
+                <!-- Layout Toggle -->
+                <div class="toolbar-group">
+                    <span class="group-label">Kolom:</span>
+                    <button type="button" class="btn-tool {{ $layout === '2col' ? 'active' : '' }}" id="btn-layout-2" onclick="setLayout('2col')">2 Kolom</button>
+                    <button type="button" class="btn-tool {{ $layout === '1col' ? 'active' : '' }}" id="btn-layout-1" onclick="setLayout('1col')">1 Kolom</button>
+                </div>
+
+                <!-- Print Trigger Button -->
+                <button type="button" class="btn-print" onclick="window.print()">
+                    🖨️ Cetak Sekarang
+                </button>
+            </div>
+        </div>
+
+        <div class="toolbar-tips">
+            <span>💡 <strong>Tips Cetak Kertas F4 Tanpa Terpotong:</strong> Pada jendela cetak printer (Ctrl + P), pastikan <em>Paper size</em> dipilih <strong>Folio / F4 / 215 × 330 mm</strong> dan <em>Margins</em> dipilih <strong>Default / None</strong>. Jika soal masih sisa 1–2 baris di lembar 3, klik tombol skala <strong>95%</strong> di atas!</span>
+        </div>
+    </div>
+
+    <div id="print-sheet" class="print-sheet">
 
     @php
         $logoPath = public_path('images/logo_madrasah_yaspih.png');
@@ -728,8 +996,77 @@
     </div>
 
     <!-- RUNNING FOOTER -->
-    <div style="text-align: center; font-style: italic; font-size: 9pt; margin-top: 20px; color: #111; border-top: 1px dotted #888; padding-top: 6px;">
+    <div style="text-align: center; font-style: italic; font-size: 8.5pt; margin-top: 14px; color: #333; border-top: 1px dotted #888; padding-top: 4px;">
         Kerjakan lah soal dengan teliti dan benar, jangan terburu-buru
     </div>
+    </div> <!-- END #print-sheet -->
+
+    <script>
+        function setPaper(size) {
+            const styleEl = document.getElementById('page-size-style');
+            const btnF4 = document.getElementById('btn-paper-f4');
+            const btnA4 = document.getElementById('btn-paper-a4');
+            const sheet = document.getElementById('print-sheet');
+
+            if (size === 'f4') {
+                styleEl.innerHTML = '@page { size: 215mm 330mm; margin: 10mm 12mm 10mm 12mm; }';
+                btnF4.classList.add('active');
+                btnA4.classList.remove('active');
+                sheet.style.maxWidth = '215mm';
+                sheet.style.minHeight = '330mm';
+            } else {
+                styleEl.innerHTML = '@page { size: 210mm 297mm; margin: 10mm 12mm 10mm 12mm; }';
+                btnA4.classList.add('active');
+                btnF4.classList.remove('active');
+                sheet.style.maxWidth = '210mm';
+                sheet.style.minHeight = '297mm';
+            }
+        }
+
+        function setDensity(mode) {
+            const btnCompact = document.getElementById('btn-den-compact');
+            const btnNormal = document.getElementById('btn-den-normal');
+
+            if (mode === 'compact') {
+                document.body.classList.add('density-compact');
+                document.body.classList.remove('density-normal');
+                btnCompact.classList.add('active', 'active-green');
+                btnNormal.classList.remove('active');
+            } else {
+                document.body.classList.remove('density-compact');
+                document.body.classList.add('density-normal');
+                btnNormal.classList.add('active');
+                btnCompact.classList.remove('active', 'active-green');
+            }
+        }
+
+        function setScale(val) {
+            ['100', '95', '90', '85'].forEach(s => {
+                document.body.classList.remove('scale-' + s);
+                const b = document.getElementById('btn-scale-' + s);
+                if (b) b.classList.remove('active');
+            });
+
+            document.body.classList.add('scale-' + val);
+            const activeBtn = document.getElementById('btn-scale-' + val);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+
+        function setLayout(cols) {
+            const container = document.querySelector('.content-container');
+            const btn2 = document.getElementById('btn-layout-2');
+            const btn1 = document.getElementById('btn-layout-1');
+
+            if (cols === '2col') {
+                container.classList.add('col-2');
+                btn2.classList.add('active');
+                btn1.classList.remove('active');
+            } else {
+                container.classList.remove('col-2');
+                btn1.classList.add('active');
+                btn2.classList.remove('active');
+            }
+        }
+    </script>
 </body>
 </html>

@@ -3,11 +3,13 @@
 <head>
     <meta charset="utf-8">
     <title>Instrumen Telaah Soal HOTS - {{ $package->title }}</title>
-    <style>
+    <style id="page-size-style">
         @page {
-            size: A4 landscape;
-            margin: 0.8cm 1cm 0.8cm 1cm;
+            size: 330mm 215mm; /* Standar F4 / Folio Landscape (Lebar 33cm, Tinggi 21.5cm) */
+            margin: 8mm 10mm 8mm 10mm;
         }
+    </style>
+    <style>
         body {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 8.5pt;
@@ -15,8 +17,29 @@
             color: #000;
             margin: 0;
             padding: 0;
-            background: #fff;
+            background: #e2e8f0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
+
+        .print-sheet {
+            background: #fff;
+            max-width: 330mm;
+            min-height: 215mm;
+            margin: 105px auto 30px auto;
+            padding: 10mm 12mm;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+            border-radius: 4px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+
+        /* SCALING ZOOM PRESETS */
+        body.scale-100 .print-sheet { zoom: 1; }
+        body.scale-95 .print-sheet { zoom: 0.95; }
+        body.scale-90 .print-sheet { zoom: 0.90; }
+        body.scale-85 .print-sheet { zoom: 0.85; }
+
         .header {
             text-align: center;
             margin-bottom: 8px;
@@ -54,11 +77,11 @@
         }
         .matrix-table th, .matrix-table td {
             border: 1px solid #000;
-            padding: 2px 1px;
+            padding: 2.5px 1px;
             vertical-align: middle;
         }
         .matrix-table th {
-            background-color: #ffffff;
+            background-color: #f8fafc;
             text-align: center;
             font-weight: bold;
         }
@@ -67,11 +90,16 @@
             font-weight: bold;
             font-size: 8pt;
         }
+        .matrix-table tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
         .center { text-align: center; }
 
         .signatures {
             width: 100%;
             margin-top: 14px;
+            break-inside: avoid;
             page-break-inside: avoid;
             font-size: 9pt;
             border-collapse: collapse;
@@ -82,46 +110,191 @@
             vertical-align: top;
         }
         .sig-container {
-            height: 50px;
+            height: 48px;
             display: flex;
             align-items: center;
             margin: 2px 0;
         }
         .sig-img {
-            max-height: 48px;
+            max-height: 45px;
             max-width: 150px;
             object-fit: contain;
             display: block;
         }
         .sig-space {
-            height: 50px;
+            height: 48px;
         }
 
-        .no-print {
+        /* FLOATING PRINT TOOLBAR (SCREEN ONLY) */
+        .print-toolbar {
             position: fixed;
-            top: 12px;
-            right: 12px;
-            background: #059669;
-            color: white;
-            padding: 7px 14px;
-            border-radius: 6px;
-            font-family: sans-serif;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            border: none;
-            z-index: 9999;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 10px 16px;
+            z-index: 99999;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 12px;
         }
-        .no-print:hover { background: #047857; }
+        .toolbar-wrapper {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .toolbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toolbar-badge {
+            background: #8b5cf6;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .toolbar-title {
+            font-weight: 700;
+            font-size: 13px;
+            color: #ffffff;
+        }
+        .toolbar-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            background: #1e293b;
+            padding: 2px 4px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            gap: 2px;
+        }
+        .group-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #94a3b8;
+            padding: 0 6px;
+            text-transform: uppercase;
+        }
+        .btn-tool {
+            background: transparent;
+            color: #cbd5e1;
+            border: none;
+            padding: 4px 9px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-tool:hover {
+            color: #ffffff;
+            background: #334155;
+        }
+        .btn-tool.active {
+            background: #8b5cf6;
+            color: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .btn-print {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #ffffff;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+            transition: all 0.15s ease;
+        }
+        .btn-print:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.6);
+        }
+        .toolbar-tips {
+            max-width: 1280px;
+            margin: 6px auto 0 auto;
+            font-size: 10.5px;
+            color: #cbd5e1;
+            padding-top: 4px;
+            border-top: 1px solid #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
         @media print {
             .no-print { display: none !important; }
-            body { margin: 0; }
+            body { background: #fff !important; margin: 0 !important; }
+            .print-sheet {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                max-width: none !important;
+                min-height: auto !important;
+            }
+            body.scale-95 .print-sheet { zoom: 0.95; }
+            body.scale-90 .print-sheet { zoom: 0.90; }
+            body.scale-85 .print-sheet { zoom: 0.85; }
         }
     </style>
 </head>
-<body>
-    <button class="no-print" onclick="window.print()">🖨️ Cetak Instrumen Telaah (HOTS)</button>
+<body class="scale-100 paper-f4">
+    <!-- FLOATING INTERACTIVE CONTROLLER (SCREEN ONLY) -->
+    <div class="no-print print-toolbar">
+        <div class="toolbar-wrapper">
+            <div class="toolbar-brand">
+                <span class="toolbar-badge">F4 Landscape</span>
+                <span class="toolbar-title">Instrumen Telaah Butir Soal HOTS</span>
+            </div>
+
+            <div class="toolbar-controls">
+                <!-- Paper Size Selector -->
+                <div class="toolbar-group">
+                    <span class="group-label">Kertas:</span>
+                    <button type="button" class="btn-tool active" id="btn-paper-f4" onclick="setPaper('f4')">F4 Landscape (33 × 21.5 cm)</button>
+                    <button type="button" class="btn-tool" id="btn-paper-a4" onclick="setPaper('a4')">A4 Landscape (29.7 × 21 cm)</button>
+                </div>
+
+                <!-- Scaling Zoom -->
+                <div class="toolbar-group">
+                    <span class="group-label">Skala:</span>
+                    <button type="button" class="btn-tool active" id="btn-scale-100" onclick="setScale(100)">100%</button>
+                    <button type="button" class="btn-tool" id="btn-scale-95" onclick="setScale(95)">95%</button>
+                    <button type="button" class="btn-tool" id="btn-scale-90" onclick="setScale(90)">90%</button>
+                </div>
+
+                <!-- Print Trigger Button -->
+                <button type="button" class="btn-print" onclick="window.print()">
+                    🖨️ Cetak Telaah
+                </button>
+            </div>
+        </div>
+
+        <div class="toolbar-tips">
+            <span>💡 <strong>Tips Cetak Landscape F4:</strong> Pada dialog printer (Ctrl + P), pastikan <em>Paper size</em> dipilih <strong>Folio / F4 / 215 × 330 mm</strong>, <em>Orientation</em> dipilih <strong>Landscape</strong>, dan <em>Margins</em> dipilih <strong>Default / None</strong>.</span>
+        </div>
+    </div>
+
+    <div id="print-sheet" class="print-sheet">
 
     @php
         // Judul Asesmen
@@ -328,5 +501,41 @@
             </td>
         </tr>
     </table>
+    </div> <!-- END #print-sheet -->
+
+    <script>
+        function setPaper(size) {
+            const styleEl = document.getElementById('page-size-style');
+            const btnF4 = document.getElementById('btn-paper-f4');
+            const btnA4 = document.getElementById('btn-paper-a4');
+            const sheet = document.getElementById('print-sheet');
+
+            if (size === 'f4') {
+                styleEl.innerHTML = '@page { size: 330mm 215mm; margin: 8mm 10mm 8mm 10mm; }';
+                btnF4.classList.add('active');
+                btnA4.classList.remove('active');
+                sheet.style.maxWidth = '330mm';
+                sheet.style.minHeight = '215mm';
+            } else {
+                styleEl.innerHTML = '@page { size: 297mm 210mm; margin: 8mm 10mm 8mm 10mm; }';
+                btnA4.classList.add('active');
+                btnF4.classList.remove('active');
+                sheet.style.maxWidth = '297mm';
+                sheet.style.minHeight = '210mm';
+            }
+        }
+
+        function setScale(val) {
+            ['100', '95', '90'].forEach(s => {
+                document.body.classList.remove('scale-' + s);
+                const b = document.getElementById('btn-scale-' + s);
+                if (b) b.classList.remove('active');
+            });
+
+            document.body.classList.add('scale-' + val);
+            const activeBtn = document.getElementById('btn-scale-' + val);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+    </script>
 </body>
 </html>

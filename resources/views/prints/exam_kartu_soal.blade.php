@@ -5,8 +5,8 @@
     <title>Kartu Soal - {{ $package->title }}</title>
     <style>
         @page {
-            size: A4 portrait;
-            margin: 1.5cm 1.2cm 1.5cm 1.2cm;
+            size: 215mm 330mm; /* Standar F4 / Folio Portrait */
+            margin: 10mm 12mm 10mm 12mm;
         }
         body {
             font-family: 'Times New Roman', Times, serif;
