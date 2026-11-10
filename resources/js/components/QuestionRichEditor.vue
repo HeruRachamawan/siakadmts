@@ -213,53 +213,77 @@
 
       <div class="w-px h-4 bg-slate-300 mx-0.5"></div>
 
-      <!-- 6. MATH & FORMULA SYMBOLS PALETTE DROPDOWN -->
+      <!-- 6. EQUATION STUDIO (STANDAR MICROSOFT WORD) -->
       <div class="relative">
         <button
           type="button"
           @click="toggleSymbolPalette"
-          class="px-2.5 h-7 flex items-center gap-1.5 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-800 hover:bg-amber-500/20 border border-amber-300 transition"
-          title="Buka Palet Simbol Matematika & Sains"
+          class="px-2.5 h-7 flex items-center gap-1.5 rounded-lg text-xs font-bold transition shadow-2xs"
+          :class="showSymbolPalette
+            ? 'bg-amber-500 text-white shadow-xs'
+            : 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-900 hover:from-amber-100 hover:to-orange-100 border border-amber-300'"
+          title="Buka Menu Equation Rumus Matematika & Sains (ala Microsoft Word)"
         >
-          <Sigma class="w-3.5 h-3.5 text-amber-700" />
-          <span>Simbol MTK</span>
-          <ChevronDown class="w-3 h-3 text-amber-600 transition" :class="{ 'rotate-180': showSymbolPalette }" />
+          <span class="text-sm font-serif font-black leading-none italic">π</span>
+          <span class="font-bold">Equation</span>
+          <ChevronDown class="w-3 h-3 transition duration-200" :class="{ 'rotate-180': showSymbolPalette }" />
         </button>
 
         <!-- Backdrop to close on click outside -->
         <div
           v-if="showSymbolPalette"
-          class="fixed inset-0 z-40"
+          class="fixed inset-0 z-40 bg-slate-900/10 backdrop-blur-2xs"
           @click="showSymbolPalette = false"
         ></div>
 
-        <!-- PALETTE POPUP DROPDOWN (Studio Palet Simbol MTK) -->
+        <!-- EQUATION STUDIO POPUP (MS WORD EQUATION GALLERY & BUILDER) -->
         <div
           v-if="showSymbolPalette"
-          class="absolute right-0 top-full mt-2 w-[340px] sm:w-[450px] max-w-[calc(100vw-24px)] bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-3 sm:p-4 animate-in fade-in zoom-in-95 text-slate-800"
+          class="absolute left-0 sm:left-auto right-0 top-full mt-2 w-[350px] sm:w-[560px] md:w-[650px] max-w-[calc(100vw-20px)] bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-3 sm:p-4 animate-in fade-in zoom-in-95 text-slate-800"
         >
           <!-- Header -->
-          <div class="flex items-center justify-between pb-2 border-b border-slate-100 mb-2.5">
-            <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <Sigma class="w-4 h-4 text-amber-600" />
-              <span>Studio Simbol Rumus MTK & Sains</span>
-            </span>
+          <div class="flex items-center justify-between pb-2.5 border-b border-slate-100 mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center font-serif font-black text-base italic shadow-2xs">
+                π
+              </div>
+              <div>
+                <span class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                  Equation Studio (Standar Microsoft Word)
+                </span>
+                <p class="text-[10px] text-slate-400">Galeri Rumus Matematika, Sains, Pecahan & Bentuk Akar</p>
+              </div>
+            </div>
             <button
               type="button"
               @click="showSymbolPalette = false"
-              class="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition"
-              title="Tutup Palet"
+              class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition"
+              title="Tutup Menu Equation"
             >
-              <X class="w-3.5 h-3.5" />
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+
+          <!-- Quick Math Symbols Strip -->
+          <div class="mb-3 p-1.5 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center gap-1 overflow-x-auto text-xs">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1 shrink-0">Cepat:</span>
+            <button
+              type="button"
+              v-for="qs in quickMathSymbols"
+              :key="qs"
+              @click="insertSymbol(qs)"
+              class="w-7 h-7 shrink-0 rounded-lg bg-white hover:bg-amber-100 border border-slate-200 text-slate-800 font-bold hover:border-amber-400 flex items-center justify-center transition active:scale-95 text-xs shadow-2xs"
+            >
+              {{ qs }}
             </button>
           </div>
 
           <!-- Quick Search Filter -->
-          <div class="relative mb-2.5">
+          <div class="relative mb-3">
             <input
               type="text"
               v-model="symbolSearch"
-              placeholder="Cari simbol... (misal: akar, derajat, pi, sigma, x², pecahan)"
+              placeholder="Cari rumus atau simbol... (contoh: pythagoras, lingkaran, kuadrat, pecahan, spldv, akar)"
               class="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:bg-white focus:border-amber-400 transition placeholder:text-slate-400"
             />
             <Search class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -273,107 +297,163 @@
             </button>
           </div>
 
-          <!-- Category Tabs (Shown when not searching) -->
-          <div v-if="!symbolSearch" class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-[11px] mb-2.5 overflow-x-auto">
+          <!-- Main Mode Tabs (When not searching) -->
+          <div v-if="!symbolSearch" class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs mb-3">
             <button
               type="button"
-              v-for="cat in symbolCategories"
-              :key="cat.id"
-              @click="activeCategory = cat.id"
-              class="px-2.5 py-1 rounded-lg font-semibold shrink-0 transition text-xs whitespace-nowrap"
-              :class="activeCategory === cat.id ? 'bg-white text-amber-900 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900'"
+              @click="equationMode = 'gallery'"
+              class="flex-1 py-1.5 px-3 rounded-lg font-bold transition text-center flex items-center justify-center gap-1.5"
+              :class="equationMode === 'gallery' ? 'bg-white text-amber-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
             >
-              {{ cat.name }}
+              <span>📐 Galeri Rumus Populer</span>
+            </button>
+            <button
+              type="button"
+              @click="equationMode = 'builder'"
+              class="flex-1 py-1.5 px-3 rounded-lg font-bold transition text-center flex items-center justify-center gap-1.5"
+              :class="equationMode === 'builder' ? 'bg-white text-amber-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+            >
+              <span>🔢 Pembuat Rumus Bebas</span>
+            </button>
+            <button
+              type="button"
+              @click="equationMode = 'symbols'"
+              class="flex-1 py-1.5 px-3 rounded-lg font-bold transition text-center flex items-center justify-center gap-1.5"
+              :class="equationMode === 'symbols' ? 'bg-white text-amber-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+            >
+              <span>🔣 Palet Simbol Lengkap</span>
             </button>
           </div>
 
-          <!-- When Search active: Result Title -->
-          <div v-else class="text-[11px] font-bold text-amber-800 mb-1.5 px-1 flex items-center justify-between">
-            <span>Hasil Pencarian: "{{ symbolSearch }}"</span>
-            <span class="text-slate-400 font-normal">{{ currentSymbols.length }} simbol</span>
+          <!-- TAB 1: PRESET EQUATION GALLERY (ALA MS WORD) -->
+          <div v-if="(!symbolSearch && equationMode === 'gallery') || (symbolSearch && filteredEquations.length > 0)" class="space-y-2 max-h-64 sm:max-h-72 overflow-y-auto p-0.5 pr-1">
+            <div v-if="symbolSearch" class="text-[11px] font-bold text-amber-800 mb-1">
+              Rumus Ditemukan ({{ filteredEquations.length }}):
+            </div>
+            <div
+              v-for="eq in (symbolSearch ? filteredEquations : equationGallery)"
+              :key="eq.id"
+              @click="insertEquation(eq)"
+              class="p-2.5 bg-slate-50 hover:bg-amber-50/70 border border-slate-200 hover:border-amber-300 rounded-xl cursor-pointer transition group shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+            >
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2 mb-0.5">
+                  <span class="text-xs font-bold text-slate-800 group-hover:text-amber-900 truncate">{{ eq.title }}</span>
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-200 text-slate-700">{{ eq.category }}</span>
+                </div>
+                <div class="text-[11px] text-slate-400 line-clamp-1">{{ eq.desc }}</div>
+              </div>
+              <div class="p-2 bg-white rounded-lg border border-slate-200 shadow-2xs flex items-center justify-center text-xs font-serif sm:shrink-0 group-hover:border-amber-400 group-hover:shadow-xs transition">
+                <span v-html="eq.previewHtml"></span>
+              </div>
+            </div>
           </div>
 
-          <!-- 1. Template Rumus View -->
-          <div v-if="!symbolSearch && activeCategory === 'templates'" class="space-y-1.5 max-h-60 overflow-y-auto p-0.5">
-            <button
-              type="button"
-              @click="insertFractionTemplate"
-              class="w-full p-2 bg-amber-50/70 hover:bg-amber-100/80 text-left border border-amber-200/80 rounded-xl flex items-center justify-between transition group"
-            >
-              <div>
-                <div class="text-xs font-bold text-amber-950">Pecahan Bertingkat Biasa</div>
-                <div class="text-[11px] text-amber-700">Format atas/bawah bertingkat (a/b) dengan garis pembagi</div>
+          <!-- TAB 2: EQUATION BUILDER (PECAHAN, AKAR, PANGKAT KUSTOM) -->
+          <div v-else-if="!symbolSearch && equationMode === 'builder'" class="space-y-3 max-h-64 sm:max-h-72 overflow-y-auto p-0.5 pr-1">
+            <!-- 1. Pecahan Biasa -->
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+              <div class="text-xs font-bold text-slate-800 flex items-center justify-between">
+                <span>1. Sisipkan Pecahan Bertingkat</span>
+                <span class="text-[11px] text-slate-400 font-normal">Format: Atas / Bawah</span>
               </div>
-              <span class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-bold text-xs text-amber-800 shadow-2xs group-hover:scale-105 transition">a/b</span>
-            </button>
+              <div class="flex items-center gap-2">
+                <input type="text" v-model="customBuilder.num" placeholder="Pembilang (atas)" class="w-24 text-center px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold" />
+                <span class="text-slate-400 font-bold">/</span>
+                <input type="text" v-model="customBuilder.den" placeholder="Penyebut (bawah)" class="w-24 text-center px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold" />
+                <button
+                  type="button"
+                  @click="insertCustomFraction"
+                  class="ml-auto px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-2xs transition"
+                >
+                  + Sisipkan
+                </button>
+              </div>
+            </div>
 
-            <button
-              type="button"
-              @click="insertMixedFractionTemplate"
-              class="w-full p-2 bg-amber-50/70 hover:bg-amber-100/80 text-left border border-amber-200/80 rounded-xl flex items-center justify-between transition group"
-            >
-              <div>
-                <div class="text-xs font-bold text-amber-950">Pecahan Campuran</div>
-                <div class="text-[11px] text-amber-700">Bilangan bulat dengan pecahan bertingkat (contoh: 2 ½)</div>
+            <!-- 2. Pecahan Campuran -->
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+              <div class="text-xs font-bold text-slate-800 flex items-center justify-between">
+                <span>2. Sisipkan Pecahan Campuran</span>
+                <span class="text-[11px] text-slate-400 font-normal">Format: Bilangan + Pecahan</span>
               </div>
-              <span class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-bold text-xs text-amber-800 shadow-2xs group-hover:scale-105 transition">2 ½</span>
-            </button>
+              <div class="flex items-center gap-2">
+                <input type="text" v-model="customBuilder.whole" placeholder="Bulat" class="w-16 text-center px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold" />
+                <input type="text" v-model="customBuilder.mixNum" placeholder="Atas" class="w-20 text-center px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold" />
+                <span class="text-slate-400 font-bold">/</span>
+                <input type="text" v-model="customBuilder.mixDen" placeholder="Bawah" class="w-20 text-center px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold" />
+                <button
+                  type="button"
+                  @click="insertCustomMixedFraction"
+                  class="ml-auto px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-2xs transition"
+                >
+                  + Sisipkan
+                </button>
+              </div>
+            </div>
 
-            <button
-              type="button"
-              @click="insertRootTemplate"
-              class="w-full p-2 bg-amber-50/70 hover:bg-amber-100/80 text-left border border-amber-200/80 rounded-xl flex items-center justify-between transition group"
-            >
-              <div>
-                <div class="text-xs font-bold text-amber-950">Bentuk Akar Bergaris Atas</div>
-                <div class="text-[11px] text-amber-700">Akar dengan garis penutup rumus di atas isian (√(b²-4ac))</div>
+            <!-- 3. Bentuk Akar -->
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+              <div class="text-xs font-bold text-slate-800 flex items-center justify-between">
+                <span>3. Sisipkan Bentuk Akar Bergaris Atas</span>
+                <span class="text-[11px] text-slate-400 font-normal">√(isi) atau ⁿ√(isi)</span>
               </div>
-              <span class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-bold text-xs text-amber-800 shadow-2xs group-hover:scale-105 transition">√(x)</span>
-            </button>
+              <div class="flex items-center gap-2">
+                <input type="text" v-model="customBuilder.rootDegree" placeholder="n (pangkat)" class="w-20 text-center px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs" />
+                <span class="text-base font-bold text-slate-600">&radic;</span>
+                <input type="text" v-model="customBuilder.rootContent" placeholder="Isi rumus dalam akar" class="flex-1 px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-medium" />
+                <button
+                  type="button"
+                  @click="insertCustomRoot"
+                  class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-2xs transition"
+                >
+                  + Sisipkan
+                </button>
+              </div>
+            </div>
 
-            <button
-              type="button"
-              @click="insertLinearSystemTemplate"
-              class="w-full p-2 bg-amber-50/70 hover:bg-amber-100/80 text-left border border-amber-200/80 rounded-xl flex items-center justify-between transition group"
-            >
-              <div>
-                <div class="text-xs font-bold text-amber-950">Sistem Persamaan Linear (SPLDV)</div>
-                <div class="text-[11px] text-amber-700">Persamaan 2 baris berkurung kurawal { ...</div>
+            <!-- 4. Pangkat / Eksponen -->
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+              <div class="text-xs font-bold text-slate-800 flex items-center justify-between">
+                <span>4. Sisipkan Pangkat / Eksponen</span>
+                <span class="text-[11px] text-slate-400 font-normal">xⁿ</span>
               </div>
-              <span class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-bold text-xs text-amber-800 shadow-2xs group-hover:scale-105 transition">{ SPL</span>
-            </button>
-
-            <button
-              type="button"
-              @click="insertStatsMeanTemplate"
-              class="w-full p-2 bg-amber-50/70 hover:bg-amber-100/80 text-left border border-amber-200/80 rounded-xl flex items-center justify-between transition group"
-            >
-              <div>
-                <div class="text-xs font-bold text-amber-950">Rumus Rata-Rata Statistika</div>
-                <div class="text-[11px] text-amber-700">x̄ = (∑ fᵢ·xᵢ) / (∑ fᵢ)</div>
+              <div class="flex items-center gap-2">
+                <input type="text" v-model="customBuilder.base" placeholder="Basis (x)" class="w-28 text-center px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold" />
+                <span class="text-xs text-slate-400">pangkat</span>
+                <input type="text" v-model="customBuilder.power" placeholder="Pangkat (2)" class="w-20 text-center px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold" />
+                <button
+                  type="button"
+                  @click="insertCustomPower"
+                  class="ml-auto px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-2xs transition"
+                >
+                  + Sisipkan
+                </button>
               </div>
-              <span class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-bold text-xs text-amber-800 shadow-2xs group-hover:scale-105 transition">x̄ = ∑/n</span>
-            </button>
-
-            <button
-              type="button"
-              @click="insertMatrixTemplate"
-              class="w-full p-2 bg-amber-50/70 hover:bg-amber-100/80 text-left border border-amber-200/80 rounded-xl flex items-center justify-between transition group"
-            >
-              <div>
-                <div class="text-xs font-bold text-amber-950">Matriks Ordo 2x2</div>
-                <div class="text-[11px] text-amber-700">Matriks 2 baris 2 kolom dengan kurung siku [ a b ; c d ]</div>
-              </div>
-              <span class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-bold text-xs text-amber-800 shadow-2xs group-hover:scale-105 transition">[ 2x2 ]</span>
-            </button>
+            </div>
           </div>
 
-          <!-- 2. Symbol Grid (Normal / Search) -->
-          <div v-else>
+          <!-- TAB 3: COMPLETE SYMBOLS & GREEK (PALET LENGKAP) -->
+          <div v-else class="space-y-2 max-h-64 sm:max-h-72 overflow-y-auto p-0.5 pr-1">
+            <!-- Category Sub-tabs if not searching -->
+            <div v-if="!symbolSearch" class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-[11px] mb-2 overflow-x-auto">
+              <button
+                type="button"
+                v-for="cat in symbolCategories.filter(c => c.id !== 'templates')"
+                :key="cat.id"
+                @click="activeCategory = cat.id"
+                class="px-2.5 py-1 rounded-lg font-semibold shrink-0 transition text-xs whitespace-nowrap"
+                :class="activeCategory === cat.id ? 'bg-white text-amber-900 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900'"
+              >
+                {{ cat.name }}
+              </button>
+            </div>
+
+            <!-- Symbols Grid -->
             <div v-if="currentSymbols.length === 0" class="py-8 text-center text-xs text-slate-400">
               Tidak ada simbol yang cocok dengan "{{ symbolSearch }}".
             </div>
-            <div v-else class="grid grid-cols-6 sm:grid-cols-7 gap-1.5 max-h-56 overflow-y-auto p-1">
+            <div v-else class="grid grid-cols-6 sm:grid-cols-8 gap-1.5">
               <button
                 type="button"
                 v-for="item in currentSymbols"
@@ -383,17 +463,6 @@
                 :title="item.label"
               >
                 <span v-html="item.display || item.symbol"></span>
-              </button>
-            </div>
-
-            <!-- Quick Template Hint in Fractions -->
-            <div v-if="activeCategory === 'fractions' && !symbolSearch" class="mt-2 pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                @click="insertFractionTemplate"
-                class="w-full py-1.5 px-3 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs rounded-xl border border-amber-200 flex items-center justify-center gap-1.5 transition"
-              >
-                <span>+ Sisipkan Format Pecahan Bertingkat (a/b)</span>
               </button>
             </div>
           </div>
@@ -510,6 +579,21 @@ const showNumberingDropdown = ref(false);
 const showBulletsDropdown = ref(false);
 const activeCategory = ref('templates');
 const symbolSearch = ref('');
+const equationMode = ref('gallery');
+
+const quickMathSymbols = ['±', '×', '÷', '≤', '≥', '≠', '≈', '√', 'π', '°', 'α', 'β', 'θ', '∑', '∫', '∞', 'cm²', 'cm³'];
+
+const customBuilder = reactive({
+  num: 'a',
+  den: 'b',
+  whole: '2',
+  mixNum: '1',
+  mixDen: '2',
+  rootDegree: '',
+  rootContent: 'x',
+  base: 'x',
+  power: '2'
+});
 
 const activeFormats = reactive({
   bold: false,
@@ -774,6 +858,164 @@ const currentSymbols = computed(() => {
   return symbolsDatabase[activeCategory.value] || [];
 });
 
+// PRESET EQUATION GALLERY (MICROSOFT WORD STYLE)
+const equationGallery = [
+  {
+    id: 'pythagoras',
+    title: 'Teorema Pythagoras',
+    category: 'Geometri',
+    desc: 'Hubungan panjang sisi pada segitiga siku-siku',
+    previewHtml: '<i style="font-style:italic;">a</i><sup>2</sup> + <i style="font-style:italic;">b</i><sup>2</sup> = <i style="font-style:italic;">c</i><sup>2</sup>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;"><i style="font-style:italic;">a</i><sup>2</sup> + <i style="font-style:italic;">b</i><sup>2</sup> = <i style="font-style:italic;">c</i><sup>2</sup></span>&nbsp;'
+  },
+  {
+    id: 'quadratic_abc',
+    title: 'Rumus Kuadrat (Rumus ABC)',
+    category: 'Aljabar',
+    desc: 'Penyelesaian akar-akar persamaan kuadrat',
+    previewHtml: '<i style="font-style:italic;">x</i> = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.85em; line-height:1;"><span style="border-bottom:1px solid currentColor; padding:0 3px;">-<i style="font-style:italic;">b</i> &plusmn; &radic;<span style="border-top:1px solid currentColor;">b<sup>2</sup> - 4ac</span></span><span style="padding:0 3px;">2<i style="font-style:italic;">a</i></span></span>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;"><i style="font-style:italic;">x</i> = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.9em; line-height:1.1; margin:0 3px;"><span style="border-bottom:1px solid currentColor; padding:0 4px;">-<i style="font-style:italic;">b</i> &plusmn; &radic;<span style="border-top:1px solid currentColor; padding-top:1px; margin-left:1px; display:inline-block;"><i style="font-style:italic;">b</i><sup>2</sup> &minus; 4<i style="font-style:italic;">ac</i></span></span><span style="padding:0 4px;">2<i style="font-style:italic;">a</i></span></span></span>&nbsp;'
+  },
+  {
+    id: 'binomial',
+    title: 'Binomial Theorem (Ekspansi)',
+    category: 'Aljabar',
+    desc: 'Teorema penjabaran perpangkatan binomial aljabar',
+    previewHtml: '(<i style="font-style:italic;">x</i> + <i style="font-style:italic;">a</i>)<sup><i>n</i></sup> = &sum;<sub><i>k</i>=0</sub><sup><i>n</i></sup> (<sup><i>n</i></sup><sub><i>k</i></sub>)<i style="font-style:italic;">x</i><sup><i>k</i></sup><i style="font-style:italic;">a</i><sup><i>n</i>-<i>k</i></sup>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;">(<i style="font-style:italic;">x</i> + <i style="font-style:italic;">a</i>)<sup><i style="font-style:italic;">n</i></sup> = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.85em; line-height:1; margin:0 2px;"><span style="font-size:0.75em;"><i style="font-style:italic;">n</i></span><span style="font-size:1.4em; line-height:0.9;">&sum;</span><span style="font-size:0.75em;"><i style="font-style:italic;">k</i>=0</span></span> <span style="display:inline-flex; align-items:center; vertical-align:middle;"><span style="font-size:1.4em; line-height:1;">(</span><span style="display:inline-flex; flex-direction:column; text-align:center; font-size:0.85em; line-height:1.1;"><span><i style="font-style:italic;">n</i></span><span><i style="font-style:italic;">k</i></span></span><span style="font-size:1.4em; line-height:1;">)</span></span> <i style="font-style:italic;">x</i><sup><i style="font-style:italic;">k</i></sup><i style="font-style:italic;">a</i><sup><i style="font-style:italic;">n</i>&minus;<i style="font-style:italic;">k</i></sup></span>&nbsp;'
+  },
+  {
+    id: 'circle_area',
+    title: 'Luas Lingkaran',
+    category: 'Geometri',
+    desc: 'Rumus luas daerah lingkaran berjari-jari r',
+    previewHtml: '<i style="font-style:italic;">L</i> = &pi;<i style="font-style:italic;">r</i><sup>2</sup>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;"><i style="font-style:italic;">L</i> = &pi;<i style="font-style:italic;">r</i><sup>2</sup></span>&nbsp;'
+  },
+  {
+    id: 'circle_circum',
+    title: 'Keliling Lingkaran',
+    category: 'Geometri',
+    desc: 'Rumus keliling lingkaran (2πr atau πd)',
+    previewHtml: '<i style="font-style:italic;">K</i> = 2&pi;<i style="font-style:italic;">r</i>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;"><i style="font-style:italic;">K</i> = 2&pi;<i style="font-style:italic;">r</i></span>&nbsp;'
+  },
+  {
+    id: 'cylinder_vol',
+    title: 'Volume Tabung (Silinder)',
+    category: 'Geometri Ruang',
+    desc: 'Volume bangun ruang sisi lengkung tabung',
+    previewHtml: '<i style="font-style:italic;">V</i> = &pi;<i style="font-style:italic;">r</i><sup>2</sup><i style="font-style:italic;">t</i>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;"><i style="font-style:italic;">V</i> = &pi;<i style="font-style:italic;">r</i><sup>2</sup><i style="font-style:italic;">t</i></span>&nbsp;'
+  },
+  {
+    id: 'cone_vol',
+    title: 'Volume Kerucut',
+    category: 'Geometri Ruang',
+    desc: 'Volume sepertiga tabung untuk kerucut',
+    previewHtml: '<i style="font-style:italic;">V</i> = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.85em; line-height:1;"><span style="border-bottom:1px solid currentColor;">1</span><span>3</span></span> &pi;<i style="font-style:italic;">r</i><sup>2</sup><i style="font-style:italic;">t</i>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;"><i style="font-style:italic;">V</i> = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.9em; line-height:1.1; margin:0 3px;"><span style="border-bottom:1px solid currentColor; padding:0 3px;">1</span><span style="padding:0 3px;">3</span></span>&pi;<i style="font-style:italic;">r</i><sup>2</sup><i style="font-style:italic;">t</i></span>&nbsp;'
+  },
+  {
+    id: 'sphere_vol',
+    title: 'Volume Bola',
+    category: 'Geometri Ruang',
+    desc: 'Rumus volume ruang bola pejal',
+    previewHtml: '<i style="font-style:italic;">V</i> = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.85em; line-height:1;"><span style="border-bottom:1px solid currentColor;">4</span><span>3</span></span> &pi;<i style="font-style:italic;">r</i><sup>3</sup>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;"><i style="font-style:italic;">V</i> = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.9em; line-height:1.1; margin:0 3px;"><span style="border-bottom:1px solid currentColor; padding:0 3px;">4</span><span style="padding:0 3px;">3</span></span>&pi;<i style="font-style:italic;">r</i><sup>3</sup></span>&nbsp;'
+  },
+  {
+    id: 'spldv',
+    title: 'SPLDV (Sistem Linear Dua Variabel)',
+    category: 'Aljabar',
+    desc: 'Format kurung kurawal sistem persamaan linear',
+    previewHtml: '{ 2<i>x</i> + 3<i>y</i> = 8 &nbsp;|&nbsp; <i>x</i> &minus; 2<i>y</i> = 1',
+    insertHtml: '<span style="display:inline-flex; align-items:center; vertical-align:middle; font-family:\'Cambria Math\',\'Times New Roman\',serif; margin:4px 0;"><span style="font-size:2em; font-weight:300; line-height:1; margin-right:4px;">{</span><span style="display:flex; flex-direction:column; font-size:0.95em; line-height:1.35;"><span>2<i style="font-style:italic;">x</i> + 3<i style="font-style:italic;">y</i> = 8</span><span><i style="font-style:italic;">x</i> &minus; 2<i style="font-style:italic;">y</i> = 1</span></span></span>&nbsp;'
+  },
+  {
+    id: 'mean',
+    title: 'Rata-rata (Mean Data Kelompok)',
+    category: 'Statistika',
+    desc: 'Perhitungan rata-rata berbobot frekuensi data',
+    previewHtml: '<i style="font-style:italic;">x&#772;</i> = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.8em; line-height:1;"><span style="border-bottom:1px solid currentColor;">&sum; <i>f<sub>i</sub>x<sub>i</sub></i></span><span>&sum; <i>f<sub>i</sub></i></span></span>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; white-space:nowrap; vertical-align:middle; font-size:1.05em;"><i style="font-style:italic;">x&#772;</i> = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.85em; line-height:1.1; margin:0 3px;"><span style="border-bottom:1px solid currentColor; padding:0 4px;">&sum; <i style="font-style:italic;">f<sub>i</sub></i> &middot; <i style="font-style:italic;">x<sub>i</sub></i></span><span style="padding:0 4px;">&sum; <i style="font-style:italic;">f<sub>i</sub></i></span></span></span>&nbsp;'
+  },
+  {
+    id: 'linear_gradient',
+    title: 'Persamaan Garis Lurus (Gradien m)',
+    category: 'Aljabar',
+    desc: 'Persamaan garis melalui satu titik dengan kemiringan m',
+    previewHtml: '<i style="font-style:italic;">y</i> &minus; <i style="font-style:italic;">y</i><sub>1</sub> = <i style="font-style:italic;">m</i>(<i style="font-style:italic;">x</i> &minus; <i style="font-style:italic;">x</i><sub>1</sub>)',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;"><i style="font-style:italic;">y</i> &minus; <i style="font-style:italic;">y</i><sub>1</sub> = <i style="font-style:italic;">m</i>(<i style="font-style:italic;">x</i> &minus; <i style="font-style:italic;">x</i><sub>1</sub>)</span>&nbsp;'
+  },
+  {
+    id: 'trig_identity',
+    title: 'Identitas Pokok Trigonometri',
+    category: 'Trigonometri',
+    desc: 'Sinus kuadrat ditambah cosinus kuadrat sama dengan satu',
+    previewHtml: 'sin<sup>2</sup>&alpha; + cos<sup>2</sup>&alpha; = 1',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;">sin<sup>2</sup>&alpha; + cos<sup>2</sup>&alpha; = 1</span>&nbsp;'
+  },
+  {
+    id: 'trig_tangent',
+    title: 'Rumus Tangen (sin/cos)',
+    category: 'Trigonometri',
+    desc: 'Definisi tangen sudut sebagai perbandingan sinus dan cosinus',
+    previewHtml: 'tan&alpha; = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.85em; line-height:1;"><span style="border-bottom:1px solid currentColor;">sin&alpha;</span><span>cos&alpha;</span></span>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;">tan&alpha; = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.9em; line-height:1.1; margin:0 3px;"><span style="border-bottom:1px solid currentColor; padding:0 3px;">sin&alpha;</span><span style="padding:0 3px;">cos&alpha;</span></span></span>&nbsp;'
+  },
+  {
+    id: 'newton_two',
+    title: 'Hukum II Newton (Dinamika)',
+    category: 'IPA Fisika',
+    desc: 'Hubungan gaya, massa benda, dan percepatan gerak',
+    previewHtml: '&Sigma;<i style="font-style:italic;">F</i> = <i style="font-style:italic;">m</i> &middot; <i style="font-style:italic;">a</i>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;">&Sigma;<i style="font-style:italic;">F</i> = <i style="font-style:italic;">m</i> &middot; <i style="font-style:italic;">a</i></span>&nbsp;'
+  },
+  {
+    id: 'velocity',
+    title: 'Kecepatan Rata-rata (GLB)',
+    category: 'IPA Fisika',
+    desc: 'Hubungan perpindahan jarak dibagi selang waktu tempuh',
+    previewHtml: '<i style="font-style:italic;">v</i> = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.85em; line-height:1;"><span style="border-bottom:1px solid currentColor;"><i style="font-style:italic;">s</i></span><span><i style="font-style:italic;">t</i></span></span>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;"><i style="font-style:italic;">v</i> = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.9em; line-height:1.1; margin:0 3px;"><span style="border-bottom:1px solid currentColor; padding:0 3px;"><i style="font-style:italic;">s</i></span><span style="padding:0 3px;"><i style="font-style:italic;">t</i></span></span></span>&nbsp;'
+  },
+  {
+    id: 'kinetic_energy',
+    title: 'Energi Kinetik (Ek)',
+    category: 'IPA Fisika',
+    desc: 'Energi benda bergerak bermassa m dengan kelajuan v',
+    previewHtml: '<i style="font-style:italic;">E<sub>k</sub></i> = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.85em; line-height:1;"><span style="border-bottom:1px solid currentColor;">1</span><span>2</span></span> <i style="font-style:italic;">m</i><i style="font-style:italic;">v</i><sup>2</sup>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;"><i style="font-style:italic;">E<sub>k</sub></i> = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.9em; line-height:1.1; margin:0 3px;"><span style="border-bottom:1px solid currentColor; padding:0 3px;">1</span><span style="padding:0 3px;">2</span></span><i style="font-style:italic;">m</i><i style="font-style:italic;">v</i><sup>2</sup></span>&nbsp;'
+  },
+  {
+    id: 'density',
+    title: 'Massa Jenis / Densitas (ρ)',
+    category: 'IPA Fisika',
+    desc: 'Perbandingan massa terhadap volume zat',
+    previewHtml: '&rho; = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.85em; line-height:1;"><span style="border-bottom:1px solid currentColor;"><i style="font-style:italic;">m</i></span><span><i style="font-style:italic;">V</i></span></span>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1.05em; vertical-align:middle;">&rho; = <span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-size:0.9em; line-height:1.1; margin:0 3px;"><span style="border-bottom:1px solid currentColor; padding:0 3px;"><i style="font-style:italic;">m</i></span><span style="padding:0 3px;"><i style="font-style:italic;">V</i></span></span></span>&nbsp;'
+  },
+  {
+    id: 'photosynthesis',
+    title: 'Reaksi Kimia Fotosintesis',
+    category: 'IPA Biologi/Kimia',
+    desc: 'Persamaan reaksi konversi karbon dioksida dan air menjadi glukosa',
+    previewHtml: '6CO<sub>2</sub> + 6H<sub>2</sub>O &rarr; C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> + 6O<sub>2</sub>',
+    insertHtml: '<span style="font-family:\'Cambria Math\',\'Times New Roman\',serif; font-size:1em; vertical-align:middle;">6CO<sub>2</sub> + 6H<sub>2</sub>O &rarr; C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> + 6O<sub>2</sub></span>&nbsp;'
+  }
+];
+
+const filteredEquations = computed(() => {
+  if (!symbolSearch.value.trim()) return equationGallery;
+  const q = symbolSearch.value.toLowerCase().trim();
+  return equationGallery.filter(eq =>
+    eq.title.toLowerCase().includes(q) ||
+    eq.category.toLowerCase().includes(q) ||
+    (eq.desc && eq.desc.toLowerCase().includes(q))
+  );
+});
+
 const syncContent = () => {
   if (editorRef.value && editorRef.value.innerHTML !== props.modelValue) {
     editorRef.value.innerHTML = props.modelValue || '';
@@ -1035,6 +1277,46 @@ const insertHtml = (html) => {
 
 const insertSymbol = (sym) => {
   insertHtml(sym);
+  showSymbolPalette.value = false;
+};
+
+const insertEquation = (eq) => {
+  if (eq && eq.insertHtml) {
+    insertHtml(eq.insertHtml);
+  }
+  showSymbolPalette.value = false;
+};
+
+const insertCustomFraction = () => {
+  const num = customBuilder.num || 'a';
+  const den = customBuilder.den || 'b';
+  const html = `<span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-family:'Cambria Math','Times New Roman',serif; font-size:0.95em; line-height:1.1; margin:0 3px;"><span style="border-bottom:1px solid currentColor; padding:0 4px; min-width:14px;">${num}</span><span style="padding:0 4px; min-width:14px;">${den}</span></span>&nbsp;`;
+  insertHtml(html);
+  showSymbolPalette.value = false;
+};
+
+const insertCustomMixedFraction = () => {
+  const whole = customBuilder.whole || '2';
+  const num = customBuilder.mixNum || '1';
+  const den = customBuilder.mixDen || '2';
+  const html = `<span style="font-family:'Cambria Math','Times New Roman',serif; vertical-align:middle;">${whole}</span><span style="display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; font-family:'Cambria Math','Times New Roman',serif; font-size:0.95em; line-height:1.1; margin:0 3px;"><span style="border-bottom:1px solid currentColor; padding:0 4px; min-width:14px;">${num}</span><span style="padding:0 4px; min-width:14px;">${den}</span></span>&nbsp;`;
+  insertHtml(html);
+  showSymbolPalette.value = false;
+};
+
+const insertCustomRoot = () => {
+  const deg = customBuilder.rootDegree ? `<sup style="font-size:0.75em; vertical-align:super; margin-right:-2px;">${customBuilder.rootDegree}</sup>` : '';
+  const content = customBuilder.rootContent || 'x';
+  const html = `<span style="font-family:'Cambria Math','Times New Roman',serif; white-space:nowrap; vertical-align:middle;">${deg}&radic;<span style="border-top:1px solid currentColor; padding-top:1px; margin-left:1px; display:inline-block;">${content}</span></span>&nbsp;`;
+  insertHtml(html);
+  showSymbolPalette.value = false;
+};
+
+const insertCustomPower = () => {
+  const base = customBuilder.base || 'x';
+  const pow = customBuilder.power || '2';
+  const html = `<span style="font-family:'Cambria Math','Times New Roman',serif; vertical-align:middle;">${base}<sup>${pow}</sup></span>&nbsp;`;
+  insertHtml(html);
   showSymbolPalette.value = false;
 };
 
