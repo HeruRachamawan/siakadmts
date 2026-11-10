@@ -407,8 +407,8 @@
                     </tr>
                 </table>
             </td>
-            <!-- Kolom Kanan (Mepet Penuh ke Sudut Kanan Sejajar Garis Tepi Tabel) -->
-            <td style="width: 50%; vertical-align: top; text-align: right; padding: 0;">
+            <!-- Kolom Kanan (Posisi Pas di Sisi Kanan, Nyaman dan Seimbang) -->
+            <td style="width: 50%; vertical-align: top; text-align: right; padding: 0 70px 0 0;">
                 <div style="display: inline-block; text-align: left;">
                     <table style="border-collapse: collapse;">
                         <tr>
