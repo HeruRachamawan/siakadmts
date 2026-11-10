@@ -6,7 +6,10 @@
     <style id="page-size-style">
         @page {
             size: 215mm 330mm; /* Standar F4 / Folio Portrait Indonesia */
-            margin: 10mm 12mm 10mm 12mm;
+            margin-top: 5mm;    /* Atas hemat 5mm (ruang kosong atas rapat) */
+            margin-bottom: 8mm; /* Bawah aman 8mm (anti-terpotong roller printer) */
+            margin-left: 10mm;  /* Samping kiri 1cm */
+            margin-right: 10mm; /* Samping kanan 1cm */
         }
     </style>
     <style>
@@ -501,7 +504,7 @@
         </div>
 
         <div class="toolbar-tips">
-            <span>💡 <strong>Tips Cetak Kertas F4 Tanpa Terpotong:</strong> Pada jendela cetak printer (Ctrl + P), pastikan <em>Paper size</em> dipilih <strong>Folio / F4 / 215 × 330 mm</strong> dan <em>Margins</em> dipilih <strong>Default / None</strong>. Jika soal masih sisa 1–2 baris di lembar 3, klik tombol skala <strong>95%</strong> di atas!</span>
+            <span>💡 <strong>Tips Cetak Rapat Tanpa Terpotong:</strong> Pada jendela cetak printer (Ctrl + P), pastikan <em>Paper size</em> dipilih <strong>Folio / F4 / 215 × 330 mm</strong>, <em>Margins</em> dipilih <strong>None (Tanpa Margin)</strong>, dan <strong>Hilangkan centang Headers & footers</strong> agar ruang kosong atas hilang dan nomor soal paling bawah 100% aman tidak terpotong!</span>
         </div>
     </div>
 
@@ -538,10 +541,10 @@
         {{ $examCode }}
     </div>
 
-    <div class="header-kop" style="display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 10px;">
+    <div class="header-kop" style="display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 3px double #000; padding-bottom: 6px; margin-bottom: 8px;">
         @if($logoBase64)
             <div style="position: absolute; left: 10px; top: 0;">
-                <img src="{{ $logoBase64 }}" alt="Logo Madrasah" style="height: 72px; width: auto; object-fit: contain;">
+                <img src="{{ $logoBase64 }}" alt="Logo Madrasah" style="height: 64px; width: auto; object-fit: contain;">
             </div>
         @endif
         <div style="text-align: center; width: 100%; padding: 0 80px;">
@@ -1009,13 +1012,13 @@
             const sheet = document.getElementById('print-sheet');
 
             if (size === 'f4') {
-                styleEl.innerHTML = '@page { size: 215mm 330mm; margin: 10mm 12mm 10mm 12mm; }';
+                styleEl.innerHTML = '@page { size: 215mm 330mm; margin: 5mm 10mm 8mm 10mm; }';
                 btnF4.classList.add('active');
                 btnA4.classList.remove('active');
                 sheet.style.maxWidth = '215mm';
                 sheet.style.minHeight = '330mm';
             } else {
-                styleEl.innerHTML = '@page { size: 210mm 297mm; margin: 10mm 12mm 10mm 12mm; }';
+                styleEl.innerHTML = '@page { size: 210mm 297mm; margin: 5mm 10mm 8mm 10mm; }';
                 btnA4.classList.add('active');
                 btnF4.classList.remove('active');
                 sheet.style.maxWidth = '210mm';
