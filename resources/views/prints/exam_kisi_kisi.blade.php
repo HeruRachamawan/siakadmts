@@ -388,24 +388,44 @@
     </div>
 
     <!-- IDENTITAS / METADATA -->
-    <table class="meta-table">
+    <table class="meta-table" style="width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 9.5pt;">
         <tr>
-            <td style="width: 14%;">Nama Guru</td>
-            <td style="width: 36%;">: {{ $package->teacher->user->name ?? ($package->teacher->name ?? 'Heru Rachmawan') }}</td>
-            <td style="width: 14%;">Kurikulum</td>
-            <td style="width: 36%;">: {{ $package->curriculum ?? 'Kurikulum Merdeka' }}</td>
-        </tr>
-        <tr>
-            <td>Mata Pelajaran</td>
-            <td>: {{ $package->subject->name ?? 'Informatika' }}</td>
-            <td>Jumlah soal</td>
-            <td>: {{ $totalQ }} Soal</td>
-        </tr>
-        <tr>
-            <td>Kelas / Semester</td>
-            <td>: {{ $package->classRoom->name ?? 'VII' }}/{{ $semStr }}</td>
-            <td>Bentuk Soal</td>
-            <td>: {{ $package->assessment_type ?? 'HOTS' }}</td>
+            <!-- Kolom Kiri -->
+            <td style="width: 48%; vertical-align: top; padding: 0;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 135px; padding: 2px 0;">Nama Guru</td>
+                        <td style="padding: 2px 0;">: {{ $package->teacher->user->name ?? ($package->teacher->name ?? 'Heru Rachmawan') }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 2px 0;">Mata Pelajaran</td>
+                        <td style="padding: 2px 0;">: {{ $package->subject->name ?? 'Informatika' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 2px 0;">Kelas / Semester</td>
+                        <td style="padding: 2px 0;">: {{ $package->classRoom->name ?? 'VII' }}/{{ $semStr }}</td>
+                    </tr>
+                </table>
+            </td>
+            <!-- Spacer Tengah -->
+            <td style="width: 12%;"></td>
+            <!-- Kolom Kanan (Mepet Rata Kanan Sejajar Batas Tabel) -->
+            <td style="width: 40%; vertical-align: top; padding: 0;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 110px; padding: 2px 0;">Kurikulum</td>
+                        <td style="padding: 2px 0;">: {{ $package->curriculum ?? 'Kurikulum Merdeka' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 2px 0;">Jumlah soal</td>
+                        <td style="padding: 2px 0;">: {{ $totalQ }} Soal</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 2px 0;">Bentuk Soal</td>
+                        <td style="padding: 2px 0;">: {{ $package->assessment_type ?? 'HOTS' }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
     </table>
 
@@ -463,9 +483,9 @@
     </div>
 
     <!-- TANDA TANGAN -->
-    <table class="signatures">
+    <table class="signatures" style="width: 100%; border-collapse: collapse; margin-top: 14px;">
         <tr>
-            <td style="width: 50%; text-align: left; padding-left: 20px;">
+            <td style="width: 50%; text-align: left; vertical-align: top; padding-left: 20px;">
                 Mengetahui,<br>
                 <strong>Kepala Madrasah</strong><br>
                 @if($sigBase64)
@@ -477,11 +497,13 @@
                 @endif
                 <strong><u>H. Umar Usman Ali, S.Pd,S.Pd.I</u></strong>
             </td>
-            <td style="width: 50%; text-align: left; padding-left: 80px;">
-                Bogor, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}<br>
-                <strong>Guru Mata Pelajaran</strong><br>
-                <div class="sig-space"></div>
-                <strong><u>{{ $package->teacher->user->name ?? ($package->teacher->name ?? 'Heru Rachmawan') }}</u></strong>
+            <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 20px;">
+                <div style="display: inline-block; text-align: left; min-width: 250px;">
+                    Bogor, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}<br>
+                    <strong>Guru Mata Pelajaran</strong><br>
+                    <div class="sig-space"></div>
+                    <strong><u>{{ $package->teacher->user->name ?? ($package->teacher->name ?? 'Heru Rachmawan') }}</u></strong>
+                </div>
             </td>
         </tr>
     </table>

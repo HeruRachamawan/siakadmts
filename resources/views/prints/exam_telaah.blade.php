@@ -479,9 +479,9 @@
     </table>
 
     <!-- TANDA TANGAN PENGESAHAN -->
-    <table class="signatures">
+    <table class="signatures" style="width: 100%; border-collapse: collapse; margin-top: 14px;">
         <tr>
-            <td style="width: 50%; text-align: left; padding-left: 40px;">
+            <td style="width: 50%; text-align: left; vertical-align: top; padding-left: 20px;">
                 Mengetahui,<br>
                 <strong>Kepala Madrasah</strong><br>
                 @if($sigBase64)
@@ -493,11 +493,13 @@
                 @endif
                 <strong><u>H. Umar Usman Ali, S.Pd.,S.Pd.I</u></strong>
             </td>
-            <td style="width: 50%; text-align: left; padding-left: 160px;">
-                Bogor, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}<br>
-                <strong>Guru Mapel</strong><br>
-                <div class="sig-space"></div>
-                <strong><u>{{ $package->teacher->user->name ?? ($package->teacher->name ?? 'Heru Rachmawan') }}</u></strong>
+            <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 20px;">
+                <div style="display: inline-block; text-align: left; min-width: 250px;">
+                    Bogor, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}<br>
+                    <strong>Guru Mapel</strong><br>
+                    <div class="sig-space"></div>
+                    <strong><u>{{ $package->teacher->user->name ?? ($package->teacher->name ?? 'Heru Rachmawan') }}</u></strong>
+                </div>
             </td>
         </tr>
     </table>
