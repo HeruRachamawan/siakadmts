@@ -1436,7 +1436,11 @@
             <!-- 4. Level Kognitif (Kolom 5 Cetak) -->
             <div>
               <label class="block font-bold text-slate-700 mb-1">Level Kognitif (Standar BSNP/Kemenag) *</label>
-              <select v-model="activeQuestions[currentQuestionIndex].cognitive_level" class="form-select text-xs font-medium">
+              <select
+                v-model="activeQuestions[currentQuestionIndex].cognitive_level"
+                @change="onCognitiveLevelChange(currentQuestionIndex)"
+                class="form-select text-xs font-medium"
+              >
                 <option v-for="l in options.cognitive_levels" :key="l.value" :value="l.value">{{ l.label }}</option>
               </select>
             </div>
@@ -1449,7 +1453,7 @@
                   type="button"
                   v-for="diff in [{ val: 'mudah', lbl: 'Mudah' }, { val: 'sedang', lbl: 'Sedang' }, { val: 'sukar', lbl: 'Sukar' }]"
                   :key="diff.val"
-                  @click="activeQuestions[currentQuestionIndex].difficulty_level = diff.val"
+                  @click="onDifficultyChange(currentQuestionIndex, diff.val)"
                   class="py-1.5 text-xs font-bold rounded-lg border transition text-center"
                   :class="activeQuestions[currentQuestionIndex].difficulty_level === diff.val ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'"
                 >
@@ -2133,6 +2137,23 @@ const copyKisiFromPrev = (index) => {
   curQ.material = prevQ.material || curQ.material;
   if (!curQ.cognitive_level && prevQ.cognitive_level) curQ.cognitive_level = prevQ.cognitive_level;
   if (!curQ.difficulty_level && prevQ.difficulty_level) curQ.difficulty_level = prevQ.difficulty_level;
+};
+
+const onCognitiveLevelChange = (idx) => {
+  const q = activeQuestions.value[idx];
+  if (!q) return;
+  if (q.cognitive_level === 'L3') q.difficulty_level = 'sukar';
+  else if (q.cognitive_level === 'L2') q.difficulty_level = 'sedang';
+  else if (q.cognitive_level === 'L1') q.difficulty_level = 'mudah';
+};
+
+const onDifficultyChange = (idx, val) => {
+  const q = activeQuestions.value[idx];
+  if (!q) return;
+  q.difficulty_level = val;
+  if (val === 'sukar' && q.cognitive_level !== 'L3') q.cognitive_level = 'L3';
+  else if (val === 'sedang' && q.cognitive_level !== 'L2') q.cognitive_level = 'L2';
+  else if (val === 'mudah' && q.cognitive_level !== 'L1') q.cognitive_level = 'L1';
 };
 
 // Methods
