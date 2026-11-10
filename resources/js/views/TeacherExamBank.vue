@@ -699,10 +699,19 @@
               type="button"
               @click="previewTelaah"
               class="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition flex items-center gap-1"
-              title="Preview Instrumen Telaah Soal HOTS"
+              title="Preview Instrumen Telaah Soal"
             >
               <ClipboardCheck class="w-3.5 h-3.5 text-slate-400" />
               <span class="hidden xl:inline">Telaah</span>
+            </button>
+            <button
+              type="button"
+              @click="previewKunci"
+              class="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition flex items-center gap-1"
+              title="Preview Kunci Jawaban & Pedoman Penskoran"
+            >
+              <Key class="w-3.5 h-3.5 text-slate-400" />
+              <span class="hidden xl:inline">Kunci</span>
             </button>
           </div>
 
@@ -1961,6 +1970,7 @@ import {
   ChevronRight,
   Zap,
   ClipboardCheck,
+  Key,
   Sparkles,
   Layers,
   Award,
@@ -2300,6 +2310,11 @@ const previewKisiKisi = () => {
 const previewTelaah = () => {
   if (!activePackage.value) return;
   window.open(`/prints/exam/${activePackage.value.id}/telaah`, '_blank');
+};
+
+const previewKunci = () => {
+  if (!activePackage.value) return;
+  window.open(`/prints/exam/${activePackage.value.id}/kunci`, '_blank');
 };
 
 // Smart Auto-Generate Kisi-Kisi Engine
