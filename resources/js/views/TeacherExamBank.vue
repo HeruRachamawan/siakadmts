@@ -143,20 +143,24 @@
           </div>
         </div>
 
-        <!-- Card Body / Stats -->
+        <!-- Card Body / Dynamic Question Type Stats -->
         <div class="p-5 bg-slate-50/50 space-y-3">
-          <div class="grid grid-cols-3 gap-2 text-center">
-            <div class="bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
-              <div class="text-xs text-slate-400">Total Soal</div>
-              <div class="text-base font-bold text-slate-800">{{ pkg.questions_count }}</div>
-            </div>
-            <div class="bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
-              <div class="text-xs text-slate-400">Pilihan Ganda</div>
-              <div class="text-base font-bold text-emerald-600">{{ pkg.pg_count }}</div>
-            </div>
-            <div class="bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
-              <div class="text-xs text-slate-400">Uraian/Essay</div>
-              <div class="text-base font-bold text-blue-600">{{ pkg.essay_count }}</div>
+          <div
+            class="grid gap-2 text-center"
+            :class="{
+              'grid-cols-1': getPackageQuestionStats(pkg).length === 1,
+              'grid-cols-2': getPackageQuestionStats(pkg).length === 2,
+              'grid-cols-3': getPackageQuestionStats(pkg).length === 3 || getPackageQuestionStats(pkg).length >= 5,
+              'grid-cols-2 sm:grid-cols-4': getPackageQuestionStats(pkg).length === 4
+            }"
+          >
+            <div
+              v-for="st in getPackageQuestionStats(pkg)"
+              :key="st.key"
+              class="bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs flex flex-col justify-center min-w-0"
+            >
+              <div class="text-[11px] text-slate-400 font-medium truncate" :title="st.label">{{ st.label }}</div>
+              <div class="text-base font-bold mt-0.5" :class="st.color">{{ st.count }}</div>
             </div>
           </div>
 
@@ -2154,6 +2158,48 @@ const onDifficultyChange = (idx, val) => {
   if (val === 'sukar' && q.cognitive_level !== 'L3') q.cognitive_level = 'L3';
   else if (val === 'sedang' && q.cognitive_level !== 'L2') q.cognitive_level = 'L2';
   else if (val === 'mudah' && q.cognitive_level !== 'L1') q.cognitive_level = 'L1';
+};
+
+const getPackageQuestionStats = (pkg) => {
+  if (!pkg) return [];
+  const stats = [
+    { key: 'total', label: 'Total Soal', count: Number(pkg.questions_count) || 0, color: 'text-slate-800' },
+  ];
+
+  if (Number(pkg.pg_count) > 0) {
+    stats.push({ key: 'pg', label: 'Pilihan Ganda', count: Number(pkg.pg_count), color: 'text-emerald-600' });
+  }
+  if (Number(pkg.pg_complex_count) > 0) {
+    stats.push({ key: 'pg_complex', label: 'PG Kompleks', count: Number(pkg.pg_complex_count), color: 'text-indigo-600' });
+  }
+  if (Number(pkg.true_false_count) > 0) {
+    stats.push({ key: 'true_false', label: 'Benar/Salah', count: Number(pkg.true_false_count), color: 'text-teal-600' });
+  }
+  if (Number(pkg.matching_count) > 0) {
+    stats.push({ key: 'matching', label: 'Menjodohkan', count: Number(pkg.matching_count), color: 'text-purple-600' });
+  }
+  if (Number(pkg.short_answer_count) > 0) {
+    stats.push({ key: 'short_answer', label: 'Isian Singkat', count: Number(pkg.short_answer_count), color: 'text-amber-600' });
+  }
+  if (Number(pkg.essay_count) > 0) {
+    stats.push({ key: 'essay', label: 'Uraian/Essay', count: Number(pkg.essay_count), color: 'text-blue-600' });
+  }
+
+  // Safety net: check if there are unaccounted questions with unstandardized types
+  const totalCount = Number(pkg.questions_count) || 0;
+  const accounted = (Number(pkg.pg_count) || 0) +
+    (Number(pkg.pg_complex_count) || 0) +
+    (Number(pkg.true_false_count) || 0) +
+    (Number(pkg.matching_count) || 0) +
+    (Number(pkg.short_answer_count) || 0) +
+    (Number(pkg.essay_count) || 0);
+
+  const diff = totalCount - accounted;
+  if (diff > 0 && stats.length > 1) {
+    stats.push({ key: 'other', label: 'Lainnya', count: diff, color: 'text-slate-600' });
+  }
+
+  return stats;
 };
 
 // Methods

@@ -140,7 +140,7 @@
               </td>
               <td class="px-5 py-4 text-center">
                 <span class="font-bold text-slate-800">{{ pkg.questions_count }}</span>
-                <div class="text-[10px] text-slate-400">PG: {{ pkg.pg_count }} | Ess: {{ pkg.essay_count }}</div>
+                <div class="text-[10px] text-slate-400 font-medium" :title="getPackageTypeBadges(pkg)">{{ getPackageTypeBadges(pkg) }}</div>
               </td>
               <td class="px-5 py-4">
                 <span
@@ -567,6 +567,30 @@ const filters = reactive({
   status_kurikulum: '',
   search: ''
 });
+
+const getPackageTypeBadges = (pkg) => {
+  if (!pkg) return '-';
+  const parts = [];
+  if (Number(pkg.pg_count) > 0) parts.push(`PG: ${pkg.pg_count}`);
+  if (Number(pkg.pg_complex_count) > 0) parts.push(`PGK: ${pkg.pg_complex_count}`);
+  if (Number(pkg.true_false_count) > 0) parts.push(`B/S: ${pkg.true_false_count}`);
+  if (Number(pkg.matching_count) > 0) parts.push(`Jodoh: ${pkg.matching_count}`);
+  if (Number(pkg.short_answer_count) > 0) parts.push(`Isian: ${pkg.short_answer_count}`);
+  if (Number(pkg.essay_count) > 0) parts.push(`Uraian: ${pkg.essay_count}`);
+
+  const accounted = (Number(pkg.pg_count) || 0) +
+    (Number(pkg.pg_complex_count) || 0) +
+    (Number(pkg.true_false_count) || 0) +
+    (Number(pkg.matching_count) || 0) +
+    (Number(pkg.short_answer_count) || 0) +
+    (Number(pkg.essay_count) || 0);
+  const diff = (Number(pkg.questions_count) || 0) - accounted;
+  if (diff > 0 && parts.length > 0) {
+    parts.push(`Lainnya: ${diff}`);
+  }
+
+  return parts.length ? parts.join(' • ') : '-';
+};
 
 // Review Drawer
 const activePackage = ref(null);

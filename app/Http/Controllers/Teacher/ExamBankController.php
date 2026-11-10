@@ -45,6 +45,18 @@ class ExamBankController extends Controller
                 'questions as pg_count' => function ($q) {
                     $q->where('question_type', 'pg');
                 },
+                'questions as pg_complex_count' => function ($q) {
+                    $q->where('question_type', 'pg_complex');
+                },
+                'questions as true_false_count' => function ($q) {
+                    $q->where('question_type', 'true_false');
+                },
+                'questions as matching_count' => function ($q) {
+                    $q->where('question_type', 'matching');
+                },
+                'questions as short_answer_count' => function ($q) {
+                    $q->where('question_type', 'short_answer');
+                },
                 'questions as essay_count' => function ($q) {
                     $q->where('question_type', 'essay');
                 },
