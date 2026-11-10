@@ -391,8 +391,8 @@
     <table class="meta-table" style="width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 9.5pt;">
         <tr>
             <!-- Kolom Kiri -->
-            <td style="width: 48%; vertical-align: top; padding: 0;">
-                <table style="width: 100%; border-collapse: collapse;">
+            <td style="width: 50%; vertical-align: top; text-align: left; padding: 0;">
+                <table style="border-collapse: collapse;">
                     <tr>
                         <td style="width: 135px; padding: 2px 0;">Nama Guru</td>
                         <td style="padding: 2px 0;">: {{ $package->teacher->user->name ?? ($package->teacher->name ?? 'Heru Rachmawan') }}</td>
@@ -407,24 +407,24 @@
                     </tr>
                 </table>
             </td>
-            <!-- Spacer Tengah -->
-            <td style="width: 12%;"></td>
-            <!-- Kolom Kanan (Mepet Rata Kanan Sejajar Batas Tabel) -->
-            <td style="width: 40%; vertical-align: top; padding: 0;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="width: 110px; padding: 2px 0;">Kurikulum</td>
-                        <td style="padding: 2px 0;">: {{ $package->curriculum ?? 'Kurikulum Merdeka' }}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 2px 0;">Jumlah soal</td>
-                        <td style="padding: 2px 0;">: {{ $totalQ }} Soal</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 2px 0;">Bentuk Soal</td>
-                        <td style="padding: 2px 0;">: {{ $package->assessment_type ?? 'HOTS' }}</td>
-                    </tr>
-                </table>
+            <!-- Kolom Kanan (Mepet Penuh ke Sudut Kanan Sejajar Garis Tepi Tabel) -->
+            <td style="width: 50%; vertical-align: top; text-align: right; padding: 0;">
+                <div style="display: inline-block; text-align: left;">
+                    <table style="border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 110px; padding: 2px 0;">Kurikulum</td>
+                            <td style="padding: 2px 0; white-space: nowrap;">: {{ $package->curriculum ?? 'Kurikulum Merdeka' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px 0;">Jumlah soal</td>
+                            <td style="padding: 2px 0; white-space: nowrap;">: {{ $totalQ }} Soal</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px 0;">Bentuk Soal</td>
+                            <td style="padding: 2px 0; white-space: nowrap;">: {{ $package->assessment_type ?? 'HOTS' }}</td>
+                        </tr>
+                    </table>
+                </div>
             </td>
         </tr>
     </table>
