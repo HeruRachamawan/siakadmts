@@ -328,8 +328,12 @@
                 <div class="toolbar-group">
                     <span class="group-label">Semester:</span>
                     <select id="select-semester" class="select-tool" onchange="updateExamEvent()">
-                        <option value="GANJIL">Ganjil (1)</option>
-                        <option value="GENAP">Genap (2)</option>
+                        <option value="GANJIL_HURUF">Ganjil (Huruf)</option>
+                        <option value="GANJIL_ROMAWI">I (Romawi)</option>
+                        <option value="GANJIL_ANGKA">1 (Angka)</option>
+                        <option value="GENAP_HURUF">Genap (Huruf)</option>
+                        <option value="GENAP_ROMAWI">II (Romawi)</option>
+                        <option value="GENAP_ANGKA">2 (Angka)</option>
                     </select>
                 </div>
 
@@ -356,14 +360,31 @@
     <div id="print-sheet" class="print-sheet">
 
     @php
+        // Normalisasi Nama Kelas ke Angka Romawi Resmi
+        $rawClass = trim($package->classRoom->name ?? 'VII');
+        $cleanClassUpper = strtoupper($rawClass);
+        if (preg_match('/(?:kelas\s*)?9\s*([a-z]?)/i', $rawClass, $m)) {
+            $romanClass = 'IX' . (!empty($m[1]) ? '-' . strtoupper($m[1]) : '');
+        } elseif (preg_match('/(?:kelas\s*)?8\s*([a-z]?)/i', $rawClass, $m)) {
+            $romanClass = 'VIII' . (!empty($m[1]) ? '-' . strtoupper($m[1]) : '');
+        } elseif (preg_match('/(?:kelas\s*)?7\s*([a-z]?)/i', $rawClass, $m)) {
+            $romanClass = 'VII' . (!empty($m[1]) ? '-' . strtoupper($m[1]) : '');
+        } elseif (str_contains($cleanClassUpper, 'IX')) {
+            $romanClass = $cleanClassUpper;
+        } elseif (str_contains($cleanClassUpper, 'VIII')) {
+            $romanClass = $cleanClassUpper;
+        } elseif (str_contains($cleanClassUpper, 'VII')) {
+            $romanClass = $cleanClassUpper;
+        } else {
+            $romanClass = $cleanClassUpper;
+        }
+
         // Deteksi Semester Baku
         $rawSem = strtolower(trim($package->semester ?? ''));
-        $semStr = '1';
-        $semesterLabel = 'GANJIL';
-        if ($rawSem === 'genap' || $rawSem === '2') {
-            $semStr = '2';
-            $semesterLabel = 'GENAP';
-        }
+        $semNum = ($rawSem === 'genap' || $rawSem === '2') ? '2' : '1';
+        $semesterLabel = ($semNum === '2') ? 'GENAP' : 'GANJIL';
+        $semesterWord = ($semNum === '2') ? 'Genap' : 'Ganjil';
+        $semesterRoman = ($semNum === '2') ? 'II' : 'I';
 
         // Deteksi Acara Asesmen Baku & Full Title
         $examTypeKey = strtolower(trim($package->exam_type ?? 'sas'));
@@ -464,7 +485,7 @@
                     </tr>
                     <tr>
                         <td style="padding: 2px 0;">Kelas / Semester</td>
-                        <td style="padding: 2px 0;">: <span id="display-semester-table" data-base-class="{{ $package->classRoom->name ?? 'VII' }}">{{ $package->classRoom->name ?? 'VII' }}/{{ $semStr }}</span></td>
+                        <td style="padding: 2px 0;">: <span id="display-semester-table" data-base-class="{{ $romanClass }}">{{ $romanClass }} / {{ $semesterWord }}</span></td>
                     </tr>
                 </table>
             </td>
@@ -606,17 +627,27 @@
 
         function updateExamEvent() {
             const eventVal = document.getElementById('select-event').value;
-            const semVal = document.getElementById('select-semester').value;
+            const semSelectVal = document.getElementById('select-semester').value;
             const titleEl = document.getElementById('display-event-title');
             const semTableEl = document.getElementById('display-semester-table');
             
-            let titleText = '';
-            let semNum = semVal === 'GENAP' ? '2' : '1';
+            const isGenap = semSelectVal.startsWith('GENAP');
+            const semUpper = isGenap ? 'GENAP' : 'GANJIL';
+            let semDisplay = '';
 
+            if (semSelectVal.endsWith('_ROMAWI')) {
+                semDisplay = isGenap ? 'II' : 'I';
+            } else if (semSelectVal.endsWith('_ANGKA')) {
+                semDisplay = isGenap ? '2' : '1';
+            } else {
+                semDisplay = isGenap ? 'Genap' : 'Ganjil';
+            }
+
+            let titleText = '';
             if (eventVal === 'ASAS') {
-                titleText = 'ASESMEN SUMATIF AKHIR SEMESTER ' + semVal + ' (ASAS)';
+                titleText = 'ASESMEN SUMATIF AKHIR SEMESTER ' + semUpper + ' (ASAS)';
             } else if (eventVal === 'ASTS') {
-                titleText = 'ASESMEN SUMATIF TENGAH SEMESTER ' + semVal + ' (ASTS)';
+                titleText = 'ASESMEN SUMATIF TENGAH SEMESTER ' + semUpper + ' (ASTS)';
             } else if (eventVal === 'ASAT') {
                 titleText = 'ASESMEN SUMATIF AKHIR TAHUN (ASAT)';
             } else if (eventVal === 'AM') {
@@ -631,7 +662,7 @@
 
             if (semTableEl) {
                 const baseClass = semTableEl.getAttribute('data-base-class') || 'VII';
-                semTableEl.textContent = baseClass + '/' + semNum;
+                semTableEl.textContent = baseClass + ' / ' + semDisplay;
             }
         }
 
@@ -640,7 +671,7 @@
             const evEl = document.getElementById('select-event');
             const smEl = document.getElementById('select-semester');
             if (evEl) evEl.value = '{{ $currentEvent }}';
-            if (smEl) smEl.value = '{{ $semesterLabel }}';
+            if (smEl) smEl.value = '{{ $semesterLabel }}_HURUF';
         });
     </script>
 </body>

@@ -166,6 +166,20 @@
 
         $rawSem = strtolower(trim($package->semester ?? ''));
         $semesterLabel = ($rawSem === 'genap' || $rawSem === '2') ? 'GENAP' : 'GANJIL';
+        $semesterWord = ($semesterLabel === 'GENAP') ? 'Genap' : 'Ganjil';
+
+        $rawClass = trim($package->classRoom->name ?? 'VII');
+        $cleanClassUpper = strtoupper($rawClass);
+        if (preg_match('/(?:kelas\s*)?9\s*([a-z]?)/i', $rawClass, $m)) {
+            $romanClass = 'IX' . (!empty($m[1]) ? '-' . strtoupper($m[1]) : '');
+        } elseif (preg_match('/(?:kelas\s*)?8\s*([a-z]?)/i', $rawClass, $m)) {
+            $romanClass = 'VIII' . (!empty($m[1]) ? '-' . strtoupper($m[1]) : '');
+        } elseif (preg_match('/(?:kelas\s*)?7\s*([a-z]?)/i', $rawClass, $m)) {
+            $romanClass = 'VII' . (!empty($m[1]) ? '-' . strtoupper($m[1]) : '');
+        } else {
+            $romanClass = $cleanClassUpper;
+        }
+
         $examTypeKey = strtolower(trim($package->exam_type ?? 'sas'));
         $examTitle = 'ASESMEN SUMATIF AKHIR SEMESTER ' . $semesterLabel . ' (ASAS)';
         if (str_contains($examTypeKey, 'tengah') || str_contains($examTypeKey, 'sts') || str_contains($examTypeKey, 'pts') || str_contains($examTypeKey, 'asts')) {
@@ -210,7 +224,7 @@
                 </tr>
                 <tr>
                     <td><strong>Kelas / Semester</strong></td>
-                    <td>{{ $package->classRoom->name ?? '-' }} / {{ ucfirst($package->semester) }}</td>
+                    <td>{{ $romanClass }} / {{ $semesterWord }}</td>
                     <td><strong>Level Kognitif</strong></td>
                     <td>{{ $q->cognitive_level ?? 'L1' }} (Kesukaran: {{ ucfirst($q->difficulty_level ?? 'sedang') }})</td>
                 </tr>
