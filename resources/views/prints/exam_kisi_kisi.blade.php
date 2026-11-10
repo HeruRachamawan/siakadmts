@@ -232,6 +232,22 @@
             color: #ffffff;
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
+        .select-tool {
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.15s ease;
+        }
+        .select-tool:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+        }
         .btn-print {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: #ffffff;
@@ -292,8 +308,29 @@
                 <!-- Paper Size Selector -->
                 <div class="toolbar-group">
                     <span class="group-label">Kertas:</span>
-                    <button type="button" class="btn-tool active" id="btn-paper-f4" onclick="setPaper('f4')">F4 Landscape (33 × 21.5 cm)</button>
-                    <button type="button" class="btn-tool" id="btn-paper-a4" onclick="setPaper('a4')">A4 Landscape (29.7 × 21 cm)</button>
+                    <button type="button" class="btn-tool active" id="btn-paper-f4" onclick="setPaper('f4')">F4 Landscape</button>
+                    <button type="button" class="btn-tool" id="btn-paper-a4" onclick="setPaper('a4')">A4 Landscape</button>
+                </div>
+
+                <!-- Event / Acara Selector -->
+                <div class="toolbar-group">
+                    <span class="group-label">Acara:</span>
+                    <select id="select-event" class="select-tool" onchange="updateExamEvent()">
+                        <option value="ASAS">ASAS (Sumatif Akhir Semester)</option>
+                        <option value="ASTS">ASTS (Sumatif Tengah Semester)</option>
+                        <option value="ASAT">ASAT (Sumatif Akhir Tahun)</option>
+                        <option value="AM">AM (Asesmen Madrasah)</option>
+                        <option value="FORMATIF">UH / Formatif</option>
+                    </select>
+                </div>
+
+                <!-- Semester Selector -->
+                <div class="toolbar-group">
+                    <span class="group-label">Semester:</span>
+                    <select id="select-semester" class="select-tool" onchange="updateExamEvent()">
+                        <option value="GANJIL">Ganjil (1)</option>
+                        <option value="GENAP">Genap (2)</option>
+                    </select>
                 </div>
 
                 <!-- Scaling Zoom -->
@@ -319,21 +356,35 @@
     <div id="print-sheet" class="print-sheet">
 
     @php
-        // Judul Asesmen Dinamis (Default: ASAS sesuai format Word)
-        $examTitle = 'ASESMEN SUMATIF AKHIR SEMESTER (ASAS)';
-        if (!empty($package->exam_type)) {
-            $t = strtoupper($package->exam_type);
-            if (str_contains($t, 'TENGAH') || str_contains($t, 'ASTS') || str_contains($t, 'PTS')) {
-                $examTitle = 'ASESMEN SUMATIF TENGAH SEMESTER (ASTS)';
-            } elseif (str_contains($t, 'MADRASAH') || str_contains($t, 'AM') || str_contains($t, 'UM')) {
-                $examTitle = 'ASESMEN MADRASAH (AM)';
-            } elseif (str_contains($t, 'HARIAN') || str_contains($t, 'UH')) {
-                $examTitle = 'ASESMEN FORMATIF / HARIAN';
-            } elseif (str_contains($t, 'AKHIR') || str_contains($t, 'ASAS') || str_contains($t, 'PAS') || str_contains($t, 'PAT')) {
-                $examTitle = 'ASESMEN SUMATIF AKHIR SEMESTER (ASAS)';
-            } else {
-                $examTitle = strtoupper($package->exam_type);
-            }
+        // Deteksi Semester Baku
+        $rawSem = strtolower(trim($package->semester ?? ''));
+        $semStr = '1';
+        $semesterLabel = 'GANJIL';
+        if ($rawSem === 'genap' || $rawSem === '2') {
+            $semStr = '2';
+            $semesterLabel = 'GENAP';
+        }
+
+        // Deteksi Acara Asesmen Baku & Full Title
+        $examTypeKey = strtolower(trim($package->exam_type ?? 'sas'));
+        $currentEvent = 'ASAS';
+
+        if (str_contains($examTypeKey, 'tengah') || str_contains($examTypeKey, 'sts') || str_contains($examTypeKey, 'pts') || str_contains($examTypeKey, 'asts')) {
+            $currentEvent = 'ASTS';
+            $fullTitle = "ASESMEN SUMATIF TENGAH SEMESTER {$semesterLabel} (ASTS)";
+        } elseif (str_contains($examTypeKey, 'madrasah') || str_contains($examTypeKey, 'am') || str_contains($examTypeKey, 'um')) {
+            $currentEvent = 'AM';
+            $fullTitle = "ASESMEN MADRASAH (AM)";
+        } elseif (str_contains($examTypeKey, 'harian') || str_contains($examTypeKey, 'uh') || str_contains($examTypeKey, 'formatif')) {
+            $currentEvent = 'FORMATIF';
+            $fullTitle = "ASESMEN FORMATIF / ULANGAN HARIAN";
+        } elseif (str_contains($examTypeKey, 'pat') || str_contains($examTypeKey, 'asat') || (str_contains($examTypeKey, 'akhir') && $semesterLabel === 'GENAP')) {
+            $currentEvent = 'ASAT';
+            $fullTitle = "ASESMEN SUMATIF AKHIR TAHUN (ASAT)";
+        } else {
+            // Default: SAS / ASAS
+            $currentEvent = 'ASAS';
+            $fullTitle = "ASESMEN SUMATIF AKHIR SEMESTER {$semesterLabel} (ASAS)";
         }
 
         // Hitung Statistik Persentase Soal per Level Kognitif
@@ -372,12 +423,6 @@
             'short_answer' => 'Isian Singkat',
             'essay' => 'Uraian',
         ];
-
-        // Format Semester
-        $semStr = '1';
-        if (strtolower($package->semester ?? '') === 'genap' || $package->semester == '2') {
-            $semStr = '2';
-        }
     @endphp
 
     <!-- HEADER / KOP -->
@@ -388,7 +433,7 @@
         }
     @endphp
     <div class="header">
-        <h2>KISI-KISI SOAL {{ $examTitle }}</h2>
+        <h2>KISI-KISI SOAL <span id="display-event-title">{{ $fullTitle }}</span></h2>
         <h3>TAHUN PELAJARAN {{ $package->academicYear->year ?? '2026/2027' }}</h3>
         <h3>{{ $schoolTitle }}</h3>
     </div>
@@ -409,7 +454,7 @@
                     </tr>
                     <tr>
                         <td style="padding: 2px 0;">Kelas / Semester</td>
-                        <td style="padding: 2px 0;">: {{ $package->classRoom->name ?? 'VII' }}/{{ $semStr }}</td>
+                        <td style="padding: 2px 0;">: <span id="display-semester-table" data-base-class="{{ $package->classRoom->name ?? 'VII' }}">{{ $package->classRoom->name ?? 'VII' }}/{{ $semStr }}</span></td>
                     </tr>
                 </table>
             </td>
@@ -548,6 +593,45 @@
             const activeBtn = document.getElementById('btn-scale-' + val);
             if (activeBtn) activeBtn.classList.add('active');
         }
+
+        function updateExamEvent() {
+            const eventVal = document.getElementById('select-event').value;
+            const semVal = document.getElementById('select-semester').value;
+            const titleEl = document.getElementById('display-event-title');
+            const semTableEl = document.getElementById('display-semester-table');
+            
+            let titleText = '';
+            let semNum = semVal === 'GENAP' ? '2' : '1';
+
+            if (eventVal === 'ASAS') {
+                titleText = 'ASESMEN SUMATIF AKHIR SEMESTER ' + semVal + ' (ASAS)';
+            } else if (eventVal === 'ASTS') {
+                titleText = 'ASESMEN SUMATIF TENGAH SEMESTER ' + semVal + ' (ASTS)';
+            } else if (eventVal === 'ASAT') {
+                titleText = 'ASESMEN SUMATIF AKHIR TAHUN (ASAT)';
+            } else if (eventVal === 'AM') {
+                titleText = 'ASESMEN MADRASAH (AM)';
+            } else if (eventVal === 'FORMATIF') {
+                titleText = 'ASESMEN FORMATIF / ULANGAN HARIAN';
+            }
+
+            if (titleEl) {
+                titleEl.textContent = titleText;
+            }
+
+            if (semTableEl) {
+                const baseClass = semTableEl.getAttribute('data-base-class') || 'VII';
+                semTableEl.textContent = baseClass + '/' + semNum;
+            }
+        }
+
+        // Sinkronisasi nilai default dropdown sesuai paket soal
+        document.addEventListener('DOMContentLoaded', function() {
+            const evEl = document.getElementById('select-event');
+            const smEl = document.getElementById('select-semester');
+            if (evEl) evEl.value = '{{ $currentEvent }}';
+            if (smEl) smEl.value = '{{ $semesterLabel }}';
+        });
     </script>
 </body>
 </html>

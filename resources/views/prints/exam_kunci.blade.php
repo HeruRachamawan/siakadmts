@@ -113,6 +113,20 @@
         if (empty($schoolTitle) || str_contains($schoolTitle, 'YASPIN') || str_contains($schoolTitle, 'SMK')) {
             $schoolTitle = 'MTS AL - HASANAH';
         }
+
+        $rawSem = strtolower(trim($package->semester ?? ''));
+        $semesterLabel = ($rawSem === 'genap' || $rawSem === '2') ? 'GENAP' : 'GANJIL';
+        $examTypeKey = strtolower(trim($package->exam_type ?? 'sas'));
+        $examTitle = 'ASESMEN SUMATIF AKHIR SEMESTER ' . $semesterLabel . ' (ASAS)';
+        if (str_contains($examTypeKey, 'tengah') || str_contains($examTypeKey, 'sts') || str_contains($examTypeKey, 'pts') || str_contains($examTypeKey, 'asts')) {
+            $examTitle = 'ASESMEN SUMATIF TENGAH SEMESTER ' . $semesterLabel . ' (ASTS)';
+        } elseif (str_contains($examTypeKey, 'madrasah') || str_contains($examTypeKey, 'am') || str_contains($examTypeKey, 'um')) {
+            $examTitle = 'ASESMEN MADRASAH (AM)';
+        } elseif (str_contains($examTypeKey, 'harian') || str_contains($examTypeKey, 'uh') || str_contains($examTypeKey, 'formatif')) {
+            $examTitle = 'ASESMEN FORMATIF / ULANGAN HARIAN';
+        } elseif (str_contains($examTypeKey, 'pat') || str_contains($examTypeKey, 'asat') || (str_contains($examTypeKey, 'akhir') && $semesterLabel === 'GENAP')) {
+            $examTitle = 'ASESMEN SUMATIF AKHIR TAHUN (ASAT)';
+        }
     @endphp
     <div class="header">
         <h2>KUNCI JAWABAN & PEDOMAN PENSKORAN</h2>
@@ -124,7 +138,7 @@
             <td width="18%"><strong>Mata Pelajaran</strong></td>
             <td width="32%">: {{ $package->subject->name ?? '-' }}</td>
             <td width="18%"><strong>Jenis Ujian</strong></td>
-            <td width="32%">: {{ strtoupper($package->exam_type) }} - {{ $package->title }}</td>
+            <td width="32%">: {{ $examTitle }}</td>
         </tr>
         <tr>
             <td><strong>Kelas / Semester</strong></td>

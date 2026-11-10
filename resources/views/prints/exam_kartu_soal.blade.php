@@ -163,9 +163,23 @@
         if (empty($schoolTitle) || str_contains($schoolTitle, 'YASPIN') || str_contains($schoolTitle, 'SMK')) {
             $schoolTitle = 'MTS AL - HASANAH';
         }
+
+        $rawSem = strtolower(trim($package->semester ?? ''));
+        $semesterLabel = ($rawSem === 'genap' || $rawSem === '2') ? 'GENAP' : 'GANJIL';
+        $examTypeKey = strtolower(trim($package->exam_type ?? 'sas'));
+        $examTitle = 'ASESMEN SUMATIF AKHIR SEMESTER ' . $semesterLabel . ' (ASAS)';
+        if (str_contains($examTypeKey, 'tengah') || str_contains($examTypeKey, 'sts') || str_contains($examTypeKey, 'pts') || str_contains($examTypeKey, 'asts')) {
+            $examTitle = 'ASESMEN SUMATIF TENGAH SEMESTER ' . $semesterLabel . ' (ASTS)';
+        } elseif (str_contains($examTypeKey, 'madrasah') || str_contains($examTypeKey, 'am') || str_contains($examTypeKey, 'um')) {
+            $examTitle = 'ASESMEN MADRASAH (AM)';
+        } elseif (str_contains($examTypeKey, 'harian') || str_contains($examTypeKey, 'uh') || str_contains($examTypeKey, 'formatif')) {
+            $examTitle = 'ASESMEN FORMATIF / ULANGAN HARIAN';
+        } elseif (str_contains($examTypeKey, 'pat') || str_contains($examTypeKey, 'asat') || (str_contains($examTypeKey, 'akhir') && $semesterLabel === 'GENAP')) {
+            $examTitle = 'ASESMEN SUMATIF AKHIR TAHUN (ASAT)';
+        }
     @endphp
     <div class="header">
-        <h2>KARTU SOAL {{ strtoupper($package->exam_type) }}</h2>
+        <h2>KARTU SOAL {{ $examTitle }}</h2>
         <h3>{{ $schoolTitle }} - TP {{ $package->academicYear->year ?? '2026/2027' }}</h3>
     </div>
 
