@@ -31,6 +31,85 @@
       </div>
     </div>
 
+    <!-- Interactive Assessment Metric Cards (Gaya Card Pengelompokan ASTS & ASAS) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <!-- 1. Semua Paket -->
+      <button
+        type="button"
+        @click="activeExamTypeTab = 'all'"
+        class="p-4 rounded-2xl border text-left transition relative overflow-hidden group shadow-2xs"
+        :class="activeExamTypeTab === 'all'
+          ? 'bg-slate-900 text-white border-slate-900 ring-2 ring-emerald-500 shadow-md'
+          : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200/80'"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider" :class="activeExamTypeTab === 'all' ? 'text-slate-300' : 'text-slate-500'">Semua Paket</span>
+          <div class="p-2 rounded-xl" :class="activeExamTypeTab === 'all' ? 'bg-white/10 text-emerald-400' : 'bg-slate-100 text-slate-600'">
+            <Layers class="w-4 h-4" />
+          </div>
+        </div>
+        <div class="text-2xl sm:text-3xl font-black">{{ examTypeCounts.all }}</div>
+        <div class="text-[11px] mt-1" :class="activeExamTypeTab === 'all' ? 'text-slate-300' : 'text-slate-400'">Total Seluruh Paket Soal</div>
+      </button>
+
+      <!-- 2. ASTS -->
+      <button
+        type="button"
+        @click="activeExamTypeTab = 'sts'"
+        class="p-4 rounded-2xl border text-left transition relative overflow-hidden group shadow-2xs"
+        :class="activeExamTypeTab === 'sts'
+          ? 'bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-300 shadow-md'
+          : 'bg-white hover:bg-indigo-50/30 text-slate-800 border-slate-200/80'"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider" :class="activeExamTypeTab === 'sts' ? 'text-indigo-100' : 'text-indigo-600'">Kelompok ASTS</span>
+          <div class="p-2 rounded-xl" :class="activeExamTypeTab === 'sts' ? 'bg-white/10 text-white' : 'bg-indigo-50 text-indigo-600'">
+            <BookOpen class="w-4 h-4" />
+          </div>
+        </div>
+        <div class="text-2xl sm:text-3xl font-black">{{ examTypeCounts.sts }}</div>
+        <div class="text-[11px] mt-1" :class="activeExamTypeTab === 'sts' ? 'text-indigo-100' : 'text-slate-400'">Sumatif Tengah Semester</div>
+      </button>
+
+      <!-- 3. ASAS -->
+      <button
+        type="button"
+        @click="activeExamTypeTab = 'sas'"
+        class="p-4 rounded-2xl border text-left transition relative overflow-hidden group shadow-2xs"
+        :class="activeExamTypeTab === 'sas'
+          ? 'bg-purple-600 text-white border-purple-600 ring-2 ring-purple-300 shadow-md'
+          : 'bg-white hover:bg-purple-50/30 text-slate-800 border-slate-200/80'"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider" :class="activeExamTypeTab === 'sas' ? 'text-purple-100' : 'text-purple-600'">Kelompok ASAS</span>
+          <div class="p-2 rounded-xl" :class="activeExamTypeTab === 'sas' ? 'bg-white/10 text-white' : 'bg-purple-50 text-purple-600'">
+            <Award class="w-4 h-4" />
+          </div>
+        </div>
+        <div class="text-2xl sm:text-3xl font-black">{{ examTypeCounts.sas }}</div>
+        <div class="text-[11px] mt-1" :class="activeExamTypeTab === 'sas' ? 'text-purple-100' : 'text-slate-400'">Sumatif Akhir Semester</div>
+      </button>
+
+      <!-- 4. Formatif / Lainnya -->
+      <button
+        type="button"
+        @click="activeExamTypeTab = (activeExamTypeTab === 'uh' ? 'other' : 'uh')"
+        class="p-4 rounded-2xl border text-left transition relative overflow-hidden group shadow-2xs"
+        :class="(activeExamTypeTab === 'uh' || activeExamTypeTab === 'other')
+          ? 'bg-teal-600 text-white border-teal-600 ring-2 ring-teal-300 shadow-md'
+          : 'bg-white hover:bg-teal-50/30 text-slate-800 border-slate-200/80'"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider" :class="(activeExamTypeTab === 'uh' || activeExamTypeTab === 'other') ? 'text-teal-100' : 'text-teal-600'">Formatif / Lainnya</span>
+          <div class="p-2 rounded-xl" :class="(activeExamTypeTab === 'uh' || activeExamTypeTab === 'other') ? 'bg-white/10 text-white' : 'bg-teal-50 text-teal-600'">
+            <Calendar class="w-4 h-4" />
+          </div>
+        </div>
+        <div class="text-2xl sm:text-3xl font-black">{{ examTypeCounts.uh + examTypeCounts.other }}</div>
+        <div class="text-[11px] mt-1" :class="(activeExamTypeTab === 'uh' || activeExamTypeTab === 'other') ? 'text-teal-100' : 'text-slate-400'">Formatif, AM & Lainnya</div>
+      </button>
+    </div>
+
     <!-- Filter & Search Bar -->
     <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
@@ -107,161 +186,220 @@
       </button>
     </div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    <div v-else class="space-y-8">
       <div
-        v-for="pkg in packages"
-        :key="pkg.id"
-        class="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col justify-between"
+        v-for="grp in groupedPackages"
+        :key="grp.key"
+        class="space-y-4"
       >
-        <!-- Card Header -->
-        <div class="p-5 border-b border-slate-100 rounded-t-2xl">
-          <div class="flex items-start justify-between gap-3 mb-2">
-            <span
-              class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold capitalize"
-              :class="getStatusBadgeClass(pkg.status_kurikulum)"
-            >
-              {{ getStatusLabel(pkg.status_kurikulum) }}
-            </span>
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-              {{ pkg.exam_type }}
-            </span>
-          </div>
-
-          <h3 class="text-base font-bold text-slate-800 line-clamp-1 mb-1" :title="pkg.title">
-            {{ pkg.title }}
-          </h3>
-
-          <div class="text-xs text-slate-500 space-y-1">
-            <div class="flex items-center gap-1.5">
-              <GraduationCap class="w-3.5 h-3.5 text-slate-400" />
-              <span>{{ pkg.subject?.name }} &bull; Kelas {{ pkg.class_room?.name }}</span>
+        <!-- Group Section Header -->
+        <div class="flex items-center justify-between pb-3 border-b-2" :class="grp.headerBorderClass">
+          <div class="flex items-center gap-3">
+            <div class="p-2.5 rounded-xl shadow-2xs" :class="grp.iconBg">
+              <component :is="grp.icon" class="w-5 h-5" />
             </div>
-            <div class="flex items-center gap-1.5">
-              <Calendar class="w-3.5 h-3.5 text-slate-400" />
-              <span>Semester {{ pkg.semester === 'ganjil' ? 'Ganjil' : 'Genap' }} ({{ pkg.academic_phase || 'Fase D' }})</span>
+            <div>
+              <div class="flex items-center gap-2.5">
+                <h2 class="text-base sm:text-lg font-black text-slate-800">{{ grp.label }}</h2>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-black shadow-2xs" :class="grp.badgeClass">
+                  {{ grp.packages.length }} Paket
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 font-medium">{{ grp.subLabel }}</p>
             </div>
           </div>
-        </div>
-
-        <!-- Card Body / Dynamic Question Type Stats -->
-        <div class="p-5 bg-slate-50/50 space-y-3">
-          <div
-            class="grid gap-2 text-center"
-            :class="{
-              'grid-cols-1': getPackageQuestionStats(pkg).length === 1,
-              'grid-cols-2': getPackageQuestionStats(pkg).length === 2,
-              'grid-cols-3': getPackageQuestionStats(pkg).length === 3 || getPackageQuestionStats(pkg).length >= 5,
-              'grid-cols-2 sm:grid-cols-4': getPackageQuestionStats(pkg).length === 4
-            }"
+          <button
+            type="button"
+            @click="openCreateModalWithExamType(grp.key)"
+            class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 transition shadow-2xs"
           >
-            <div
-              v-for="st in getPackageQuestionStats(pkg)"
-              :key="st.key"
-              class="bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs flex flex-col justify-center min-w-0"
-            >
-              <div class="text-[11px] text-slate-400 font-medium truncate" :title="st.label">{{ st.label }}</div>
-              <div class="text-base font-bold mt-0.5" :class="st.color">{{ st.count }}</div>
-            </div>
-          </div>
-
-          <!-- Revision Notes alert if any -->
-          <div v-if="pkg.status_kurikulum === 'revision_needed' && pkg.review_notes" class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
-            <div class="font-bold flex items-center gap-1 mb-1">
-              <AlertCircle class="w-3.5 h-3.5" />
-              Catatan Telaah Kurikulum:
-            </div>
-            <p class="line-clamp-2 italic">{{ pkg.review_notes }}</p>
-          </div>
+            <Plus class="w-3.5 h-3.5" />
+            <span>Tambah {{ grp.shortLabel }}</span>
+          </button>
         </div>
 
-        <!-- Card Actions -->
-        <div class="p-4 bg-white border-t border-slate-100 flex flex-col gap-2 rounded-b-2xl">
-          <!-- Primary Actions -->
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              @click="openEditor(pkg.id)"
-              class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-2xs transition"
-            >
-              <Edit3 class="w-3.5 h-3.5" />
-              <span>Kelola Soal & Kisi-Kisi</span>
-            </button>
-            <button
-              type="button"
-              @click="openImportModal(pkg)"
-              class="p-2 text-slate-600 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 rounded-xl transition"
-              title="Import dari Excel"
-            >
-              <Upload class="w-4 h-4" />
-            </button>
-          </div>
+        <!-- Empty state within group if selected specifically and empty -->
+        <div v-if="grp.packages.length === 0" class="bg-white rounded-2xl border border-dashed border-slate-200 p-8 text-center">
+          <p class="text-xs text-slate-500 mb-3">Belum ada paket soal untuk kategori {{ grp.shortLabel }}.</p>
+          <button
+            type="button"
+            @click="openCreateModalWithExamType(grp.key)"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition shadow-xs"
+          >
+            <Plus class="w-3.5 h-3.5" />
+            <span>Buat Paket {{ grp.shortLabel }} Baru</span>
+          </button>
+        </div>
 
-          <!-- Secondary Toolbar: Cetak & Status Workflow -->
-          <div class="flex items-center justify-between pt-1 border-t border-slate-50 gap-2">
-            <!-- Print Dropdown (opens upwards with left-0 to prevent card clipping) -->
-            <div class="relative group">
-              <button
-                type="button"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition"
-              >
-                <Printer class="w-3.5 h-3.5 text-slate-600" />
-                <span>Cetak</span>
-                <ChevronDown class="w-3 h-3 text-slate-400 group-hover:rotate-180 transition duration-200" />
-              </button>
-              <div class="hidden group-hover:block absolute left-0 bottom-full mb-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-xl z-30 py-1.5 text-xs text-slate-700 divide-y divide-slate-100">
-                <div class="py-1">
-                  <a :href="`/prints/exam/${pkg.id}/naskah?layout=2col`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 font-medium transition">
-                    <span>📄</span>
-                    <span>Naskah 2 Kolom (Hemat)</span>
-                  </a>
-                  <a :href="`/prints/exam/${pkg.id}/naskah?layout=1col`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
-                    <span>📄</span>
-                    <span>Naskah 1 Kolom</span>
-                  </a>
+        <!-- Cards Grid for this group -->
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          <div
+            v-for="pkg in grp.packages"
+            :key="pkg.id"
+            class="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col justify-between"
+          >
+            <!-- Card Header -->
+            <div class="p-5 border-b border-slate-100 rounded-t-2xl">
+              <div class="flex items-start justify-between gap-3 mb-2">
+                <span
+                  class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold capitalize"
+                  :class="getStatusBadgeClass(pkg.status_kurikulum)"
+                >
+                  {{ getStatusLabel(pkg.status_kurikulum) }}
+                </span>
+                <span
+                  class="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-2xs"
+                  :class="getExamTypeBadge(pkg.exam_type).class"
+                >
+                  {{ getExamTypeBadge(pkg.exam_type).label }}
+                </span>
+              </div>
+
+              <h3 class="text-base font-bold text-slate-800 line-clamp-1 mb-1" :title="pkg.title">
+                {{ pkg.title }}
+              </h3>
+
+              <div class="text-xs text-slate-500 space-y-1">
+                <div class="flex items-center gap-1.5">
+                  <GraduationCap class="w-3.5 h-3.5 text-slate-400" />
+                  <span>{{ pkg.subject?.name }} &bull; Kelas {{ pkg.class_room?.name }}</span>
                 </div>
-                <div class="py-1">
-                  <a :href="`/prints/exam/${pkg.id}/kisi-kisi`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
-                    <span>📊</span>
-                    <span>Kisi-Kisi Resmi</span>
-                  </a>
-                  <a :href="`/prints/exam/${pkg.id}/kartu-soal`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
-                    <span>🗂️</span>
-                    <span>Kartu Soal</span>
-                  </a>
-                </div>
-                <div class="py-1">
-                  <a :href="`/prints/exam/${pkg.id}/telaah`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
-                    <span>📝</span>
-                    <span>Berita Acara Telaah</span>
-                  </a>
-                  <a :href="`/prints/exam/${pkg.id}/kunci`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
-                    <span>🔑</span>
-                    <span>Kunci & Rubrik Nilai</span>
-                  </a>
+                <div class="flex items-center gap-1.5">
+                  <Calendar class="w-3.5 h-3.5 text-slate-400" />
+                  <span>Semester {{ pkg.semester === 'ganjil' ? 'Ganjil' : 'Genap' }} ({{ pkg.academic_phase || 'Fase D' }})</span>
                 </div>
               </div>
             </div>
 
-            <div class="flex items-center gap-1.5">
-              <button
-                v-if="pkg.status_kurikulum !== 'approved'"
-                type="button"
-                @click="submitToKurikulum(pkg)"
-                class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-lg transition"
-                title="Ajukan ke Kurikulum"
+            <!-- Card Body / Dynamic Question Type Stats -->
+            <div class="p-5 bg-slate-50/50 space-y-3">
+              <div
+                class="grid gap-2 text-center"
+                :class="{
+                  'grid-cols-1': getPackageQuestionStats(pkg).length === 1,
+                  'grid-cols-2': getPackageQuestionStats(pkg).length === 2,
+                  'grid-cols-3': getPackageQuestionStats(pkg).length === 3 || getPackageQuestionStats(pkg).length >= 5,
+                  'grid-cols-2 sm:grid-cols-4': getPackageQuestionStats(pkg).length === 4
+                }"
               >
-                <Send class="w-3.5 h-3.5" />
-                <span>Ajukan</span>
-              </button>
-              <button
-                v-if="pkg.status_kurikulum !== 'approved'"
-                type="button"
-                @click="deletePackage(pkg)"
-                class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition"
-                title="Hapus Paket Soal"
-              >
-                <Trash2 class="w-4 h-4" />
-              </button>
+                <div
+                  v-for="st in getPackageQuestionStats(pkg)"
+                  :key="st.key"
+                  class="bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs flex flex-col justify-center min-w-0"
+                >
+                  <div class="text-[11px] text-slate-400 font-medium truncate" :title="st.label">{{ st.label }}</div>
+                  <div class="text-base font-bold mt-0.5" :class="st.color">{{ st.count }}</div>
+                </div>
+              </div>
+
+              <!-- Revision Notes alert if any -->
+              <div v-if="pkg.status_kurikulum === 'revision_needed' && pkg.review_notes" class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                <div class="font-bold flex items-center gap-1 mb-1">
+                  <AlertCircle class="w-3.5 h-3.5" />
+                  Catatan Telaah Kurikulum:
+                </div>
+                <p class="line-clamp-2 italic">{{ pkg.review_notes }}</p>
+              </div>
+            </div>
+
+            <!-- Card Actions -->
+            <div class="p-4 bg-white border-t border-slate-100 flex flex-col gap-2 rounded-b-2xl">
+              <!-- Primary Actions -->
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="openEditor(pkg.id)"
+                  class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-2xs transition"
+                >
+                  <Edit3 class="w-3.5 h-3.5" />
+                  <span>Kelola Soal & Kisi-Kisi</span>
+                </button>
+                <button
+                  type="button"
+                  @click="openImportModal(pkg)"
+                  class="p-2 text-slate-600 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 rounded-xl transition"
+                  title="Import dari Excel"
+                >
+                  <Upload class="w-4 h-4" />
+                </button>
+              </div>
+
+              <!-- Secondary Toolbar: Cetak & Status Workflow -->
+              <div class="flex items-center justify-between pt-1 border-t border-slate-50 gap-2">
+                <!-- Print Dropdown (opens upwards with left-0 to prevent card clipping) -->
+                <div class="relative group">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition"
+                  >
+                    <Printer class="w-3.5 h-3.5 text-slate-600" />
+                    <span>Cetak</span>
+                    <ChevronDown class="w-3 h-3 text-slate-400 group-hover:rotate-180 transition duration-200" />
+                  </button>
+                  <div class="hidden group-hover:block absolute left-0 bottom-full mb-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-xl z-30 py-1.5 text-xs text-slate-700 divide-y divide-slate-100">
+                    <div class="py-1">
+                      <a :href="`/prints/exam/${pkg.id}/naskah?layout=2col`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 font-medium transition">
+                        <span>📄</span>
+                        <span>Naskah 2 Kolom (Hemat)</span>
+                      </a>
+                      <a :href="`/prints/exam/${pkg.id}/naskah?layout=1col`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                        <span>📄</span>
+                        <span>Naskah 1 Kolom</span>
+                      </a>
+                    </div>
+                    <div class="py-1">
+                      <a :href="`/prints/exam/${pkg.id}/kisi-kisi`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                        <span>📊</span>
+                        <span>Kisi-Kisi Resmi</span>
+                      </a>
+                      <a :href="`/prints/exam/${pkg.id}/kartu-soal`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                        <span>🗂️</span>
+                        <span>Kartu Soal</span>
+                      </a>
+                    </div>
+                    <div class="py-1">
+                      <a :href="`/prints/exam/${pkg.id}/telaah`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                        <span>📝</span>
+                        <span>Berita Acara Telaah</span>
+                      </a>
+                      <a :href="`/prints/exam/${pkg.id}/kunci`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                        <span>🔑</span>
+                        <span>Kunci & Rubrik Nilai</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    @click="openEditModal(pkg)"
+                    class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                    title="Edit Info & Jenis Asesmen Paket"
+                  >
+                    <Settings class="w-4 h-4" />
+                  </button>
+                  <button
+                    v-if="pkg.status_kurikulum !== 'approved'"
+                    type="button"
+                    @click="submitToKurikulum(pkg)"
+                    class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-lg transition"
+                    title="Ajukan ke Kurikulum"
+                  >
+                    <Send class="w-3.5 h-3.5" />
+                    <span>Ajukan</span>
+                  </button>
+                  <button
+                    v-if="pkg.status_kurikulum !== 'approved'"
+                    type="button"
+                    @click="deletePackage(pkg)"
+                    class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition"
+                    title="Hapus Paket Soal"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -346,6 +484,96 @@
             </button>
             <button type="submit" :disabled="submitting" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm">
               {{ submitting ? 'Membuat...' : 'Buat Paket Soal' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal Edit Info & Jenis Asesmen Paket Soal -->
+    <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+      <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+              <Settings class="w-4 h-4" />
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-800">Edit Info & Jenis Asesmen</h3>
+              <p class="text-xs text-slate-400">Sesuaikan judul, kategori ujian (ASTS/ASAS), kelas, dan semester</p>
+            </div>
+          </div>
+          <button @click="showEditModal = false" class="text-slate-400 hover:text-slate-600">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+        <form @submit.prevent="updatePackageInfo" class="p-6 space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Judul Paket Soal *</label>
+            <input type="text" v-model="editForm.title" required class="form-input" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Jenis Asesmen *</label>
+              <select v-model="editForm.exam_type" required class="form-select font-semibold">
+                <option v-for="t in options.exam_types" :key="t.value" :value="t.value">{{ t.label }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Semester *</label>
+              <select v-model="editForm.semester" required class="form-select">
+                <option value="ganjil">Ganjil</option>
+                <option value="genap">Genap</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Mata Pelajaran *</label>
+              <select v-model="editForm.subject_id" required class="form-select">
+                <option v-for="s in options.subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Kelas Target *</label>
+              <select v-model="editForm.class_room_id" required class="form-select">
+                <option v-for="c in options.classes" :key="c.id" :value="c.id">{{ c.name }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Jumlah Butir Soal *</label>
+              <input type="number" v-model.number="editForm.total_questions" min="1" max="100" required class="form-input" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">KKM / KKTP</label>
+              <input type="number" v-model.number="editForm.kkm" min="0" max="100" class="form-input" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Kurikulum / Fase</label>
+              <select v-model="editForm.academic_phase" class="form-select">
+                <option value="Fase D">Fase D (Kurikulum Merdeka MTs)</option>
+                <option value="K-13">Kurikulum 2013 (K13)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Bobot PG : Essay (%)</label>
+              <div class="flex items-center gap-2">
+                <input type="number" v-model.number="editForm.pg_weight" placeholder="PG" class="form-input text-center" />
+                <span class="text-xs text-slate-400">:</span>
+                <input type="number" v-model.number="editForm.essay_weight" placeholder="Essay" class="form-input text-center" />
+              </div>
+            </div>
+          </div>
+          <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
+            <button type="button" @click="showEditModal = false" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50">
+              Batal
+            </button>
+            <button type="submit" :disabled="submitting" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-sm transition">
+              {{ submitting ? 'Menyimpan...' : 'Simpan Perubahan' }}
             </button>
           </div>
         </form>
@@ -1733,12 +1961,126 @@ import {
   ChevronRight,
   Zap,
   ClipboardCheck,
-  Sparkles
+  Sparkles,
+  Layers,
+  Award,
+  Settings
 } from 'lucide-vue-next';
 
 // Data State
 const loading = ref(false);
 const packages = ref([]);
+const activeExamTypeTab = ref('all');
+
+const examTypeCounts = computed(() => {
+  const counts = {
+    all: packages.value.length,
+    sts: 0,
+    sas: 0,
+    uh: 0,
+    other: 0,
+  };
+  packages.value.forEach(p => {
+    if (p.exam_type === 'sts') counts.sts++;
+    else if (p.exam_type === 'sas') counts.sas++;
+    else if (p.exam_type === 'uh') counts.uh++;
+    else counts.other++;
+  });
+  return counts;
+});
+
+const assessmentGroups = [
+  {
+    key: 'sts',
+    label: 'Asesmen Sumatif Tengah Semester (ASTS)',
+    shortLabel: 'ASTS',
+    subLabel: 'Penilaian Sumatif Tengah Semester Ganjil / Genap',
+    icon: BookOpen,
+    iconBg: 'bg-indigo-100 text-indigo-700',
+    headerBorderClass: 'border-indigo-500',
+    badgeClass: 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+  },
+  {
+    key: 'sas',
+    label: 'Asesmen Sumatif Akhir Semester (ASAS)',
+    shortLabel: 'ASAS',
+    subLabel: 'Penilaian Sumatif Akhir Semester (SAS / PAS)',
+    icon: Award,
+    iconBg: 'bg-purple-100 text-purple-700',
+    headerBorderClass: 'border-purple-500',
+    badgeClass: 'bg-purple-100 text-purple-700 border border-purple-200'
+  },
+  {
+    key: 'uh',
+    label: 'Formatif / Ulangan Harian (UH)',
+    shortLabel: 'Formatif',
+    subLabel: 'Penilaian Harian & Formatif Lingkup Materi',
+    icon: Calendar,
+    iconBg: 'bg-teal-100 text-teal-700',
+    headerBorderClass: 'border-teal-500',
+    badgeClass: 'bg-teal-100 text-teal-700 border border-teal-200'
+  },
+  {
+    key: 'other',
+    label: 'Asesmen Lainnya (AM / ASAT / Kuis)',
+    shortLabel: 'Lainnya',
+    subLabel: 'Asesmen Madrasah, Akhir Tahun, atau Kuis',
+    icon: Layers,
+    iconBg: 'bg-amber-100 text-amber-700',
+    headerBorderClass: 'border-amber-500',
+    badgeClass: 'bg-amber-100 text-amber-700 border border-amber-200'
+  }
+];
+
+const groupedPackages = computed(() => {
+  const groups = [];
+
+  const targetGroups = activeExamTypeTab.value === 'all'
+    ? assessmentGroups
+    : assessmentGroups.filter(g => g.key === activeExamTypeTab.value);
+
+  targetGroups.forEach(grp => {
+    let pkgs = [];
+    if (grp.key === 'sts') {
+      pkgs = packages.value.filter(p => p.exam_type === 'sts');
+    } else if (grp.key === 'sas') {
+      pkgs = packages.value.filter(p => p.exam_type === 'sas');
+    } else if (grp.key === 'uh') {
+      pkgs = packages.value.filter(p => p.exam_type === 'uh');
+    } else if (grp.key === 'other') {
+      pkgs = packages.value.filter(p => !['sts', 'sas', 'uh'].includes(p.exam_type));
+    }
+
+    if (pkgs.length > 0 || activeExamTypeTab.value === grp.key) {
+      groups.push({
+        ...grp,
+        packages: pkgs
+      });
+    }
+  });
+
+  return groups;
+});
+
+const getExamTypeBadge = (type) => {
+  switch (type) {
+    case 'sts':
+      return { label: 'ASTS', class: 'bg-indigo-100 text-indigo-700 border border-indigo-200' };
+    case 'sas':
+      return { label: 'ASAS', class: 'bg-purple-100 text-purple-700 border border-purple-200' };
+    case 'uh':
+      return { label: 'Formatif / UH', class: 'bg-teal-100 text-teal-700 border border-teal-200' };
+    case 'pat':
+      return { label: 'ASAT / PAT', class: 'bg-amber-100 text-amber-700 border border-amber-200' };
+    case 'am':
+      return { label: 'Asesmen Madrasah', class: 'bg-emerald-100 text-emerald-700 border border-emerald-200' };
+    case 'quiz':
+      return { label: 'Kuis', class: 'bg-slate-100 text-slate-700 border border-slate-200' };
+    default:
+      return { label: (type || 'Ujian').toUpperCase(), class: 'bg-slate-100 text-slate-600 border border-slate-200' };
+  }
+};
+
 const options = reactive({
   classes: [],
   subjects: [],
@@ -2242,7 +2584,67 @@ const openCreateModal = () => {
   createForm.total_questions = 20;
   createForm.kkm = 75;
   createForm.academic_phase = 'Fase D';
+  createForm.pg_weight = 70;
+  createForm.essay_weight = 30;
   showCreateModal.value = true;
+};
+
+const openCreateModalWithExamType = (typeKey) => {
+  openCreateModal();
+  if (['sts', 'sas', 'uh', 'pat', 'am', 'quiz'].includes(typeKey)) {
+    createForm.exam_type = typeKey;
+  }
+};
+
+// Edit Package Modal
+const showEditModal = ref(false);
+const editingPackageId = ref(null);
+const editForm = reactive({
+  title: '',
+  subject_id: '',
+  class_room_id: '',
+  academic_year_id: '',
+  exam_type: 'sts',
+  semester: 'ganjil',
+  total_questions: 20,
+  kkm: 75,
+  academic_phase: 'Fase D',
+  pg_weight: 70,
+  essay_weight: 30
+});
+
+const openEditModal = (pkg) => {
+  editingPackageId.value = pkg.id;
+  editForm.title = pkg.title || '';
+  editForm.subject_id = pkg.subject_id || '';
+  editForm.class_room_id = pkg.class_room_id || '';
+  editForm.academic_year_id = pkg.academic_year_id || '';
+  editForm.exam_type = pkg.exam_type || 'sts';
+  editForm.semester = pkg.semester || 'ganjil';
+  editForm.total_questions = pkg.total_questions || 20;
+  editForm.kkm = pkg.kkm || 75;
+  editForm.academic_phase = pkg.academic_phase || 'Fase D';
+  editForm.pg_weight = pkg.pg_weight ?? 70;
+  editForm.essay_weight = pkg.essay_weight ?? 30;
+  showEditModal.value = true;
+};
+
+const updatePackageInfo = async () => {
+  if (!editingPackageId.value) return;
+  submitting.value = true;
+  try {
+    const res = await api.put(`/teacher/exam-bank/${editingPackageId.value}`, editForm);
+    const d = res.data || res;
+    if (res.status === 'success' || d.status === 'success') {
+      showEditModal.value = false;
+      await fetchPackages();
+      alert('Informasi paket soal berhasil diperbarui!');
+    }
+  } catch (err) {
+    alert(err.response?.data?.message || err.message || 'Gagal memperbarui paket soal.');
+  } finally {
+    submitting.value = false;
+  }
 };
 
 const createPackage = async () => {

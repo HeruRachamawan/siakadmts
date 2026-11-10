@@ -109,7 +109,7 @@ class ExamBankController extends Controller
         }
 
         $packages = $query->orderBy('created_at', 'desc')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 50));
 
         return response()->json([
             'status' => 'success',
@@ -145,10 +145,10 @@ class ExamBankController extends Controller
                 'academic_years' => $academicYears,
                 'active_year' => $activeYear,
                 'exam_types' => [
-                    ['value' => 'uh', 'label' => 'Ulangan Harian (UH) / Formatif'],
-                    ['value' => 'sts', 'label' => 'Sumatif Tengah Semester (STS)'],
-                    ['value' => 'sas', 'label' => 'Sumatif Akhir Semester (SAS / PAS)'],
-                    ['value' => 'pat', 'label' => 'Penilaian Akhir Tahun (PAT)'],
+                    ['value' => 'sts', 'label' => 'ASTS (Asesmen Sumatif Tengah Semester)'],
+                    ['value' => 'sas', 'label' => 'ASAS (Asesmen Sumatif Akhir Semester / SAS)'],
+                    ['value' => 'uh', 'label' => 'Formatif / Ulangan Harian (UH)'],
+                    ['value' => 'pat', 'label' => 'ASAT (Asesmen Sumatif Akhir Tahun / PAT)'],
                     ['value' => 'am', 'label' => 'Asesmen Madrasah (AM) / Ujian Akhir'],
                     ['value' => 'quiz', 'label' => 'Kuis / Latihan Soal'],
                 ],
