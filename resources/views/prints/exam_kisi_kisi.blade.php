@@ -423,6 +423,16 @@
             'short_answer' => 'Isian Singkat',
             'essay' => 'Uraian',
         ];
+
+        // Format Bentuk Soal Realistis (bukan teks HOTS)
+        $distinctTypes = $package->questions->pluck('question_type')->unique()->filter()->values();
+        $typeNames = [];
+        foreach ($distinctTypes as $dt) {
+            if (isset($qTypeLabels[$dt])) {
+                $typeNames[] = $qTypeLabels[$dt];
+            }
+        }
+        $bentukSoalDisplay = !empty($typeNames) ? implode(', ', $typeNames) : 'Pilihan Ganda';
     @endphp
 
     <!-- HEADER / KOP -->
@@ -472,7 +482,7 @@
                         </tr>
                         <tr>
                             <td style="padding: 2px 0;">Bentuk Soal</td>
-                            <td style="padding: 2px 0; white-space: nowrap;">: {{ $package->assessment_type ?? 'HOTS' }}</td>
+                            <td style="padding: 2px 0; white-space: nowrap;">: {{ $bentukSoalDisplay }}</td>
                         </tr>
                     </table>
                 </div>

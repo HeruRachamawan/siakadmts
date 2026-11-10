@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>Instrumen Telaah Soal HOTS - {{ $package->title }}</title>
+    <title>Instrumen Telaah Soal - {{ $package->title }}</title>
     <style id="page-size-style">
         @page {
             size: 330mm 215mm; /* Standar F4 / Folio Landscape (Lebar 33cm, Tinggi 21.5cm) */
@@ -279,7 +279,7 @@
         <div class="toolbar-wrapper">
             <div class="toolbar-brand">
                 <span class="toolbar-badge">F4 Landscape</span>
-                <span class="toolbar-title">Instrumen Telaah Butir Soal HOTS</span>
+                <span class="toolbar-title">Instrumen Telaah Butir Soal</span>
             </div>
 
             <div class="toolbar-controls">
@@ -418,8 +418,7 @@
         }
     @endphp
     <div class="header">
-        <div class="title-main">INSTRUMEN TELAAH SOAL <span id="display-event-title">{{ $fullTitle }}</span> (HOTS)</div>
-        <div class="title-sub">BENTUK TES HOTS</div>
+        <div class="title-main">INSTRUMEN TELAAH SOAL <span id="display-event-title">{{ $fullTitle }}</span></div>
         <div class="title-sub">{{ $schoolTitle }}</div>
         <div class="title-sub">TAHUN PELAJARAN {{ $package->academicYear->year ?? '2026/2027' }}</div>
     </div>
