@@ -248,6 +248,44 @@
             border-color: #38bdf8;
             box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
         }
+        .input-tool {
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.15s ease;
+        }
+        .input-tool:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+        }
+        .editable-date {
+            cursor: pointer;
+            padding: 1px 3px;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        }
+        .editable-date:hover {
+            background-color: #fef08a;
+            outline: 1px dashed #ca8a04;
+        }
+        .editable-date:focus {
+            background-color: #fef9c3;
+            outline: 2px solid #2563eb;
+            cursor: text;
+        }
+        @media print {
+            .editable-date {
+                background-color: transparent !important;
+                outline: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+        }
         .btn-print {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: #ffffff;
@@ -337,6 +375,22 @@
                     </select>
                 </div>
 
+                <!-- Titimangsa / Bulan Selector -->
+                <div class="toolbar-group">
+                    <span class="group-label">Bulan/Tgl:</span>
+                    <input type="text" id="input-print-date" class="input-tool" list="list-print-dates" value="{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}" oninput="updatePrintDate(this.value)" placeholder="Contoh: Desember 2026" style="width: 130px;" title="Ketik atau pilih bulan/tanggal titimangsa">
+                    <datalist id="list-print-dates">
+                        <option value="November 2026">
+                        <option value="Desember 2026">
+                        <option value="Januari 2027">
+                        <option value="Februari 2027">
+                        <option value="Maret 2027">
+                        <option value="April 2027">
+                        <option value="Mei 2027">
+                        <option value="Juni 2027">
+                    </datalist>
+                </div>
+
                 <!-- Scaling Zoom -->
                 <div class="toolbar-group">
                     <span class="group-label">Skala:</span>
@@ -353,7 +407,7 @@
         </div>
 
         <div class="toolbar-tips">
-            <span>💡 <strong>Tips Cetak Landscape F4:</strong> Pada dialog printer (Ctrl + P), pastikan <em>Paper size</em> dipilih <strong>Folio / F4 / 215 × 330 mm</strong>, <em>Orientation</em> dipilih <strong>Landscape</strong>, dan <em>Margins</em> dipilih <strong>Default / None</strong>.</span>
+            <span>💡 <strong>Tips Cetak Landscape F4:</strong> Pada dialog printer (Ctrl + P), pastikan <em>Paper size</em> dipilih <strong>Folio / F4 / 215 × 330 mm</strong>, <em>Orientation</em> dipilih <strong>Landscape</strong>, dan <em>Margins</em> dipilih <strong>Default / None</strong>. | ✏️ <strong>Edit Titimangsa:</strong> Anda dapat langsung klik & ketik teks <u>Bulan/Tanggal</u> pada tanda tangan dokumen di bawah atau melalui kotak <em>Bulan/Tgl</em> di atas.</span>
         </div>
     </div>
 
@@ -581,7 +635,7 @@
             </td>
             <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 20px;">
                 <div style="display: inline-block; text-align: left; min-width: 250px;">
-                    Bogor, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}<br>
+                    <span id="display-print-city" class="editable-date" contenteditable="true" title="Klik untuk mengedit kota">Bogor</span>,<span id="display-print-space">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span id="display-print-date" class="editable-date" contenteditable="true" title="Klik langsung untuk mengedit bulan atau tanggal">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</span><br>
                     <strong>Guru Mata Pelajaran</strong><br>
                     <div class="sig-space"></div>
                     <strong><u>{{ $package->teacher->user->name ?? ($package->teacher->name ?? 'Heru Rachmawan') }}</u></strong>
@@ -666,12 +720,45 @@
             }
         }
 
+        function updatePrintDate(val) {
+            const displayEl = document.getElementById('display-print-date');
+            const spaceEl = document.getElementById('display-print-space');
+            if (displayEl) {
+                displayEl.textContent = val;
+            }
+            if (spaceEl) {
+                if (/^\d/.test(val.trim())) {
+                    spaceEl.innerHTML = ' ';
+                } else {
+                    spaceEl.innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                }
+            }
+        }
+
         // Sinkronisasi nilai default dropdown sesuai paket soal
         document.addEventListener('DOMContentLoaded', function() {
             const evEl = document.getElementById('select-event');
             const smEl = document.getElementById('select-semester');
             if (evEl) evEl.value = '{{ $currentEvent }}';
             if (smEl) smEl.value = '{{ $semesterLabel }}_HURUF';
+
+            // Two-way sync: jika user klik & mengedit langsung pada lembar dokumen
+            const displayDateEl = document.getElementById('display-print-date');
+            const inputDateEl = document.getElementById('input-print-date');
+            const spaceEl = document.getElementById('display-print-space');
+            if (displayDateEl && inputDateEl) {
+                displayDateEl.addEventListener('input', function() {
+                    const text = this.textContent.trim();
+                    inputDateEl.value = text;
+                    if (spaceEl) {
+                        if (/^\d/.test(text)) {
+                            spaceEl.innerHTML = ' ';
+                        } else {
+                            spaceEl.innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>
