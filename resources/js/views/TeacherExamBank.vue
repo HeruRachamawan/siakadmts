@@ -2104,19 +2104,28 @@
             <!-- Tipe Soal Target -->
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Ubah Menjadi Tipe Soal *</label>
-              <select v-model="batchForm.targetType" class="form-select font-bold text-xs" required>
-                <option value="true_false">Benar / Salah (Mode Mandiri 1 Kunci - Standar No. 31-35)</option>
-                <option value="matching">Menjodohkan (Mode Mandiri 1 Pasangan - Standar No. 36-40)</option>
-                <option value="pg">Pilihan Ganda (PG Tunggal Opsi A-D)</option>
-                <option value="pg_complex">Pilihan Ganda Kompleks (Multi Kunci)</option>
-                <option value="short_answer">Isian Singkat (Short Answer)</option>
-                <option value="essay">Uraian / Essay</option>
+              <select v-model="batchForm.targetType" @change="handleBatchTargetTypeChange" class="form-select font-bold text-xs" required>
+                <option value="true_false">Benar / Salah (2 Poin - Standar No. 31-35)</option>
+                <option value="matching">Menjodohkan (3 Poin - Standar No. 36-40)</option>
+                <option value="pg">Pilihan Ganda (1 Poin - PG Tunggal Opsi A-D)</option>
+                <option value="pg_complex">Pilihan Ganda Kompleks (3 Poin - Multi Kunci)</option>
+                <option value="short_answer">Isian Singkat (2 Poin - Short Answer)</option>
+                <option value="essay">Uraian / Essay (5 Poin)</option>
               </select>
             </div>
 
             <!-- Bobot Nilai -->
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Bobot Nilai per Butir Soal *</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-bold text-slate-700">Bobot Nilai per Butir Soal *</label>
+                <button
+                  type="button"
+                  @click="resetBatchWeightToDefault"
+                  class="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold underline cursor-pointer"
+                >
+                  Gunakan Bobot Standar
+                </button>
+              </div>
               <div class="flex items-center gap-2">
                 <input
                   type="number"
@@ -2131,14 +2140,35 @@
               </div>
             </div>
 
-            <!-- Preview Ringkasan -->
-            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1 text-slate-600">
-              <div class="font-bold text-slate-800 flex items-center gap-1.5">
-                <span>📋 Ringkasan Perubahan:</span>
+            <!-- Preview Ringkasan & Estimasi Total Paket -->
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2 text-slate-600">
+              <div class="font-bold text-slate-800 flex items-center justify-between">
+                <span class="flex items-center gap-1.5">
+                  <span>📋 Ringkasan Perubahan:</span>
+                </span>
+                <span
+                  class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  :class="batchNewTotalPoints === 100 ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'"
+                >
+                  {{ batchNewTotalPoints === 100 ? '✅ Pas 100 Poin' : `Total Paket: ${batchNewTotalPoints} Poin` }}
+                </span>
               </div>
               <p>
                 Akan mengubah total <strong class="text-indigo-700">{{ Math.max(0, (batchForm.toNumber - batchForm.fromNumber + 1)) }} butir soal</strong> (Nomor <strong>{{ batchForm.fromNumber }}</strong> s/d <strong>{{ batchForm.toNumber }}</strong>) menjadi tipe <strong class="text-slate-900">{{ getQuestionTypeLabel(batchForm.targetType) }}</strong> dengan bobot <strong class="text-emerald-700">{{ batchForm.scoreWeight }} poin</strong>.
               </p>
+              <div class="pt-1.5 border-t border-slate-200/80 flex items-center justify-between text-[11px]">
+                <span class="text-slate-500">Estimasi Total Skor Seluruh Paket:</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-400 line-through">{{ batchCurrentTotalPoints }} Poin</span>
+                  <span class="font-bold text-slate-700">➔</span>
+                  <span class="font-black" :class="batchNewTotalPoints === 100 ? 'text-emerald-600' : 'text-amber-600'">
+                    {{ batchNewTotalPoints }} Poin
+                  </span>
+                  <span v-if="batchNewTotalPoints !== 100" class="text-[10px] text-amber-600">
+                    ({{ 100 - batchNewTotalPoints > 0 ? 'kurang ' + (100 - batchNewTotalPoints) : 'lebih ' + (batchNewTotalPoints - 100) }} poin)
+                  </span>
+                </div>
+              </div>
             </div>
 
             <!-- Footer Buttons -->
@@ -2489,7 +2519,44 @@ const batchForm = reactive({
   fromNumber: 31,
   toNumber: 35,
   targetType: 'true_false',
-  scoreWeight: 1.0,
+  scoreWeight: 2.0,
+});
+
+const getDefaultScoreWeightForType = (type) => {
+  switch (type) {
+    case 'pg': return 1.0;
+    case 'pg_complex': return 3.0;
+    case 'true_false': return 2.0;
+    case 'matching': return 3.0;
+    case 'short_answer': return 2.0;
+    case 'essay': return 5.0;
+    default: return 1.0;
+  }
+};
+
+const handleBatchTargetTypeChange = () => {
+  batchForm.scoreWeight = getDefaultScoreWeightForType(batchForm.targetType);
+};
+
+const resetBatchWeightToDefault = () => {
+  batchForm.scoreWeight = getDefaultScoreWeightForType(batchForm.targetType);
+};
+
+const batchCurrentTotalPoints = computed(() => {
+  return activeQuestions.value.reduce((sum, q) => sum + (Number(q.score_weight) || 0), 0);
+});
+
+const batchNewTotalPoints = computed(() => {
+  const from = Math.max(1, parseInt(batchForm.fromNumber) || 1);
+  const to = Math.min(activeQuestions.value.length, parseInt(batchForm.toNumber) || from);
+  const newWeight = Number(batchForm.scoreWeight) || 0;
+
+  return activeQuestions.value.reduce((sum, q) => {
+    if (q.question_number >= from && q.question_number <= to) {
+      return sum + newWeight;
+    }
+    return sum + (Number(q.score_weight) || 0);
+  }, 0);
 });
 
 const openBatchTypeModal = () => {
@@ -2498,25 +2565,25 @@ const openBatchTypeModal = () => {
     batchForm.fromNumber = 41;
     batchForm.toNumber = Math.min(45, activeQuestions.value.length);
     batchForm.targetType = 'essay';
-    batchForm.scoreWeight = 2.0;
+    batchForm.scoreWeight = 5.0;
   } else if (currNum >= 36) {
     batchForm.fromNumber = 36;
     batchForm.toNumber = Math.min(40, activeQuestions.value.length);
     batchForm.targetType = 'matching';
-    batchForm.scoreWeight = 1.0;
+    batchForm.scoreWeight = 3.0;
   } else if (currNum >= 31) {
     batchForm.fromNumber = 31;
     batchForm.toNumber = Math.min(35, activeQuestions.value.length);
     batchForm.targetType = 'true_false';
-    batchForm.scoreWeight = 1.0;
+    batchForm.scoreWeight = 2.0;
   } else if (currNum >= 21) {
     batchForm.fromNumber = 21;
     batchForm.toNumber = Math.min(30, activeQuestions.value.length);
     batchForm.targetType = 'pg_complex';
-    batchForm.scoreWeight = 1.0;
+    batchForm.scoreWeight = 3.0;
   } else {
     batchForm.fromNumber = 1;
-    batchForm.toNumber = Math.min(30, activeQuestions.value.length);
+    batchForm.toNumber = Math.min(20, activeQuestions.value.length);
     batchForm.targetType = 'pg';
     batchForm.scoreWeight = 1.0;
   }

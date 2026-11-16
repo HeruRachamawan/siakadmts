@@ -624,10 +624,29 @@ class ExamBankController extends Controller
                 );
             }
 
-            // Sync total_questions count
+            // Sync total_questions count and auto-recalculate objective : essay weight ratio
             $maxNumber = max(array_column($validated['questions'], 'question_number'));
+            $objPoints = 0;
+            $essayPoints = 0;
+            foreach ($validated['questions'] as $q) {
+                $weight = floatval($q['score_weight'] ?? 1.0);
+                if (($q['question_type'] ?? '') === 'essay') {
+                    $essayPoints += $weight;
+                } else {
+                    $objPoints += $weight;
+                }
+            }
+            $sumPoints = $objPoints + $essayPoints;
+            $updateData = [];
             if ($maxNumber > $package->total_questions) {
-                $package->update(['total_questions' => $maxNumber]);
+                $updateData['total_questions'] = $maxNumber;
+            }
+            if ($sumPoints > 0) {
+                $updateData['pg_weight'] = round(($objPoints / $sumPoints) * 100, 2);
+                $updateData['essay_weight'] = round(($essayPoints / $sumPoints) * 100, 2);
+            }
+            if (!empty($updateData)) {
+                $package->update($updateData);
             }
 
             DB::commit();
