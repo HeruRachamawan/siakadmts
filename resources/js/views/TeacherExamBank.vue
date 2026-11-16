@@ -2164,10 +2164,54 @@
                   <span class="font-black" :class="batchNewTotalPoints === 100 ? 'text-emerald-600' : 'text-amber-600'">
                     {{ batchNewTotalPoints }} Poin
                   </span>
-                  <span v-if="batchNewTotalPoints !== 100" class="text-[10px] text-amber-600">
+                  <span v-if="batchNewTotalPoints !== 100" class="text-[10px] text-amber-600 font-semibold">
                     ({{ 100 - batchNewTotalPoints > 0 ? 'kurang ' + (100 - batchNewTotalPoints) : 'lebih ' + (batchNewTotalPoints - 100) }} poin)
                   </span>
                 </div>
+              </div>
+
+              <!-- Rekomendasi Penyeimbang Cepat (Jika Belum Pas 100 Poin) -->
+              <div
+                v-if="batchNewTotalPoints !== 100 && rebalanceSuggestion"
+                class="mt-2 p-2.5 bg-amber-50/90 border border-amber-200/90 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+              >
+                <div class="space-y-0.5">
+                  <div class="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
+                    <Sparkles class="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>Rekomendasi Penyeimbang (Auto-Rebalance):</span>
+                  </div>
+                  <p class="text-[11px] text-amber-800 leading-tight">
+                    {{ rebalanceSuggestion.description }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  @click="applyRebalanceSuggestion"
+                  class="shrink-0 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold text-[11px] rounded-lg shadow-2xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Zap class="w-3 h-3 text-amber-200" />
+                  <span>{{ rebalanceSuggestion.buttonText }}</span>
+                </button>
+              </div>
+
+              <!-- Notifikasi Rebalance Aktif -->
+              <div
+                v-else-if="activeRebalance"
+                class="mt-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-800"
+              >
+                <div class="flex items-center gap-1.5">
+                  <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>
+                    Penyeimbang aktif: <strong>{{ activeRebalance.label }}</strong> diset <strong>{{ activeRebalance.targetWeight }} poin</strong> agar total paket pas 100.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  @click="activeRebalance = null"
+                  class="text-[10px] text-emerald-700 hover:underline ml-2 cursor-pointer font-semibold shrink-0"
+                >
+                  Batalkan
+                </button>
               </div>
             </div>
 
@@ -2196,7 +2240,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue';
 import api, { getImageUrl } from '../api';
 import QuestionRichEditor from '../components/QuestionRichEditor.vue';
 import {
@@ -2546,20 +2590,117 @@ const batchCurrentTotalPoints = computed(() => {
   return activeQuestions.value.reduce((sum, q) => sum + (Number(q.score_weight) || 0), 0);
 });
 
+const activeRebalance = ref(null);
+
+watch(
+  () => [batchForm.fromNumber, batchForm.toNumber, batchForm.targetType],
+  () => {
+    activeRebalance.value = null;
+  }
+);
+
 const batchNewTotalPoints = computed(() => {
   const from = Math.max(1, parseInt(batchForm.fromNumber) || 1);
   const to = Math.min(activeQuestions.value.length, parseInt(batchForm.toNumber) || from);
   const newWeight = Number(batchForm.scoreWeight) || 0;
 
-  return activeQuestions.value.reduce((sum, q) => {
+  let total = 0;
+  activeQuestions.value.forEach(q => {
     if (q.question_number >= from && q.question_number <= to) {
-      return sum + newWeight;
+      total += newWeight;
+    } else if (activeRebalance.value && activeRebalance.value.affectedNumbers?.includes(q.question_number)) {
+      total += Number(activeRebalance.value.targetWeight);
+    } else {
+      total += (Number(q.score_weight) || 0);
     }
-    return sum + (Number(q.score_weight) || 0);
-  }, 0);
+  });
+  return Math.round(total * 10) / 10;
 });
 
+const rebalanceSuggestion = computed(() => {
+  const from = Math.max(1, parseInt(batchForm.fromNumber) || 1);
+  const to = Math.min(activeQuestions.value.length, parseInt(batchForm.toNumber) || from);
+  const newWeight = Number(batchForm.scoreWeight) || 0;
+
+  // Hitung total skor jika batch ini diterapkan tanpa penyeimbang
+  let unadjustedTotal = 0;
+  activeQuestions.value.forEach(q => {
+    if (q.question_number >= from && q.question_number <= to) {
+      unadjustedTotal += newWeight;
+    } else {
+      unadjustedTotal += (Number(q.score_weight) || 0);
+    }
+  });
+
+  const diff = Math.round((unadjustedTotal - 100) * 10) / 10;
+  if (diff === 0) return null;
+
+  // 1. Cek apakah ada butir Essay di luar rentang yang sedang diubah
+  const outsideEssays = activeQuestions.value.filter(q =>
+    (q.question_number < from || q.question_number > to) && q.question_type === 'essay'
+  );
+
+  if (outsideEssays.length > 0) {
+    const currentEssaySum = outsideEssays.reduce((sum, q) => sum + (Number(q.score_weight) || 0), 0);
+    const targetEssaySum = currentEssaySum - diff;
+    if (targetEssaySum > 0) {
+      const newWeightPerEssay = Math.round((targetEssaySum / outsideEssays.length) * 10) / 10;
+      if (newWeightPerEssay > 0) {
+        const firstNum = outsideEssays[0].question_number;
+        const lastNum = outsideEssays[outsideEssays.length - 1].question_number;
+        const rangeText = outsideEssays.length === 1 ? `No. ${firstNum}` : `No. ${firstNum}–${lastNum}`;
+        const currentW = outsideEssays[0].score_weight || 5;
+        return {
+          type: 'essay',
+          rangeText,
+          label: `Uraian / Essay (${rangeText})`,
+          description: diff > 0
+            ? `Turunkan bobot ${outsideEssays.length} butir Essay (${rangeText}) dari ${currentW} poin jadi ${newWeightPerEssay} poin (kurangi ${diff} poin)`
+            : `Naikkan bobot ${outsideEssays.length} butir Essay (${rangeText}) dari ${currentW} poin jadi ${newWeightPerEssay} poin (tambah ${Math.abs(diff)} poin)`,
+          targetWeight: newWeightPerEssay,
+          targetCount: outsideEssays.length,
+          affectedNumbers: outsideEssays.map(q => q.question_number),
+          buttonText: `⚡ Seimbangkan via Essay (Jadikan ${newWeightPerEssay} Poin)`
+        };
+      }
+    }
+  }
+
+  // 2. Jika tidak ada Essay di luar rentang, tawarkan menyesuaikan bobot rentang saat ini
+  const countAffected = Math.max(1, to - from + 1);
+  const outsideScoreSum = activeQuestions.value.reduce((sum, q) => {
+    if (q.question_number >= from && q.question_number <= to) return sum;
+    return sum + (Number(q.score_weight) || 0);
+  }, 0);
+  const neededForBatch = 100 - outsideScoreSum;
+  if (neededForBatch > 0) {
+    const newBatchWeight = Math.round((neededForBatch / countAffected) * 10) / 10;
+    if (newBatchWeight > 0 && newBatchWeight !== newWeight) {
+      return {
+        type: 'batch',
+        label: `Bobot Rentang No. ${from}–${to}`,
+        description: `Ubah bobot rentang ini menjadi ${newBatchWeight} poin per butir agar total seluruh paket pas 100 poin.`,
+        targetWeight: newBatchWeight,
+        buttonText: `🎯 Set Bobot Rentang Ini Jadi ${newBatchWeight} Poin`
+      };
+    }
+  }
+
+  return null;
+});
+
+const applyRebalanceSuggestion = () => {
+  if (!rebalanceSuggestion.value) return;
+  if (rebalanceSuggestion.value.type === 'batch') {
+    batchForm.scoreWeight = rebalanceSuggestion.value.targetWeight;
+    activeRebalance.value = null;
+  } else {
+    activeRebalance.value = { ...rebalanceSuggestion.value };
+  }
+};
+
 const openBatchTypeModal = () => {
+  activeRebalance.value = null;
   const currNum = activeQuestions.value[currentQuestionIndex.value]?.question_number || 1;
   if (currNum >= 41) {
     batchForm.fromNumber = 41;
@@ -2591,6 +2732,7 @@ const openBatchTypeModal = () => {
 };
 
 const applyBatchPreset = (from, to, type, weight = 1.0) => {
+  activeRebalance.value = null;
   batchForm.fromNumber = from;
   batchForm.toNumber = Math.min(to, activeQuestions.value.length);
   batchForm.targetType = type;
@@ -2694,6 +2836,17 @@ const applyBatchType = () => {
     }
   });
 
+  // Apply auto-rebalance if active
+  let rebalanceMsg = '';
+  if (activeRebalance.value && activeRebalance.value.type === 'essay') {
+    activeQuestions.value.forEach(q => {
+      if (activeRebalance.value.affectedNumbers?.includes(q.question_number)) {
+        q.score_weight = Number(activeRebalance.value.targetWeight);
+      }
+    });
+    rebalanceMsg = `\n\n⚡ Catatan: Bobot ${activeRebalance.value.targetCount} butir Essay (${activeRebalance.value.rangeText || ''}) otomatis disesuaikan menjadi ${activeRebalance.value.targetWeight} poin agar Total Paket PAS 100 Poin.`;
+  }
+
   // Switch to first affected question
   const targetIdx = activeQuestions.value.findIndex(q => q.question_number === from);
   if (targetIdx !== -1) {
@@ -2701,7 +2854,8 @@ const applyBatchType = () => {
   }
 
   showBatchModal.value = false;
-  alert(`Berhasil! ${count} butir soal (Nomor ${from} s/d ${to}) telah diubah menjadi tipe "${getQuestionTypeLabel(batchForm.targetType)}" dengan bobot ${batchForm.scoreWeight} poin.`);
+  alert(`Berhasil! ${count} butir soal (Nomor ${from} s/d ${to}) telah diubah menjadi tipe "${getQuestionTypeLabel(batchForm.targetType)}" dengan bobot ${batchForm.scoreWeight} poin.${rebalanceMsg}`);
+  activeRebalance.value = null;
 };
 
 const removeQuestion = (idx) => {
