@@ -995,11 +995,22 @@
           <button
             type="button"
             @click="autoGenerateAllKisiKisi"
-            class="hidden sm:inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 text-xs font-bold rounded-lg shadow-sm transition"
+            class="hidden sm:inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 text-xs font-bold rounded-lg shadow-sm transition cursor-pointer"
             title="Otomatis rumuskan Kisi-Kisi (TP, Materi, Indikator, Level Kognitif) untuk semua nomor soal"
           >
             <Sparkles class="w-3.5 h-3.5 text-slate-950" />
             <span>Auto-Kisi</span>
+          </button>
+
+          <!-- Reset All Kisi-Kisi Button -->
+          <button
+            type="button"
+            @click="resetAllKisiKisi"
+            class="hidden sm:inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-slate-800 hover:bg-rose-950/70 text-slate-300 hover:text-rose-200 text-xs font-semibold rounded-lg border border-slate-700 hover:border-rose-700/50 shadow-sm transition cursor-pointer"
+            title="Kosongkan isian kisi-kisi (TP, Materi, Indikator) pada semua nomor soal"
+          >
+            <RotateCcw class="w-3.5 h-3.5 text-slate-400 group-hover:text-rose-300" />
+            <span>Reset Kisi</span>
           </button>
 
           <!-- Save All Button -->
@@ -1888,16 +1899,28 @@
               </div>
             </div>
 
-            <!-- Single Question Auto-Generate Button -->
-            <button
-              type="button"
-              @click="autoGenerateSingleKisiKisi(currentQuestionIndex)"
-              class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-[11px] font-bold rounded-lg shadow-2xs transition"
-              title="Otomatis rumuskan TP, Materi, Indikator, dan Level Kognitif dari teks soal ini"
-            >
-              <Sparkles class="w-3.5 h-3.5 text-amber-300" />
-              <span>Auto-Fill</span>
-            </button>
+            <!-- Actions: Reset & Auto-Generate -->
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                @click="resetSingleKisiKisi(currentQuestionIndex)"
+                class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 text-[11px] font-bold rounded-lg shadow-2xs transition cursor-pointer"
+                title="Kosongkan isian TP, Materi, dan Indikator pada butir soal ini"
+              >
+                <RotateCcw class="w-3.5 h-3.5 text-slate-500" />
+                <span>Reset</span>
+              </button>
+
+              <button
+                type="button"
+                @click="autoGenerateSingleKisiKisi(currentQuestionIndex)"
+                class="inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-[11px] font-bold rounded-lg shadow-2xs transition cursor-pointer"
+                title="Otomatis rumuskan TP, Materi, Indikator, dan Level Kognitif dari teks soal ini"
+              >
+                <Sparkles class="w-3.5 h-3.5 text-amber-300" />
+                <span>Auto-Fill</span>
+              </button>
+            </div>
           </div>
 
           <!-- Quick Inherit from previous question -->
@@ -2339,7 +2362,8 @@ import {
   Sparkles,
   Layers,
   Award,
-  Settings
+  Settings,
+  RotateCcw
 } from 'lucide-vue-next';
 
 // Data State
@@ -3604,6 +3628,16 @@ const autoGenerateSingleKisiKisi = (index) => {
   q.difficulty_level = res.difficulty_level;
 };
 
+const resetSingleKisiKisi = (index) => {
+  const q = activeQuestions.value[index];
+  if (!q) return;
+  q.basic_competency = '';
+  q.material = '';
+  q.indicator = '';
+  q.cognitive_level = 'L1';
+  q.difficulty_level = 'mudah';
+};
+
 const autoGenerateAllKisiKisi = () => {
   if (!activeQuestions.value || activeQuestions.value.length === 0) return;
 
@@ -3629,6 +3663,21 @@ const autoGenerateAllKisiKisi = () => {
   }
 
   alert(`Alhamdulillah! Kisi-kisi, Level Kognitif, dan Tingkat Kesukaran untuk ${generated} butir soal berhasil diisi otomatis. Jangan lupa klik tombol "Simpan Semua".`);
+};
+
+const resetAllKisiKisi = () => {
+  if (!activeQuestions.value || activeQuestions.value.length === 0) return;
+  if (!confirm(`Apakah Anda yakin ingin mengosongkan seluruh isian kisi-kisi (TP, Materi, dan Indikator) untuk seluruh ${activeQuestions.value.length} butir soal?`)) {
+    return;
+  }
+  activeQuestions.value.forEach(q => {
+    q.basic_competency = '';
+    q.material = '';
+    q.indicator = '';
+    q.cognitive_level = 'L1';
+    q.difficulty_level = 'mudah';
+  });
+  alert('Seluruh isian kisi-kisi berhasil dikosongkan. Klik "Simpan Semua" jika ingin menyimpan perubahan ini secara permanen.');
 };
 
 const copyKisiFromPrev = (index) => {
