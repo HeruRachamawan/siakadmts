@@ -407,15 +407,15 @@
     </div>
 
     <!-- Modal Buat Paket Soal Baru -->
-    <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-      <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+    <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto">
+      <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] my-auto">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
           <h3 class="text-base font-bold text-slate-800">Buat Paket Soal Baru</h3>
-          <button @click="showCreateModal = false" class="text-slate-400 hover:text-slate-600">
+          <button @click="showCreateModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">
             <X class="w-5 h-5" />
           </button>
         </div>
-        <form @submit.prevent="createPackage" class="p-6 space-y-4">
+        <form @submit.prevent="createPackage" class="p-6 space-y-4 overflow-y-auto flex-1">
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Judul Paket Soal *</label>
             <input type="text" v-model="createForm.title" placeholder="Contoh: STS Ganjil Matematika Kelas 7" required class="form-input" />
@@ -688,11 +688,11 @@
               <span v-else class="text-[10px] text-slate-400">Total persentase bobot = 100%</span>
             </div>
           </div>
-          <div class="pt-2 flex justify-end gap-2">
-            <button type="button" @click="showCreateModal = false" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50">
+          <div class="pt-3 sticky bottom-0 bg-white/95 backdrop-blur-xs flex justify-end gap-2 border-t border-slate-100 mt-4 -mx-6 -mb-6 p-6 shrink-0">
+            <button type="button" @click="showCreateModal = false" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 cursor-pointer">
               Batal
             </button>
-            <button type="submit" :disabled="submitting" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm">
+            <button type="submit" :disabled="submitting" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm cursor-pointer">
               {{ submitting ? 'Membuat...' : 'Buat Paket Soal' }}
             </button>
           </div>
@@ -701,9 +701,9 @@
     </div>
 
     <!-- Modal Edit Info & Jenis Asesmen Paket Soal -->
-    <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-      <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+    <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto">
+      <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] my-auto">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
           <div class="flex items-center gap-2.5">
             <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
               <Settings class="w-4 h-4" />
@@ -713,11 +713,11 @@
               <p class="text-xs text-slate-400">Sesuaikan judul, kategori ujian (ASTS/ASAS), kelas, dan semester</p>
             </div>
           </div>
-          <button @click="showEditModal = false" class="text-slate-400 hover:text-slate-600">
+          <button @click="showEditModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">
             <X class="w-5 h-5" />
           </button>
         </div>
-        <form @submit.prevent="updatePackageInfo" class="p-6 space-y-4">
+        <form @submit.prevent="updatePackageInfo" class="p-6 space-y-4 overflow-y-auto flex-1">
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Judul Paket Soal *</label>
             <input type="text" v-model="editForm.title" required class="form-input" />
@@ -779,11 +779,11 @@
               <span class="text-[10px] text-slate-400">Total proporsi persentase harus 100%</span>
             </div>
           </div>
-          <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
-            <button type="button" @click="showEditModal = false" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50">
+          <div class="pt-3 sticky bottom-0 bg-white/95 backdrop-blur-xs flex justify-end gap-2 border-t border-slate-100 mt-4 -mx-6 -mb-6 p-6 shrink-0">
+            <button type="button" @click="showEditModal = false" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 cursor-pointer">
               Batal
             </button>
-            <button type="submit" :disabled="submitting" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-sm transition">
+            <button type="submit" :disabled="submitting" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-sm transition cursor-pointer">
               {{ submitting ? 'Menyimpan...' : 'Simpan Perubahan' }}
             </button>
           </div>
