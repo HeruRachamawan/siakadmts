@@ -195,6 +195,7 @@ class ExamBankController extends Controller
             'academic_phase' => 'nullable|string|max:30',
             'curriculum_type' => 'nullable|string|in:merdeka,k13',
             'description' => 'nullable|string|max:1000',
+            'execution_date' => 'nullable|string|max:60',
             'teacher_id' => 'nullable|exists:teachers,id',
         ]);
 
@@ -267,6 +268,7 @@ class ExamBankController extends Controller
             'status' => 'draft',
             'status_kurikulum' => 'draft',
             'description' => $validated['description'] ?? null,
+            'execution_date' => $validated['execution_date'] ?? null,
         ]);
 
         // Pre-create blank question placeholders up to total_questions
@@ -484,6 +486,7 @@ class ExamBankController extends Controller
             'academic_phase' => 'nullable|string|max:30',
             'curriculum_type' => 'nullable|string|in:merdeka,k13',
             'description' => 'nullable|string|max:1000',
+            'execution_date' => 'nullable|string|max:60',
         ]);
 
         $package->update($validated);

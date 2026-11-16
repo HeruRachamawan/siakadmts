@@ -264,9 +264,10 @@
                   <GraduationCap class="w-3.5 h-3.5 text-slate-400" />
                   <span>{{ pkg.subject?.name }} &bull; Kelas {{ pkg.class_room?.name }}</span>
                 </div>
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1.5 flex-wrap">
                   <Calendar class="w-3.5 h-3.5 text-slate-400" />
                   <span>Semester {{ pkg.semester === 'ganjil' ? 'Ganjil' : 'Genap' }} ({{ pkg.academic_phase || 'Fase D' }})</span>
+                  <span v-if="pkg.execution_date" class="text-slate-400">&bull; {{ pkg.execution_date }}</span>
                 </div>
               </div>
             </div>
@@ -450,6 +451,38 @@
                 <option value="genap">Genap</option>
               </select>
             </div>
+          </div>
+          <!-- Bulan & Tahun Pelaksanaan Ujian (Titimangsa Cetak Dokumen) -->
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <Calendar class="w-3.5 h-3.5 text-indigo-600" />
+                Bulan & Tahun Pelaksanaan Ujian
+              </label>
+              <span class="text-[10px] text-slate-500 font-medium">Titimangsa Tanda Tangan Cetak</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Bulan Pelaksanaan</label>
+                <select v-model="createForm.execution_month" class="form-select text-xs">
+                  <option v-for="m in monthOptions" :key="m" :value="m">{{ m }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tahun Pelaksanaan</label>
+                <input
+                  type="number"
+                  v-model.number="createForm.execution_year"
+                  min="2020"
+                  max="2035"
+                  class="form-input text-xs"
+                  placeholder="2026"
+                />
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-400">
+              Otomatis diterapkan ke Titimangsa Lembar Kisi-Kisi, Lembar Telaah, & Kunci Jawaban (contoh: <em>Bogor, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {{ createForm.execution_month }} {{ createForm.execution_year }}</em>).
+            </p>
           </div>
           <!-- Pola & Komposisi Soal (Preset Cerdas) -->
           <div class="p-3.5 bg-gradient-to-br from-indigo-50/80 to-slate-50 border border-indigo-100 rounded-xl space-y-2.5">
@@ -736,6 +769,38 @@
                 <option value="genap">Genap</option>
               </select>
             </div>
+          </div>
+          <!-- Bulan & Tahun Pelaksanaan Ujian (Titimangsa Cetak Dokumen) -->
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <Calendar class="w-3.5 h-3.5 text-indigo-600" />
+                Bulan & Tahun Pelaksanaan Ujian
+              </label>
+              <span class="text-[10px] text-slate-500 font-medium">Titimangsa Tanda Tangan Cetak</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Bulan Pelaksanaan</label>
+                <select v-model="editForm.execution_month" class="form-select text-xs">
+                  <option v-for="m in monthOptions" :key="m" :value="m">{{ m }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tahun Pelaksanaan</label>
+                <input
+                  type="number"
+                  v-model.number="editForm.execution_year"
+                  min="2020"
+                  max="2035"
+                  class="form-input text-xs"
+                  placeholder="2026"
+                />
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-400">
+              Otomatis diterapkan ke Titimangsa Lembar Kisi-Kisi, Lembar Telaah, & Kunci Jawaban (contoh: <em>Bogor, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {{ editForm.execution_month }} {{ editForm.execution_year }}</em>).
+            </p>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -2411,7 +2476,20 @@ const filters = reactive({
   my_exams_only: true
 });
 
-// Modals
+// Modals & Helpers
+const monthOptions = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+
+const getCurrentMonthName = () => {
+  return monthOptions[new Date().getMonth()] || 'November';
+};
+
+const getCurrentYear = () => {
+  return new Date().getFullYear() || 2026;
+};
+
 const showCreateModal = ref(false);
 const submitting = ref(false);
 const createForm = reactive({
@@ -2420,6 +2498,8 @@ const createForm = reactive({
   class_room_id: '',
   exam_type: 'sts',
   semester: 'ganjil',
+  execution_month: getCurrentMonthName(),
+  execution_year: getCurrentYear(),
   composition_preset: 'standard_mts_45',
   custom_counts: {
     pg: 20,
@@ -3181,6 +3261,8 @@ const openCreateModal = () => {
   createForm.class_room_id = options.classes[0]?.id || '';
   createForm.exam_type = 'sts';
   createForm.semester = 'ganjil';
+  createForm.execution_month = getCurrentMonthName();
+  createForm.execution_year = getCurrentYear();
   createForm.composition_preset = 'standard_mts_45';
   createForm.custom_counts = {
     pg: 20,
@@ -3214,6 +3296,8 @@ const editForm = reactive({
   academic_year_id: '',
   exam_type: 'sts',
   semester: 'ganjil',
+  execution_month: getCurrentMonthName(),
+  execution_year: getCurrentYear(),
   total_questions: 20,
   kkm: 75,
   academic_phase: 'Fase D',
@@ -3229,6 +3313,21 @@ const openEditModal = (pkg) => {
   editForm.academic_year_id = pkg.academic_year_id || '';
   editForm.exam_type = pkg.exam_type || 'sts';
   editForm.semester = pkg.semester || 'ganjil';
+
+  let execMonth = getCurrentMonthName();
+  let execYear = getCurrentYear();
+  if (pkg.execution_date) {
+    const parts = pkg.execution_date.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      execMonth = parts.slice(0, parts.length - 1).join(' ');
+      execYear = parseInt(parts[parts.length - 1]) || getCurrentYear();
+    } else if (parts.length === 1) {
+      execMonth = parts[0];
+    }
+  }
+  editForm.execution_month = execMonth;
+  editForm.execution_year = execYear;
+
   editForm.total_questions = pkg.total_questions || 20;
   editForm.kkm = pkg.kkm || 75;
   editForm.academic_phase = pkg.academic_phase || 'Fase D';
@@ -3241,7 +3340,13 @@ const updatePackageInfo = async () => {
   if (!editingPackageId.value) return;
   submitting.value = true;
   try {
-    const res = await api.put(`/teacher/exam-bank/${editingPackageId.value}`, editForm);
+    const payload = {
+      ...editForm,
+      execution_date: editForm.execution_month && editForm.execution_year
+        ? `${editForm.execution_month} ${editForm.execution_year}`
+        : null
+    };
+    const res = await api.put(`/teacher/exam-bank/${editingPackageId.value}`, payload);
     const d = res.data || res;
     if (res.status === 'success' || d.status === 'success') {
       showEditModal.value = false;
@@ -3258,7 +3363,13 @@ const updatePackageInfo = async () => {
 const createPackage = async () => {
   submitting.value = true;
   try {
-    const res = await api.post('/teacher/exam-bank', createForm);
+    const payload = {
+      ...createForm,
+      execution_date: createForm.execution_month && createForm.execution_year
+        ? `${createForm.execution_month} ${createForm.execution_year}`
+        : null
+    };
+    const res = await api.post('/teacher/exam-bank', payload);
     const d = res.data || res;
     if (res.status === 'success' || d.status === 'success') {
       showCreateModal.value = false;

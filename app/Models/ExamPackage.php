@@ -29,6 +29,7 @@ class ExamPackage extends Model
         'academic_phase',
         'curriculum_type',
         'description',
+        'execution_date',
     ];
 
     protected $casts = [

@@ -378,7 +378,7 @@
                 <!-- Titimangsa / Bulan Selector -->
                 <div class="toolbar-group">
                     <span class="group-label">Bulan/Tgl:</span>
-                    <input type="text" id="input-print-date" class="input-tool" list="list-print-dates" value="{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}" oninput="updatePrintDate(this.value)" placeholder="Contoh: Desember 2026" style="width: 130px;" title="Ketik atau pilih bulan/tanggal titimangsa">
+                    <input type="text" id="input-print-date" class="input-tool" list="list-print-dates" value="{{ $package->execution_date ?: \Carbon\Carbon::now()->translatedFormat('F Y') }}" oninput="updatePrintDate(this.value)" placeholder="Contoh: Desember 2026" style="width: 130px;" title="Ketik atau pilih bulan/tanggal titimangsa">
                     <datalist id="list-print-dates">
                         <option value="November 2026">
                         <option value="Desember 2026">
@@ -635,7 +635,7 @@
             </td>
             <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 20px;">
                 <div style="display: inline-block; text-align: left; min-width: 250px;">
-                    <span id="display-print-city" class="editable-date" contenteditable="true" title="Klik untuk mengedit kota">Bogor</span>,<span id="display-print-space">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span id="display-print-date" class="editable-date" contenteditable="true" title="Klik langsung untuk mengedit bulan atau tanggal">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</span><br>
+                    <span id="display-print-city" class="editable-date" contenteditable="true" title="Klik untuk mengedit kota">Bogor</span>,<span id="display-print-space">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span id="display-print-date" class="editable-date" contenteditable="true" title="Klik langsung untuk mengedit bulan atau tanggal">{{ $package->execution_date ?: \Carbon\Carbon::now()->translatedFormat('F Y') }}</span><br>
                     <strong>Guru Mata Pelajaran</strong><br>
                     <div class="sig-space"></div>
                     <strong><u>{{ $package->teacher->user->name ?? ($package->teacher->name ?? 'Heru Rachmawan') }}</u></strong>
