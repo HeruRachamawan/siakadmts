@@ -880,10 +880,10 @@
             @click="showRightPane = !showRightPane"
             class="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg border transition"
             :class="showRightPane ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'"
-            title="Tampilkan / Sembunyikan Panel Kisi-Kisi"
+            title="Tampilkan / Sembunyikan Panel Samping Kisi-Kisi"
           >
             <TableProperties class="w-3.5 h-3.5" />
-            <span class="hidden xl:inline">Kisi-Kisi</span>
+            <span class="hidden xl:inline">Panel Kisi-Kisi</span>
           </button>
 
           <!-- Quick Print Preview (Desktop) -->
