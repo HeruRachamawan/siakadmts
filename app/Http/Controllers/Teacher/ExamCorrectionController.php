@@ -344,7 +344,17 @@ class ExamCorrectionController extends Controller
                 str_contains($lower, 'lokal') || str_starts_with($lower, 'l-') || str_starts_with($lower, 'lok-');
         }
 
-        if ($isLokalClass) {
+        if ($exam->target_grade) {
+            $classIds = \App\Models\ClassRoom::where('grade_level', $exam->target_grade)->pluck('id');
+            $students = Student::with('classRoom')
+                ->where(function ($q) use ($classIds) {
+                    $q->whereIn('class_id', $classIds)
+                      ->orWhereIn('lokal_class_id', $classIds);
+                })
+                ->orderBy('class_id', 'asc')
+                ->orderBy('full_name', 'asc')
+                ->get();
+        } elseif ($isLokalClass) {
             $students = Student::with('classRoom')
                 ->where(function ($q) use ($exam) {
                     $q->where('lokal_class_id', $exam->class_room_id)

@@ -87,7 +87,13 @@ class ExamBankController extends Controller
         }
 
         if ($request->filled('class_room_id')) {
-            $query->where('class_room_id', $request->class_room_id);
+            $class = ClassRoom::find($request->class_room_id);
+            $query->where(function ($q) use ($request, $class) {
+                $q->where('class_room_id', $request->class_room_id);
+                if ($class && $class->grade_level) {
+                    $q->orWhere('target_grade', (string)$class->grade_level);
+                }
+            });
         }
 
         if ($request->filled('subject_id')) {
@@ -128,6 +134,39 @@ class ExamBankController extends Controller
 
         $classes = ClassRoom::orderBy('grade_level')->orderBy('name')->get(['id', 'name', 'grade_level']);
 
+        $targetOptions = [];
+        $grades = ClassRoom::select('grade_level')->distinct()->orderBy('grade_level')->pluck('grade_level');
+        foreach ($grades as $g) {
+            $repClass = ClassRoom::where('grade_level', $g)->orderBy('id')->first();
+            $rombelCount = ClassRoom::where('grade_level', $g)->count();
+            $rombelNames = ClassRoom::where('grade_level', $g)->pluck('name')->join(', ');
+            $label = "Kelas {$g} (Global - Seluruh Rombel)";
+            if ($rombelCount > 1) {
+                $label = "Kelas {$g} (Global - Mencakup {$rombelNames})";
+            }
+            $targetOptions[] = [
+                'type' => 'global',
+                'target_grade' => (string)$g,
+                'class_room_id' => $repClass?->id,
+                'key' => 'global_' . $g,
+                'label' => $label,
+                'short_label' => "Kelas {$g} (Global)",
+                'group' => 'Tingkat Global (Soal Bersama / ASAS / ASTS)'
+            ];
+        }
+
+        foreach ($classes as $c) {
+            $targetOptions[] = [
+                'type' => 'specific',
+                'target_grade' => null,
+                'class_room_id' => $c->id,
+                'key' => 'class_' . $c->id,
+                'label' => "Kelas {$c->name} (Khusus Rombel {$c->name})",
+                'short_label' => "Kelas {$c->name}",
+                'group' => 'Rombel Spesifik (Khusus Guru / Kelas Tertentu)'
+            ];
+        }
+
         if (!$isPrivileged && $teacher && $teacher->subjects()->exists()) {
             $subjects = $teacher->subjects()->orderBy('name')->get(['subjects.id', 'subjects.name', 'subjects.code']);
         } else {
@@ -141,6 +180,7 @@ class ExamBankController extends Controller
             'status' => 'success',
             'data' => [
                 'classes' => $classes,
+                'target_classes' => $targetOptions,
                 'subjects' => $subjects,
                 'academic_years' => $academicYears,
                 'active_year' => $activeYear,
@@ -196,6 +236,7 @@ class ExamBankController extends Controller
             'curriculum_type' => 'nullable|string|in:merdeka,k13',
             'description' => 'nullable|string|max:1000',
             'execution_date' => 'nullable|string|max:60',
+            'target_grade' => 'nullable|string|max:10',
             'teacher_id' => 'nullable|exists:teachers,id',
         ]);
 
@@ -269,6 +310,7 @@ class ExamBankController extends Controller
             'status_kurikulum' => 'draft',
             'description' => $validated['description'] ?? null,
             'execution_date' => $validated['execution_date'] ?? null,
+            'target_grade' => $validated['target_grade'] ?? null,
         ]);
 
         // Pre-create blank question placeholders up to total_questions
@@ -487,6 +529,7 @@ class ExamBankController extends Controller
             'curriculum_type' => 'nullable|string|in:merdeka,k13',
             'description' => 'nullable|string|max:1000',
             'execution_date' => 'nullable|string|max:60',
+            'target_grade' => 'nullable|string|max:10',
         ]);
 
         $package->update($validated);

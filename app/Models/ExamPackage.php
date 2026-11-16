@@ -12,6 +12,7 @@ class ExamPackage extends Model
     protected $fillable = [
         'teacher_id',
         'class_room_id',
+        'target_grade',
         'subject_id',
         'academic_year_id',
         'title',

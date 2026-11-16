@@ -420,15 +420,24 @@
         }
 
         // Teks Kelas Terbilang
-        $cleanClassName = strtoupper(trim($package->classRoom->name ?? 'VII'));
-        if (str_contains($cleanClassName, '7') || str_contains($cleanClassName, 'VII')) {
-            $classDisplay = 'VII (TUJUH)';
-        } elseif (str_contains($cleanClassName, '8') || str_contains($cleanClassName, 'VIII')) {
-            $classDisplay = 'VIII (DELAPAN)';
-        } elseif (str_contains($cleanClassName, '9') || str_contains($cleanClassName, 'IX')) {
-            $classDisplay = 'IX (SEMBILAN)';
+        if (!empty($package->target_grade)) {
+            $classDisplay = match((string)$package->target_grade) {
+                '9' => 'IX (SEMBILAN)',
+                '8' => 'VIII (DELAPAN)',
+                '7' => 'VII (TUJUH)',
+                default => strtoupper($package->target_grade)
+            };
         } else {
-            $classDisplay = $cleanClassName;
+            $cleanClassName = strtoupper(trim($package->classRoom->name ?? 'VII'));
+            if (str_contains($cleanClassName, '7') || str_contains($cleanClassName, 'VII')) {
+                $classDisplay = 'VII (TUJUH)';
+            } elseif (str_contains($cleanClassName, '8') || str_contains($cleanClassName, 'VIII')) {
+                $classDisplay = 'VIII (DELAPAN)';
+            } elseif (str_contains($cleanClassName, '9') || str_contains($cleanClassName, 'IX')) {
+                $classDisplay = 'IX (SEMBILAN)';
+            } else {
+                $classDisplay = $cleanClassName;
+            }
         }
 
         // Total Soal (Default 45 sesuai data Excel)

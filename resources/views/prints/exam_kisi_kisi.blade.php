@@ -417,7 +417,14 @@
         // Normalisasi Nama Kelas ke Angka Romawi Resmi
         $rawClass = trim($package->classRoom->name ?? 'VII');
         $cleanClassUpper = strtoupper($rawClass);
-        if (preg_match('/(?:kelas\s*)?9\s*([a-z]?)/i', $rawClass, $m)) {
+        if (!empty($package->target_grade)) {
+            $romanClass = match((string)$package->target_grade) {
+                '9' => 'IX',
+                '8' => 'VIII',
+                '7' => 'VII',
+                default => strtoupper($package->target_grade)
+            };
+        } elseif (preg_match('/(?:kelas\s*)?9\s*([a-z]?)/i', $rawClass, $m)) {
             $romanClass = 'IX' . (!empty($m[1]) ? '-' . strtoupper($m[1]) : '');
         } elseif (preg_match('/(?:kelas\s*)?8\s*([a-z]?)/i', $rawClass, $m)) {
             $romanClass = 'VIII' . (!empty($m[1]) ? '-' . strtoupper($m[1]) : '');

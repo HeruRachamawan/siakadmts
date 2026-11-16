@@ -262,7 +262,12 @@
               <div class="text-xs text-slate-500 space-y-1">
                 <div class="flex items-center gap-1.5">
                   <GraduationCap class="w-3.5 h-3.5 text-slate-400" />
-                  <span>{{ pkg.subject?.name }} &bull; Kelas {{ pkg.class_room?.name }}</span>
+                  <span>
+                    {{ pkg.subject?.name }} &bull; 
+                    <span :class="pkg.target_grade ? 'font-bold text-indigo-700' : ''">
+                      {{ pkg.target_grade ? ('Kelas ' + pkg.target_grade + ' (Global)') : ('Kelas ' + (pkg.class_room?.name || '')) }}
+                    </span>
+                  </span>
                 </div>
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <Calendar class="w-3.5 h-3.5 text-slate-400" />
@@ -431,9 +436,18 @@
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Kelas Target *</label>
-              <select v-model="createForm.class_room_id" required class="form-select">
-                <option value="">Pilih Kelas</option>
-                <option v-for="c in options.classes" :key="c.id" :value="c.id">{{ c.name }}</option>
+              <select v-model="createForm.target_selection" required class="form-select text-xs font-medium">
+                <option value="">Pilih Kelas Target</option>
+                <optgroup v-if="globalTargetOptions.length" label="🌐 Tingkat Global (Soal Bersama / ASAS / ASTS)">
+                  <option v-for="opt in globalTargetOptions" :key="opt.key" :value="opt.key">
+                    {{ opt.label }}
+                  </option>
+                </optgroup>
+                <optgroup v-if="specificTargetOptions.length" label="🏫 Rombel Spesifik (Khusus Guru / Kelas Tertentu)">
+                  <option v-for="opt in specificTargetOptions" :key="opt.key" :value="opt.key">
+                    {{ opt.label }}
+                  </option>
+                </optgroup>
               </select>
             </div>
           </div>
@@ -811,8 +825,18 @@
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Kelas Target *</label>
-              <select v-model="editForm.class_room_id" required class="form-select">
-                <option v-for="c in options.classes" :key="c.id" :value="c.id">{{ c.name }}</option>
+              <select v-model="editForm.target_selection" required class="form-select text-xs font-medium">
+                <option value="">Pilih Kelas Target</option>
+                <optgroup v-if="globalTargetOptions.length" label="🌐 Tingkat Global (Soal Bersama / ASAS / ASTS)">
+                  <option v-for="opt in globalTargetOptions" :key="opt.key" :value="opt.key">
+                    {{ opt.label }}
+                  </option>
+                </optgroup>
+                <optgroup v-if="specificTargetOptions.length" label="🏫 Rombel Spesifik (Khusus Guru / Kelas Tertentu)">
+                  <option v-for="opt in specificTargetOptions" :key="opt.key" :value="opt.key">
+                    {{ opt.label }}
+                  </option>
+                </optgroup>
               </select>
             </div>
           </div>
@@ -2482,6 +2506,7 @@ const getExamTypeBadge = (type) => {
 
 const options = reactive({
   classes: [],
+  target_classes: [],
   subjects: [],
   academic_years: [],
   active_year: null,
@@ -2490,6 +2515,44 @@ const options = reactive({
   cognitive_levels: [],
   difficulty_levels: []
 });
+
+const allTargetOptions = computed(() => {
+  if (options.target_classes && options.target_classes.length > 0) {
+    return options.target_classes;
+  }
+  const res = [];
+  const classes = options.classes || [];
+  const grades = [...new Set(classes.map(c => String(c.grade_level)).filter(Boolean))].sort();
+  grades.forEach(g => {
+    const rep = classes.find(c => String(c.grade_level) === g);
+    const matching = classes.filter(c => String(c.grade_level) === g);
+    const rNames = matching.map(c => c.name).join(', ');
+    res.push({
+      type: 'global',
+      target_grade: g,
+      class_room_id: rep ? rep.id : null,
+      key: 'global_' + g,
+      label: matching.length > 1 ? `Kelas ${g} (Global - Mencakup ${rNames})` : `Kelas ${g} (Global - Seluruh Rombel)`,
+      short_label: `Kelas ${g} (Global)`,
+      group: 'Tingkat Global (Soal Bersama / ASAS / ASTS)'
+    });
+  });
+  classes.forEach(c => {
+    res.push({
+      type: 'specific',
+      target_grade: null,
+      class_room_id: c.id,
+      key: 'class_' + c.id,
+      label: `Kelas ${c.name} (Khusus Rombel ${c.name})`,
+      short_label: `Kelas ${c.name}`,
+      group: 'Rombel Spesifik (Khusus Guru / Kelas Tertentu)'
+    });
+  });
+  return res;
+});
+
+const globalTargetOptions = computed(() => allTargetOptions.value.filter(o => o.type === 'global'));
+const specificTargetOptions = computed(() => allTargetOptions.value.filter(o => o.type === 'specific'));
 
 const filters = reactive({
   academic_year_id: '',
@@ -2520,6 +2583,8 @@ const createForm = reactive({
   title: '',
   subject_id: '',
   class_room_id: '',
+  target_selection: '',
+  target_grade: null,
   exam_type: 'sts',
   semester: 'ganjil',
   execution_month: getCurrentMonthName(),
@@ -3785,7 +3850,9 @@ const fetchPackages = async () => {
 const openCreateModal = () => {
   createForm.title = '';
   createForm.subject_id = options.subjects[0]?.id || '';
+  createForm.target_selection = globalTargetOptions.value[0]?.key || (options.classes[0]?.id ? 'class_' + options.classes[0].id : '');
   createForm.class_room_id = options.classes[0]?.id || '';
+  createForm.target_grade = null;
   createForm.exam_type = 'sts';
   createForm.semester = 'ganjil';
   createForm.execution_month = getCurrentMonthName();
@@ -3820,6 +3887,8 @@ const editForm = reactive({
   title: '',
   subject_id: '',
   class_room_id: '',
+  target_selection: '',
+  target_grade: null,
   academic_year_id: '',
   exam_type: 'sts',
   semester: 'ganjil',
@@ -3837,6 +3906,14 @@ const openEditModal = (pkg) => {
   editForm.title = pkg.title || '';
   editForm.subject_id = pkg.subject_id || '';
   editForm.class_room_id = pkg.class_room_id || '';
+  editForm.target_grade = pkg.target_grade || null;
+  if (pkg.target_grade) {
+    editForm.target_selection = 'global_' + pkg.target_grade;
+  } else if (pkg.class_room_id) {
+    editForm.target_selection = 'class_' + pkg.class_room_id;
+  } else {
+    editForm.target_selection = globalTargetOptions.value[0]?.key || '';
+  }
   editForm.academic_year_id = pkg.academic_year_id || '';
   editForm.exam_type = pkg.exam_type || 'sts';
   editForm.semester = pkg.semester || 'ganjil';
@@ -3867,8 +3944,14 @@ const updatePackageInfo = async () => {
   if (!editingPackageId.value) return;
   submitting.value = true;
   try {
+    const chosenOpt = allTargetOptions.value.find(o => o.key === editForm.target_selection);
+    const resolvedClassId = chosenOpt ? chosenOpt.class_room_id : editForm.class_room_id;
+    const resolvedTargetGrade = chosenOpt ? chosenOpt.target_grade : null;
+
     const payload = {
       ...editForm,
+      class_room_id: resolvedClassId,
+      target_grade: resolvedTargetGrade,
       execution_date: editForm.execution_month && editForm.execution_year
         ? `${editForm.execution_month} ${editForm.execution_year}`
         : null
@@ -3890,8 +3973,14 @@ const updatePackageInfo = async () => {
 const createPackage = async () => {
   submitting.value = true;
   try {
+    const chosenOpt = allTargetOptions.value.find(o => o.key === createForm.target_selection);
+    const resolvedClassId = chosenOpt ? chosenOpt.class_room_id : createForm.class_room_id;
+    const resolvedTargetGrade = chosenOpt ? chosenOpt.target_grade : null;
+
     const payload = {
       ...createForm,
+      class_room_id: resolvedClassId,
+      target_grade: resolvedTargetGrade,
       execution_date: createForm.execution_month && createForm.execution_year
         ? `${createForm.execution_month} ${createForm.execution_year}`
         : null

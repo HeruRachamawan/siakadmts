@@ -551,15 +551,24 @@
         $logoPath = public_path('images/logo_madrasah_yaspih.png');
         $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : null;
 
-        $cleanClassName = strtoupper(trim($package->classRoom->name ?? 'VII'));
-        if (str_contains($cleanClassName, '7') || str_contains($cleanClassName, 'VII')) {
-            $classDisplay = 'VII(TUJUH) A/B*  Fase D';
-        } elseif (str_contains($cleanClassName, '8') || str_contains($cleanClassName, 'VIII')) {
-            $classDisplay = 'VIII(DELAPAN) A/B*  Fase D';
-        } elseif (str_contains($cleanClassName, '9') || str_contains($cleanClassName, 'IX')) {
-            $classDisplay = 'IX(SEMBILAN) A/B*  Fase D';
+        if (!empty($package->target_grade)) {
+            $classDisplay = match((string)$package->target_grade) {
+                '9' => 'IX(SEMBILAN) A/B*  Fase D',
+                '8' => 'VIII(DELAPAN) A/B*  Fase D',
+                '7' => 'VII(TUJUH) A/B*  Fase D',
+                default => 'Kelas ' . $package->target_grade . '  Fase D'
+            };
         } else {
-            $classDisplay = $cleanClassName . '  ' . ($package->academic_phase ?? 'Fase D');
+            $cleanClassName = strtoupper(trim($package->classRoom->name ?? 'VII'));
+            if (str_contains($cleanClassName, '7') || str_contains($cleanClassName, 'VII')) {
+                $classDisplay = 'VII(TUJUH) A/B*  Fase D';
+            } elseif (str_contains($cleanClassName, '8') || str_contains($cleanClassName, 'VIII')) {
+                $classDisplay = 'VIII(DELAPAN) A/B*  Fase D';
+            } elseif (str_contains($cleanClassName, '9') || str_contains($cleanClassName, 'IX')) {
+                $classDisplay = 'IX(SEMBILAN) A/B*  Fase D';
+            } else {
+                $classDisplay = $cleanClassName . '  ' . ($package->academic_phase ?? 'Fase D');
+            }
         }
 
         // Deteksi Semester Baku
