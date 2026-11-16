@@ -2974,94 +2974,556 @@ const previewKunci = () => {
   window.open(`/prints/exam/${activePackage.value.id}/kunci`, '_blank');
 };
 
-// Smart Auto-Generate Kisi-Kisi Engine
+// Smart Auto-Generate Kisi-Kisi Engine (Multi-Subject & Natural Heuristic NLP)
 const analyzeQuestionContent = (q, prevQ = null) => {
-  const cleanHtml = (q.question_text || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  const cleanHtml = (q.question_text || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
   const lowerText = cleanHtml.toLowerCase();
+  const currentSubject = (activePackage.value?.subject?.name || '').trim();
+
+  // Helper: Format string to Title Case
+  const toTitleCase = (str) => {
+    if (!str) return '';
+    return str
+      .toLowerCase()
+      .split(/\s+/)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  };
+
+  // Helper: Heuristic extraction of key subject matter directly from sentence
+  const extractHeuristicSubject = (rawText, lower) => {
+    if (!rawText || rawText.length < 5) return null;
+
+    // Check for quoted term e.g. "ikhtiar", 'tawakal', «al-adl»
+    const quoteMatch = rawText.match(/["'«]([^"'»]{3,40})["'»]/);
+    if (quoteMatch && quoteMatch[1] && !quoteMatch[1].match(/^(a|b|c|d|benar|salah)$/i)) {
+      return toTitleCase(quoteMatch[1].trim());
+    }
+
+    // Strip common exam preamble / filler questions
+    let stripped = rawText
+      .replace(/^(berikut\s+ini\s+yang\s+(bukan\s+)?merupakan|berikut\s+ini\s+yang\s+(bukan\s+)?termasuk|di\s+bawah\s+ini\s+yang\s+(bukan\s+)?termasuk|manakah\s+pernyataan\s+yang\s+tepat\s+mengenai|manakah\s+yang\s+(bukan\s+)?merupakan|perhatikan\s+(beberapa\s+)?(pernyataan|kutipan|ayat|hadits|tabel|gambar|data|kasus|contoh)\s+berikut(\s+ini)?[\s:,\.\-]*|salah\s+satu\s+(contoh|ciri|karakteristik|faktor|dampak|hikmah|keutamaan|tujuan|fungsi|bentuk)\s+(dari\s+)?|sikap\s+yang\s+mencerminkan|perilaku\s+yang\s+menunjukkan)\s*/i, '')
+      .trim();
+
+    // Extract core clause before delimiters (adalah, yaitu, merupakan, dinamakan, disebut, ?, :, .)
+    const clauseMatch = stripped.match(/^([a-zA-Z0-9\s\-_',]{4,55}?)(?:\s+(?:adalah|yaitu|merupakan|dinamakan|disebut|ialah|sebagai)|[?:.;]|$)/i);
+    if (clauseMatch && clauseMatch[1]) {
+      let core = clauseMatch[1].replace(/^(yang|pada|dalam|tentang|dari|untuk|dengan|bahwa)\s+/i, '').trim();
+      const words = core.split(/\s+/).filter(w => w.length > 2);
+      if (words.length >= 1 && words.length <= 6) {
+        return toTitleCase(core);
+      }
+    }
+    return null;
+  };
 
   // 1. Determine Topic / Material
   let topic = q.material || '';
+  let detectedDomain = 'umum';
+
   if (!topic) {
-    if (lowerText.match(/gui|grafis|antarmuka grafis|ikon|icon|simbol visual/)) {
+    // --- A. AKIDAH AKHLAK (MADRASAH) ---
+    if (lowerText.match(/al-ghaffar|al ghaffar|al-ghofur|maha pengampun/)) {
+      topic = 'Asmaul Husna: Al-Ghaffar';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/al-'afuw|al afuw|al-afuww|maha pemaaf/)) {
+      topic = 'Asmaul Husna: Al-\'Afuw';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/al-basith|al basith|maha melapangkan/)) {
+      topic = 'Asmaul Husna: Al-Basith';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/an-nafi|an nafi|maha pemberi manfaat/)) {
+      topic = 'Asmaul Husna: An-Nafi\'';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/ar-ra'uf|ar rauf|ar-rauf|maha pengasih/)) {
+      topic = 'Asmaul Husna: Ar-Ra\'uf';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/al-barr|al barr|maha penderma/)) {
+      topic = 'Asmaul Husna: Al-Barr';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/al-hakim|al hakim|maha bijaksana/)) {
+      topic = 'Asmaul Husna: Al-Hakim';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/al-fattah|al fattah|maha pembuka rahmat/)) {
+      topic = 'Asmaul Husna: Al-Fattah';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/al-adl|al adl|al-'adl|maha adil/)) {
+      topic = 'Asmaul Husna: Al-\'Adl';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/al-hayyu|al-qayyum|al qayyum|al hayyu/)) {
+      topic = 'Asmaul Husna: Al-Hayyu dan Al-Qayyum';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/asmaul husna|nama-nama baik allah/)) {
+      topic = 'Memahami Asmaul Husna';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/sifat wajib|sifat mustahil|sifat jaiz|wujud|qidam|baqa|mukhalafatu|qiyamuhu|wahdaniyah|qudrat|iradat|sama'|bashar|kalam/)) {
+      topic = 'Sifat-Sifat Allah SWT';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/malaikat|jibril|mikail|israfil|izrail|munkar|nakir|raqib|atid|malik|ridwan/)) {
+      topic = 'Iman kepada Malaikat Allah SWT';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/kitab|taurat|zabur|injil|suhuf|al-qur'an/)) {
+      topic = 'Iman kepada Kitab-Kitab Allah SWT';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/ulul azmi|mukjizat|karamah|karomah|ma'unah|maunah|irhas/)) {
+      topic = 'Mukjizat dan Keteladanan Rasul Ulul Azmi';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/hari kiamat|hari akhir|kiamat sugra|kiamat kubra|yaumul ba'ats|yaumul hisab|yaumul mizan|yaumul jaza|barzakh|tanda-tanda kiamat/)) {
+      topic = 'Iman kepada Hari Akhir (Kiamat)';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/qada|qadar|takdir mubram|takdir muallaq/)) {
+      topic = 'Iman kepada Qada dan Qadar (Takdir)';
+      detectedDomain = 'akidah';
+    } else if (lowerText.match(/tawakal|berserah diri kepada allah/)) {
+      topic = 'Sifat Tawakal (Akhlak Terpuji)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/ikhtiar|berusaha sungguh-sungguh/)) {
+      topic = 'Sifat Ikhtiar (Akhlak Terpuji)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/sabar|kesabaran/)) {
+      topic = 'Sifat Sabar (Akhlak Terpuji)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/syukur|bersyukur|nikmat allah/)) {
+      topic = 'Sifat Syukur (Akhlak Terpuji)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/qana'ah|qanaah|merasa cukup/)) {
+      topic = 'Sifat Qana\'ah (Akhlak Terpuji)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/husnudzan|berprasangka baik/)) {
+      topic = 'Perilaku Husnudzan (Prasangka Baik)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/tawadhu|rendah hati/)) {
+      topic = 'Sikap Tawadhu (Rendah Hati)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/tasamuh|toleransi/)) {
+      topic = 'Sikap Tasamuh (Toleransi)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/ta'awun|tolong menolong/)) {
+      topic = 'Sikap Ta\'awun (Tolong Menolong)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/istiqamah|konsisten/)) {
+      topic = 'Sifat Istiqamah';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/birrul walidain|orang tua|berbakti kepada guru|menghormati guru/)) {
+      topic = 'Berbakti kepada Orang Tua dan Guru';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/adab bergaul|adab berteman|adab media sosial|adab berpakaian|adab makan/)) {
+      topic = 'Adab Islam dalam Kehidupan Sehari-hari';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/ananiyah|egois|mementingkan diri/)) {
+      topic = 'Menghindari Perilaku Ananiyah (Egois)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/putus asa|pesimis/)) {
+      topic = 'Menghindari Perilaku Putus Asa';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/gadab|marah|pemarah/)) {
+      topic = 'Menghindari Sifat Gadab (Pemarah)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/tamak|serakah/)) {
+      topic = 'Menghindari Sifat Tamak (Serakah)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/riya|pamer|sum'ah/)) {
+      topic = 'Menghindari Perilaku Riya\' dan Sum\'ah';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/nifaq|munafik|ciri-ciri orang munafik/)) {
+      topic = 'Menghindari Sifat Nifaq (Munafik)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/hasad|dengki|iri hati/)) {
+      topic = 'Menghindari Perilaku Hasad (Dengki)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/gibah|menggunjing/)) {
+      topic = 'Larangan Perilaku Gibah (Menggunjing)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/fitnah|menuduh/)) {
+      topic = 'Bahaya Perilaku Fitnah';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/namimah|adu domba/)) {
+      topic = 'Larangan Perilaku Namimah (Adu Domba)';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/israf|tabdzir|boros|pemborosan/)) {
+      topic = 'Larangan Israf dan Tabdzir';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/abu bakar/)) {
+      topic = 'Keteladanan Sahabat Abu Bakar Ash-Shiddiq';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/umar bin khattab/)) {
+      topic = 'Keteladanan Sahabat Umar bin Khattab';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/utsman bin affan/)) {
+      topic = 'Keteladanan Sahabat Utsman bin Affan';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/ali bin abi thalib/)) {
+      topic = 'Keteladanan Sahabat Ali bin Abi Thalib';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/bilal bin rabah/)) {
+      topic = 'Keteladanan Sahabat Bilal bin Rabah';
+      detectedDomain = 'akhlak';
+    } else if (lowerText.match(/luqman/)) {
+      topic = 'Keteladanan dan Nasihat Luqman Al-Hakim';
+      detectedDomain = 'akhlak';
+
+    // --- B. FIKIH (MADRASAH) ---
+    } else if (lowerText.match(/thaharah|bersuci|hadas|wudhu|tayamum|mandi wajib|najis/)) {
+      topic = 'Ketentuan Thaharah dan Bersuci';
+      detectedDomain = 'fikih';
+    } else if (lowerText.match(/shalat fardhu|shalat wajib|rukun shalat|syarat shalat|batal shalat/)) {
+      topic = 'Ketentuan Shalat Fardhu';
+      detectedDomain = 'fikih';
+    } else if (lowerText.match(/shalat berjamaah|makmum masbuq|imam shalat/)) {
+      topic = 'Ketentuan Shalat Berjamaah';
+      detectedDomain = 'fikih';
+    } else if (lowerText.match(/shalat sunnah|tahajud|dhuha|witir|tarawih|rawatib|istikharah/)) {
+      topic = 'Ketentuan Shalat Sunnah';
+      detectedDomain = 'fikih';
+    } else if (lowerText.match(/sujud sahwi|sujud tilawah|sujud syukur/)) {
+      topic = 'Sujud Sahwi, Tilawah, dan Syukur';
+      detectedDomain = 'fikih';
+    } else if (lowerText.match(/shalat jum'at|khutbah jumat|shalat jumat/)) {
+      topic = 'Ketentuan Shalat Jum\'at';
+      detectedDomain = 'fikih';
+    } else if (lowerText.match(/shalat jamak|shalat qashar|jamak takdim|jamak takhir/)) {
+      topic = 'Shalat Jamak dan Qashar';
+      detectedDomain = 'fikih';
+    } else if (lowerText.match(/shalat jenazah|memandikan jenazah|mengafani|menguburkan/)) {
+      topic = 'Pengurusan dan Shalat Jenazah';
+      detectedDomain = 'fikih';
+    } else if (lowerText.match(/zakat fitrah|zakat mal|nisab|haul|mustahiq/)) {
+      topic = 'Ketentuan Zakat dalam Islam';
+      detectedDomain = 'fikih';
+    } else if (lowerText.match(/puasa ramadhan|puasa sunnah|syarat puasa|rukun puasa|kaffarah|fidyah/)) {
+      topic = 'Ketentuan Ibadah Puasa';
+      detectedDomain = 'fikih';
+    } else if (lowerText.match(/haji|umrah|miqat|thawaf|tawaf|sa'i|wukuf|tahallul/)) {
+      topic = 'Ibadah Haji dan Umrah';
+      detectedDomain = 'fikih';
+    } else if (lowerText.match(/makanan halal|minuman halal|makanan haram|bangkai|daging babi/)) {
+      topic = 'Makanan dan Minuman Halal & Haram';
+      detectedDomain = 'fikih';
+    } else if (lowerText.match(/qurban|kurban|aqiqah|penyembelihan hewan/)) {
+      topic = 'Penyembelihan Hewan, Qurban, dan Aqiqah';
+      detectedDomain = 'fikih';
+    } else if (lowerText.match(/jual beli|khiyar|riba|pinjam meminjam|sewa menyewa|ariyah|qardh|ijarah/)) {
+      topic = 'Ketentuan Muamalah Islam';
+      detectedDomain = 'fikih';
+
+    // --- C. AL-QUR'AN HADITS ---
+    } else if (lowerText.match(/nun sukun|tanwin|idzhar|idgham|iqlab|ikhfa/)) {
+      topic = 'Hukum Tajwid: Nun Sukun dan Tanwin';
+      detectedDomain = 'qurdis';
+    } else if (lowerText.match(/mim sukun|ikhfa syafawi|idgham mimi|idzhar syafawi/)) {
+      topic = 'Hukum Tajwid: Mim Sukun';
+      detectedDomain = 'qurdis';
+    } else if (lowerText.match(/al-syamsiyah|al-qamariyah/)) {
+      topic = 'Hukum Bacaan Al-Syamsiyah dan Al-Qamariyah';
+      detectedDomain = 'qurdis';
+    } else if (lowerText.match(/qalqalah|sugra|kubra/)) {
+      topic = 'Hukum Bacaan Qalqalah';
+      detectedDomain = 'qurdis';
+    } else if (lowerText.match(/hukum mad|mad thabi'i|mad wajib|mad jaiz|mad aridh/)) {
+      topic = 'Hukum Bacaan Mad';
+      detectedDomain = 'qurdis';
+    } else if (lowerText.match(/menuntut ilmu/)) {
+      topic = 'Hadits tentang Kewajiban Menuntut Ilmu';
+      detectedDomain = 'qurdis';
+    } else if (lowerText.match(/silaturahmi/)) {
+      topic = 'Hadits tentang Menjaga Silaturahmi';
+      detectedDomain = 'qurdis';
+
+    // --- D. SEJARAH KEBUDAYAAN ISLAM (SKI) ---
+    } else if (lowerText.match(/khulafaur rasyidin/)) {
+      topic = 'Kepemimpinan Khulafaur Rasyidin';
+      detectedDomain = 'ski';
+    } else if (lowerText.match(/daulah umayyah|damaskus|muawiyah/)) {
+      topic = 'Perkembangan Daulah Umayyah';
+      detectedDomain = 'ski';
+    } else if (lowerText.match(/daulah abbasiyah|baghdad|harun al-rasyid|baitul hikmah/)) {
+      topic = 'Perkembangan Daulah Abbasiyah';
+      detectedDomain = 'ski';
+    } else if (lowerText.match(/daulah ayyubiyah|shalahuddin/)) {
+      topic = 'Perkembangan Daulah Ayyubiyah';
+      detectedDomain = 'ski';
+    } else if (lowerText.match(/walisongo|sunan/)) {
+      topic = 'Peran Walisongo dalam Dakwah Islam';
+      detectedDomain = 'ski';
+    } else if (lowerText.match(/kerajaan islam|samudera pasai|demak|mataram islam|banten|ternate/)) {
+      topic = 'Kerajaan-Kerajaan Islam di Nusantara';
+      detectedDomain = 'ski';
+
+    // --- E. MATEMATIKA ---
+    } else if (lowerText.match(/pola bilangan|barisan aritmatika|deret/)) {
+      topic = 'Pola Bilangan dan Barisan';
+      detectedDomain = 'matematika';
+    } else if (lowerText.match(/koordinat kartesius|sumbu x|sumbu y|kuadran/)) {
+      topic = 'Sistem Koordinat Kartesius';
+      detectedDomain = 'matematika';
+    } else if (lowerText.match(/relasi dan fungsi|domain|kodomain|range/)) {
+      topic = 'Relasi dan Fungsi';
+      detectedDomain = 'matematika';
+    } else if (lowerText.match(/persamaan garis lurus|gradien/)) {
+      topic = 'Persamaan Garis Lurus (Gradien)';
+      detectedDomain = 'matematika';
+    } else if (lowerText.match(/spldv|persamaan linier dua variabel/)) {
+      topic = 'Sistem Persamaan Linier Dua Variabel (SPLDV)';
+      detectedDomain = 'matematika';
+    } else if (lowerText.match(/teorema pythagoras|sisi miring|hipotenusa|tripel pythagoras/)) {
+      topic = 'Teorema Pythagoras';
+      detectedDomain = 'matematika';
+    } else if (lowerText.match(/lingkaran|jari-jari|diameter|juring|tembereng|sudut pusat/)) {
+      topic = 'Unsur dan Perhitungan Lingkaran';
+      detectedDomain = 'matematika';
+    } else if (lowerText.match(/bangun ruang|kubus|balok|prisma|limas|luas permukaan|volume bangun/)) {
+      topic = 'Bangun Ruang Sisi Datar';
+      detectedDomain = 'matematika';
+    } else if (lowerText.match(/statistika|mean|median|modus|rata-rata|diagram/)) {
+      topic = 'Statistika dan Pengolahan Data';
+      detectedDomain = 'matematika';
+    } else if (lowerText.match(/peluang|ruang sampel|titik sampel/)) {
+      topic = 'Teori Peluang';
+      detectedDomain = 'matematika';
+    } else if (lowerText.match(/bilangan berpangkat|bentuk akar|eksponen/)) {
+      topic = 'Bilangan Berpangkat dan Bentuk Akar';
+      detectedDomain = 'matematika';
+    } else if (lowerText.match(/persamaan kuadrat|diskriminan/)) {
+      topic = 'Persamaan dan Fungsi Kuadrat';
+      detectedDomain = 'matematika';
+    } else if (lowerText.match(/transformasi geometri|translasi|refleksi|rotasi|dilatasi/)) {
+      topic = 'Transformasi Geometri';
+      detectedDomain = 'matematika';
+    } else if (lowerText.match(/kesebangunan|kekongruenan|sebangun|kongruen/)) {
+      topic = 'Kesebangunan dan Kekongruenan';
+      detectedDomain = 'matematika';
+
+    // --- F. IPA (SAINS) ---
+    } else if (lowerText.match(/fotosintesis|klorofil|reaksi terang|glukosa/)) {
+      topic = 'Proses Fotosintesis Tumbuhan';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/sistem gerak|tulang|sendi|otot|rangka/)) {
+      topic = 'Sistem Gerak pada Manusia';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/sistem pencernaan|enzim|lambung|usus halus/)) {
+      topic = 'Sistem Pencernaan Manusia';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/sistem peredaran darah|jantung|arteri|vena|sel darah/)) {
+      topic = 'Sistem Peredaran Darah Manusia';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/sistem pernapasan|alveolus|paru-paru|diafragma/)) {
+      topic = 'Sistem Pernapasan Manusia';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/sistem ekskresi|ginjal|nefron|urine|kulit/)) {
+      topic = 'Sistem Ekskresi Manusia';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/hukum newton|kelembaman|aksi reaksi|gaya gesek/)) {
+      topic = 'Gaya dan Hukum Gerak Newton';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/usaha dan pesawat sederhana|tuas|katrol|bidang miring/)) {
+      topic = 'Usaha dan Pesawat Sederhana';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/tekanan hidrostatis|hukum pascal|archimedes|terapung/)) {
+      topic = 'Tekanan Zat dan Penerapannya';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/getaran|gelombang|bunyi|frekuensi|amplitudo/)) {
+      topic = 'Getaran, Gelombang, dan Bunyi';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/cahaya|cermin|lensa|alat optik|mikroskop/)) {
+      topic = 'Cahaya dan Alat Optik';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/listrik statis|listrik dinamis|muatan|arus listrik|ohm/)) {
+      topic = 'Listrik Statis dan Dinamis';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/kemagnetan|induksi elektromagnetik|transformator/)) {
+      topic = 'Kemagnetan dan Induksi Elektromagnetik';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/tata surya|planet|rotasi|revolusi|gerhana/)) {
+      topic = 'Sistem Tata Surya';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/pewarisan sifat|gen|kromosom|monohibrid|dihibrid|mendel/)) {
+      topic = 'Pewarisan Sifat (Genetika)';
+      detectedDomain = 'sains';
+    } else if (lowerText.match(/bioteknologi|fermentasi|rekayasa genetika/)) {
+      topic = 'Penerapan Bioteknologi';
+      detectedDomain = 'sains';
+
+    // --- G. BAHASA INDONESIA ---
+    } else if (lowerText.match(/teks deskripsi|pancaindra/)) {
+      topic = 'Teks Deskripsi';
+      detectedDomain = 'bahasa';
+    } else if (lowerText.match(/cerita fantasi|alur cerita/)) {
+      topic = 'Teks Cerita Fantasi';
+      detectedDomain = 'bahasa';
+    } else if (lowerText.match(/teks prosedur|tahapan/)) {
+      topic = 'Teks Prosedur';
+      detectedDomain = 'bahasa';
+    } else if (lowerText.match(/laporan hasil observasi|lho/)) {
+      topic = 'Teks Laporan Hasil Observasi (LHO)';
+      detectedDomain = 'bahasa';
+    } else if (lowerText.match(/puisi|larik|bait|rima|majas/)) {
+      topic = 'Karya Sastra Puisi';
+      detectedDomain = 'bahasa';
+    } else if (lowerText.match(/teks berita|5w\+1h|adiksimba/)) {
+      topic = 'Teks Berita';
+      detectedDomain = 'bahasa';
+    } else if (lowerText.match(/iklan|slogan|poster/)) {
+      topic = 'Iklan, Slogan, dan Poster';
+      detectedDomain = 'bahasa';
+    } else if (lowerText.match(/teks eksposisi|tesis|argumentasi/)) {
+      topic = 'Teks Eksposisi';
+      detectedDomain = 'bahasa';
+    } else if (lowerText.match(/teks eksplanasi|sebab akibat/)) {
+      topic = 'Teks Eksplanasi';
+      detectedDomain = 'bahasa';
+    } else if (lowerText.match(/cerpen|cerita pendek|latar|tema/)) {
+      topic = 'Teks Cerita Pendek (Cerpen)';
+      detectedDomain = 'bahasa';
+    } else if (lowerText.match(/kalimat efektif|kata baku|ejaan|konjungsi/)) {
+      topic = 'Kaidah Kebahasaan dan Kalimat Efektif';
+      detectedDomain = 'bahasa';
+
+    // --- H. PENDIDIKAN PANCASILA (PKN) ---
+    } else if (lowerText.match(/pancasila|bpupki|ppki|sila ke/)) {
+      topic = 'Nilai-Nilai dan Sejarah Pancasila';
+      detectedDomain = 'sosial';
+    } else if (lowerText.match(/norma kesusilaan|norma kesopanan|norma hukum|norma agama/)) {
+      topic = 'Norma dan Keadilan dalam Masyarakat';
+      detectedDomain = 'sosial';
+    } else if (lowerText.match(/uud 1945|konstitusi|pembukaan uud/)) {
+      topic = 'Konstitusi dan UUD NRI Tahun 1945';
+      detectedDomain = 'sosial';
+    } else if (lowerText.match(/bhinneka tunggal ika|keberagaman|sara/)) {
+      topic = 'Keberagaman dalam Bhinneka Tunggal Ika';
+      detectedDomain = 'sosial';
+    } else if (lowerText.match(/demokrasi|kedaulatan rakyat|lembaga negara/)) {
+      topic = 'Kedaulatan dan Lembaga-Lembaga Negara';
+      detectedDomain = 'sosial';
+    } else if (lowerText.match(/bela negara|cinta tanah air|nasionalisme/)) {
+      topic = 'Komitmen Bela Negara';
+      detectedDomain = 'sosial';
+
+    // --- I. INFORMATIKA / KOMPUTER ---
+    } else if (lowerText.match(/gui|antarmuka grafis|ikon visual/)) {
       topic = 'Antarmuka Pengguna (GUI)';
+      detectedDomain = 'komputer';
     } else if (lowerText.match(/cli|command line|baris perintah/)) {
       topic = 'Interaksi Pengguna (CLI)';
-    } else if (lowerText.match(/vui|voice|suara|siri|alexa|google assistant|bixby/)) {
+      detectedDomain = 'komputer';
+    } else if (lowerText.match(/vui|voice|suara|siri|alexa|google assistant/)) {
       topic = 'Voice User Interface (VUI)';
-    } else if (lowerText.match(/remote|kendali jarak jauh|alat pengendali/)) {
-      topic = 'Alat Pengendali Perangkat';
-    } else if (lowerText.match(/kalkulator|calculator|\b2\s*\+\s*7/)) {
-      topic = 'Aplikasi Perhitungan Sederhana';
-    } else if (lowerText.match(/windows|jendela/)) {
-      topic = 'Manajemen Jendela Aplikasi';
-    } else if (lowerText.match(/file explorer|folder|direktori|map dokumen|pengelolaan file/)) {
+      detectedDomain = 'komputer';
+    } else if (lowerText.match(/file explorer|folder|direktori|pengelolaan file/)) {
       topic = 'Pengelolaan File dan Folder';
+      detectedDomain = 'komputer';
     } else if (lowerText.match(/hard disk|flash drive|flashdisk|kartu memori|media simpan/)) {
       topic = 'Media Penyimpanan Elektronik';
+      detectedDomain = 'komputer';
     } else if (lowerText.match(/ekstensi|\.jpg|\.png|\.doc|\.docx|format file/)) {
       topic = 'Format dan Ekstensi File';
-    } else if (lowerText.match(/finder|macos|macintosh/)) {
-      topic = 'Pengelolaan File di Berbagai OS';
-    } else if (lowerText.match(/ctrl-c|ctrl-v|shortcut|tombol pintas|salin|tempel/)) {
+      detectedDomain = 'komputer';
+    } else if (lowerText.match(/ctrl-c|ctrl-v|shortcut|tombol pintas/)) {
       topic = 'Tombol Pintas (Shortcut)';
+      detectedDomain = 'komputer';
     } else if (lowerText.match(/peramban|browser|chrome|firefox|safari|edge/)) {
       topic = 'Peramban Web (Web Browser)';
-    } else if (lowerText.match(/bookmark|penanda halaman|favorit/)) {
-      topic = 'Fitur Penanda (Bookmark)';
-    } else if (lowerText.match(/mesin pencari|search engine|google|bing|yahoo/)) {
+      detectedDomain = 'komputer';
+    } else if (lowerText.match(/mesin pencari|search engine|google|bing/)) {
       topic = 'Mesin Pencari (Search Engine)';
-    } else if (lowerText.match(/kata kunci|keyword|operator and|operator logika/)) {
-      topic = 'Teknik Pencarian Internet';
-    } else if (lowerText.match(/surel|email|gmail|surat elektronik|inbox|spam/)) {
+      detectedDomain = 'komputer';
+    } else if (lowerText.match(/surel|email|gmail|inbox/)) {
       topic = 'Surel (Electronic Mail)';
-    } else if (lowerText.match(/keyboard|papan tombol|function keys|f1|f12|qwerty/)) {
+      detectedDomain = 'komputer';
+    } else if (lowerText.match(/keyboard|papan tombol/)) {
       topic = 'Perangkat Keras (Keyboard)';
-    } else if (lowerText.match(/ram|rom|random access memory|volatile|mainboard/)) {
+      detectedDomain = 'komputer';
+    } else if (lowerText.match(/ram|rom|random access memory|volatile/)) {
       topic = 'Memori Komputer (RAM dan ROM)';
+      detectedDomain = 'komputer';
     } else if (lowerText.match(/cloud storage|penyimpanan awan/)) {
       topic = 'Penyimpanan Awan (Cloud Storage)';
-    } else if (lowerText.match(/mouse|tetikus|cpu|central processing|monitor|printer|input devices|output devices|hardware/)) {
+      detectedDomain = 'komputer';
+    } else if (lowerText.match(/mouse|tetikus|cpu|monitor|printer|hardware/)) {
       topic = 'Perangkat Keras Komputer';
+      detectedDomain = 'komputer';
     } else if (lowerText.match(/software|perangkat lunak/)) {
       topic = 'Perangkat Lunak Komputer';
-    } else if (prevQ && prevQ.material) {
-      topic = prevQ.material;
+      detectedDomain = 'komputer';
+
+    // --- J. CERDAS: HEURISTIC EXTRACTION LANGSUNG DARI KALIMAT SOAL ---
     } else {
-      const subjectName = activePackage.value?.subject?.name || 'Informatika';
-      topic = 'Materi Pokok ' + subjectName;
+      const extracted = extractHeuristicSubject(cleanHtml, lowerText);
+      if (extracted) {
+        topic = extracted;
+      } else if (prevQ && prevQ.material) {
+        topic = prevQ.material;
+      } else if (currentSubject) {
+        topic = 'Materi ' + currentSubject;
+      } else {
+        topic = 'Materi Pokok';
+      }
     }
   }
 
-  // 2. Determine Indikator Soal
+  // Deteksi domain jika belum teridentifikasi
+  if (detectedDomain === 'umum') {
+    const sLow = currentSubject.toLowerCase();
+    if (sLow.includes('akidah') || sLow.includes('aqidah')) detectedDomain = 'akidah';
+    else if (sLow.includes('akhlak')) detectedDomain = 'akhlak';
+    else if (sLow.includes('fikih') || sLow.includes('fiqih')) detectedDomain = 'fikih';
+    else if (sLow.includes('qur') || sLow.includes('hadits') || sLow.includes('hadis')) detectedDomain = 'qurdis';
+    else if (sLow.includes('sejarah') || sLow.includes('ski')) detectedDomain = 'ski';
+    else if (sLow.includes('arab') || sLow.includes('indonesia') || sLow.includes('inggris')) detectedDomain = 'bahasa';
+    else if (sLow.includes('matematika') || sLow.includes('ipa')) detectedDomain = 'matematika';
+    else if (sLow.includes('komputer') || sLow.includes('informatika')) detectedDomain = 'komputer';
+  }
+
+  // 2. Determine Indikator Soal Kontekstual
   let indicator = q.indicator || '';
   if (!indicator) {
     const qType = q.question_type || 'pg';
+
+    // Tentukan frasa pembuka stimulus yang tepat
+    let stimulus = 'Disajikan pertanyaan';
+    if (lowerText.match(/tabel|data berikut/)) stimulus = 'Disajikan tabel data';
+    else if (lowerText.match(/gambar|foto|diagram/)) stimulus = 'Disajikan gambar ilustrasi';
+    else if (lowerText.match(/ayat|surat|hadits|firman/)) stimulus = 'Disajikan teks ayat atau hadits';
+    else if (lowerText.match(/contoh|perilaku|sikap|kasus|cerita|kisah/)) stimulus = 'Disajikan ilustrasi kasus atau perilaku';
+    else if (lowerText.match(/pernyataan/)) stimulus = 'Disajikan beberapa pernyataan';
+
     if (qType === 'pg') {
-      if (lowerText.match(/kepanjangan|singkatan|arti/)) {
-        indicator = `Disajikan deskripsi tentang ${topic}, peserta didik dapat menentukan kepanjangan atau definisinya secara tepat.`;
-      } else if (lowerText.match(/dinamakan|disebut|istilah|pengertian/)) {
-        indicator = `Disajikan pengertian atau simbol visual pada ${topic}, peserta didik dapat mengidentifikasi istilah yang tepat.`;
-      } else if (lowerText.match(/mengapa|alasan|keunggulan|keuntungan/)) {
-        indicator = `Disajikan permasalahan terkait ${topic}, peserta didik dapat menjelaskan karakteristik/keunggulannya dengan tepat.`;
-      } else if (lowerText.match(/langkah|cara|prosedur|menu|perintah/)) {
-        indicator = `Disajikan skenario aktivitas pada ${topic}, peserta didik dapat menentukan langkah menu yang digunakan.`;
-      } else if (lowerText.match(/hitung|hasil|kalkulasi/)) {
-        indicator = `Disajikan studi kasus operasi perhitungan pada ${topic}, peserta didik dapat menentukan hasil kalkulasi yang tepat.`;
-      } else if (lowerText.match(/contoh|macam|daftar/)) {
-        indicator = `Disajikan daftar pilihan, peserta didik dapat menentukan contoh media atau perangkat terkait ${topic} dengan benar.`;
+      if (lowerText.match(/pengertian|definisi|arti|makna|istilah|disebut|dinamakan/)) {
+        indicator = `${stimulus} terkait ${topic}, peserta didik dapat mengidentifikasi pengertian atau maknanya secara tepat.`;
+      } else if (lowerText.match(/contoh|perilaku|penerapan|tindakan|cerminan|kehidupan/)) {
+        indicator = `${stimulus}, peserta didik dapat menentukan contoh penerapan dari ${topic} dalam kehidupan nyata dengan tepat.`;
+      } else if (lowerText.match(/ciri|karakteristik|tanda|sifat/)) {
+        indicator = `${stimulus}, peserta didik dapat mengidentifikasi ciri-ciri atau tanda dari ${topic} dengan benar.`;
+      } else if (lowerText.match(/hikmah|manfaat|keutamaan|tujuan|fungsi/)) {
+        indicator = `${stimulus}, peserta didik dapat menjelaskan hikmah atau keutamaan terkait ${topic} secara tepat.`;
+      } else if (lowerText.match(/dampak|akibat|bahaya|larangan|tercela/)) {
+        indicator = `${stimulus}, peserta didik dapat menganalisis dampak negatif atau larangan terkait ${topic} dengan benar.`;
+      } else if (lowerText.match(/dalil|ayat|hadits|surat|riwayat/)) {
+        indicator = `${stimulus}, peserta didik dapat menentukan kandungan dalil yang berkaitan dengan ${topic} secara tepat.`;
+      } else if (lowerText.match(/hitung|hasil|kalkulasi|nilai|luas|volume|besar/)) {
+        indicator = `${stimulus}, peserta didik dapat menghitung dan menentukan hasil akhir dari ${topic} dengan tepat.`;
+      } else if (lowerText.match(/langkah|cara|prosedur|tahapan|urutan|syarat|rukun/)) {
+        indicator = `${stimulus}, peserta didik dapat menentukan urutan tata cara/prosedur terkait ${topic} dengan benar.`;
+      } else if (lowerText.match(/mengapa|alasan|keunggulan|faktor|penyebab|akibat/)) {
+        indicator = `${stimulus} mengenai ${topic}, peserta didik dapat menganalisis alasan atau faktor penyebabnya dengan tepat.`;
       } else {
-        indicator = `Disajikan pertanyaan mengenai ${topic}, peserta didik dapat menentukan jawaban yang tepat.`;
+        indicator = `${stimulus} mengenai ${topic}, peserta didik dapat menentukan jawaban yang tepat.`;
       }
     } else if (qType === 'pg_complex') {
-      indicator = `Disajikan ragam pernyataan terkait ${topic}, peserta didik dapat memilih beberapa pilihan/pernyataan yang benar.`;
+      indicator = `${stimulus} terkait ${topic}, peserta didik dapat menganalisis dan memilih beberapa pernyataan yang benar.`;
     } else if (qType === 'true_false') {
-      indicator = `Disajikan pernyataan mengenai ${topic}, peserta didik dapat memvalidasi kebenaran pernyataan tersebut secara tepat.`;
+      indicator = `${stimulus} mengenai ${topic}, peserta didik dapat memvalidasi kebenaran pernyataan tersebut secara tepat.`;
     } else if (qType === 'matching') {
-      indicator = `Disajikan komponen atau istilah ${topic}, peserta didik dapat menjodohkan dengan fungsi atau pasangannya yang sesuai.`;
+      indicator = `${stimulus} terkait ${topic}, peserta didik dapat menjodohkan konsep atau istilah dengan pasangannya yang sesuai.`;
     } else if (qType === 'short_answer') {
-      indicator = `Disajikan pertanyaan ringkas terkait ${topic}, peserta didik dapat menuliskan jawaban yang tepat.`;
+      indicator = `${stimulus} terkait ${topic}, peserta didik dapat menuliskan jawaban yang tepat secara ringkas.`;
     } else if (qType === 'essay') {
-      indicator = `Disajikan pertanyaan konseptual terkait ${topic}, peserta didik dapat menjelaskan konsep dan penerapannya secara jelas dan terperinci.`;
+      indicator = `${stimulus} konseptual terkait ${topic}, peserta didik dapat menjelaskan, menganalisis, dan memberikan contoh penerapannya secara mendalam.`;
     }
   }
 
@@ -3071,11 +3533,27 @@ const analyzeQuestionContent = (q, prevQ = null) => {
     if (prevQ && prevQ.basic_competency && prevQ.material === topic) {
       tp = prevQ.basic_competency;
     } else {
-      tp = `Peserta didik mampu memahami dan menganalisis konsep ${topic} beserta penerapannya.`;
+      if (detectedDomain === 'akidah') {
+        tp = `Peserta didik mampu memahami, meyakini, dan meneladani nilai-nilai ${topic} dalam kehidupan beriman.`;
+      } else if (detectedDomain === 'akhlak') {
+        tp = `Peserta didik mampu menganalisis, membiasakan, dan menerapkan perilaku terpuji terkait ${topic} dalam kehidupan sehari-hari.`;
+      } else if (detectedDomain === 'fikih') {
+        tp = `Peserta didik mampu memahami ketentuan hukum syariat dan mempraktikkan tata cara ibadah ${topic} secara benar.`;
+      } else if (detectedDomain === 'qurdis') {
+        tp = `Peserta didik mampu membaca sesuai kaidah tajwid serta memahami dan mengamalkan kandungan ${topic}.`;
+      } else if (detectedDomain === 'ski') {
+        tp = `Peserta didik mampu menganalisis sejarah perkembangan Islam dan meneladani keteladanan ${topic}.`;
+      } else if (detectedDomain === 'matematika' || detectedDomain === 'sains') {
+        tp = `Peserta didik mampu memahami konsep, prinsip, dan menyelesaikan permasalahan kontekstual terkait ${topic}.`;
+      } else if (detectedDomain === 'bahasa') {
+        tp = `Peserta didik mampu menganalisis struktur, kaidah kebahasaan, dan menyajikan gagasan mengenai ${topic}.`;
+      } else {
+        tp = `Peserta didik mampu memahami dan menganalisis konsep ${topic} beserta penerapannya.`;
+      }
     }
   }
 
-  // 4. Determine Level Kognitif & Tingkat Kesukaran cerdas sesuai materi dan isi soal
+  // 4. Determine Level Kognitif Cerdas
   let cognitive = 'L1';
   const qType = q.question_type || 'pg';
 
@@ -3087,7 +3565,7 @@ const analyzeQuestionContent = (q, prevQ = null) => {
   } else if (
     qType === 'matching' ||
     qType === 'true_false' ||
-    lowerText.match(/langkah|cara|prosedur|shortcut|fungsi|kegunaan|bagaimana|hitung|mengurutkan|terapkan|gunakan|tentukan|hasil dari|pasangkan|manfaat/i)
+    lowerText.match(/langkah|cara|prosedur|fungsi|kegunaan|bagaimana|hitung|mengurutkan|terapkan|gunakan|tentukan|hasil dari|pasangkan|manfaat|contoh|perilaku|cerminan/i)
   ) {
     cognitive = 'L2';
   } else {
