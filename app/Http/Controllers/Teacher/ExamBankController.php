@@ -187,7 +187,8 @@ class ExamBankController extends Controller
             'exam_type' => 'required|string|in:uh,sts,sas,pat,am,quiz',
             'semester' => 'required|string|in:ganjil,genap',
             'total_questions' => 'required|integer|min:1|max:100',
-            'composition_preset' => 'nullable|string|in:standard_mts_45,classic_pg_essay,custom',
+            'composition_preset' => 'nullable|string|in:standard_mts_45,custom_distribution,classic_pg_essay,custom',
+            'custom_counts' => 'nullable|array',
             'kkm' => 'nullable|numeric|min:0|max:100',
             'pg_weight' => 'nullable|numeric|min:0|max:100',
             'essay_weight' => 'nullable|numeric|min:0|max:100',
@@ -217,14 +218,36 @@ class ExamBankController extends Controller
         $activeYear = AcademicYear::where('is_active', true)->first();
 
         $compositionPreset = $request->input('composition_preset', 'standard_mts_45');
+        $customCounts = $request->input('custom_counts', []);
 
         $pgWeight = $validated['pg_weight'] ?? 70.00;
         $essayWeight = $validated['essay_weight'] ?? 30.00;
+        $totalQuestions = $validated['total_questions'];
 
         // Jika menggunakan Preset Standar MTs (45 Butir), otomatis gunakan bobot resmi 75 : 25
-        if ($compositionPreset === 'standard_mts_45' && $validated['total_questions'] == 45) {
+        if ($compositionPreset === 'standard_mts_45') {
+            $totalQuestions = 45;
             $pgWeight = 75.00;
             $essayWeight = 25.00;
+        } elseif ($compositionPreset === 'custom_distribution' && !empty($customCounts)) {
+            $cPg = max(0, intval($customCounts['pg'] ?? 0));
+            $cPgk = max(0, intval($customCounts['pg_complex'] ?? 0));
+            $cTf = max(0, intval($customCounts['true_false'] ?? 0));
+            $cMatch = max(0, intval($customCounts['matching'] ?? 0));
+            $cEssay = max(0, intval($customCounts['essay'] ?? 0));
+
+            $calcTotal = $cPg + $cPgk + $cTf + $cMatch + $cEssay;
+            if ($calcTotal > 0) {
+                $totalQuestions = $calcTotal;
+            }
+
+            $objPoints = ($cPg * 1) + ($cPgk * 3) + ($cTf * 2) + ($cMatch * 3);
+            $essayPoints = ($cEssay * 5);
+            $sumPoints = $objPoints + $essayPoints;
+            if ($sumPoints > 0) {
+                $pgWeight = round(($objPoints / $sumPoints) * 100, 2);
+                $essayWeight = round(($essayPoints / $sumPoints) * 100, 2);
+            }
         }
 
         $package = ExamPackage::create([
@@ -235,7 +258,7 @@ class ExamBankController extends Controller
             'title' => $validated['title'],
             'exam_type' => $validated['exam_type'],
             'semester' => $validated['semester'],
-            'total_questions' => $validated['total_questions'],
+            'total_questions' => $totalQuestions,
             'kkm' => $validated['kkm'] ?? 75.00,
             'pg_weight' => $pgWeight,
             'essay_weight' => $essayWeight,
@@ -250,63 +273,162 @@ class ExamBankController extends Controller
         $existingCount = $package->questions()->count();
         if ($existingCount < $package->total_questions) {
             $newQuestions = [];
-            for ($i = $existingCount + 1; $i <= $package->total_questions; $i++) {
-                $qType = 'pg';
-                $scoreWeight = 1.00;
-                $options = json_encode(['A' => '', 'B' => '', 'C' => '', 'D' => '']);
-                $correctAnswer = null;
 
-                // Terapkan otomatisasi struktur tipe soal jika Preset Standar MTs (45 Butir) dipilih
-                if ($compositionPreset === 'standard_mts_45' && $package->total_questions == 45) {
-                    if ($i <= 20) {
-                        // No 1-20: PG Tunggal (bobot 1)
-                        $qType = 'pg';
-                        $scoreWeight = 1.00;
-                        $options = json_encode(['A' => '', 'B' => '', 'C' => '', 'D' => '']);
-                        $correctAnswer = null;
-                    } elseif ($i <= 30) {
-                        // No 21-30: PG Kompleks (bobot 3)
-                        $qType = 'pg_complex';
-                        $scoreWeight = 3.00;
-                        $options = json_encode(['A' => '', 'B' => '', 'C' => '', 'D' => '']);
-                        $correctAnswer = null;
-                    } elseif ($i <= 35) {
-                        // No 31-35: Benar / Salah (bobot 2)
-                        $qType = 'true_false';
-                        $scoreWeight = 2.00;
-                        $options = json_encode(['mode' => 'single', 'answer' => 'B']);
-                        $correctAnswer = 'B';
-                    } elseif ($i <= 40) {
-                        // No 36-40: Menjodohkan (bobot 3)
-                        $qType = 'matching';
-                        $scoreWeight = 3.00;
-                        $options = json_encode(['mode' => 'single', 'right_text' => '', 'key' => 'A']);
-                        $correctAnswer = 'A';
-                    } else {
-                        // No 41-45: Uraian / Essay (bobot 5)
-                        $qType = 'essay';
-                        $scoreWeight = 5.00;
-                        $options = null;
-                        $correctAnswer = null;
-                    }
+            if ($compositionPreset === 'custom_distribution' && !empty($customCounts)) {
+                $cPg = max(0, intval($customCounts['pg'] ?? 0));
+                $cPgk = max(0, intval($customCounts['pg_complex'] ?? 0));
+                $cTf = max(0, intval($customCounts['true_false'] ?? 0));
+                $cMatch = max(0, intval($customCounts['matching'] ?? 0));
+                $cEssay = max(0, intval($customCounts['essay'] ?? 0));
+
+                $qNum = 1;
+                // 1. PG Tunggal
+                for ($k = 0; $k < $cPg; $k++) {
+                    $newQuestions[] = [
+                        'exam_package_id' => $package->id,
+                        'question_number' => $qNum++,
+                        'question_type' => 'pg',
+                        'question_text' => null,
+                        'options' => json_encode(['A' => '', 'B' => '', 'C' => '', 'D' => '']),
+                        'correct_answer' => null,
+                        'score_weight' => 1.00,
+                        'cognitive_level' => 'L1',
+                        'difficulty_level' => 'sedang',
+                        'telaah_status' => 'layak',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
                 }
+                // 2. PG Kompleks
+                for ($k = 0; $k < $cPgk; $k++) {
+                    $newQuestions[] = [
+                        'exam_package_id' => $package->id,
+                        'question_number' => $qNum++,
+                        'question_type' => 'pg_complex',
+                        'question_text' => null,
+                        'options' => json_encode(['A' => '', 'B' => '', 'C' => '', 'D' => '']),
+                        'correct_answer' => null,
+                        'score_weight' => 3.00,
+                        'cognitive_level' => 'L2',
+                        'difficulty_level' => 'sedang',
+                        'telaah_status' => 'layak',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+                // 3. Benar / Salah
+                for ($k = 0; $k < $cTf; $k++) {
+                    $newQuestions[] = [
+                        'exam_package_id' => $package->id,
+                        'question_number' => $qNum++,
+                        'question_type' => 'true_false',
+                        'question_text' => null,
+                        'options' => json_encode(['mode' => 'single', 'answer' => 'B']),
+                        'correct_answer' => 'B',
+                        'score_weight' => 2.00,
+                        'cognitive_level' => 'L1',
+                        'difficulty_level' => 'sedang',
+                        'telaah_status' => 'layak',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+                // 4. Menjodohkan
+                for ($k = 0; $k < $cMatch; $k++) {
+                    $newQuestions[] = [
+                        'exam_package_id' => $package->id,
+                        'question_number' => $qNum++,
+                        'question_type' => 'matching',
+                        'question_text' => null,
+                        'options' => json_encode(['mode' => 'single', 'right_text' => '', 'key' => 'A']),
+                        'correct_answer' => 'A',
+                        'score_weight' => 3.00,
+                        'cognitive_level' => 'L2',
+                        'difficulty_level' => 'sedang',
+                        'telaah_status' => 'layak',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+                // 5. Uraian / Essay
+                for ($k = 0; $k < $cEssay; $k++) {
+                    $newQuestions[] = [
+                        'exam_package_id' => $package->id,
+                        'question_number' => $qNum++,
+                        'question_type' => 'essay',
+                        'question_text' => null,
+                        'options' => null,
+                        'correct_answer' => null,
+                        'score_weight' => 5.00,
+                        'cognitive_level' => 'L3',
+                        'difficulty_level' => 'sukar',
+                        'telaah_status' => 'layak',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            } else {
+                for ($i = $existingCount + 1; $i <= $package->total_questions; $i++) {
+                    $qType = 'pg';
+                    $scoreWeight = 1.00;
+                    $options = json_encode(['A' => '', 'B' => '', 'C' => '', 'D' => '']);
+                    $correctAnswer = null;
 
-                $newQuestions[] = [
-                    'exam_package_id' => $package->id,
-                    'question_number' => $i,
-                    'question_type' => $qType,
-                    'question_text' => null,
-                    'options' => $options,
-                    'correct_answer' => $correctAnswer,
-                    'score_weight' => $scoreWeight,
-                    'cognitive_level' => 'L1',
-                    'difficulty_level' => 'sedang',
-                    'telaah_status' => 'layak',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
+                    // Terapkan otomatisasi struktur tipe soal jika Preset Standar MTs (45 Butir) dipilih
+                    if ($compositionPreset === 'standard_mts_45' && $package->total_questions == 45) {
+                        if ($i <= 20) {
+                            // No 1-20: PG Tunggal (bobot 1)
+                            $qType = 'pg';
+                            $scoreWeight = 1.00;
+                            $options = json_encode(['A' => '', 'B' => '', 'C' => '', 'D' => '']);
+                            $correctAnswer = null;
+                        } elseif ($i <= 30) {
+                            // No 21-30: PG Kompleks (bobot 3)
+                            $qType = 'pg_complex';
+                            $scoreWeight = 3.00;
+                            $options = json_encode(['A' => '', 'B' => '', 'C' => '', 'D' => '']);
+                            $correctAnswer = null;
+                        } elseif ($i <= 35) {
+                            // No 31-35: Benar / Salah (bobot 2)
+                            $qType = 'true_false';
+                            $scoreWeight = 2.00;
+                            $options = json_encode(['mode' => 'single', 'answer' => 'B']);
+                            $correctAnswer = 'B';
+                        } elseif ($i <= 40) {
+                            // No 36-40: Menjodohkan (bobot 3)
+                            $qType = 'matching';
+                            $scoreWeight = 3.00;
+                            $options = json_encode(['mode' => 'single', 'right_text' => '', 'key' => 'A']);
+                            $correctAnswer = 'A';
+                        } else {
+                            // No 41-45: Uraian / Essay (bobot 5)
+                            $qType = 'essay';
+                            $scoreWeight = 5.00;
+                            $options = null;
+                            $correctAnswer = null;
+                        }
+                    }
+
+                    $newQuestions[] = [
+                        'exam_package_id' => $package->id,
+                        'question_number' => $i,
+                        'question_type' => $qType,
+                        'question_text' => null,
+                        'options' => $options,
+                        'correct_answer' => $correctAnswer,
+                        'score_weight' => $scoreWeight,
+                        'cognitive_level' => 'L1',
+                        'difficulty_level' => 'sedang',
+                        'telaah_status' => 'layak',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
             }
-            ExamQuestion::insert($newQuestions);
+
+            if (!empty($newQuestions)) {
+                ExamQuestion::insert($newQuestions);
+            }
         }
 
         return response()->json([

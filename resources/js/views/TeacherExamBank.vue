@@ -468,9 +468,10 @@
               @change="handleCompositionPresetChange"
               class="form-select font-bold text-xs bg-white border-indigo-200 text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             >
-              <option value="standard_mts_45">🎯 Standar Asesmen MTs (45 Butir: 5 Tipe Soal - Total 100 Poin)</option>
-              <option value="classic_pg_essay">📝 Standar PG & Uraian (Proporsional Persentase)</option>
-              <option value="custom">⚙️ Kustom / Ulangan Harian (Atur Bebas Mandiri)</option>
+              <option value="standard_mts_45">🎯 Standar Baku MTs (45 Butir - Template Resmi ASAS)</option>
+              <option value="custom_distribution">✏️ Kustom Pembagian per Tipe Soal (Atur Bebas Jumlah Tiap Tipe)</option>
+              <option value="classic_pg_essay">📝 Standar Sederhana (Hanya PG & Uraian)</option>
+              <option value="custom">⚙️ Polos / Bebas (Tanpa Pembagian Tipe di Awal)</option>
             </select>
 
             <!-- Preview Khusus Standar MTs 45 Butir -->
@@ -490,6 +491,144 @@
                 ✨ Begitu paket dibuat, seluruh 45 nomor langsung memiliki tipe soal dan bobot nilai yang siap pakai.
               </p>
             </div>
+
+            <!-- Builder Kustom Pembagian Butir per Tipe Soal -->
+            <div v-if="createForm.composition_preset === 'custom_distribution'" class="bg-white p-3 rounded-xl border border-indigo-200 text-xs text-slate-700 space-y-2.5 shadow-2xs">
+              <div class="flex items-center justify-between border-b border-indigo-50 pb-1.5">
+                <span class="font-bold text-indigo-950 flex items-center gap-1.5">
+                  <span>✏️ Tentukan Jumlah Butir Tiap Tipe:</span>
+                </span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" :class="customTotalPoints === 100 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'">
+                  Total Skor: {{ customTotalPoints }} Poin
+                </span>
+              </div>
+
+              <div class="space-y-1.5">
+                <!-- PG Tunggal -->
+                <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/80 rounded-lg border border-slate-100">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[10px] flex items-center justify-center">PG</span>
+                    <div>
+                      <div class="font-bold text-slate-800 text-[11px]">Pilihan Ganda Tunggal</div>
+                      <div class="text-[10px] text-slate-400">Bobot: 1 Poin per nomor</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      v-model.number="createForm.custom_counts.pg"
+                      min="0"
+                      max="100"
+                      class="form-input w-16 py-1 text-center font-bold text-xs"
+                      @input="recalculateCustomDistribution"
+                    />
+                    <span class="text-[11px] text-slate-500 w-8">butir</span>
+                  </div>
+                </div>
+
+                <!-- PG Kompleks -->
+                <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/80 rounded-lg border border-slate-100">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-md bg-indigo-100 text-indigo-800 font-bold text-[10px] flex items-center justify-center">PGK</span>
+                    <div>
+                      <div class="font-bold text-slate-800 text-[11px]">Pilihan Ganda Kompleks</div>
+                      <div class="text-[10px] text-slate-400">Bobot: 3 Poin per nomor</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      v-model.number="createForm.custom_counts.pg_complex"
+                      min="0"
+                      max="100"
+                      class="form-input w-16 py-1 text-center font-bold text-xs"
+                      @input="recalculateCustomDistribution"
+                    />
+                    <span class="text-[11px] text-slate-500 w-8">butir</span>
+                  </div>
+                </div>
+
+                <!-- Benar / Salah -->
+                <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/80 rounded-lg border border-slate-100">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-md bg-purple-100 text-purple-800 font-bold text-[10px] flex items-center justify-center">B/S</span>
+                    <div>
+                      <div class="font-bold text-slate-800 text-[11px]">Benar / Salah</div>
+                      <div class="text-[10px] text-slate-400">Bobot: 2 Poin per nomor</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      v-model.number="createForm.custom_counts.true_false"
+                      min="0"
+                      max="100"
+                      class="form-input w-16 py-1 text-center font-bold text-xs"
+                      @input="recalculateCustomDistribution"
+                    />
+                    <span class="text-[11px] text-slate-500 w-8">butir</span>
+                  </div>
+                </div>
+
+                <!-- Menjodohkan -->
+                <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/80 rounded-lg border border-slate-100">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-md bg-teal-100 text-teal-800 font-bold text-[10px] flex items-center justify-center">JOD</span>
+                    <div>
+                      <div class="font-bold text-slate-800 text-[11px]">Menjodohkan (Matching)</div>
+                      <div class="text-[10px] text-slate-400">Bobot: 3 Poin per nomor</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      v-model.number="createForm.custom_counts.matching"
+                      min="0"
+                      max="100"
+                      class="form-input w-16 py-1 text-center font-bold text-xs"
+                      @input="recalculateCustomDistribution"
+                    />
+                    <span class="text-[11px] text-slate-500 w-8">butir</span>
+                  </div>
+                </div>
+
+                <!-- Uraian / Essay -->
+                <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/80 rounded-lg border border-slate-100">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-md bg-blue-100 text-blue-800 font-bold text-[10px] flex items-center justify-center">ESS</span>
+                    <div>
+                      <div class="font-bold text-slate-800 text-[11px]">Uraian / Essay</div>
+                      <div class="text-[10px] text-slate-400">Bobot: 5 Poin per nomor</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      v-model.number="createForm.custom_counts.essay"
+                      min="0"
+                      max="100"
+                      class="form-input w-16 py-1 text-center font-bold text-xs"
+                      @input="recalculateCustomDistribution"
+                    />
+                    <span class="text-[11px] text-slate-500 w-8">butir</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Live Summary Box -->
+              <div class="p-2 bg-indigo-50/70 rounded-lg border border-indigo-100 text-[11px] space-y-1">
+                <div class="flex items-center justify-between font-bold text-indigo-950">
+                  <span>📊 Total Soal Otomatis:</span>
+                  <span class="text-xs text-indigo-700 bg-white px-2 py-0.5 rounded border border-indigo-200">
+                    {{ createForm.total_questions }} Butir Soal
+                  </span>
+                </div>
+                <div class="text-[10px] text-slate-600 pt-0.5 leading-relaxed">
+                  Struktur Nomor:
+                  <span class="font-bold text-indigo-900">{{ customDistributionPlanText }}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
@@ -500,12 +639,13 @@
                 v-model.number="createForm.total_questions"
                 min="1"
                 max="100"
-                :disabled="createForm.composition_preset === 'standard_mts_45'"
+                :disabled="createForm.composition_preset === 'standard_mts_45' || createForm.composition_preset === 'custom_distribution'"
                 required
                 class="form-input"
-                :class="createForm.composition_preset === 'standard_mts_45' ? 'bg-slate-100 text-slate-500 font-bold cursor-not-allowed' : ''"
+                :class="createForm.composition_preset === 'standard_mts_45' || createForm.composition_preset === 'custom_distribution' ? 'bg-slate-100 text-slate-500 font-bold cursor-not-allowed' : ''"
               />
               <span v-if="createForm.composition_preset === 'standard_mts_45'" class="text-[10px] text-slate-400">Terkunci 45 butir (Standar MTs)</span>
+              <span v-else-if="createForm.composition_preset === 'custom_distribution'" class="text-[10px] text-slate-400">Dihitung otomatis dari komposisi di atas</span>
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">KKM / KKTP</label>
@@ -522,7 +662,7 @@
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">
-                {{ createForm.composition_preset === 'standard_mts_45' ? 'Rasio Objektif : Uraian' : 'Bobot Objektif : Uraian (%)' }}
+                {{ createForm.composition_preset === 'standard_mts_45' || createForm.composition_preset === 'custom_distribution' ? 'Rasio Objektif : Uraian' : 'Bobot Objektif : Uraian (%)' }}
               </label>
               <div class="flex items-center gap-2">
                 <input
@@ -530,8 +670,8 @@
                   v-model.number="createForm.pg_weight"
                   placeholder="Objektif"
                   class="form-input text-center"
-                  :disabled="createForm.composition_preset === 'standard_mts_45'"
-                  :class="createForm.composition_preset === 'standard_mts_45' ? 'bg-slate-100 text-slate-500 font-bold cursor-not-allowed' : ''"
+                  :disabled="createForm.composition_preset === 'standard_mts_45' || createForm.composition_preset === 'custom_distribution'"
+                  :class="createForm.composition_preset === 'standard_mts_45' || createForm.composition_preset === 'custom_distribution' ? 'bg-slate-100 text-slate-500 font-bold cursor-not-allowed' : ''"
                 />
                 <span class="text-xs text-slate-400">:</span>
                 <input
@@ -539,11 +679,12 @@
                   v-model.number="createForm.essay_weight"
                   placeholder="Uraian"
                   class="form-input text-center"
-                  :disabled="createForm.composition_preset === 'standard_mts_45'"
-                  :class="createForm.composition_preset === 'standard_mts_45' ? 'bg-slate-100 text-slate-500 font-bold cursor-not-allowed' : ''"
+                  :disabled="createForm.composition_preset === 'standard_mts_45' || createForm.composition_preset === 'custom_distribution'"
+                  :class="createForm.composition_preset === 'standard_mts_45' || createForm.composition_preset === 'custom_distribution' ? 'bg-slate-100 text-slate-500 font-bold cursor-not-allowed' : ''"
                 />
               </div>
               <span v-if="createForm.composition_preset === 'standard_mts_45'" class="text-[10px] text-slate-400">75 Poin Objektif : 25 Poin Uraian</span>
+              <span v-else-if="createForm.composition_preset === 'custom_distribution'" class="text-[10px] text-slate-400">{{ createForm.pg_weight }}% Objektif : {{ createForm.essay_weight }}% Uraian</span>
               <span v-else class="text-[10px] text-slate-400">Total persentase bobot = 100%</span>
             </div>
           </div>
@@ -2206,6 +2347,13 @@ const createForm = reactive({
   exam_type: 'sts',
   semester: 'ganjil',
   composition_preset: 'standard_mts_45',
+  custom_counts: {
+    pg: 20,
+    pg_complex: 10,
+    true_false: 5,
+    matching: 5,
+    essay: 5
+  },
   total_questions: 45,
   kkm: 75,
   academic_phase: 'Fase D',
@@ -2213,11 +2361,75 @@ const createForm = reactive({
   essay_weight: 25
 });
 
+const recalculateCustomDistribution = () => {
+  const pg = Math.max(0, parseInt(createForm.custom_counts?.pg) || 0);
+  const pgk = Math.max(0, parseInt(createForm.custom_counts?.pg_complex) || 0);
+  const tf = Math.max(0, parseInt(createForm.custom_counts?.true_false) || 0);
+  const match = Math.max(0, parseInt(createForm.custom_counts?.matching) || 0);
+  const essay = Math.max(0, parseInt(createForm.custom_counts?.essay) || 0);
+
+  const totalQ = pg + pgk + tf + match + essay;
+  createForm.total_questions = totalQ > 0 ? totalQ : 1;
+
+  const objPoints = (pg * 1) + (pgk * 3) + (tf * 2) + (match * 3);
+  const essayPoints = (essay * 5);
+  const totalPoints = objPoints + essayPoints;
+
+  if (totalPoints > 0) {
+    createForm.pg_weight = Math.round((objPoints / totalPoints) * 100);
+    createForm.essay_weight = 100 - createForm.pg_weight;
+  }
+};
+
+const customTotalPoints = computed(() => {
+  const pg = Math.max(0, parseInt(createForm.custom_counts?.pg) || 0);
+  const pgk = Math.max(0, parseInt(createForm.custom_counts?.pg_complex) || 0);
+  const tf = Math.max(0, parseInt(createForm.custom_counts?.true_false) || 0);
+  const match = Math.max(0, parseInt(createForm.custom_counts?.matching) || 0);
+  const essay = Math.max(0, parseInt(createForm.custom_counts?.essay) || 0);
+  return (pg * 1) + (pgk * 3) + (tf * 2) + (match * 3) + (essay * 5);
+});
+
+const customDistributionPlanText = computed(() => {
+  const pg = Math.max(0, parseInt(createForm.custom_counts?.pg) || 0);
+  const pgk = Math.max(0, parseInt(createForm.custom_counts?.pg_complex) || 0);
+  const tf = Math.max(0, parseInt(createForm.custom_counts?.true_false) || 0);
+  const match = Math.max(0, parseInt(createForm.custom_counts?.matching) || 0);
+  const essay = Math.max(0, parseInt(createForm.custom_counts?.essay) || 0);
+
+  const segments = [];
+  let curr = 1;
+  if (pg > 0) {
+    segments.push(`No ${curr}–${curr + pg - 1} PG`);
+    curr += pg;
+  }
+  if (pgk > 0) {
+    segments.push(`No ${curr}–${curr + pgk - 1} PGK`);
+    curr += pgk;
+  }
+  if (tf > 0) {
+    segments.push(`No ${curr}–${curr + tf - 1} B/S`);
+    curr += tf;
+  }
+  if (match > 0) {
+    segments.push(`No ${curr}–${curr + match - 1} Jodoh`);
+    curr += match;
+  }
+  if (essay > 0) {
+    segments.push(`No ${curr}–${curr + essay - 1} Essay`);
+    curr += essay;
+  }
+
+  return segments.length > 0 ? segments.join(' • ') : 'Belum ada butir soal';
+});
+
 const handleCompositionPresetChange = () => {
   if (createForm.composition_preset === 'standard_mts_45') {
     createForm.total_questions = 45;
     createForm.pg_weight = 75;
     createForm.essay_weight = 25;
+  } else if (createForm.composition_preset === 'custom_distribution') {
+    recalculateCustomDistribution();
   } else if (createForm.composition_preset === 'classic_pg_essay') {
     if (createForm.total_questions === 45) {
       createForm.total_questions = 35;
@@ -2749,6 +2961,13 @@ const openCreateModal = () => {
   createForm.exam_type = 'sts';
   createForm.semester = 'ganjil';
   createForm.composition_preset = 'standard_mts_45';
+  createForm.custom_counts = {
+    pg: 20,
+    pg_complex: 10,
+    true_false: 5,
+    matching: 5,
+    essay: 5
+  };
   createForm.total_questions = 45;
   createForm.kkm = 75;
   createForm.academic_phase = 'Fase D';
