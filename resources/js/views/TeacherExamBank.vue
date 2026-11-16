@@ -451,10 +451,61 @@
               </select>
             </div>
           </div>
+          <!-- Pola & Komposisi Soal (Preset Cerdas) -->
+          <div class="p-3.5 bg-gradient-to-br from-indigo-50/80 to-slate-50 border border-indigo-100 rounded-xl space-y-2.5">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                <Sparkles class="w-3.5 h-3.5 text-indigo-600" />
+                Pola & Komposisi Tipe Soal
+              </label>
+              <span class="text-[10px] font-bold text-indigo-600 bg-white px-2 py-0.5 rounded-full border border-indigo-200 shadow-2xs">
+                Otomatisasi Tipe & Bobot
+              </span>
+            </div>
+            
+            <select
+              v-model="createForm.composition_preset"
+              @change="handleCompositionPresetChange"
+              class="form-select font-bold text-xs bg-white border-indigo-200 text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="standard_mts_45">🎯 Standar Asesmen MTs (45 Butir: 5 Tipe Soal - Total 100 Poin)</option>
+              <option value="classic_pg_essay">📝 Standar PG & Uraian (Proporsional Persentase)</option>
+              <option value="custom">⚙️ Kustom / Ulangan Harian (Atur Bebas Mandiri)</option>
+            </select>
+
+            <!-- Preview Khusus Standar MTs 45 Butir -->
+            <div v-if="createForm.composition_preset === 'standard_mts_45'" class="bg-white p-3 rounded-lg border border-indigo-100 text-[11px] text-slate-700 space-y-1.5 shadow-2xs">
+              <div class="flex items-center justify-between font-bold text-indigo-950 border-b border-indigo-50 pb-1">
+                <span>Rincian Struktur Paket Soal:</span>
+                <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[10px] font-bold">100 Poin Pas</span>
+              </div>
+              <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] pt-0.5">
+                <div>• <strong>No. 1–20</strong> : PG Tunggal (20 × 1 = 20 Poin)</div>
+                <div>• <strong>No. 21–30</strong> : PG Kompleks (10 × 3 = 30 Poin)</div>
+                <div>• <strong>No. 31–35</strong> : Benar / Salah (5 × 2 = 10 Poin)</div>
+                <div>• <strong>No. 36–40</strong> : Menjodohkan (5 × 3 = 15 Poin)</div>
+                <div class="col-span-2">• <strong>No. 41–45</strong> : Uraian / Essay (5 × 5 = 25 Poin)</div>
+              </div>
+              <p class="text-[10px] text-indigo-600 font-medium italic pt-1 border-t border-slate-100">
+                ✨ Begitu paket dibuat, seluruh 45 nomor langsung memiliki tipe soal dan bobot nilai yang siap pakai.
+              </p>
+            </div>
+          </div>
+
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Jumlah Butir Soal *</label>
-              <input type="number" v-model.number="createForm.total_questions" min="1" max="100" required class="form-input" />
+              <input
+                type="number"
+                v-model.number="createForm.total_questions"
+                min="1"
+                max="100"
+                :disabled="createForm.composition_preset === 'standard_mts_45'"
+                required
+                class="form-input"
+                :class="createForm.composition_preset === 'standard_mts_45' ? 'bg-slate-100 text-slate-500 font-bold cursor-not-allowed' : ''"
+              />
+              <span v-if="createForm.composition_preset === 'standard_mts_45'" class="text-[10px] text-slate-400">Terkunci 45 butir (Standar MTs)</span>
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">KKM / KKTP</label>
@@ -470,12 +521,30 @@
               </select>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Bobot PG : Essay (%)</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                {{ createForm.composition_preset === 'standard_mts_45' ? 'Rasio Objektif : Uraian' : 'Bobot Objektif : Uraian (%)' }}
+              </label>
               <div class="flex items-center gap-2">
-                <input type="number" v-model.number="createForm.pg_weight" placeholder="PG" class="form-input text-center" />
+                <input
+                  type="number"
+                  v-model.number="createForm.pg_weight"
+                  placeholder="Objektif"
+                  class="form-input text-center"
+                  :disabled="createForm.composition_preset === 'standard_mts_45'"
+                  :class="createForm.composition_preset === 'standard_mts_45' ? 'bg-slate-100 text-slate-500 font-bold cursor-not-allowed' : ''"
+                />
                 <span class="text-xs text-slate-400">:</span>
-                <input type="number" v-model.number="createForm.essay_weight" placeholder="Essay" class="form-input text-center" />
+                <input
+                  type="number"
+                  v-model.number="createForm.essay_weight"
+                  placeholder="Uraian"
+                  class="form-input text-center"
+                  :disabled="createForm.composition_preset === 'standard_mts_45'"
+                  :class="createForm.composition_preset === 'standard_mts_45' ? 'bg-slate-100 text-slate-500 font-bold cursor-not-allowed' : ''"
+                />
               </div>
+              <span v-if="createForm.composition_preset === 'standard_mts_45'" class="text-[10px] text-slate-400">75 Poin Objektif : 25 Poin Uraian</span>
+              <span v-else class="text-[10px] text-slate-400">Total persentase bobot = 100%</span>
             </div>
           </div>
           <div class="pt-2 flex justify-end gap-2">
@@ -560,12 +629,13 @@
               </select>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Bobot PG : Essay (%)</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Bobot Objektif : Uraian (%)</label>
               <div class="flex items-center gap-2">
-                <input type="number" v-model.number="editForm.pg_weight" placeholder="PG" class="form-input text-center" />
+                <input type="number" v-model.number="editForm.pg_weight" placeholder="Objektif" class="form-input text-center" />
                 <span class="text-xs text-slate-400">:</span>
-                <input type="number" v-model.number="editForm.essay_weight" placeholder="Essay" class="form-input text-center" />
+                <input type="number" v-model.number="editForm.essay_weight" placeholder="Uraian" class="form-input text-center" />
               </div>
+              <span class="text-[10px] text-slate-400">Total proporsi persentase harus 100%</span>
             </div>
           </div>
           <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
@@ -1790,61 +1860,76 @@
           <form @submit.prevent="applyBatchType" class="p-6 space-y-4">
             <!-- Preset Cepat -->
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1.5">Preset Populer 1-Klik:</label>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block text-xs font-bold text-slate-700">Preset Standar & Cepat:</label>
+                <span class="text-[10px] text-slate-400">Format Resmi MTs Al-Hasanah</span>
+              </div>
+
+              <!-- Master 1-Click Button untuk 45 Butir -->
+              <button
+                type="button"
+                @click="applyFullMtsStandardPreset"
+                class="w-full mb-2 py-2 px-3 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-xl border border-emerald-300 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+                title="Terapkan pembagian tipe dan bobot resmi (No 1-20 PG, 21-30 PGK, 31-35 B/S, 36-40 Jodoh, 41-45 Essay) total 100 poin"
+              >
+                <Sparkles class="w-4 h-4 text-emerald-600" />
+                <span>⚡ Terapkan Format Standar Lengkap MTs (No 1–45: 5 Tipe Soal - 100 Poin)</span>
+              </button>
+
               <div class="flex flex-wrap gap-1.5">
                 <button
                   type="button"
-                  @click="applyBatchPreset(31, 35, 'true_false', 1.0)"
+                  @click="applyBatchPreset(1, 20, 'pg', 1.0)"
                   class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer"
-                  :class="batchForm.fromNumber === 31 && batchForm.toNumber === 35 && batchForm.targetType === 'true_false'
-                    ? 'bg-purple-100 text-purple-800 border-purple-300 font-bold'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200'"
-                >
-                  <span>🎯 No. 31–35: Benar / Salah</span>
-                </button>
-
-                <button
-                  type="button"
-                  @click="applyBatchPreset(36, 40, 'matching', 1.0)"
-                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer"
-                  :class="batchForm.fromNumber === 36 && batchForm.toNumber === 40 && batchForm.targetType === 'matching'
-                    ? 'bg-teal-100 text-teal-800 border-teal-300 font-bold'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200'"
-                >
-                  <span>🔗 No. 36–40: Menjodohkan</span>
-                </button>
-
-                <button
-                  type="button"
-                  @click="applyBatchPreset(41, 45, 'essay', 2.0)"
-                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer"
-                  :class="batchForm.fromNumber === 41 && batchForm.toNumber === 45 && batchForm.targetType === 'essay'
-                    ? 'bg-blue-100 text-blue-800 border-blue-300 font-bold'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200'"
-                >
-                  <span>📝 No. 41–45: Uraian / Essay</span>
-                </button>
-
-                <button
-                  type="button"
-                  @click="applyBatchPreset(1, 30, 'pg', 1.0)"
-                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer"
-                  :class="batchForm.fromNumber === 1 && batchForm.toNumber === 30 && batchForm.targetType === 'pg'
+                  :class="batchForm.fromNumber === 1 && batchForm.toNumber === 20 && batchForm.targetType === 'pg'
                     ? 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'
                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200'"
                 >
-                  <span>🔘 No. 1–30: PG Tunggal</span>
+                  <span>🔘 No. 1–20: PG Tunggal (1 Poin)</span>
                 </button>
 
                 <button
                   type="button"
-                  @click="applyBatchPreset(21, 30, 'pg_complex', 1.0)"
+                  @click="applyBatchPreset(21, 30, 'pg_complex', 3.0)"
                   class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer"
                   :class="batchForm.fromNumber === 21 && batchForm.toNumber === 30 && batchForm.targetType === 'pg_complex'
                     ? 'bg-indigo-100 text-indigo-800 border-indigo-300 font-bold'
                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200'"
                 >
-                  <span>🔲 No. 21–30: PG Kompleks</span>
+                  <span>🔲 No. 21–30: PG Kompleks (3 Poin)</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="applyBatchPreset(31, 35, 'true_false', 2.0)"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer"
+                  :class="batchForm.fromNumber === 31 && batchForm.toNumber === 35 && batchForm.targetType === 'true_false'
+                    ? 'bg-purple-100 text-purple-800 border-purple-300 font-bold'
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200'"
+                >
+                  <span>🎯 No. 31–35: Benar / Salah (2 Poin)</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="applyBatchPreset(36, 40, 'matching', 3.0)"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer"
+                  :class="batchForm.fromNumber === 36 && batchForm.toNumber === 40 && batchForm.targetType === 'matching'
+                    ? 'bg-teal-100 text-teal-800 border-teal-300 font-bold'
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200'"
+                >
+                  <span>🔗 No. 36–40: Menjodohkan (3 Poin)</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="applyBatchPreset(41, 45, 'essay', 5.0)"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer"
+                  :class="batchForm.fromNumber === 41 && batchForm.toNumber === 45 && batchForm.targetType === 'essay'
+                    ? 'bg-blue-100 text-blue-800 border-blue-300 font-bold'
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200'"
+                >
+                  <span>📝 No. 41–45: Uraian / Essay (5 Poin)</span>
                 </button>
               </div>
             </div>
@@ -2120,12 +2205,27 @@ const createForm = reactive({
   class_room_id: '',
   exam_type: 'sts',
   semester: 'ganjil',
-  total_questions: 20,
+  composition_preset: 'standard_mts_45',
+  total_questions: 45,
   kkm: 75,
   academic_phase: 'Fase D',
-  pg_weight: 70,
-  essay_weight: 30
+  pg_weight: 75,
+  essay_weight: 25
 });
+
+const handleCompositionPresetChange = () => {
+  if (createForm.composition_preset === 'standard_mts_45') {
+    createForm.total_questions = 45;
+    createForm.pg_weight = 75;
+    createForm.essay_weight = 25;
+  } else if (createForm.composition_preset === 'classic_pg_essay') {
+    if (createForm.total_questions === 45) {
+      createForm.total_questions = 35;
+    }
+    createForm.pg_weight = 70;
+    createForm.essay_weight = 30;
+  }
+};
 
 // Excel Import
 const showImportModal = ref(false);
@@ -2216,6 +2316,50 @@ const applyBatchPreset = (from, to, type, weight = 1.0) => {
   batchForm.toNumber = Math.min(to, activeQuestions.value.length);
   batchForm.targetType = type;
   batchForm.scoreWeight = weight;
+};
+
+const applyFullMtsStandardPreset = () => {
+  if (!confirm('Terapkan format standar resmi MTs Al-Hasanah ke seluruh butir soal paket ini?\n\n• No 1–20   : PG Tunggal (bobot 1 poin)\n• No 21–30 : PG Kompleks (bobot 3 poin)\n• No 31–35 : Benar / Salah (bobot 2 poin)\n• No 36–40 : Menjodohkan (bobot 3 poin)\n• No 41–45 : Uraian / Essay (bobot 5 poin)\n\nTotal Maksimal: 100 Poin Pas.')) {
+    return;
+  }
+
+  activeQuestions.value.forEach(q => {
+    const num = q.question_number;
+    if (num <= 20) {
+      q.question_type = 'pg';
+      q.score_weight = 1.0;
+      ensureOptions(q);
+    } else if (num <= 30) {
+      q.question_type = 'pg_complex';
+      q.score_weight = 3.0;
+      ensureOptions(q);
+    } else if (num <= 35) {
+      q.question_type = 'true_false';
+      q.score_weight = 2.0;
+      q.options = { mode: 'single', answer: q.correct_answer || 'B' };
+      if (!q.correct_answer || (q.correct_answer !== 'B' && q.correct_answer !== 'S')) {
+        q.correct_answer = 'B';
+      }
+    } else if (num <= 40) {
+      q.question_type = 'matching';
+      q.score_weight = 3.0;
+      const single = ensureSingleMatching(q);
+      q.options = {
+        mode: 'single',
+        right_text: single.right_text || '',
+        key: single.key || 'A'
+      };
+      if (!q.correct_answer) {
+        q.correct_answer = q.options.key || 'A';
+      }
+    } else if (num <= 45) {
+      q.question_type = 'essay';
+      q.score_weight = 5.0;
+    }
+  });
+
+  showBatchModal.value = false;
+  alert('Berhasil! Seluruh butir soal (No 1 s/d 45) telah disesuaikan dengan format standar resmi MTs Al-Hasanah (Total 100 Poin).');
 };
 
 const getQuestionTypeLabel = (type) => {
@@ -2604,11 +2748,12 @@ const openCreateModal = () => {
   createForm.class_room_id = options.classes[0]?.id || '';
   createForm.exam_type = 'sts';
   createForm.semester = 'ganjil';
-  createForm.total_questions = 20;
+  createForm.composition_preset = 'standard_mts_45';
+  createForm.total_questions = 45;
   createForm.kkm = 75;
   createForm.academic_phase = 'Fase D';
-  createForm.pg_weight = 70;
-  createForm.essay_weight = 30;
+  createForm.pg_weight = 75;
+  createForm.essay_weight = 25;
   showCreateModal.value = true;
 };
 
