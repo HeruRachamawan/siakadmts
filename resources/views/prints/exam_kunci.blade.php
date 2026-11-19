@@ -504,27 +504,27 @@
         $defaultEssay = [
             [
                 'no' => 41,
-                'text' => 'Perangkat Keras (Hardware): Komponen fisik komputer yang nyata, dapat dilihat, dan dapat disentuh secara langsung (contoh: CPU, monitor, keyboard, mouse).<br><br>Perangkat Lunak (Software): Program, aplikasi, atau instruksi elektronik yang tersimpan di dalam komputer untuk menjalankan perangkat keras dan tidak memiliki wujud fisik (contoh: OS Windows, Microsoft Word, Browser).',
+                'text' => 'Kunci jawaban dan kriteria penskoran disesuaikan dengan rumusan materi butir soal terkait.',
                 'score' => 5
             ],
             [
                 'no' => 42,
-                'text' => 'Contoh peranti masukan: Keyboard (papan ketik), Mouse (tetikus), Scanner, Microphone, Webcam.',
+                'text' => 'Kunci jawaban dan kriteria penskoran disesuaikan dengan rumusan materi butir soal terkait.',
                 'score' => 5
             ],
             [
                 'no' => 43,
-                'text' => 'Kegunaan utama: Memasukkan karakter teks, angka, simbol, serta memberikan perintah ke sistem komputer.<br><br>Jenis tata letak paling populer: QWERTY (diambil dari 6 tombol huruf pertama pada baris teratas mesin tik).',
+                'text' => 'Kunci jawaban dan kriteria penskoran disesuaikan dengan rumusan materi butir soal terkait.',
                 'score' => 5
             ],
             [
                 'no' => 44,
-                'text' => 'RAM (Random Access Memory): Bersifat volatile (sementara), sehingga seluruh data di dalam RAM akan hilang/terhapus saat komputer dimatikan.<br><br>ROM (Read Only Memory): Bersifat non-volatile (permanen), sehingga data dan instruksi sistem bawaan di dalam ROM tetap tersimpan dan tidak hilang meskipun komputer dimatikan.',
+                'text' => 'Kunci jawaban dan kriteria penskoran disesuaikan dengan rumusan materi butir soal terkait.',
                 'score' => 5
             ],
             [
                 'no' => 45,
-                'text' => '3 Contoh Peranti Keluaran (Output Devices):<br>1. Monitor: Menampilkan hasil olah data berupa visual di layar.<br>2. Printer: Mencetak dokumen atau gambar ke media fisik kertas.<br>3. Speaker: Mengeluarkan hasil olahan komputer dalam bentuk suara/audio.<br><br>2 Contoh Peranti Penyimpanan Sekunder (Secondary Storage):<br>1. Hard Disk (HDD) / Solid State Drive (SSD)<br>2. Flashdisk / Kartu Memori',
+                'text' => 'Kunci jawaban dan kriteria penskoran disesuaikan dengan rumusan materi butir soal terkait.',
                 'score' => 5
             ]
         ];

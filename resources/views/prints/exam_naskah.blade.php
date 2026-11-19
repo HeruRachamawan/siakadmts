@@ -689,7 +689,7 @@
         <!-- 1. BAGIAN: PILIHAN GANDA TUNGGAL -->
         @if ($pgQuestions->isNotEmpty())
             <div class="section-title">{{ $secLetters[$secIdx++] }}. Pilihan Ganda</div>
-            <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Pilihlah jawaban dibawah ini dengan tepat!!</p>
+            <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Pilihlah salah satu jawaban yang paling tepat!</p>
 
             @foreach ($pgQuestions as $q)
                 <div class="question-item">
@@ -725,7 +725,7 @@
         <!-- 2. BAGIAN: PILIHAN GANDA KOMPLEKS (AKM) -->
         @if (isset($pgComplexQuestions) && $pgComplexQuestions->isNotEmpty())
             <div class="section-title">{{ $secLetters[$secIdx++] }}. Pilihan Ganda Kompleks</div>
-            <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Jawablah pernyatan dibawah ini dengan mengisi lebih dari pada 1 pilihan!!!</p>
+            <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Pilihlah lebih dari satu jawaban yang benar dengan memberi tanda centang (✓) pada kotak pilihan jawaban!</p>
 
             @foreach ($pgComplexQuestions as $q)
                 <div class="question-item">
@@ -785,7 +785,7 @@
 
             {{-- 3A. TABEL UTUH BENAR / SALAH MODE PER-NOMOR (No. 31 s/d 35) --}}
             @if (!empty($singleTfList))
-                <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Bacalah setiap pernyataan dibawah ini dengan teliti, kemudian berilah tadna centang (√) pada kolom Benar jika pernyataan sesuai dengan materi buku, atau pada kolom salah jika pernyataan tidak sesuai!!!!</p>
+                <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Bacalah setiap pernyataan berikut dengan teliti, kemudian berikan tanda centang (✓) pada kolom Benar jika pernyataan sesuai atau pada kolom Salah jika pernyataan tidak sesuai!</p>
 
                 <table class="akm-table" style="margin-bottom: 14px;">
                     <thead>
@@ -891,10 +891,8 @@
                 }
             @endphp
 
-            {{-- 4A. TABEL UTUH MENJODOHKAN MODE MANDIRI (No. 36 s/d 40) DENGAN KOLOM JAWABAN DI TENGAH --}}
+            {{-- 4A. TABEL UTUH MENJODOHKAN MODE MANDIRI DENGAN KOLOM JAWABAN DI TENGAH --}}
             @if (!empty($singleMatchingList))
-                <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Pasangkan nama perangkat keras komputer pada Lajur Kiri (Nomor 1-5) dengan fungsi atau pengertiannya yang paling tepat pada Lajur Kanan (Huru A-F)! Tuliskan huruf pilihannya saja (A, B, C, D, E, atau F) pada kolom Jawaban di tengah!</p>
-
                 @php
                     // Kumpulkan semua pilihan kanan yang unik, diurutkan berdasarkan huruf A, B, C...
                     $rightOptions = [];
@@ -924,7 +922,22 @@
                         $rightList[] = ['key' => $k, 'text' => $text];
                     }
                     $maxRows = max(count($singleMatchingList), count($rightList));
+
+                    // Hitung rentang nomor soal dan rentang pilihan huruf secara otomatis
+                    $firstMatchNo = $singleMatchingList[0]->question_number ?? 1;
+                    $lastMatchItem = end($singleMatchingList);
+                    $lastMatchNo = $lastMatchItem->question_number ?? count($singleMatchingList);
+                    $matchRangeStr = ($firstMatchNo == $lastMatchNo) ? "Nomor {$firstMatchNo}" : "Nomor {$firstMatchNo}-{$lastMatchNo}";
+
+                    $firstLetter = !empty($rightList) ? $rightList[0]['key'] : 'A';
+                    $lastLetterItem = end($rightList);
+                    $lastLetter = !empty($lastLetterItem) ? $lastLetterItem['key'] : 'E';
+                    $letterRangeStr = ($firstLetter == $lastLetter) ? "Huruf {$firstLetter}" : "Huruf {$firstLetter}-{$lastLetter}";
                 @endphp
+
+                <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">
+                    Pasangkan pernyataan/istilah pada Lajur Kiri ({{ $matchRangeStr }}) dengan pilihan jawaban yang paling tepat pada Lajur Kanan ({{ $letterRangeStr }})! Tuliskan huruf pilihannya saja pada kolom Jawaban di tengah!
+                </p>
 
                 <table class="akm-table" style="margin-bottom: 14px;">
                     <thead>
@@ -1023,7 +1036,7 @@
         <!-- 5. BAGIAN: ISIAN SINGKAT -->
         @if (isset($shortAnswerQuestions) && $shortAnswerQuestions->isNotEmpty())
             <div class="section-title">{{ $secLetters[$secIdx++] }}. Isian Singkat</div>
-            <p class="section-desc">Jawablah pertanyaan berikut dengan singkat dan tepat!</p>
+            <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Jawablah pertanyaan-pertanyaan berikut dengan singkat dan tepat!</p>
 
             @foreach ($shortAnswerQuestions as $q)
                 <div class="question-item">
@@ -1049,7 +1062,7 @@
         <!-- 6. BAGIAN: URAIAN / ESSAY -->
         @if ($essayQuestions->isNotEmpty())
             <div class="section-title">{{ $secLetters[$secIdx++] }}. Uraian</div>
-            <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Jawabalah pertanyaan di bawah ini dengan benar!!!</p>
+            <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Jawablah pertanyaan-pertanyaan berikut dengan jelas dan tepat!</p>
 
             @foreach ($essayQuestions as $q)
                 <div class="question-item">
