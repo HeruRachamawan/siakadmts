@@ -2355,6 +2355,11 @@
 import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue';
 import api, { getImageUrl } from '../api';
 import QuestionRichEditor from '../components/QuestionRichEditor.vue';
+import { useConfirm } from '../composables/useConfirm';
+import { useToast } from '../composables/useToast';
+
+const { confirm } = useConfirm();
+const toast = useToast();
 import {
   BookOpen,
   Plus,
@@ -2908,10 +2913,15 @@ const applyBatchPreset = (from, to, type, weight = 1.0) => {
   batchForm.scoreWeight = weight;
 };
 
-const applyFullMtsStandardPreset = () => {
-  if (!confirm('Terapkan format standar resmi MTs Al-Hasanah ke seluruh butir soal paket ini?\n\n• No 1–20   : PG Tunggal (bobot 1 poin)\n• No 21–30 : PG Kompleks (bobot 3 poin)\n• No 31–35 : Benar / Salah (bobot 2 poin)\n• No 36–40 : Menjodohkan (bobot 3 poin)\n• No 41–45 : Uraian / Essay (bobot 5 poin)\n\nTotal Maksimal: 100 Poin Pas.')) {
-    return;
-  }
+const applyFullMtsStandardPreset = async () => {
+  const isConfirmed = await confirm({
+    title: 'Terapkan Format Standar MTs',
+    message: 'Terapkan format standar resmi MTs Al-Hasanah ke seluruh butir soal paket ini?\n\n• No 1–20   : PG Tunggal (bobot 1 poin)\n• No 21–30 : PG Kompleks (bobot 3 poin)\n• No 31–35 : Benar / Salah (bobot 2 poin)\n• No 36–40 : Menjodohkan (bobot 3 poin)\n• No 41–45 : Uraian / Essay (bobot 5 poin)\n\nTotal Maksimal: 100 Poin Pas.',
+    type: 'info',
+    confirmText: 'Ya, Terapkan',
+    cancelText: 'Batal'
+  });
+  if (!isConfirmed) return;
 
   activeQuestions.value.forEach(q => {
     const num = q.question_number;
@@ -2949,7 +2959,7 @@ const applyFullMtsStandardPreset = () => {
   });
 
   showBatchModal.value = false;
-  alert('Berhasil! Seluruh butir soal (No 1 s/d 45) telah disesuaikan dengan format standar resmi MTs Al-Hasanah (Total 100 Poin).');
+  toast.success('Berhasil! Format standar resmi MTs Al-Hasanah (Total 100 Poin) telah diterapkan.');
 };
 
 const getQuestionTypeLabel = (type) => {
@@ -2969,7 +2979,7 @@ const applyBatchType = () => {
   const to = Math.min(activeQuestions.value.length, parseInt(batchForm.toNumber) || from);
 
   if (from > to) {
-    alert('Nomor awal tidak boleh lebih besar dari nomor akhir!');
+    toast.error('Nomor awal tidak boleh lebih besar dari nomor akhir!');
     return;
   }
 
@@ -3013,7 +3023,7 @@ const applyBatchType = () => {
         q.score_weight = Number(activeRebalance.value.targetWeight);
       }
     });
-    rebalanceMsg = `\n\n⚡ Catatan: Bobot ${activeRebalance.value.targetCount} butir Essay (${activeRebalance.value.rangeText || ''}) otomatis disesuaikan menjadi ${activeRebalance.value.targetWeight} poin agar Total Paket PAS 100 Poin.`;
+    rebalanceMsg = ` • Bobot Essay disesuaikan ke ${activeRebalance.value.targetWeight} poin agar pas 100 poin.`;
   }
 
   // Switch to first affected question
@@ -3023,17 +3033,24 @@ const applyBatchType = () => {
   }
 
   showBatchModal.value = false;
-  alert(`Berhasil! ${count} butir soal (Nomor ${from} s/d ${to}) telah diubah menjadi tipe "${getQuestionTypeLabel(batchForm.targetType)}" dengan bobot ${batchForm.scoreWeight} poin.${rebalanceMsg}`);
+  toast.success(`Berhasil! ${count} butir soal (No ${from} s/d ${to}) telah diubah menjadi tipe "${getQuestionTypeLabel(batchForm.targetType)}"${rebalanceMsg}`);
   activeRebalance.value = null;
 };
 
-const removeQuestion = (idx) => {
+const removeQuestion = async (idx) => {
   if (activeQuestions.value.length <= 1) {
-    alert('Paket soal harus memiliki minimal 1 butir soal.');
+    toast.warning('Paket soal harus memiliki minimal 1 butir soal.');
     return;
   }
   const qNum = activeQuestions.value[idx].question_number;
-  if (!confirm(`Hapus butir soal nomor ${qNum}? Nomor soal setelahnya akan otomatis diurutkan ulang.`)) return;
+  const isConfirmed = await confirm({
+    title: 'Hapus Butir Soal',
+    message: `Hapus butir soal nomor ${qNum}? Nomor soal setelahnya akan otomatis diurutkan ulang.`,
+    type: 'danger',
+    confirmText: 'Ya, Hapus',
+    cancelText: 'Batal'
+  });
+  if (!isConfirmed) return;
   activeQuestions.value.splice(idx, 1);
   activeQuestions.value.forEach((q, i) => {
     q.question_number = i + 1;
@@ -3041,6 +3058,7 @@ const removeQuestion = (idx) => {
   if (currentQuestionIndex.value >= activeQuestions.value.length) {
     currentQuestionIndex.value = activeQuestions.value.length - 1;
   }
+  toast.success(`Butir soal nomor ${qNum} berhasil dihapus.`);
 };
 
 const previewNaskah = () => {
@@ -3844,6 +3862,7 @@ const autoGenerateSingleKisiKisi = (index) => {
   q.basic_competency = res.basic_competency;
   q.cognitive_level = res.cognitive_level;
   q.difficulty_level = res.difficulty_level;
+  toast.success(`Kisi-kisi soal No. ${q.question_number} berhasil dirumuskan!`);
 };
 
 const resetSingleKisiKisi = (index) => {
@@ -3854,9 +3873,10 @@ const resetSingleKisiKisi = (index) => {
   q.indicator = '';
   q.cognitive_level = 'L1';
   q.difficulty_level = 'mudah';
+  toast.info(`Isian kisi-kisi soal No. ${q.question_number} dikosongkan.`);
 };
 
-const autoGenerateAllKisiKisi = () => {
+const autoGenerateAllKisiKisi = async () => {
   if (!activeQuestions.value || activeQuestions.value.length === 0) return;
 
   const countEmpty = activeQuestions.value.filter(q => !q.indicator || !q.material || !q.basic_competency).length;
@@ -3864,7 +3884,14 @@ const autoGenerateAllKisiKisi = () => {
     ? `Generate kisi-kisi otomatis untuk ${countEmpty} butir soal yang kisi-kisinya belum lengkap? Level kognitif dan tingkat kesukaran akan dianalisis otomatis sesuai isi soal.`
     : `Semua butir soal sudah memiliki kisi-kisi. Apakah Anda ingin meng-generate ulang kisi-kisi, level kognitif, dan tingkat kesukaran untuk seluruh ${activeQuestions.value.length} butir soal?`;
 
-  if (!confirm(confirmMsg)) return;
+  const isConfirmed = await confirm({
+    title: 'Auto-Generate Kisi-Kisi',
+    message: confirmMsg,
+    type: 'info',
+    confirmText: 'Ya, Generate Kisi-Kisi',
+    cancelText: 'Batal'
+  });
+  if (!isConfirmed) return;
 
   let generated = 0;
   for (let i = 0; i < activeQuestions.value.length; i++) {
@@ -3880,14 +3907,20 @@ const autoGenerateAllKisiKisi = () => {
     generated++;
   }
 
-  alert(`Alhamdulillah! Kisi-kisi, Level Kognitif, dan Tingkat Kesukaran untuk ${generated} butir soal berhasil diisi otomatis. Jangan lupa klik tombol "Simpan Semua".`);
+  toast.success(`Alhamdulillah! Kisi-kisi untuk ${generated} butir soal berhasil diisi otomatis. Jangan lupa klik tombol "Simpan Semua".`);
 };
 
-const resetAllKisiKisi = () => {
+const resetAllKisiKisi = async () => {
   if (!activeQuestions.value || activeQuestions.value.length === 0) return;
-  if (!confirm(`Apakah Anda yakin ingin mengosongkan seluruh isian kisi-kisi (TP, Materi, dan Indikator) untuk seluruh ${activeQuestions.value.length} butir soal?`)) {
-    return;
-  }
+  const isConfirmed = await confirm({
+    title: 'Kosongkan Seluruh Kisi-Kisi',
+    message: `Apakah Anda yakin ingin mengosongkan seluruh isian kisi-kisi (TP, Materi, dan Indikator) untuk seluruh ${activeQuestions.value.length} butir soal?`,
+    type: 'warning',
+    confirmText: 'Ya, Kosongkan',
+    cancelText: 'Batal'
+  });
+  if (!isConfirmed) return;
+
   activeQuestions.value.forEach(q => {
     q.basic_competency = '';
     q.material = '';
@@ -3895,7 +3928,7 @@ const resetAllKisiKisi = () => {
     q.cognitive_level = 'L1';
     q.difficulty_level = 'mudah';
   });
-  alert('Seluruh isian kisi-kisi berhasil dikosongkan. Klik "Simpan Semua" jika ingin menyimpan perubahan ini secara permanen.');
+  toast.info('Seluruh isian kisi-kisi berhasil dikosongkan. Klik "Simpan Semua" jika ingin menyimpan perubahan ini secara permanen.');
 };
 
 const copyKisiFromPrev = (index) => {
@@ -4114,10 +4147,10 @@ const updatePackageInfo = async () => {
     if (res.status === 'success' || d.status === 'success') {
       showEditModal.value = false;
       await fetchPackages();
-      alert('Informasi paket soal berhasil diperbarui!');
+      toast.success('Informasi paket soal berhasil diperbarui!');
     }
   } catch (err) {
-    alert(err.response?.data?.message || err.message || 'Gagal memperbarui paket soal.');
+    toast.error(err.response?.data?.message || err.message || 'Gagal memperbarui paket soal.');
   } finally {
     submitting.value = false;
   }
@@ -4144,10 +4177,11 @@ const createPackage = async () => {
       showCreateModal.value = false;
       await fetchPackages();
       const newId = d.data?.id || d.id;
+      toast.success('Paket soal baru berhasil dibuat!');
       if (newId) openEditor(newId);
     }
   } catch (err) {
-    alert(err.response?.data?.message || err.message || 'Gagal membuat paket soal.');
+    toast.error(err.response?.data?.message || err.message || 'Gagal membuat paket soal.');
   } finally {
     submitting.value = false;
   }
@@ -4163,7 +4197,7 @@ const openEditor = async (packageId) => {
       currentQuestionIndex.value = 0;
     }
   } catch (err) {
-    alert(err.response?.data?.message || err.message || 'Gagal memuat butir soal.');
+    toast.error(err.response?.data?.message || err.message || 'Gagal memuat butir soal.');
   }
 };
 
@@ -4229,7 +4263,7 @@ const removeOption = (q, opt) => {
   const opts = ensureOptions(q);
   const keys = getOptionKeys(q);
   if (keys.length <= 2) {
-    alert('Pilihan jawaban minimal harus memiliki 2 opsi!');
+    toast.warning('Pilihan jawaban minimal harus memiliki 2 opsi!');
     return;
   }
   
@@ -4585,10 +4619,10 @@ const saveAllQuestions = async () => {
     });
     const d = res.data || res;
     if (res.status === 'success' || d.status === 'success') {
-      alert('Semua butir soal dan kisi-kisi berhasil disimpan!');
+      toast.success('Semua butir soal dan kisi-kisi berhasil disimpan!');
     }
   } catch (err) {
-    alert(err.response?.data?.message || err.message || 'Gagal menyimpan butir soal.');
+    toast.error(err.response?.data?.message || err.message || 'Gagal menyimpan butir soal.');
   } finally {
     savingQuestions.value = false;
   }
@@ -4617,9 +4651,10 @@ const handleQuestionImageUpload = async (event, question) => {
     const d = res.data || res;
     if (res.status === 'success' || d.status === 'success') {
       question.question_image = d.filename || d.data?.filename;
+      toast.success('Gambar stimulus berhasil diunggah!');
     }
   } catch (err) {
-    alert(err.response?.data?.message || err.message || 'Gagal mengunggah gambar stimulus.');
+    toast.error(err.response?.data?.message || err.message || 'Gagal mengunggah gambar stimulus.');
   } finally {
     uploadingImage.value = false;
   }
@@ -4630,27 +4665,44 @@ const getStorageUrl = (path) => {
 };
 
 const submitToKurikulum = async (pkg) => {
-  if (!confirm(`Ajukan paket soal "${pkg.title}" ke Tim Kurikulum untuk ditelaah dan diverifikasi?`)) return;
+  const isConfirmed = await confirm({
+    title: 'Ajukan ke Tim Kurikulum',
+    message: `Ajukan paket soal "${pkg.title}" ke Tim Kurikulum untuk ditelaah dan diverifikasi?`,
+    type: 'info',
+    confirmText: 'Ya, Ajukan',
+    cancelText: 'Batal'
+  });
+  if (!isConfirmed) return;
+
   try {
     const res = await api.post(`/teacher/exam-bank/${pkg.id}/submit-kurikulum`);
     if (res.data?.status === 'success') {
-      alert(res.data.message);
+      toast.success(res.data.message || 'Paket soal berhasil diajukan ke Tim Kurikulum!');
       fetchPackages();
     }
   } catch (err) {
-    alert(err.response?.data?.message || 'Gagal mengajukan paket soal.');
+    toast.error(err.response?.data?.message || 'Gagal mengajukan paket soal.');
   }
 };
 
 const deletePackage = async (pkg) => {
-  if (!confirm(`Hapus paket soal "${pkg.title}" beserta seluruh butir soalnya?`)) return;
+  const isConfirmed = await confirm({
+    title: 'Hapus Paket Soal',
+    message: `Hapus paket soal "${pkg.title}" beserta seluruh butir soalnya? Tindakan ini tidak dapat dibatalkan.`,
+    type: 'danger',
+    confirmText: 'Ya, Hapus Paket',
+    cancelText: 'Batal'
+  });
+  if (!isConfirmed) return;
+
   try {
     const res = await api.delete(`/teacher/exam-bank/${pkg.id}`);
     if (res.data?.status === 'success') {
+      toast.success('Paket soal berhasil dihapus!');
       fetchPackages();
     }
   } catch (err) {
-    alert(err.response?.data?.message || 'Gagal menghapus paket soal.');
+    toast.error(err.response?.data?.message || 'Gagal menghapus paket soal.');
   }
 };
 
@@ -4680,12 +4732,12 @@ const submitImportExcel = async () => {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     if (res.data?.status === 'success') {
-      alert(res.data.message);
+      toast.success(res.data.message || 'File Excel butir soal berhasil diimpor!');
       showImportModal.value = false;
       fetchPackages();
     }
   } catch (err) {
-    alert(err.response?.data?.message || 'Gagal mengimpor file Excel.');
+    toast.error(err.response?.data?.message || 'Gagal mengimpor file Excel.');
   } finally {
     importing.value = false;
   }
