@@ -286,6 +286,30 @@
                 padding: 0 !important;
             }
         }
+        .btn-word {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+            transition: all 0.15s ease;
+        }
+        .btn-word:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.6);
+        }
+        .btn-word:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
         .btn-print {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: #ffffff;
@@ -398,6 +422,11 @@
                     <button type="button" class="btn-tool" id="btn-scale-95" onclick="setScale(95)">95%</button>
                     <button type="button" class="btn-tool" id="btn-scale-90" onclick="setScale(90)">90%</button>
                 </div>
+
+                <!-- Word (.doc) Download Button -->
+                <button type="button" class="btn-word" id="btn-download-word" onclick="downloadWordDoc()" title="Unduh Lembar Kisi-Kisi dalam Format Microsoft Word (.doc)">
+                    📄 Unduh Word (.doc)
+                </button>
 
                 <!-- Print Trigger Button -->
                 <button type="button" class="btn-print" onclick="window.print()">
@@ -738,6 +767,270 @@
                     spaceEl.innerHTML = ' ';
                 } else {
                     spaceEl.innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                }
+            }
+        }
+
+        function downloadWordDoc() {
+            const btnWord = document.getElementById('btn-download-word');
+            const originalText = btnWord ? btnWord.innerHTML : '📄 Unduh Word (.doc)';
+            if (btnWord) {
+                btnWord.innerHTML = '⏳ Menyiapkan Word...';
+                btnWord.disabled = true;
+            }
+
+            try {
+                const isA4 = document.getElementById('btn-paper-a4')?.classList.contains('active');
+                const paperSizeCss = isA4 ? '297mm 210mm' : '330mm 215mm';
+                const paperMarginCss = isA4 ? '10mm 15mm 10mm 15mm' : '12mm 15mm 12mm 15mm';
+                const paperName = isA4 ? 'A4' : 'F4';
+
+                const eventTitle = document.getElementById('display-event-title')?.textContent.trim() || @json($fullTitle);
+                const academicYear = @json($package->academicYear->year ?? '2026/2027');
+                const schoolTitle = @json($schoolTitle);
+                const teacherName = @json($package->teacher->user->name ?? ($package->teacher->name ?? 'Heru Rachmawan'));
+                const subjectName = @json($package->subject->name ?? 'Informatika');
+                const semDisplay = document.getElementById('display-semester-table')?.textContent.trim() || @json($romanClass . ' / ' . $semesterWord);
+                const curriculum = @json($package->curriculum ?? 'Kurikulum Merdeka');
+                const totalQuestions = @json($totalQ . ' Soal');
+                const questionTypes = @json($bentukSoalDisplay);
+
+                const city = document.getElementById('display-print-city')?.textContent.trim() || 'Bogor';
+                const date = document.getElementById('display-print-date')?.textContent.trim() || @json($package->execution_date ?: \Carbon\Carbon::now()->translatedFormat('F Y'));
+                const space = document.getElementById('display-print-space')?.innerHTML || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+
+                const l1Pct = @json((string)$l1Pct);
+                const l2Pct = @json((string)$l2Pct);
+                const l3Pct = @json((string)$l3Pct);
+
+                // Ekstrak baris tabel kisi-kisi langsung dari tampilan DOM
+                const tbodyRows = document.querySelectorAll('.data-table tbody tr');
+                let rowsHtml = '';
+                tbodyRows.forEach(tr => {
+                    const tds = tr.querySelectorAll('td');
+                    if (tds.length === 7) {
+                        rowsHtml += `<tr>
+                            <td style="border: 1pt solid #000000; padding: 4.5pt 3pt; text-align: center; vertical-align: top; font-size: 9pt;">${tds[0].innerHTML.trim()}</td>
+                            <td style="border: 1pt solid #000000; padding: 4.5pt 5pt; text-align: left; vertical-align: top; font-size: 9pt;">${tds[1].innerHTML.trim()}</td>
+                            <td style="border: 1pt solid #000000; padding: 4.5pt 5pt; text-align: left; vertical-align: top; font-size: 9pt;">${tds[2].innerHTML.trim()}</td>
+                            <td style="border: 1pt solid #000000; padding: 4.5pt 5pt; text-align: left; vertical-align: top; font-size: 9pt;">${tds[3].innerHTML.trim()}</td>
+                            <td style="border: 1pt solid #000000; padding: 4.5pt 2pt; text-align: center; vertical-align: top; font-size: 9pt;">${tds[4].innerHTML.trim()}</td>
+                            <td style="border: 1pt solid #000000; padding: 4.5pt 2pt; text-align: center; vertical-align: top; font-size: 9pt;">${tds[5].innerHTML.trim()}</td>
+                            <td style="border: 1pt solid #000000; padding: 4.5pt 2pt; text-align: center; vertical-align: top; font-size: 9pt;">${tds[6].innerHTML.trim()}</td>
+                        </tr>`;
+                    } else {
+                        rowsHtml += tr.outerHTML;
+                    }
+                });
+
+                // Tanda tangan Kepala Madrasah (Base64 MHTML)
+                const sigBase64Data = @json($sigBase64);
+                let sigImgHtml = '';
+                if (sigBase64Data) {
+                    sigImgHtml = '<div style="height: 50px; margin: 2px 0;"><img src="signature_kepala.png" width="140" height="48" style="display:block; object-fit:contain; border:none;" alt="Tanda Tangan Kepala Madrasah"></div>';
+                } else {
+                    sigImgHtml = '<div style="height: 50px;"></div>';
+                }
+
+                // Susun HTML Dokumen Word Standar Microsoft Word XML
+                const wordHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="utf-8">
+  <title>Kisi-Kisi Soal ${subjectName} - ${schoolTitle}</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    @page Section1 {
+      size: ${paperSizeCss};
+      mso-page-orientation: landscape;
+      margin: ${paperMarginCss};
+    }
+    div.Section1 {
+      page: Section1;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9.5pt;
+      color: #000000;
+    }
+    table {
+      border-collapse: collapse;
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+  </style>
+</head>
+<body style="font-family: Arial, Helvetica, sans-serif; color: #000000; margin: 0; padding: 0;">
+  <div class="Section1">
+    <!-- HEADER -->
+    <div style="text-align: center; margin-bottom: 12pt;">
+      <div style="font-size: 13pt; font-weight: bold; text-transform: uppercase; color: #000000;">
+        KISI-KISI SOAL ${eventTitle}
+      </div>
+      <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; color: #000000; margin-top: 3pt;">
+        TAHUN PELAJARAN ${academicYear}
+      </div>
+      <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; color: #000000; margin-top: 3pt;">
+        ${schoolTitle}
+      </div>
+    </div>
+
+    <!-- IDENTITAS -->
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-bottom: 10pt; font-size: 9.5pt; font-family: Arial, sans-serif;">
+      <tr>
+        <td width="50%" valign="top" style="text-align: left; padding: 0;">
+          <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse; font-size: 9.5pt;">
+            <tr>
+              <td style="width: 135px; padding: 2px 0;">Nama Guru</td>
+              <td style="padding: 2px 0;">: ${teacherName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 2px 0;">Mata Pelajaran</td>
+              <td style="padding: 2px 0;">: ${subjectName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 2px 0;">Kelas / Semester</td>
+              <td style="padding: 2px 0;">: ${semDisplay}</td>
+            </tr>
+          </table>
+        </td>
+        <td width="50%" valign="top" align="right" style="text-align: right; padding: 0 40px 0 0;">
+          <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse; font-size: 9.5pt; display: inline-table; text-align: left;">
+            <tr>
+              <td style="width: 110px; padding: 2px 0;">Kurikulum</td>
+              <td style="padding: 2px 0;">: ${curriculum}</td>
+            </tr>
+            <tr>
+              <td style="padding: 2px 0;">Jumlah soal</td>
+              <td style="padding: 2px 0;">: ${totalQuestions}</td>
+            </tr>
+            <tr>
+              <td style="padding: 2px 0;">Bentuk Soal</td>
+              <td style="padding: 2px 0;">: ${questionTypes}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- TABEL KISI-KISI 7 KOLOM -->
+    <table width="100%" border="1" cellspacing="0" cellpadding="4" style="width: 100%; border-collapse: collapse; border: 1pt solid #000000; margin-top: 4pt; margin-bottom: 8pt; font-family: Arial, sans-serif; font-size: 9pt;">
+      <thead>
+        <tr style="background-color: #f1f5f9;">
+          <th style="width: 4%; border: 1pt solid #000000; padding: 5pt 3pt; text-align: center; font-weight: bold;">NO</th>
+          <th style="width: 20%; border: 1pt solid #000000; padding: 5pt 4pt; text-align: center; font-weight: bold;">Tujuan Pembelajaran (TP)</th>
+          <th style="width: 16%; border: 1pt solid #000000; padding: 5pt 4pt; text-align: center; font-weight: bold;">Materi</th>
+          <th style="width: 40%; border: 1pt solid #000000; padding: 5pt 4pt; text-align: center; font-weight: bold;">Indikator Soal</th>
+          <th style="width: 6%; border: 1pt solid #000000; padding: 5pt 2pt; text-align: center; font-weight: bold;">Level Kognitif</th>
+          <th style="width: 7%; border: 1pt solid #000000; padding: 5pt 2pt; text-align: center; font-weight: bold;">Bentuk Soal</th>
+          <th style="width: 7%; border: 1pt solid #000000; padding: 5pt 2pt; text-align: center; font-weight: bold;">Nomor Soal</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+
+    <!-- STATISTIK PERSENTASE -->
+    <div style="margin-top: 8pt; margin-bottom: 12pt; font-size: 9.5pt; font-family: Arial, sans-serif;">
+      <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse; font-size: 9.5pt;">
+        <tr>
+          <td style="font-weight: bold; width: 140px; vertical-align: top;">Persentase Soal :</td>
+          <td style="vertical-align: top;">
+            <div>L1 = &nbsp;${l1Pct} %</div>
+            <div>L2 = &nbsp;${l2Pct} %</div>
+            <div>L3 = &nbsp;${l3Pct} %</div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- TANDA TANGAN -->
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-top: 14pt; font-size: 9.5pt; font-family: Arial, sans-serif;">
+      <tr>
+        <td width="50%" valign="top" style="text-align: left; padding-left: 20px;">
+          Mengetahui,<br>
+          <strong>Kepala Madrasah</strong><br>
+          ${sigImgHtml}
+          <strong><u>H. Umar Usman Ali, S.Pd,S.Pd.I</u></strong>
+        </td>
+        <td width="50%" valign="top" align="right" style="text-align: right; padding-right: 20px;">
+          <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse; font-size: 9.5pt; display: inline-table; text-align: left; min-width: 230px;">
+            <tr>
+              <td>
+                <span>${city},${space}${date}</span><br>
+                <strong>Guru Mata Pelajaran</strong><br>
+                <div style="height: 50px;"></div>
+                <strong><u>${teacherName}</u></strong>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>`;
+
+                // Kemas ke Format Dokumen MHTML Word (.doc)
+                const boundary = "----=_NextPart_SiakadMts_KisiKisi_" + Date.now();
+                let mhtml = "";
+
+                mhtml += "MIME-Version: 1.0\r\n";
+                mhtml += `Content-Type: multipart/related; boundary="${boundary}"\r\n\r\n`;
+
+                // Part 1: Main HTML Body
+                mhtml += `--${boundary}\r\n`;
+                mhtml += "Content-Type: text/html; charset=utf-8\r\n";
+                mhtml += "Content-Transfer-Encoding: 8bit\r\n\r\n";
+                mhtml += wordHtml + "\r\n\r\n";
+
+                // Part 2: Disematkan Gambar Tanda Tangan Kepala Madrasah jika ada
+                if (sigBase64Data) {
+                    const cleanB64 = sigBase64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+                    const wrappedB64 = cleanB64.replace(/(.{76})/g, "$1\r\n");
+                    mhtml += `--${boundary}\r\n`;
+                    mhtml += "Content-Type: image/png\r\n";
+                    mhtml += "Content-Transfer-Encoding: base64\r\n";
+                    mhtml += "Content-Location: signature_kepala.png\r\n\r\n";
+                    mhtml += wrappedB64 + "\r\n\r\n";
+                }
+
+                mhtml += `--${boundary}--\r\n`;
+
+                const blob = new Blob([mhtml], { type: 'application/msword;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const safeMapel = (subjectName || 'Mapel').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const safeClass = (document.getElementById('display-semester-table')?.getAttribute('data-base-class') || 'Kelas').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const safeEvent = (document.getElementById('select-event')?.value || 'ASAS').replace(/[^a-zA-Z0-9_-]/g, '_');
+                a.href = url;
+                a.download = `Kisi_Kisi_${safeMapel}_${safeClass}_${safeEvent}_${paperName}.doc`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                if (btnWord) {
+                    btnWord.innerHTML = '✅ Terunduh!';
+                    setTimeout(() => {
+                        btnWord.innerHTML = originalText;
+                        btnWord.disabled = false;
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Word export error:', err);
+                alert('Gagal mengunduh dokumen Word. Silakan coba kembali.');
+                if (btnWord) {
+                    btnWord.innerHTML = originalText;
+                    btnWord.disabled = false;
                 }
             }
         }
