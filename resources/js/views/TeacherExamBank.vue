@@ -3063,9 +3063,10 @@ const previewKunci = () => {
   window.open(`/prints/exam/${activePackage.value.id}/kunci`, '_blank');
 };
 
-// Smart Auto-Generate Kisi-Kisi Engine (Multi-Subject & Natural Heuristic NLP)
+// Smart Auto-Generate Kisi-Kisi Engine (Multi-Subject, Arabic/Quran/Hadith Aware & Natural NLP)
 const analyzeQuestionContent = (q, prevQ = null) => {
-  const cleanHtml = (q.question_text || '')
+  const rawOriginal = (q.question_text || '').trim();
+  const cleanHtml = rawOriginal
     .replace(/<[^>]*>/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/&quot;/g, '"')
@@ -3074,6 +3075,7 @@ const analyzeQuestionContent = (q, prevQ = null) => {
     .trim();
   const lowerText = cleanHtml.toLowerCase();
   const currentSubject = (activePackage.value?.subject?.name || '').trim();
+  const currentSubjectLower = currentSubject.toLowerCase();
 
   // Helper: Format string to Title Case
   const toTitleCase = (str) => {
@@ -3085,23 +3087,106 @@ const analyzeQuestionContent = (q, prevQ = null) => {
       .join(' ');
   };
 
-  // Helper: Heuristic extraction of key subject matter directly from sentence
+  // 0A. DETEKSI TEKS & TULISAN ARAB (Unicode Arabic: \u0600-\u06FF, dll)
+  const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+  const hasArabic = arabicRegex.test(rawOriginal);
+  let arabicSnippet = '';
+  if (hasArabic) {
+    const arabicClauses = cleanHtml.match(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\s،؛ـ\.]+/g);
+    if (arabicClauses && arabicClauses.length > 0) {
+      const validArabic = arabicClauses.map(w => w.trim()).filter(w => w.length >= 3);
+      if (validArabic.length > 0) {
+        let firstArab = validArabic[0];
+        if (firstArab.length > 55) {
+          firstArab = firstArab.substring(0, 52).trim() + '...';
+        }
+        arabicSnippet = firstArab;
+      }
+    }
+  }
+
+  // 0B. DETEKSI SITASI AL-QUR'AN (Nama Surah & Nomor Ayat)
+  let quranCitation = null;
+  const knownSurahs = 'al-fatihah|al-baqarah|ali [\'`]?imran|an-nisa|al-ma\'?idah|al-an\'?am|al-a\'?raf|al-anfal|at-taubah|yunus|hud|yusuf|ar-ra\'?d|ibrahim|al-hijr|an-nahl|al-isra|al-kahf|al-kahfi|maryam|thaha|ta ha|al-anbiya|al-hajj|al-mu\'?minun|an-nur|al-furqan|asy-syu\'?ara|an-naml|al-qashash|al-ankabut|ar-rum|luqman|as-sajdah|al-ahzab|saba|fatir|yasin|ya sin|ash-shaffat|shad|az-zumar|ghafir|fushshilat|asy-syura|az-zukhruf|ad-dukhan|al-jatsiyah|al-ahqaf|muhammad|al-fath|al-hujurat|qaf|adz-dzariyat|ath-thur|an-najm|al-qamar|ar-rahman|al-waqi\'?ah|al-hadid|al-mujadilah|al-hasyr|al-mumtahanah|ash-shaff|al-jumu\'?ah|al-munafiqun|at-taghabun|ath-thalaq|at-tahrim|al-mulk|al-qalam|al-haqqah|al-ma\'?arij|nuh|al-jinn|al-muzzammil|al-muddatstsir|al-qiyamah|al-insan|al-mursalat|an-naba|an-nazi\'?at|abasa|\'abasa|at-takwir|al-infithar|al-muthaffifin|al-insyiqaq|al-buruj|ath-thariq|al-a\'?la|al-ghasyiyah|al-fajr|al-balad|asy-syams|al-lail|adh-dhuha|ad-dhuha|al-insyirah|asy-syarh|at-tin|al-\'?alaq|al-qadr|al-bayyinah|az-zalzalah|al-\'?adiyat|al-qari\'?ah|at-takatsur|al-\'?ashr|al-humazah|al-fil|quraisy|al-ma\'?un|al-kautsar|al-kafirun|an-nashr|al-lahab|al-ikhlas|al-falaq|an-nas';
+  
+  const surahSpecificMatch = cleanHtml.match(new RegExp('(?:q\\.?s\\.?|surat|surah)?\\s*(' + knownSurahs + ')(?:\\s*(?:ayat|ay\\.|:|\\[?\\d+\\]?:?)\\s*(\\d+(?:\\s*[-–]\\s*\\d+)?))?', 'i'));
+  const surahGenericMatch = cleanHtml.match(/(?:q\.?s\.?|surat|surah)\s+([a-zA-Z\s'\-]{3,25})(?:(?:\s*(?:ayat|ay\.|:)\s*|\s*\[?\d+\]?\s*:\s*)(\d+(?:\s*[-–]\s*\d+)?))?/i);
+
+  if (surahSpecificMatch && surahSpecificMatch[1]) {
+    const sName = toTitleCase(surahSpecificMatch[1].trim());
+    const aNum = surahSpecificMatch[2] ? surahSpecificMatch[2].trim() : '';
+    quranCitation = {
+      surah: sName,
+      ayat: aNum,
+      fullRef: aNum ? `Q.S. ${sName} ayat ${aNum}` : `Q.S. ${sName}`
+    };
+  } else if (surahGenericMatch && surahGenericMatch[1]) {
+    const rawS = surahGenericMatch[1].trim().replace(/\s+(ayat|adalah|berikut|menjelaskan).*$/i, '');
+    const aNum = surahGenericMatch[2] ? surahGenericMatch[2].trim() : '';
+    if (rawS && rawS.length >= 3) {
+      const sName = toTitleCase(rawS);
+      quranCitation = {
+        surah: sName,
+        ayat: aNum,
+        fullRef: aNum ? `Q.S. ${sName} ayat ${aNum}` : `Q.S. ${sName}`
+      };
+    }
+  }
+
+  // 0C. DETEKSI SITASI HADITS
+  let hadithCitation = null;
+  const hadithMatch = cleanHtml.match(/(?:h\.?r\.?|hadits\s+riwayat|riwayat\s+hadits|hadis\s+riwayat)\s+([a-zA-Z\s,dan&]{3,35})/i);
+  if (hadithMatch && hadithMatch[1]) {
+    const rawPerawi = hadithMatch[1].trim().replace(/\s+(tentang|adalah|yang|bahwa|mengenai).*$/i, '');
+    if (rawPerawi && rawPerawi.length >= 3) {
+      hadithCitation = `H.R. ${toTitleCase(rawPerawi)}`;
+    }
+  }
+
+  // Helper: Heuristic extraction of key subject matter directly from sentence (Bebas CP, Murni dari Soal Guru)
   const extractHeuristicSubject = (rawText, lower) => {
     if (!rawText || rawText.length < 5) return null;
 
-    // Check for quoted term e.g. "ikhtiar", 'tawakal', «al-adl»
-    const quoteMatch = rawText.match(/["'«]([^"'»]{3,40})["'»]/);
-    if (quoteMatch && quoteMatch[1] && !quoteMatch[1].match(/^(a|b|c|d|benar|salah)$/i)) {
+    // Pola 1: Istilah dalam tanda kutip (misal "ikhtiar", 'الصَّبْرِ', «Al-Ghaffar»)
+    const quoteMatch = rawText.match(/["'«“]([^"'»”]{3,45})["'»”]/);
+    if (quoteMatch && quoteMatch[1] && !quoteMatch[1].match(/^(a|b|c|d|e|benar|salah)$/i)) {
       return toTitleCase(quoteMatch[1].trim());
     }
 
-    // Strip common exam preamble / filler questions
+    // Pola 2: Target spesifik (fungsi/tujuan/hikmah/manfaat/rukun/syarat/pengertian/arti/definisi/hukum/ketentuan [dari/tentang] ...)
+    const specificTargetMatch = rawText.match(/(?:fungsi|tujuan|manfaat|dampak|akibat|keutamaan|hikmah|ciri-ciri|ciri|karakteristik|rukun|syarat|pengertian|arti|definisi|hukum|ketentuan|tata\s+cara|larangan|bahaya)\s+(?:dari\s+|tentang\s+)?([a-zA-Z0-9\u0600-\u06FF\s\-_',]{3,45}?)(?:\s+(?:adalah|yaitu|merupakan|dalam|pada|di|[?:.;])|$)/i);
+    if (specificTargetMatch && specificTargetMatch[1]) {
+      const cand = specificTargetMatch[1].trim();
+      if (cand.length >= 3 && !cand.match(/^(berikut|yang|bawah|atas|ini|itu)$/i)) {
+        return toTitleCase(cand);
+      }
+    }
+
+    // Pola 3: "tentang / mengenai / berkaitan dengan ..."
+    const topicPatternMatch = rawText.match(/(?:tentang|mengenai|berkaitan\s+dengan|terkait)\s+([a-zA-Z0-9\u0600-\u06FF\s\-_',]{3,45}?)(?:\s+(?:adalah|yaitu|merupakan|dalam|pada|[?:.;])|$)/i);
+    if (topicPatternMatch && topicPatternMatch[1]) {
+      const cand = topicPatternMatch[1].trim();
+      if (cand.length >= 3 && !cand.match(/^(hal|materi|soal|pernyataan)$/i)) {
+        return toTitleCase(cand);
+      }
+    }
+
+    // Pola 4: "sikap / perilaku / sifat / perbuatan ..."
+    const akhlakMatch = rawText.match(/(?:sikap|perilaku|akhlak|perbuatan|sifat)\s+([a-zA-Z0-9\u0600-\u06FF\s\-_',]{3,35}?)(?:\s+(?:adalah|yaitu|merupakan|pada|dalam|[?:.;])|$)/i);
+    if (akhlakMatch && akhlakMatch[1]) {
+      const cand = akhlakMatch[1].trim();
+      if (cand.length >= 3) {
+        return 'Sifat ' + toTitleCase(cand);
+      }
+    }
+
+    // Pola 5: Bersihkan kata-kata klise pembuka soal ujian
     let stripped = rawText
       .replace(/^(berikut\s+ini\s+yang\s+(bukan\s+)?merupakan|berikut\s+ini\s+yang\s+(bukan\s+)?termasuk|di\s+bawah\s+ini\s+yang\s+(bukan\s+)?termasuk|manakah\s+pernyataan\s+yang\s+tepat\s+mengenai|manakah\s+yang\s+(bukan\s+)?merupakan|perhatikan\s+(beberapa\s+)?(pernyataan|kutipan|ayat|hadits|tabel|gambar|data|kasus|contoh)\s+berikut(\s+ini)?[\s:,\.\-]*|salah\s+satu\s+(contoh|ciri|karakteristik|faktor|dampak|hikmah|keutamaan|tujuan|fungsi|bentuk)\s+(dari\s+)?|sikap\s+yang\s+mencerminkan|perilaku\s+yang\s+menunjukkan)\s*/i, '')
       .trim();
 
-    // Extract core clause before delimiters (adalah, yaitu, merupakan, dinamakan, disebut, ?, :, .)
-    const clauseMatch = stripped.match(/^([a-zA-Z0-9\s\-_',]{4,55}?)(?:\s+(?:adalah|yaitu|merupakan|dinamakan|disebut|ialah|sebagai)|[?:.;]|$)/i);
+    // Ambil klausa inti kalimat sebelum kata penghubung (mendukung karakter Latin dan Arab \u0600-\u06FF)
+    const clauseMatch = stripped.match(/^([a-zA-Z0-9\u0600-\u06FF\s\-_',]{4,55}?)(?:\s+(?:adalah|yaitu|merupakan|dinamakan|disebut|ialah|sebagai)|[?:.;]|$)/i);
     if (clauseMatch && clauseMatch[1]) {
       let core = clauseMatch[1].replace(/^(yang|pada|dalam|tentang|dari|untuk|dengan|bahwa)\s+/i, '').trim();
       const words = core.split(/\s+/).filter(w => w.length > 2);
@@ -3115,6 +3200,53 @@ const analyzeQuestionContent = (q, prevQ = null) => {
   // 1. Determine Topic / Material
   let topic = q.material || '';
   let detectedDomain = 'umum';
+
+  // Deteksi Domain Mapel
+  if (currentSubjectLower.includes('akidah') || currentSubjectLower.includes('aqidah')) detectedDomain = 'akidah';
+  else if (currentSubjectLower.includes('akhlak')) detectedDomain = 'akhlak';
+  else if (currentSubjectLower.includes('fikih') || currentSubjectLower.includes('fiqih')) detectedDomain = 'fikih';
+  else if (currentSubjectLower.includes('qur') || currentSubjectLower.includes('hadits') || currentSubjectLower.includes('hadis')) detectedDomain = 'qurdis';
+  else if (currentSubjectLower.includes('sejarah') || currentSubjectLower.includes('ski')) detectedDomain = 'ski';
+  else if (currentSubjectLower.includes('arab')) detectedDomain = 'bahasa_arab';
+  else if (currentSubjectLower.includes('indonesia') || currentSubjectLower.includes('inggris')) detectedDomain = 'bahasa';
+  else if (currentSubjectLower.includes('matematika')) detectedDomain = 'matematika';
+  else if (currentSubjectLower.includes('ipa') || currentSubjectLower.includes('sains')) detectedDomain = 'sains';
+  else if (currentSubjectLower.includes('komputer') || currentSubjectLower.includes('informatika')) detectedDomain = 'komputer';
+  else if (currentSubjectLower.includes('pkn') || currentSubjectLower.includes('pancasila')) detectedDomain = 'sosial';
+
+  if (!topic) {
+    // 1A. JIKA ADA SITASI AL-QUR'AN
+    if (quranCitation) {
+      const extractedSub = extractHeuristicSubject(cleanHtml, lowerText);
+      if (extractedSub && !extractedSub.toLowerCase().includes(quranCitation.surah.toLowerCase())) {
+        topic = `${quranCitation.fullRef} (${extractedSub})`;
+      } else {
+        topic = quranCitation.fullRef;
+      }
+      detectedDomain = 'qurdis';
+    // 1B. JIKA ADA SITASI HADITS
+    } else if (hadithCitation) {
+      const extractedSub = extractHeuristicSubject(cleanHtml, lowerText);
+      if (extractedSub && !extractedSub.toLowerCase().includes('hadits')) {
+        topic = `${hadithCitation} (${extractedSub})`;
+      } else {
+        topic = hadithCitation;
+      }
+      detectedDomain = 'qurdis';
+    // 1C. JIKA MAPEL BAHASA ARAB ATAU MENGANDUNG HURUF ARAB
+    } else if (detectedDomain === 'bahasa_arab' || (hasArabic && (currentSubjectLower.includes('pai') || currentSubjectLower.includes('agama') || currentSubjectLower.includes('arab')))) {
+      if (lowerText.match(/arti|makna|terjemahan|artinya/)) {
+        topic = arabicSnippet ? `Mufradat: ${arabicSnippet}` : 'Mufradat (Kosakata) Bahasa Arab';
+      } else if (lowerText.match(/tarkib|kaidah|dhamir|fi'il|isim|mubtada|khabar|jar|huruf/)) {
+        topic = 'Kaidah Bahasa Arab (Tarkib)';
+      } else if (arabicSnippet) {
+        topic = `Teks Arab: ${arabicSnippet}`;
+      } else {
+        topic = 'Ungkapan dan Kalimat Bahasa Arab';
+      }
+      detectedDomain = 'bahasa_arab';
+    }
+  }
 
   if (!topic) {
     // --- A. AKIDAH AKHLAK (MADRASAH) ---
@@ -3555,64 +3687,83 @@ const analyzeQuestionContent = (q, prevQ = null) => {
     }
   }
 
-  // Deteksi domain jika belum teridentifikasi
-  if (detectedDomain === 'umum') {
-    const sLow = currentSubject.toLowerCase();
-    if (sLow.includes('akidah') || sLow.includes('aqidah')) detectedDomain = 'akidah';
-    else if (sLow.includes('akhlak')) detectedDomain = 'akhlak';
-    else if (sLow.includes('fikih') || sLow.includes('fiqih')) detectedDomain = 'fikih';
-    else if (sLow.includes('qur') || sLow.includes('hadits') || sLow.includes('hadis')) detectedDomain = 'qurdis';
-    else if (sLow.includes('sejarah') || sLow.includes('ski')) detectedDomain = 'ski';
-    else if (sLow.includes('arab') || sLow.includes('indonesia') || sLow.includes('inggris')) detectedDomain = 'bahasa';
-    else if (sLow.includes('matematika') || sLow.includes('ipa')) detectedDomain = 'matematika';
-    else if (sLow.includes('komputer') || sLow.includes('informatika')) detectedDomain = 'komputer';
-  }
-
   // 2. Determine Indikator Soal Kontekstual
   let indicator = q.indicator || '';
   if (!indicator) {
     const qType = q.question_type || 'pg';
 
-    // Tentukan frasa pembuka stimulus yang tepat
-    let stimulus = 'Disajikan pertanyaan';
-    if (lowerText.match(/tabel|data berikut/)) stimulus = 'Disajikan tabel data';
-    else if (lowerText.match(/gambar|foto|diagram/)) stimulus = 'Disajikan gambar ilustrasi';
-    else if (lowerText.match(/ayat|surat|hadits|firman/)) stimulus = 'Disajikan teks ayat atau hadits';
-    else if (lowerText.match(/contoh|perilaku|sikap|kasus|cerita|kisah/)) stimulus = 'Disajikan ilustrasi kasus atau perilaku';
-    else if (lowerText.match(/pernyataan/)) stimulus = 'Disajikan beberapa pernyataan';
+    // 2A. JIKA SOAL MENAMPILKAN SITASI QURAN / HADITS / ARAB
+    if (quranCitation) {
+      let stimulus = 'Disajikan kutipan ' + quranCitation.fullRef;
+      if (arabicSnippet) stimulus += ` (${arabicSnippet})`;
 
-    if (qType === 'pg') {
-      if (lowerText.match(/pengertian|definisi|arti|makna|istilah|disebut|dinamakan/)) {
-        indicator = `${stimulus} terkait ${topic}, peserta didik dapat mengidentifikasi pengertian atau maknanya secara tepat.`;
-      } else if (lowerText.match(/contoh|perilaku|penerapan|tindakan|cerminan|kehidupan/)) {
-        indicator = `${stimulus}, peserta didik dapat menentukan contoh penerapan dari ${topic} dalam kehidupan nyata dengan tepat.`;
-      } else if (lowerText.match(/ciri|karakteristik|tanda|sifat/)) {
-        indicator = `${stimulus}, peserta didik dapat mengidentifikasi ciri-ciri atau tanda dari ${topic} dengan benar.`;
-      } else if (lowerText.match(/hikmah|manfaat|keutamaan|tujuan|fungsi/)) {
-        indicator = `${stimulus}, peserta didik dapat menjelaskan hikmah atau keutamaan terkait ${topic} secara tepat.`;
-      } else if (lowerText.match(/dampak|akibat|bahaya|larangan|tercela/)) {
-        indicator = `${stimulus}, peserta didik dapat menganalisis dampak negatif atau larangan terkait ${topic} dengan benar.`;
-      } else if (lowerText.match(/dalil|ayat|hadits|surat|riwayat/)) {
-        indicator = `${stimulus}, peserta didik dapat menentukan kandungan dalil yang berkaitan dengan ${topic} secara tepat.`;
-      } else if (lowerText.match(/hitung|hasil|kalkulasi|nilai|luas|volume|besar/)) {
-        indicator = `${stimulus}, peserta didik dapat menghitung dan menentukan hasil akhir dari ${topic} dengan tepat.`;
-      } else if (lowerText.match(/langkah|cara|prosedur|tahapan|urutan|syarat|rukun/)) {
-        indicator = `${stimulus}, peserta didik dapat menentukan urutan tata cara/prosedur terkait ${topic} dengan benar.`;
-      } else if (lowerText.match(/mengapa|alasan|keunggulan|faktor|penyebab|akibat/)) {
-        indicator = `${stimulus} mengenai ${topic}, peserta didik dapat menganalisis alasan atau faktor penyebabnya dengan tepat.`;
+      if (lowerText.match(/kandungan|pesan|makna|isi|maksud|tentang/)) {
+        indicator = `${stimulus}, peserta didik dapat menganalisis dan menentukan isi kandungannya dengan tepat.`;
+      } else if (lowerText.match(/arti|terjemah|makna kata|lafal/)) {
+        indicator = `${stimulus}, peserta didik dapat menentukan arti/terjemahan dari lafal yang dimaksud dengan tepat.`;
+      } else if (lowerText.match(/tajwid|hukum bacaan|idzhar|ikhfa|mad|idgham/)) {
+        indicator = `${stimulus}, peserta didik dapat mengidentifikasi hukum bacaan tajwid yang terdapat di dalamnya dengan benar.`;
+      } else if (lowerText.match(/lanjutan|sambungan|melengkapi/)) {
+        indicator = `${stimulus}, peserta didik dapat melengkapi potongan lafal ayat tersebut secara tepat.`;
+      } else if (lowerText.match(/contoh|perilaku|penerapan|kehidupan/)) {
+        indicator = `${stimulus}, peserta didik dapat menentukan contoh perilaku yang mencerminkan pengamalan ayat tersebut dalam kehidupan sehari-hari secara tepat.`;
       } else {
-        indicator = `${stimulus} mengenai ${topic}, peserta didik dapat menentukan jawaban yang tepat.`;
+        indicator = `${stimulus}, peserta didik dapat menentukan jawaban yang tepat berkaitan dengan materi yang diujikan.`;
       }
-    } else if (qType === 'pg_complex') {
-      indicator = `${stimulus} terkait ${topic}, peserta didik dapat menganalisis dan memilih beberapa pernyataan yang benar.`;
-    } else if (qType === 'true_false') {
-      indicator = `${stimulus} mengenai ${topic}, peserta didik dapat memvalidasi kebenaran pernyataan tersebut secara tepat.`;
-    } else if (qType === 'matching') {
-      indicator = `${stimulus} terkait ${topic}, peserta didik dapat menjodohkan konsep atau istilah dengan pasangannya yang sesuai.`;
-    } else if (qType === 'short_answer') {
-      indicator = `${stimulus} terkait ${topic}, peserta didik dapat menuliskan jawaban yang tepat secara ringkas.`;
-    } else if (qType === 'essay') {
-      indicator = `${stimulus} konseptual terkait ${topic}, peserta didik dapat menjelaskan, menganalisis, dan memberikan contoh penerapannya secara mendalam.`;
+    } else if (hadithCitation) {
+      let stimulus = 'Disajikan hadits ' + hadithCitation;
+      if (arabicSnippet) stimulus += ` (${arabicSnippet})`;
+      indicator = `${stimulus}, peserta didik dapat menganalisis dan menentukan kandungan atau hikmah yang tersirat dengan tepat.`;
+    } else if (detectedDomain === 'bahasa_arab' || hasArabic) {
+      let stimulus = 'Disajikan teks atau kalimat berbahasa Arab' + (arabicSnippet ? ` (${arabicSnippet})` : '');
+      if (lowerText.match(/arti|terjemah|makna/)) {
+        indicator = `${stimulus}, peserta didik dapat menentukan arti kosakata (mufradat) yang tepat.`;
+      } else if (lowerText.match(/tarkib|kaidah|dhamir|fi'il|isim|mubtada/)) {
+        indicator = `${stimulus}, peserta didik dapat melengkapi kalimat menggunakan kaidah tata bahasa (tarkib) yang benar.`;
+      } else {
+        indicator = `${stimulus}, peserta didik dapat menentukan jawaban yang tepat mengenai teks tersebut.`;
+      }
+    } else {
+      // Tentukan frasa pembuka stimulus yang tepat
+      let stimulus = 'Disajikan pertanyaan';
+      if (lowerText.match(/tabel|data berikut/)) stimulus = 'Disajikan tabel data';
+      else if (lowerText.match(/gambar|foto|diagram/)) stimulus = 'Disajikan gambar ilustrasi';
+      else if (lowerText.match(/contoh|perilaku|sikap|kasus|cerita|kisah/)) stimulus = 'Disajikan ilustrasi kasus atau perilaku';
+      else if (lowerText.match(/pernyataan/)) stimulus = 'Disajikan beberapa pernyataan';
+
+      if (qType === 'pg') {
+        if (lowerText.match(/pengertian|definisi|arti|makna|istilah|disebut|dinamakan/)) {
+          indicator = `${stimulus} terkait ${topic}, peserta didik dapat mengidentifikasi pengertian atau maknanya secara tepat.`;
+        } else if (lowerText.match(/contoh|perilaku|penerapan|tindakan|cerminan|kehidupan/)) {
+          indicator = `${stimulus}, peserta didik dapat menentukan contoh penerapan dari ${topic} dalam kehidupan nyata dengan tepat.`;
+        } else if (lowerText.match(/ciri|karakteristik|tanda|sifat/)) {
+          indicator = `${stimulus}, peserta didik dapat mengidentifikasi ciri-ciri atau tanda dari ${topic} dengan benar.`;
+        } else if (lowerText.match(/hikmah|manfaat|keutamaan|tujuan|fungsi/)) {
+          indicator = `${stimulus}, peserta didik dapat menjelaskan hikmah atau fungsi terkait ${topic} secara tepat.`;
+        } else if (lowerText.match(/dampak|akibat|bahaya|larangan|tercela/)) {
+          indicator = `${stimulus}, peserta didik dapat menganalisis dampak negatif atau larangan terkait ${topic} dengan benar.`;
+        } else if (lowerText.match(/dalil|ayat|hadits|surat|riwayat/)) {
+          indicator = `${stimulus}, peserta didik dapat menentukan kandungan dalil yang berkaitan dengan ${topic} secara tepat.`;
+        } else if (lowerText.match(/hitung|hasil|kalkulasi|nilai|luas|volume|besar/)) {
+          indicator = `${stimulus}, peserta didik dapat menghitung dan menentukan hasil akhir dari ${topic} dengan tepat.`;
+        } else if (lowerText.match(/langkah|cara|prosedur|tahapan|urutan|syarat|rukun/)) {
+          indicator = `${stimulus}, peserta didik dapat menentukan urutan tata cara/prosedur terkait ${topic} dengan benar.`;
+        } else if (lowerText.match(/mengapa|alasan|keunggulan|faktor|penyebab|akibat/)) {
+          indicator = `${stimulus} mengenai ${topic}, peserta didik dapat menganalisis alasan atau faktor penyebabnya dengan tepat.`;
+        } else {
+          indicator = `${stimulus} mengenai ${topic}, peserta didik dapat menentukan jawaban yang tepat.`;
+        }
+      } else if (qType === 'pg_complex') {
+        indicator = `${stimulus} terkait ${topic}, peserta didik dapat menganalisis dan memilih beberapa pernyataan yang benar.`;
+      } else if (qType === 'true_false') {
+        indicator = `${stimulus} mengenai ${topic}, peserta didik dapat memvalidasi kebenaran pernyataan tersebut secara tepat.`;
+      } else if (qType === 'matching') {
+        indicator = `${stimulus} terkait ${topic}, peserta didik dapat menjodohkan konsep atau istilah dengan pasangannya yang sesuai.`;
+      } else if (qType === 'short_answer') {
+        indicator = `${stimulus} terkait ${topic}, peserta didik dapat menuliskan jawaban yang tepat secara ringkas.`;
+      } else if (qType === 'essay') {
+        indicator = `${stimulus} konseptual terkait ${topic}, peserta didik dapat menjelaskan, menganalisis, dan memberikan contoh penerapannya secara mendalam.`;
+      }
     }
   }
 
@@ -3622,16 +3773,18 @@ const analyzeQuestionContent = (q, prevQ = null) => {
     if (prevQ && prevQ.basic_competency && prevQ.material === topic) {
       tp = prevQ.basic_competency;
     } else {
-      if (detectedDomain === 'akidah') {
-        tp = `Peserta didik mampu memahami, meyakini, dan meneladani nilai-nilai ${topic} dalam kehidupan beriman.`;
+      if (detectedDomain === 'qurdis') {
+        tp = `Peserta didik mampu membaca, memahami, dan menganalisis kandungan dalil ${topic} serta mengamalkannya dalam kehidupan beriman.`;
+      } else if (detectedDomain === 'akidah') {
+        tp = `Peserta didik mampu memahami, meyakini, dan meneladani nilai-nilai ${topic} dalam kehidupan sehari-hari.`;
       } else if (detectedDomain === 'akhlak') {
         tp = `Peserta didik mampu menganalisis, membiasakan, dan menerapkan perilaku terpuji terkait ${topic} dalam kehidupan sehari-hari.`;
       } else if (detectedDomain === 'fikih') {
         tp = `Peserta didik mampu memahami ketentuan hukum syariat dan mempraktikkan tata cara ibadah ${topic} secara benar.`;
-      } else if (detectedDomain === 'qurdis') {
-        tp = `Peserta didik mampu membaca sesuai kaidah tajwid serta memahami dan mengamalkan kandungan ${topic}.`;
       } else if (detectedDomain === 'ski') {
-        tp = `Peserta didik mampu menganalisis sejarah perkembangan Islam dan meneladani keteladanan ${topic}.`;
+        tp = `Peserta didik mampu menganalisis peristiwa sejarah Islam dan meneladani nilai-nilai perjuangan ${topic}.`;
+      } else if (detectedDomain === 'bahasa_arab') {
+        tp = `Peserta didik mampu memahami kosakata (mufradat), kaidah struktur teks (tarkib), dan ungkapan komunikatif terkait ${topic}.`;
       } else if (detectedDomain === 'matematika' || detectedDomain === 'sains') {
         tp = `Peserta didik mampu memahami konsep, prinsip, dan menyelesaikan permasalahan kontekstual terkait ${topic}.`;
       } else if (detectedDomain === 'bahasa') {
