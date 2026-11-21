@@ -417,6 +417,29 @@
             border-color: #10b981;
             box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
         }
+                .btn-word {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+            transition: all 0.15s ease;
+        }
+        .btn-word:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.6);
+        }
+        .btn-word:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
         .btn-print {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: #ffffff;
@@ -532,6 +555,11 @@
                     <button type="button" class="btn-tool {{ $layout === '2col' ? 'active' : '' }}" id="btn-layout-2" onclick="setLayout('2col')">2 Kolom</button>
                     <button type="button" class="btn-tool {{ $layout === '1col' ? 'active' : '' }}" id="btn-layout-1" onclick="setLayout('1col')">1 Kolom</button>
                 </div>
+
+                <!-- Word Download Button -->
+                <button type="button" class="btn-word" id="btn-unduh-word" onclick="downloadNaskahWord()" title="Unduh format Microsoft Word (.doc) anti-terpotong">
+                    📄 Unduh Word (.doc)
+                </button>
 
                 <!-- Print Trigger Button -->
                 <button type="button" class="btn-print" onclick="window.print()">
@@ -1195,6 +1223,351 @@
             if (evEl) evEl.value = '{{ $currentEvent }}';
             if (smEl) smEl.value = '{{ $semesterLabel }}';
         });
+
+        // Fungsi Ekspor Resmi Naskah Soal ke Microsoft Word (.doc)
+        function downloadNaskahWord() {
+            const btnWord = document.getElementById('btn-unduh-word');
+            const originalText = btnWord ? btnWord.innerHTML : '';
+            if (btnWord) {
+                btnWord.innerHTML = '⏳ Menyiapkan Word...';
+                btnWord.disabled = true;
+            }
+
+            try {
+                const isA4 = document.getElementById('btn-paper-a4')?.classList.contains('active');
+                const paperName = isA4 ? 'A4' : 'F4';
+                const paperSizeCss = isA4 ? '210mm 297mm' : '215.9mm 330.2mm';
+                const paperMarginCss = '12mm 15mm 12mm 15mm';
+
+                const is2Col = document.getElementById('btn-layout-2')?.classList.contains('active');
+                const layoutName = is2Col ? '2Kolom' : '1Kolom';
+
+                const isCompact = document.body.classList.contains('density-compact');
+                const fontSizeCss = isCompact ? '9.5pt' : '10pt';
+                const lineHeightCss = isCompact ? '1.18' : '1.25';
+
+                const subjectName = @json($package->subject->name ?? 'Informatika');
+                const classDisplay = @json($classDisplay ?? 'Kelas');
+                const academicYear = @json($package->academicYear->year ?? '2026/2027');
+                const examCode = document.getElementById('display-exam-code')?.textContent.trim() || @json($examCode);
+                const eventTitle = document.getElementById('display-event-title')?.textContent.trim() || @json($fullTitle);
+
+                // Kloning container butir soal
+                const originalContainer = document.querySelector('.content-container');
+                if (!originalContainer) throw new Error('Kontainer soal tidak ditemukan');
+                const cloneContainer = originalContainer.cloneNode(true);
+
+                // Koleksi dan bundle gambar
+                const imgParts = [];
+                let imgSeq = 1;
+
+                // 1. Logo Madrasah
+                const logoBase64Data = @json($logoBase64);
+                let logoFileName = '';
+                if (logoBase64Data) {
+                    logoFileName = 'logo_madrasah.png';
+                    const cleanLogoB64 = logoBase64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+                    imgParts.push({
+                        name: logoFileName,
+                        type: 'image/png',
+                        base64: cleanLogoB64
+                    });
+                }
+
+                // 2. Gambar stimulus soal
+                const realImgs = originalContainer.querySelectorAll('img.q-img');
+                const cloneImgs = cloneContainer.querySelectorAll('img.q-img');
+                cloneImgs.forEach((img, idx) => {
+                    let b64 = '';
+                    const src = img.getAttribute('src') || '';
+                    if (src.startsWith('data:image')) {
+                        b64 = src;
+                    } else if (realImgs[idx]) {
+                        try {
+                            const c = document.createElement('canvas');
+                            c.width = realImgs[idx].naturalWidth || realImgs[idx].width || 120;
+                            c.height = realImgs[idx].naturalHeight || realImgs[idx].height || 120;
+                            const ctx = c.getContext('2d');
+                            ctx.drawImage(realImgs[idx], 0, 0);
+                            b64 = c.toDataURL('image/png');
+                        } catch(e) {}
+                    }
+
+                    if (b64) {
+                        const fileName = 'stimulus_' + (imgSeq++) + '.png';
+                        const cleanB64 = b64.replace(/^data:image\/[a-z0-9-+.]+;base64,/i, '');
+                        imgParts.push({
+                            name: fileName,
+                            type: 'image/png',
+                            base64: cleanB64
+                        });
+                        img.setAttribute('src', fileName);
+                    }
+                    img.style.maxWidth = '95%';
+                    img.style.height = 'auto';
+                    img.style.display = 'block';
+                    img.style.margin = '4pt 0 4pt 15pt';
+                    img.style.border = '1pt solid #ccc';
+                    img.style.padding = '2pt';
+                });
+
+                // Perapian tabel AKM & Soal di dalam Word
+                cloneContainer.querySelectorAll('table').forEach(tbl => {
+                    tbl.setAttribute('border', '1');
+                    tbl.setAttribute('cellspacing', '0');
+                    tbl.setAttribute('cellpadding', '2');
+                    tbl.style.borderCollapse = 'collapse';
+                    tbl.style.border = '1pt solid #000000';
+                    tbl.style.pageBreakInside = 'avoid';
+                    tbl.style.breakInside = 'avoid';
+                    tbl.style.fontFamily = "'Times New Roman', Times, serif";
+                    tbl.style.fontSize = '8.5pt';
+                    tbl.querySelectorAll('th, td').forEach(c => {
+                        c.style.border = '1pt solid #000000';
+                        c.style.padding = '2.5pt 4pt';
+                    });
+                });
+
+                // Perapian proteksi putus nomor butir soal
+                cloneContainer.querySelectorAll('.question-item').forEach(qi => {
+                    qi.style.pageBreakInside = 'avoid';
+                    qi.style.breakInside = 'avoid';
+                    qi.style.marginBottom = '6pt';
+                    qi.style.textAlign = 'justify';
+                });
+
+                let wordHtml = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Naskah Soal - ${subjectName}</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    @page Section1 {
+      size: ${paperSizeCss};
+      mso-page-orientation: portrait;
+      margin: ${paperMarginCss};
+      mso-header-margin: 0.2in;
+      mso-footer-margin: 0.2in;
+    }
+    div.Section1 {
+      page: Section1;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: ${fontSizeCss};
+      line-height: ${lineHeightCss};
+      color: #000000;
+    }
+    table {
+      border-collapse: collapse;
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+    .content-container.col-2 {
+      column-count: 2;
+      column-gap: 18pt;
+      mso-column-count: 2;
+      mso-column-gap: 18pt;
+      text-align: justify;
+    }
+    .content-container {
+      width: 100%;
+      text-align: justify;
+    }
+    .question-item {
+      page-break-inside: avoid;
+      break-inside: avoid;
+      mso-pagination: lines-together;
+      margin-bottom: 6pt;
+      text-align: justify;
+    }
+    .q-number {
+      font-weight: bold;
+      float: left;
+      width: 18pt;
+    }
+    .q-text {
+      margin-left: 20pt;
+      display: block;
+      text-indent: 0pt;
+    }
+    .q-text p, .q-text div, .q-text span {
+      text-indent: 0pt !important;
+    }
+    .options-list {
+      list-style: none;
+      margin: 2pt 0 0 0;
+      padding-left: 18pt;
+    }
+    .options-list li {
+      margin-bottom: 1.5pt;
+      line-height: 1.15;
+    }
+    .section-title {
+      font-weight: bold;
+      font-size: 9.5pt;
+      text-transform: uppercase;
+      margin: 8pt 0 2pt 0;
+      border-bottom: 1pt solid #000;
+      padding-bottom: 1pt;
+    }
+    .section-desc {
+      font-size: 8.5pt;
+      font-weight: bold;
+      font-style: italic;
+      margin: 2pt 0 4pt 0;
+    }
+    table.akm-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1pt solid #000000;
+      margin: 4pt 0 6pt 0;
+      font-size: 8.5pt;
+    }
+    table.akm-table th, table.akm-table td {
+      border: 1pt solid #000000;
+      padding: 2.5pt 4pt;
+    }
+  </style>
+</head>
+<body style="font-family: 'Times New Roman', Times, serif; color: #000000; margin: 0; padding: 0;">
+  <div class="Section1">
+    <!-- KODE UJIAN -->
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 2pt; border: none;">
+      <tr>
+        <td style="text-align: right; font-size: 8.5pt; font-family: Arial, sans-serif; font-weight: bold; border: none;">
+          ${examCode}
+        </td>
+      </tr>
+    </table>
+
+    <!-- KOP RESMI MADRASAH -->
+    <table style="width: 100%; border-collapse: collapse; border-bottom: 3pt double #000000; padding-bottom: 5pt; margin-bottom: 7pt; border-top: none; border-left: none; border-right: none;">
+      <tr>
+        <td style="width: 65px; vertical-align: middle; text-align: center; border: none; padding-right: 8px;">
+          ${logoFileName ? `<img src="${logoFileName}" width="60" height="60" style="width: 60px; height: 60px; display: block;" alt="Logo">` : ''}
+        </td>
+        <td style="vertical-align: middle; text-align: center; border: none; padding: 0 5px;">
+          <div style="font-size: 13pt; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif; line-height: 1.2;">
+            MADRASAH TSANAWIYAH AL HASANAH
+          </div>
+          <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif; line-height: 1.2; margin-top: 2px;">
+            KECAMATAN CIOMAS KABUPATEN BOGOR
+          </div>
+          <div style="font-size: 11.5pt; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif; line-height: 1.2; margin-top: 2px;">
+            ${eventTitle}
+          </div>
+          <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif; line-height: 1.2; margin-top: 2px;">
+            TAHUN PELAJARAN ${academicYear}
+          </div>
+        </td>
+        <td style="width: 65px; border: none;"></td>
+      </tr>
+    </table>
+
+    <!-- IDENTITAS SISWA -->
+    <table style="width: 100%; border-collapse: collapse; font-size: 9pt; font-family: 'Times New Roman', serif; margin-bottom: 6pt; border: none;">
+      <tr>
+        <td style="width: 18%; border: none; padding: 1.5pt 0;"><strong>MATA PELAJARAN</strong></td>
+        <td style="width: 35%; border: none; padding: 1.5pt 0;">: ${subjectName.toUpperCase()}</td>
+        <td style="width: 18%; border: none; padding: 1.5pt 0;"><strong>HARI/TANGGAL</strong></td>
+        <td style="width: 29%; border: none; padding: 1.5pt 0;">: ________________</td>
+      </tr>
+      <tr>
+        <td style="border: none; padding: 1.5pt 0;"><strong>NAMA</strong></td>
+        <td style="border: none; padding: 1.5pt 0;">: ______________________</td>
+        <td style="border: none; padding: 1.5pt 0;"><strong>WAKTU</strong></td>
+        <td style="border: none; padding: 1.5pt 0;">: 90  Menit</td>
+      </tr>
+      <tr>
+        <td style="border: none; padding: 1.5pt 0;"><strong>KELAS</strong></td>
+        <td colspan="3" style="border: none; padding: 1.5pt 0;">: ${classDisplay}</td>
+      </tr>
+    </table>
+
+    <!-- PETUNJUK UMUM -->
+    <div style="border: 1pt solid #000000; background-color: #fafafa; padding: 4pt 8pt; font-size: 7.5pt; font-family: 'Times New Roman', serif; margin-bottom: 7pt;">
+      <strong>PETUNJUK UMUM :</strong>
+      <ol style="margin: 2pt 0 0 16pt; padding: 0;">
+        <li>Bacalah Do’a sebelum dan sesudah mengerjakan Soal</li>
+        <li>Jawaban di kerjakan langsung pada Soal</li>
+        <li>Isilah nama dengan lengkap dan jelas, lalu lingkari dalam satu pilihan kelas</li>
+        <li>Pergunakan ballpoint untuk mengisi</li>
+        <li>Dahulukan menjawab soal – soal yang anda anggap mudah</li>
+      </ol>
+    </div>
+
+    <!-- BUTIR SOAL -->
+    <div class="content-container ${is2Col ? 'col-2' : ''}">
+      ${cloneContainer.innerHTML}
+    </div>
+  </div>
+</body>
+</html>`;
+
+                // Kemas Dokumen MHTML Word (.doc)
+                const boundary = "----=_NextPart_SiakadMts_Naskah_" + Date.now();
+                let mhtml = "";
+
+                mhtml += "MIME-Version: 1.0\r\n";
+                mhtml += `Content-Type: multipart/related; boundary="${boundary}"\r\n\r\n`;
+
+                // Part 1: Main HTML Body
+                mhtml += `--${boundary}\r\n`;
+                mhtml += "Content-Type: text/html; charset=utf-8\r\n";
+                mhtml += "Content-Transfer-Encoding: 8bit\r\n\r\n";
+                mhtml += wordHtml + "\r\n\r\n";
+
+                // Part 2+: Gambar (Logo & Stimulus)
+                imgParts.forEach(part => {
+                    const wrappedB64 = part.base64.replace(/(.{76})/g, "$1\r\n");
+                    mhtml += `--${boundary}\r\n`;
+                    mhtml += `Content-Type: ${part.type}\r\n`;
+                    mhtml += "Content-Transfer-Encoding: base64\r\n";
+                    mhtml += `Content-Location: ${part.name}\r\n\r\n`;
+                    mhtml += wrappedB64 + "\r\n\r\n";
+                });
+
+                mhtml += `--${boundary}--\r\n`;
+
+                const blob = new Blob([mhtml], { type: 'application/msword;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const safeMapel = (subjectName || 'Mapel').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const safeClass = (classDisplay || 'Kelas').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const safeEvent = (document.getElementById('select-event')?.value || 'ASAS').replace(/[^a-zA-Z0-9_-]/g, '_');
+                a.href = url;
+                a.download = `Naskah_Soal_${safeMapel}_${safeClass}_${safeEvent}_${paperName}_${layoutName}.doc`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                if (btnWord) {
+                    btnWord.innerHTML = '✅ Terunduh!';
+                    setTimeout(() => {
+                        btnWord.innerHTML = originalText;
+                        btnWord.disabled = false;
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Word export error:', err);
+                alert('Gagal mengunduh dokumen Word. Silakan coba kembali.');
+                if (btnWord) {
+                    btnWord.innerHTML = originalText;
+                    btnWord.disabled = false;
+                }
+            }
+        }
     </script>
 </body>
 </html>
