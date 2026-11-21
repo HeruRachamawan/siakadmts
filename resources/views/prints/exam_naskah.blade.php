@@ -15,8 +15,8 @@
     <style>
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 9.5pt;
-            line-height: 1.18;
+            font-size: 10pt;
+            line-height: 1.25;
             color: #000;
             margin: 0;
             padding: 0;
@@ -36,26 +36,54 @@
             border-radius: 4px;
             box-sizing: border-box;
             transition: all 0.2s ease;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 10pt;
+            line-height: 1.25;
+        }
+
+        /* Harmonisasi menyeluruh font & angka Times New Roman */
+        .print-sheet,
+        .print-sheet *,
+        .content-container,
+        .content-container *,
+        .question-item,
+        .q-number,
+        .q-text,
+        .q-text *,
+        .options-container,
+        .options-list,
+        .options-list *,
+        .options-grid-table,
+        .options-grid-table *,
+        .opt-label,
+        .opt-text,
+        .akm-table,
+        .akm-table *,
+        .meta-table,
+        .meta-table *,
+        .petunjuk,
+        .petunjuk * {
+            font-family: 'Times New Roman', Times, serif !important;
         }
 
         /* DENSITY: KOMPAK (DEFAULT FIT MAKSIMAL 2 LEMBAR / 4 MUKA) */
         body.density-compact .print-sheet {
-            font-size: 9.5pt;
-            line-height: 1.18;
+            font-size: 10pt;
+            line-height: 1.22;
         }
         body.density-compact .header-kop {
             padding-bottom: 4px;
             margin-bottom: 6px;
         }
         body.density-compact .meta-table {
-            font-size: 8.5pt !important;
+            font-size: 9pt !important;
             margin-bottom: 5px !important;
         }
         body.density-compact .meta-table td {
-            padding: 1px 3px !important;
+            padding: 1.5px 3px !important;
         }
         body.density-compact .petunjuk {
-            font-size: 7.5pt !important;
+            font-size: 8pt !important;
             padding: 3px 8px !important;
             margin-bottom: 6px !important;
         }
@@ -65,11 +93,11 @@
         body.density-compact .section-title {
             margin: 8px 0 3px 0 !important;
             padding-bottom: 1px !important;
-            font-size: 9.5pt !important;
+            font-size: 10pt !important;
         }
         body.density-compact .section-desc {
             margin: 2px 0 4px 0 !important;
-            font-size: 8.5pt !important;
+            font-size: 9pt !important;
         }
         body.density-compact .question-item {
             margin-bottom: 7px !important;
@@ -77,15 +105,17 @@
         body.density-compact .q-text p {
             margin: 0 0 2px 0 !important;
         }
+        body.density-compact .options-container {
+            margin-top: 2px !important;
+        }
         body.density-compact .options-list {
-            margin: 2px 0 0 0 !important;
-            padding-left: 20px !important;
+            margin: 1px 0 0 0 !important;
         }
         body.density-compact .options-list li {
             margin-bottom: 1px !important;
         }
         body.density-compact .akm-table {
-            font-size: 8.5pt !important;
+            font-size: 9pt !important;
             margin: 4px 0 6px 0 !important;
         }
         body.density-compact .akm-table th, 
@@ -258,10 +288,18 @@
             break-inside: avoid;
             page-break-inside: avoid;
         }
+        .options-container {
+            margin-left: 22px;
+            margin-top: 3px;
+        }
         .options-list {
             list-style-type: none;
             padding-left: 22px;
             margin: 3px 0 0 0;
+        }
+        .options-container .options-list {
+            padding-left: 0;
+            margin: 0;
         }
         .options-list li {
             margin-bottom: 1.5px;
@@ -271,8 +309,23 @@
         }
         .opt-label {
             font-weight: bold;
-            width: 20px;
+            width: 18px;
             flex-shrink: 0;
+            display: inline-block;
+        }
+        .opt-text {
+            flex-grow: 1;
+        }
+        .options-grid-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: none !important;
+            margin: 1px 0;
+        }
+        .options-grid-table td {
+            border: none !important;
+            vertical-align: top;
+            padding: 1.5px 8px 1.5px 0;
         }
         .key-badge {
             color: #059669;
@@ -690,7 +743,7 @@
 
     <!-- KOTAK KODE NASKAH UJIAN (POJOK KANAN ATAS) -->
     <div style="display: flex; justify-content: flex-end; margin-bottom: 4px;">
-        <div style="border: 1.5px solid #000; padding: 2px 10px; font-size: 8.5pt; font-family: Arial, sans-serif; font-weight: bold; line-height: 1.2; background: #fff; display: inline-block;">
+        <div style="border: 1.5px solid #000; padding: 2px 10px; font-size: 9.5pt; font-family: 'Times New Roman', Times, serif; font-weight: bold; line-height: 1.2; background: #fff; display: inline-block;">
             <span id="display-exam-code">{{ $examCode }}</span>
         </div>
     </div>
@@ -783,22 +836,87 @@
                     @endif
 
                     @php
-                        $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
+                        $rawOpts = is_array($q->options) ? $q->options : json_decode($q->options, true);
+                        $alphaMap = ['A' => 'a', 'B' => 'b', 'C' => 'c', 'D' => 'd', 'E' => 'e'];
+                        $validOpts = [];
+                        $maxOptLen = 0;
+                        $hasComplexHtml = false;
+
+                        if (!empty($rawOpts)) {
+                            foreach ($alphaMap as $uKey => $lKey) {
+                                if (isset($rawOpts[$uKey]) && trim((string)$rawOpts[$uKey]) !== '') {
+                                    $val = $rawOpts[$uKey];
+                                    $clean = trim(strip_tags($val));
+                                    $len = mb_strlen($clean);
+                                    if ($len > $maxOptLen) {
+                                        $maxOptLen = $len;
+                                    }
+                                    if (preg_match('/<table|<ul|<ol|<div|<p|<br\s*\/?>/i', $val)) {
+                                        $hasComplexHtml = true;
+                                    }
+                                    $validOpts[] = [
+                                        'upper' => $uKey,
+                                        'lower' => $lKey,
+                                        'label' => $lKey . '.',
+                                        'val' => $val,
+                                        'is_correct' => ($showKeys && strtoupper($q->correct_answer ?? '') === $uKey),
+                                    ];
+                                }
+                            }
+                        }
+
+                        $isShortOpts = (count($validOpts) >= 3 && count($validOpts) <= 5 && !$hasComplexHtml && $maxOptLen <= 32);
                     @endphp
-                    @if (!empty($opts))
-                        <ul class="options-list">
-                            @foreach (['A', 'B', 'C', 'D', 'E'] as $key)
-                                @if (isset($opts[$key]) && $opts[$key] !== '')
-                                    <li>
-                                        <span class="opt-label">{{ $key }}.</span>
-                                        <span>{{ $opts[$key] }}</span>
-                                        @if ($showKeys && strtoupper($q->correct_answer) === $key)
-                                            <span class="key-badge">✓ (Kunci)</span>
-                                        @endif
-                                    </li>
-                                @endif
-                            @endforeach
-                        </ul>
+                    @if (!empty($validOpts))
+                        <div class="options-container" style="margin-left: 22px;">
+                            @if ($isShortOpts)
+                                <table class="options-grid-table" style="width: 100%; border-collapse: collapse; border: none; margin: 2px 0;">
+                                    <tbody>
+                                        @php
+                                            $half = (int) ceil(count($validOpts) / 2);
+                                        @endphp
+                                        @for ($r = 0; $r < $half; $r++)
+                                            @php
+                                                $leftOpt = $validOpts[$r] ?? null;
+                                                $rightOpt = $validOpts[$r + $half] ?? null;
+                                            @endphp
+                                            <tr>
+                                                <td style="width: 50%; vertical-align: top; border: none; padding: 1.5px 8px 1.5px 0;">
+                                                    @if ($leftOpt)
+                                                        <span class="opt-label">{{ $leftOpt['label'] }}</span>
+                                                        <span class="opt-text">{!! $leftOpt['val'] !!}</span>
+                                                        @if ($leftOpt['is_correct'])
+                                                            <span class="key-badge">✓ (Kunci)</span>
+                                                        @endif
+                                                    @endif
+                                                </td>
+                                                <td style="width: 50%; vertical-align: top; border: none; padding: 1.5px 0 1.5px 0;">
+                                                    @if ($rightOpt)
+                                                        <span class="opt-label">{{ $rightOpt['label'] }}</span>
+                                                        <span class="opt-text">{!! $rightOpt['val'] !!}</span>
+                                                        @if ($rightOpt['is_correct'])
+                                                            <span class="key-badge">✓ (Kunci)</span>
+                                                        @endif
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endfor
+                                    </tbody>
+                                </table>
+                            @else
+                                <ul class="options-list">
+                                    @foreach ($validOpts as $opt)
+                                        <li>
+                                            <span class="opt-label">{{ $opt['label'] }}</span>
+                                            <span class="opt-text">{!! $opt['val'] !!}</span>
+                                            @if ($opt['is_correct'])
+                                                <span class="key-badge">✓ (Kunci)</span>
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </div>
                     @endif
                 </div>
             @endforeach
@@ -819,28 +937,103 @@
                     @endif
 
                     @php
-                        $opts = is_array($q->options) ? $q->options : json_decode($q->options, true);
+                        $rawOpts = is_array($q->options) ? $q->options : json_decode($q->options, true);
+                        $alphaMap = ['A' => 'a', 'B' => 'b', 'C' => 'c', 'D' => 'd', 'E' => 'e'];
                         $keys = array_map('trim', explode(',', strtoupper($q->correct_answer ?? '')));
+                        $validOpts = [];
+                        $maxOptLen = 0;
+                        $hasComplexHtml = false;
+
+                        if (!empty($rawOpts)) {
+                            foreach ($alphaMap as $uKey => $lKey) {
+                                if (isset($rawOpts[$uKey]) && trim((string)$rawOpts[$uKey]) !== '') {
+                                    $val = $rawOpts[$uKey];
+                                    $clean = trim(strip_tags($val));
+                                    $len = mb_strlen($clean);
+                                    if ($len > $maxOptLen) {
+                                        $maxOptLen = $len;
+                                    }
+                                    if (preg_match('/<table|<ul|<ol|<div|<p|<br\s*\/?>/i', $val)) {
+                                        $hasComplexHtml = true;
+                                    }
+                                    $validOpts[] = [
+                                        'upper' => $uKey,
+                                        'lower' => $lKey,
+                                        'label' => $lKey . '.',
+                                        'val' => $val,
+                                        'is_correct' => ($showKeys && in_array($uKey, $keys)),
+                                    ];
+                                }
+                            }
+                        }
+
+                        $isShortOpts = (count($validOpts) >= 3 && count($validOpts) <= 5 && !$hasComplexHtml && $maxOptLen <= 32);
                     @endphp
-                    @if (!empty($opts))
-                        <ul class="options-list">
-                            @foreach (['A', 'B', 'C', 'D', 'E'] as $key)
-                                @if (isset($opts[$key]) && $opts[$key] !== '')
-                                    <li>
-                                        <span class="opt-label" style="display:inline-flex; align-items:center; gap:3px;">
-                                            <span style="display:inline-block; width:12px; height:12px; border:1px solid #000; text-align:center; line-height:11px; font-size:8pt;">
-                                                {{ ($showKeys && in_array($key, $keys)) ? '✓' : '' }}
+                    @if (!empty($validOpts))
+                        <div class="options-container" style="margin-left: 22px;">
+                            @if ($isShortOpts)
+                                <table class="options-grid-table" style="width: 100%; border-collapse: collapse; border: none; margin: 2px 0;">
+                                    <tbody>
+                                        @php
+                                            $half = (int) ceil(count($validOpts) / 2);
+                                        @endphp
+                                        @for ($r = 0; $r < $half; $r++)
+                                            @php
+                                                $leftOpt = $validOpts[$r] ?? null;
+                                                $rightOpt = $validOpts[$r + $half] ?? null;
+                                            @endphp
+                                            <tr>
+                                                <td style="width: 50%; vertical-align: top; border: none; padding: 1.5px 8px 1.5px 0;">
+                                                    @if ($leftOpt)
+                                                        <span class="opt-label" style="display:inline-flex; align-items:center; gap:2px; width:auto; margin-right:4px;">
+                                                            <span style="display:inline-block; width:11px; height:11px; border:1px solid #000; text-align:center; line-height:10px; font-size:7.5pt;">
+                                                                {{ $leftOpt['is_correct'] ? '✓' : '' }}
+                                                            </span>
+                                                            {{ $leftOpt['label'] }}
+                                                        </span>
+                                                        <span class="opt-text">{!! $leftOpt['val'] !!}</span>
+                                                        @if ($leftOpt['is_correct'])
+                                                            <span class="key-badge">✓</span>
+                                                        @endif
+                                                    @endif
+                                                </td>
+                                                <td style="width: 50%; vertical-align: top; border: none; padding: 1.5px 0 1.5px 0;">
+                                                    @if ($rightOpt)
+                                                        <span class="opt-label" style="display:inline-flex; align-items:center; gap:2px; width:auto; margin-right:4px;">
+                                                            <span style="display:inline-block; width:11px; height:11px; border:1px solid #000; text-align:center; line-height:10px; font-size:7.5pt;">
+                                                                {{ $rightOpt['is_correct'] ? '✓' : '' }}
+                                                            </span>
+                                                            {{ $rightOpt['label'] }}
+                                                        </span>
+                                                        <span class="opt-text">{!! $rightOpt['val'] !!}</span>
+                                                        @if ($rightOpt['is_correct'])
+                                                            <span class="key-badge">✓</span>
+                                                        @endif
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endfor
+                                    </tbody>
+                                </table>
+                            @else
+                                <ul class="options-list">
+                                    @foreach ($validOpts as $opt)
+                                        <li>
+                                            <span class="opt-label" style="display:inline-flex; align-items:center; gap:3px;">
+                                                <span style="display:inline-block; width:12px; height:12px; border:1px solid #000; text-align:center; line-height:11px; font-size:8pt;">
+                                                    {{ $opt['is_correct'] ? '✓' : '' }}
+                                                </span>
+                                                {{ $opt['label'] }}
                                             </span>
-                                            {{ $key }}.
-                                        </span>
-                                        <span>{{ $opts[$key] }}</span>
-                                        @if ($showKeys && in_array($key, $keys))
-                                            <span class="key-badge">✓</span>
-                                        @endif
-                                    </li>
-                                @endif
-                            @endforeach
-                        </ul>
+                                            <span class="opt-text">{!! $opt['val'] !!}</span>
+                                            @if ($opt['is_correct'])
+                                                <span class="key-badge">✓</span>
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </div>
                     @endif
                 </div>
             @endforeach
@@ -1297,8 +1490,8 @@
                 const layoutName = is2Col ? '2Kolom' : '1Kolom';
 
                 const isCompact = document.body.classList.contains('density-compact');
-                const fontSizeCss = isCompact ? '9.5pt' : '10pt';
-                const lineHeightCss = isCompact ? '1.18' : '1.25';
+                const fontSizeCss = '10pt';
+                const lineHeightCss = isCompact ? '1.22' : '1.25';
 
                 const subjectName = @json($package->subject->name ?? 'Informatika');
                 const classDisplay = @json($classDisplay ?? 'Kelas');
@@ -1365,8 +1558,8 @@
                     img.style.padding = '2pt';
                 });
 
-                // Perapian tabel AKM & Soal di dalam Word
-                cloneContainer.querySelectorAll('table').forEach(tbl => {
+                // Perapian tabel AKM & Soal di dalam Word (kecuali tabel opsi jawaban 2 kolom)
+                cloneContainer.querySelectorAll('table:not(.options-grid-table)').forEach(tbl => {
                     tbl.setAttribute('border', '1');
                     tbl.setAttribute('cellspacing', '0');
                     tbl.setAttribute('cellpadding', '2');
@@ -1375,10 +1568,29 @@
                     tbl.style.pageBreakInside = 'avoid';
                     tbl.style.breakInside = 'avoid';
                     tbl.style.fontFamily = "'Times New Roman', Times, serif";
-                    tbl.style.fontSize = '8.5pt';
+                    tbl.style.fontSize = '9pt';
                     tbl.querySelectorAll('th, td').forEach(c => {
                         c.style.border = '1pt solid #000000';
                         c.style.padding = '2.5pt 4pt';
+                        c.style.fontFamily = "'Times New Roman', Times, serif";
+                    });
+                });
+
+                cloneContainer.querySelectorAll('table.options-grid-table').forEach(tbl => {
+                    tbl.setAttribute('border', '0');
+                    tbl.setAttribute('cellspacing', '0');
+                    tbl.setAttribute('cellpadding', '0');
+                    tbl.style.borderCollapse = 'collapse';
+                    tbl.style.border = 'none';
+                    tbl.style.width = '100%';
+                    tbl.style.pageBreakInside = 'avoid';
+                    tbl.style.breakInside = 'avoid';
+                    tbl.style.fontFamily = "'Times New Roman', Times, serif";
+                    tbl.querySelectorAll('td').forEach(c => {
+                        c.style.border = 'none';
+                        c.style.padding = '1.5pt 6pt 1.5pt 0';
+                        c.style.verticalAlign = 'top';
+                        c.style.fontFamily = "'Times New Roman', Times, serif";
                     });
                 });
 
@@ -1388,6 +1600,7 @@
                     qi.style.breakInside = 'avoid';
                     qi.style.marginBottom = '6pt';
                     qi.style.textAlign = 'justify';
+                    qi.style.fontFamily = "'Times New Roman', Times, serif";
                 });
 
                 let wordHtml = `
@@ -1425,6 +1638,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
       border-collapse: collapse;
       mso-table-lspace: 0pt;
       mso-table-rspace: 0pt;
+      font-family: 'Times New Roman', Times, serif;
     }
     .content-container.col-2 {
       column-count: 2;
@@ -1436,6 +1650,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
     .content-container {
       width: 100%;
       text-align: justify;
+      font-family: 'Times New Roman', Times, serif;
     }
     .question-item {
       page-break-inside: avoid;
@@ -1443,53 +1658,89 @@ xmlns="http://www.w3.org/TR/REC-html40">
       mso-pagination: lines-together;
       margin-bottom: 6pt;
       text-align: justify;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: ${fontSizeCss};
     }
     .q-number {
       font-weight: bold;
       float: left;
       width: 18pt;
+      font-family: 'Times New Roman', Times, serif;
     }
     .q-text {
       margin-left: 20pt;
       display: block;
       text-indent: 0pt;
+      font-family: 'Times New Roman', Times, serif;
     }
     .q-text p, .q-text div, .q-text span {
       text-indent: 0pt !important;
+      font-family: 'Times New Roman', Times, serif !important;
+    }
+    .options-container {
+      margin-left: 20pt;
+    }
+    .options-grid-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: none;
+      margin: 2pt 0;
+    }
+    .options-grid-table td {
+      border: none;
+      vertical-align: top;
+      padding: 1.5pt 6pt 1.5pt 0;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: ${fontSizeCss};
     }
     .options-list {
       list-style: none;
       margin: 2pt 0 0 0;
-      padding-left: 18pt;
+      padding-left: 0;
     }
     .options-list li {
       margin-bottom: 1.5pt;
       line-height: 1.15;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: ${fontSizeCss};
+    }
+    .opt-label {
+      font-weight: bold;
+      display: inline-block;
+      width: 15pt;
+      font-family: 'Times New Roman', Times, serif;
+    }
+    .opt-text {
+      font-family: 'Times New Roman', Times, serif;
     }
     .section-title {
       font-weight: bold;
-      font-size: 9.5pt;
+      font-size: 10pt;
       text-transform: uppercase;
       margin: 8pt 0 2pt 0;
       border-bottom: 1pt solid #000;
       padding-bottom: 1pt;
+      font-family: 'Times New Roman', Times, serif;
     }
     .section-desc {
-      font-size: 8.5pt;
+      font-size: 9pt;
       font-weight: bold;
       font-style: italic;
       margin: 2pt 0 4pt 0;
+      font-family: 'Times New Roman', Times, serif;
     }
     table.akm-table {
       width: 100%;
       border-collapse: collapse;
       border: 1pt solid #000000;
       margin: 4pt 0 6pt 0;
-      font-size: 8.5pt;
+      font-size: 9pt;
+      font-family: 'Times New Roman', Times, serif;
     }
     table.akm-table th, table.akm-table td {
       border: 1pt solid #000000;
       padding: 2.5pt 4pt;
+      font-family: 'Times New Roman', Times, serif;
     }
   </style>
 </head>
@@ -1501,7 +1752,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
         <td style="text-align: right; border: none; padding: 0;">
           <table style="display: inline-table; border: 1.5pt solid #000000; border-collapse: collapse;">
             <tr>
-              <td style="border: 1.5pt solid #000000; padding: 2pt 8pt; font-size: 8.5pt; font-family: Arial, sans-serif; font-weight: bold; text-align: center;">
+              <td style="border: 1.5pt solid #000000; padding: 2pt 8pt; font-size: 9.5pt; font-family: 'Times New Roman', Times, serif; font-weight: bold; text-align: center;">
                 ${examCode}
               </td>
             </tr>
