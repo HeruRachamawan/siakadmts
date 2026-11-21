@@ -56,6 +56,8 @@
         .options-grid-table,
         .options-grid-table *,
         .opt-label,
+        .opt-label-complex,
+        .opt-box,
         .opt-text,
         .akm-table,
         .akm-table *,
@@ -312,6 +314,29 @@
             width: 18px;
             flex-shrink: 0;
             display: inline-block;
+        }
+        .opt-label-complex {
+            font-weight: bold;
+            width: 34px;
+            min-width: 34px;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap !important;
+        }
+        .opt-box {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 1.2px solid #000;
+            border-radius: 1.5px;
+            text-align: center;
+            line-height: 11px;
+            font-size: 8pt;
+            margin-right: 4px;
+            box-sizing: border-box;
+            vertical-align: middle;
+            background: #fff;
         }
         .opt-text {
             flex-grow: 1;
@@ -985,30 +1010,28 @@
                                             <tr>
                                                 <td style="width: 50%; vertical-align: top; border: none; padding: 1.5px 8px 1.5px 0;">
                                                     @if ($leftOpt)
-                                                        <span class="opt-label" style="display:inline-flex; align-items:center; gap:2px; width:auto; margin-right:4px;">
-                                                            <span style="display:inline-block; width:11px; height:11px; border:1px solid #000; text-align:center; line-height:10px; font-size:7.5pt;">
-                                                                {{ $leftOpt['is_correct'] ? '✓' : '' }}
+                                                        <div style="display: flex; align-items: flex-start;">
+                                                            <span class="opt-label-complex">
+                                                                <span class="opt-box">{{ $leftOpt['is_correct'] ? '✓' : '' }}</span>{{ $leftOpt['label'] }}
                                                             </span>
-                                                            {{ $leftOpt['label'] }}
-                                                        </span>
-                                                        <span class="opt-text">{!! $leftOpt['val'] !!}</span>
-                                                        @if ($leftOpt['is_correct'])
-                                                            <span class="key-badge">✓</span>
-                                                        @endif
+                                                            <span class="opt-text">{!! $leftOpt['val'] !!}</span>
+                                                            @if ($leftOpt['is_correct'])
+                                                                <span class="key-badge">✓</span>
+                                                            @endif
+                                                        </div>
                                                     @endif
                                                 </td>
                                                 <td style="width: 50%; vertical-align: top; border: none; padding: 1.5px 0 1.5px 0;">
                                                     @if ($rightOpt)
-                                                        <span class="opt-label" style="display:inline-flex; align-items:center; gap:2px; width:auto; margin-right:4px;">
-                                                            <span style="display:inline-block; width:11px; height:11px; border:1px solid #000; text-align:center; line-height:10px; font-size:7.5pt;">
-                                                                {{ $rightOpt['is_correct'] ? '✓' : '' }}
+                                                        <div style="display: flex; align-items: flex-start;">
+                                                            <span class="opt-label-complex">
+                                                                <span class="opt-box">{{ $rightOpt['is_correct'] ? '✓' : '' }}</span>{{ $rightOpt['label'] }}
                                                             </span>
-                                                            {{ $rightOpt['label'] }}
-                                                        </span>
-                                                        <span class="opt-text">{!! $rightOpt['val'] !!}</span>
-                                                        @if ($rightOpt['is_correct'])
-                                                            <span class="key-badge">✓</span>
-                                                        @endif
+                                                            <span class="opt-text">{!! $rightOpt['val'] !!}</span>
+                                                            @if ($rightOpt['is_correct'])
+                                                                <span class="key-badge">✓</span>
+                                                            @endif
+                                                        </div>
                                                     @endif
                                                 </td>
                                             </tr>
@@ -1018,12 +1041,9 @@
                             @else
                                 <ul class="options-list">
                                     @foreach ($validOpts as $opt)
-                                        <li>
-                                            <span class="opt-label" style="display:inline-flex; align-items:center; gap:3px;">
-                                                <span style="display:inline-block; width:12px; height:12px; border:1px solid #000; text-align:center; line-height:11px; font-size:8pt;">
-                                                    {{ $opt['is_correct'] ? '✓' : '' }}
-                                                </span>
-                                                {{ $opt['label'] }}
+                                        <li style="display: flex; align-items: flex-start; margin-bottom: 2px;">
+                                            <span class="opt-label-complex">
+                                                <span class="opt-box">{{ $opt['is_correct'] ? '✓' : '' }}</span>{{ $opt['label'] }}
                                             </span>
                                             <span class="opt-text">{!! $opt['val'] !!}</span>
                                             @if ($opt['is_correct'])
@@ -1709,6 +1729,26 @@ xmlns="http://www.w3.org/TR/REC-html40">
       display: inline-block;
       width: 15pt;
       font-family: 'Times New Roman', Times, serif;
+    }
+    .opt-label-complex {
+      font-weight: bold;
+      display: inline-block;
+      width: 26pt;
+      white-space: nowrap;
+      font-family: 'Times New Roman', Times, serif;
+    }
+    .opt-box {
+      display: inline-block;
+      width: 9.5pt;
+      height: 9.5pt;
+      border: 1pt solid #000;
+      text-align: center;
+      line-height: 9pt;
+      font-size: 7.5pt;
+      margin-right: 3pt;
+      vertical-align: middle;
+      font-family: 'Times New Roman', Times, serif;
+      background: #ffffff;
     }
     .opt-text {
       font-family: 'Times New Roman', Times, serif;
