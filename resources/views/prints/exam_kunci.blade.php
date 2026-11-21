@@ -182,6 +182,30 @@
                 padding: 0 !important;
             }
         }
+        .btn-word {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+            transition: all 0.15s ease;
+        }
+        .btn-word:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.6);
+        }
+        .btn-word:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
         .btn-print {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: #ffffff;
@@ -392,6 +416,11 @@
                     <button type="button" class="btn-tool" id="btn-scale-90" onclick="setScale(90)">90%</button>
                     <button type="button" class="btn-tool" id="btn-scale-85" onclick="setScale(85)">85%</button>
                 </div>
+
+                <!-- Word (.doc) Download Button -->
+                <button type="button" class="btn-word" id="btn-download-word" onclick="downloadWordDoc()" title="Unduh Kunci Jawaban & Pedoman Penskoran dalam Format Microsoft Word (.doc)">
+                    📄 Unduh Word (.doc)
+                </button>
 
                 <!-- Print Trigger Button -->
                 <button type="button" class="btn-print" onclick="window.print()">
@@ -895,6 +924,217 @@
                     spaceEl.innerHTML = ' ';
                 } else {
                     spaceEl.innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                }
+            }
+        }
+
+        function downloadWordDoc() {
+            const btnWord = document.getElementById('btn-download-word');
+            const originalText = btnWord ? btnWord.innerHTML : '📄 Unduh Word (.doc)';
+            if (btnWord) {
+                btnWord.innerHTML = '⏳ Menyiapkan Word...';
+                btnWord.disabled = true;
+            }
+
+            try {
+                const isA4 = document.getElementById('btn-paper-a4')?.classList.contains('active');
+                const paperSizeCss = isA4 ? '210mm 297mm' : '215mm 330mm';
+                const paperMarginCss = isA4 ? '10mm 12mm 12mm 12mm' : '8mm 10mm 10mm 10mm';
+                const paperName = isA4 ? 'A4' : 'F4';
+
+                const subjectName = @json($package->subject->name ?? 'Informatika');
+                const rawClass = @json($classDisplay ?? 'Kelas');
+
+                // Clone element print-sheet untuk diadaptasi ke Word
+                const sheetEl = document.getElementById('print-sheet');
+                if (!sheetEl) throw new Error('Elemen print-sheet tidak ditemukan');
+                const clone = sheetEl.cloneNode(true);
+
+                // Adaptasi Tanda Tangan Gambar ke MHTML
+                const sigBase64Data = @json($sigBase64);
+                const sigImgs = clone.querySelectorAll('img');
+                sigImgs.forEach(img => {
+                    if (sigBase64Data) {
+                        img.setAttribute('src', 'signature_kepala.png');
+                        img.setAttribute('width', '130');
+                        img.setAttribute('height', '50');
+                        img.style.border = 'none';
+                        img.style.display = 'block';
+                        img.style.objectFit = 'contain';
+                    } else {
+                        img.remove();
+                    }
+                });
+
+                // Pastikan border table data-table solid hitam di Word
+                const dataTables = clone.querySelectorAll('table.data-table');
+                dataTables.forEach(t => {
+                    t.setAttribute('border', '1');
+                    t.setAttribute('cellspacing', '0');
+                    t.setAttribute('cellpadding', '3');
+                    t.style.width = '100%';
+                    t.style.borderCollapse = 'collapse';
+                    t.style.border = '1pt solid #000000';
+                    t.style.fontFamily = "'Times New Roman', Times, serif";
+                    t.style.fontSize = '9pt';
+                    t.style.marginBottom = '6pt';
+
+                    t.querySelectorAll('th').forEach(th => {
+                        th.style.backgroundColor = '#f2f2f2';
+                        th.style.border = '1pt solid #000000';
+                        th.style.padding = '4pt 3pt';
+                        th.style.fontWeight = 'bold';
+                        th.style.textAlign = th.style.textAlign || 'center';
+                    });
+                    t.querySelectorAll('td').forEach(td => {
+                        td.style.border = '1pt solid #000000';
+                        td.style.padding = '3pt 4pt';
+                    });
+                });
+
+                // Format Header KOP
+                const headerKop = clone.querySelector('.header-kop');
+                if (headerKop) {
+                    headerKop.style.textAlign = 'center';
+                    headerKop.style.borderBottom = '2pt solid #000000';
+                    headerKop.style.paddingBottom = '4pt';
+                    headerKop.style.marginBottom = '10pt';
+                    headerKop.style.fontFamily = "'Times New Roman', Times, serif";
+                }
+
+                // Format Meta Table
+                const metaTable = clone.querySelector('.meta-table');
+                if (metaTable) {
+                    metaTable.setAttribute('border', '0');
+                    metaTable.setAttribute('cellspacing', '0');
+                    metaTable.setAttribute('cellpadding', '1');
+                    metaTable.style.width = '100%';
+                    metaTable.style.borderCollapse = 'collapse';
+                    metaTable.style.fontFamily = "'Times New Roman', Times, serif";
+                    metaTable.style.fontSize = '9.5pt';
+                    metaTable.style.marginBottom = '8pt';
+                    metaTable.querySelectorAll('td').forEach(td => {
+                        td.style.border = 'none';
+                        td.style.padding = '1.5pt 2pt';
+                    });
+                }
+
+                // Format Signatures
+                const signatures = clone.querySelector('.signatures');
+                if (signatures) {
+                    signatures.setAttribute('border', '0');
+                    signatures.setAttribute('cellspacing', '0');
+                    signatures.setAttribute('cellpadding', '0');
+                    signatures.style.width = '100%';
+                    signatures.style.borderCollapse = 'collapse';
+                    signatures.style.fontFamily = "'Times New Roman', Times, serif";
+                    signatures.style.fontSize = '9.5pt';
+                    signatures.style.marginTop = '15pt';
+                    signatures.querySelectorAll('td').forEach(td => {
+                        td.style.border = 'none';
+                    });
+                }
+
+                // Bersihkan atribut contenteditable dari clone
+                clone.querySelectorAll('[contenteditable]').forEach(el => {
+                    el.removeAttribute('contenteditable');
+                    el.style.backgroundColor = 'transparent';
+                    el.style.outline = 'none';
+                });
+
+                const wordHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="utf-8">
+  <title>Kunci Jawaban - ${subjectName}</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    @page Section1 {
+      size: ${paperSizeCss};
+      mso-page-orientation: portrait;
+      margin: ${paperMarginCss};
+    }
+    div.Section1 {
+      page: Section1;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 9.5pt;
+      color: #000000;
+    }
+    table {
+      border-collapse: collapse;
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+  </style>
+</head>
+<body style="font-family: 'Times New Roman', Times, serif; color: #000000; margin: 0; padding: 0;">
+  <div class="Section1">
+    ${clone.innerHTML}
+  </div>
+</body>
+</html>`;
+
+                // Susun file dokumen MHTML Word (.doc)
+                const boundary = "----=_NextPart_SiakadMts_Kunci_" + Date.now();
+                let mhtml = "";
+
+                mhtml += "MIME-Version: 1.0\r\n";
+                mhtml += `Content-Type: multipart/related; boundary="${boundary}"\r\n\r\n`;
+
+                // Part 1: Main HTML Body
+                mhtml += `--${boundary}\r\n`;
+                mhtml += "Content-Type: text/html; charset=utf-8\r\n";
+                mhtml += "Content-Transfer-Encoding: 8bit\r\n\r\n";
+                mhtml += wordHtml + "\r\n\r\n";
+
+                // Part 2: Disematkan Gambar Tanda Tangan Kepala Madrasah jika ada
+                if (sigBase64Data) {
+                    const cleanB64 = sigBase64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+                    const wrappedB64 = cleanB64.replace(/(.{76})/g, "$1\r\n");
+                    mhtml += `--${boundary}\r\n`;
+                    mhtml += "Content-Type: image/png\r\n";
+                    mhtml += "Content-Transfer-Encoding: base64\r\n";
+                    mhtml += "Content-Location: signature_kepala.png\r\n\r\n";
+                    mhtml += wrappedB64 + "\r\n\r\n";
+                }
+
+                mhtml += `--${boundary}--\r\n`;
+
+                const blob = new Blob([mhtml], { type: 'application/msword;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const safeMapel = (subjectName || 'Mapel').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const safeClass = (rawClass || 'Kelas').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const safeEvent = (document.getElementById('select-event')?.value || 'ASAS').replace(/[^a-zA-Z0-9_-]/g, '_');
+                a.href = url;
+                a.download = `Kunci_Jawaban_${safeMapel}_${safeClass}_${safeEvent}_${paperName}.doc`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                if (btnWord) {
+                    btnWord.innerHTML = '✅ Terunduh!';
+                    setTimeout(() => {
+                        btnWord.innerHTML = originalText;
+                        btnWord.disabled = false;
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Word export error:', err);
+                alert('Gagal mengunduh dokumen Word. Silakan coba kembali.');
+                if (btnWord) {
+                    btnWord.innerHTML = originalText;
+                    btnWord.disabled = false;
                 }
             }
         }
