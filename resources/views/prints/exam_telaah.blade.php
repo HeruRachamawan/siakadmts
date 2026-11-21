@@ -837,35 +837,39 @@
                 const halfCols = Math.floor(totalCols / 2);
                 const remCols = totalCols - halfCols;
 
+                const excelWorkbookXml = [
+                    '<!--[if gte mso 9]>',
+                    '<xml>',
+                    ' <' + 'x:ExcelWorkbook>',
+                    '  <' + 'x:ExcelWorksheets>',
+                    '   <' + 'x:ExcelWorksheet>',
+                    '    <' + 'x:Name>Telaah Butir Soal</' + 'x:Name>',
+                    '    <' + 'x:WorksheetOptions>',
+                    '     <' + 'x:Print>',
+                    '      <' + 'x:ValidPrinterInfo/>',
+                    '      <' + 'x:PaperSizeIndex>' + paperSizeIndex + '</' + 'x:PaperSizeIndex>',
+                    '      <' + 'x:Orientation>Landscape</' + 'x:Orientation>',
+                    '      <' + 'x:FitWidth>1</' + 'x:FitWidth>',
+                    '      <' + 'x:FitHeight>1</' + 'x:FitHeight>',
+                    '     </' + 'x:Print>',
+                    '     <' + 'x:FitToPage/>',
+                    '     <' + 'x:Selected/>',
+                    '     <' + 'x:DoNotDisplayGridlines/>',
+                    '    </' + 'x:WorksheetOptions>',
+                    '   </' + 'x:ExcelWorksheet>',
+                    '  </' + 'x:ExcelWorksheets>',
+                    ' </' + 'x:ExcelWorkbook>',
+                    '</xml>',
+                    '<![endif]-->'
+                ].join('\r\n');
+
                 let excelContent = `
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
 xmlns:x="urn:schemas-microsoft-com:office:excel"
 xmlns="http://www.w3.org/TR/REC-html40">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!--[if gte mso 9]>
-<xml>
- <x:ExcelWorkbook>
-  <x:ExcelWorksheets>
-   <x:ExcelWorksheet>
-    <x:Name>Telaah Butir Soal</x:Name>
-    <x:WorksheetOptions>
-     <x:Print>
-      <x:ValidPrinterInfo/>
-      <x:PaperSizeIndex>${paperSizeIndex}</x:PaperSizeIndex>
-      <x:Orientation>Landscape</x:Orientation>
-      <x:FitWidth>1</x:FitWidth>
-      <x:FitHeight>1</x:FitHeight>
-     </x:Print>
-     <x:FitToPage/>
-     <x:Selected/>
-     <x:DoNotDisplayGridlines/>
-    </x:WorksheetOptions>
-   </x:ExcelWorksheet>
-  </x:ExcelWorksheets>
- </x:ExcelWorkbook>
-</xml>
-<![endif]-->
+${excelWorkbookXml}
 <style>
   @page {
     size: ${paperSizeMm};
