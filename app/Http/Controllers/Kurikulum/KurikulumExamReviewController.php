@@ -292,15 +292,18 @@ class KurikulumExamReviewController extends Controller
 
         $school = SchoolSetting::getSetting();
         $allQuestions = $package->questions;
-        $pgQuestions = $allQuestions->filter(fn($q) => in_array($q->question_type, ['pg', 'pg_complex']));
-        $trueFalseQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'true_false');
-        $matchingQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'matching');
-        $shortAnswerQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'short_answer');
-        $essayQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'essay');
+        $pgSingleQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'pg')->values();
+        $pgComplexQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'pg_complex')->values();
+        $pgQuestions = $pgSingleQuestions; // compatibility
+        $trueFalseQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'true_false')->values();
+        $matchingQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'matching')->values();
+        $shortAnswerQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'short_answer')->values();
+        $essayQuestions = $allQuestions->filter(fn($q) => $q->question_type === 'essay')->values();
 
         return view('prints.exam_kunci', compact(
             'package', 'school', 'allQuestions',
-            'pgQuestions', 'trueFalseQuestions', 'matchingQuestions',
+            'pgQuestions', 'pgSingleQuestions', 'pgComplexQuestions',
+            'trueFalseQuestions', 'matchingQuestions',
             'shortAnswerQuestions', 'essayQuestions'
         ));
     }

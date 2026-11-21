@@ -505,15 +505,18 @@
             $fullTitle = "ASESMEN SUMATIF AKHIR SEMESTER {$semesterLabel} (ASAS)";
         }
 
-        // Kategori Soal
-        $allQ = $package->questions;
+        // Kategori Soal & Data Dinamis
+        $allQ = $package->questions->sortBy('question_number')->values();
+        $hasRealQuestions = $allQ->isNotEmpty();
+
         $pgSingle = $allQ->filter(fn($q) => $q->question_type === 'pg')->values();
         $pgComplex = $allQ->filter(fn($q) => $q->question_type === 'pg_complex')->values();
         $trueFalse = $allQ->filter(fn($q) => $q->question_type === 'true_false')->values();
         $matching = $allQ->filter(fn($q) => $q->question_type === 'matching')->values();
+        $shortAnswer = $allQ->filter(fn($q) => $q->question_type === 'short_answer')->values();
         $essay = $allQ->filter(fn($q) => $q->question_type === 'essay')->values();
 
-        // Fallback default dataset jika paket soal di database masih belum terisi lengkap (sesuai format resmi Mase)
+        // Fallback default dataset jika paket soal di database masih belum terisi butir soal
         $defaultPg = [
             1 => 'B', 2 => 'A', 3 => 'C', 4 => 'C', 5 => 'A',
             6 => 'B', 7 => 'C', 8 => 'C', 9 => 'A', 10 => 'B',
@@ -558,30 +561,124 @@
             ]
         ];
 
-        // Hitung Skor Pedoman Penskoran
-        $pgCount = $pgSingle->isNotEmpty() ? $pgSingle->count() : 20;
-        $pgWeight = 1;
-        $pgMaxScore = $pgCount * $pgWeight;
+        // Format helper untuk kunci PGK / Array
+        $formatAnswer = function($ans) {
+            if (is_array($ans)) return implode(', ', $ans);
+            if (is_string($ans) && str_starts_with(trim($ans), '[') && str_ends_with(trim($ans), ']')) {
+                $decoded = json_decode($ans, true);
+                if (is_array($decoded)) return implode(', ', $decoded);
+            }
+            return $ans ?: '-';
+        };
 
-        $pgkCount = $pgComplex->isNotEmpty() ? $pgComplex->count() : 10;
-        $pgkWeight = 3;
-        $pgkMaxScore = $pgkCount * $pgkWeight;
+        // Format helper untuk True/False
+        $formatTfAnswer = function($ans) {
+            $upper = strtoupper(trim((string)$ans));
+            if ($upper === 'TRUE' || $upper === 'BENAR') return 'B';
+            if ($upper === 'FALSE' || $upper === 'SALAH') return 'S';
+            return $upper ?: '-';
+        };
 
-        $tfCount = $trueFalse->isNotEmpty() ? $trueFalse->count() : 5;
-        $tfWeight = 2;
-        $tfMaxScore = $tfCount * $tfWeight;
+        // Susun Ringkasan Penskoran Dinamis Sesuai Butir Soal Nyata
+        $scoringSummary = [];
+        $scIndex = 1;
 
-        $matchCount = $matching->isNotEmpty() ? $matching->count() : 5;
-        $matchWeight = 3;
-        $matchMaxScore = $matchCount * $matchWeight;
+        if ($hasRealQuestions) {
+            if ($pgSingle->isNotEmpty()) {
+                $c = $pgSingle->count();
+                $w = round($pgSingle->avg('score_weight') ?: 1, 2);
+                $s = $pgSingle->sum(fn($q) => $q->score_weight ?: 1);
+                $scoringSummary[] = [
+                    'no' => $scIndex++,
+                    'code' => 'PG',
+                    'name' => 'Pilihan Ganda',
+                    'count' => $c,
+                    'weight' => $w,
+                    'max_score' => $s
+                ];
+            }
+            if ($pgComplex->isNotEmpty()) {
+                $c = $pgComplex->count();
+                $w = round($pgComplex->avg('score_weight') ?: 3, 2);
+                $s = $pgComplex->sum(fn($q) => $q->score_weight ?: 3);
+                $scoringSummary[] = [
+                    'no' => $scIndex++,
+                    'code' => 'PG KOMPLEKS',
+                    'name' => 'Pilihan Ganda Kompleks',
+                    'count' => $c,
+                    'weight' => $w,
+                    'max_score' => $s
+                ];
+            }
+            if ($trueFalse->isNotEmpty()) {
+                $c = $trueFalse->count();
+                $w = round($trueFalse->avg('score_weight') ?: 2, 2);
+                $s = $trueFalse->sum(fn($q) => $q->score_weight ?: 2);
+                $scoringSummary[] = [
+                    'no' => $scIndex++,
+                    'code' => 'BENAR / SALAH',
+                    'name' => 'Benar / Salah',
+                    'count' => $c,
+                    'weight' => $w,
+                    'max_score' => $s
+                ];
+            }
+            if ($matching->isNotEmpty()) {
+                $c = $matching->count();
+                $w = round($matching->avg('score_weight') ?: 3, 2);
+                $s = $matching->sum(fn($q) => $q->score_weight ?: 3);
+                $scoringSummary[] = [
+                    'no' => $scIndex++,
+                    'code' => 'MENJODOHKAN',
+                    'name' => 'Menjodohkan',
+                    'count' => $c,
+                    'weight' => $w,
+                    'max_score' => $s
+                ];
+            }
+            if ($shortAnswer->isNotEmpty()) {
+                $c = $shortAnswer->count();
+                $w = round($shortAnswer->avg('score_weight') ?: 2, 2);
+                $s = $shortAnswer->sum(fn($q) => $q->score_weight ?: 2);
+                $scoringSummary[] = [
+                    'no' => $scIndex++,
+                    'code' => 'ISIAN SINGKAT',
+                    'name' => 'Isian Singkat',
+                    'count' => $c,
+                    'weight' => $w,
+                    'max_score' => $s
+                ];
+            }
+            if ($essay->isNotEmpty()) {
+                $c = $essay->count();
+                $w = round($essay->avg('score_weight') ?: 5, 2);
+                $s = $essay->sum(fn($q) => $q->score_weight ?: 5);
+                $scoringSummary[] = [
+                    'no' => $scIndex++,
+                    'code' => 'URAIAN',
+                    'name' => 'Uraian',
+                    'count' => $c,
+                    'weight' => $w,
+                    'max_score' => $s
+                ];
+            }
+        } else {
+            // Default sample jika belum ada soal
+            $scoringSummary = [
+                ['no' => 1, 'code' => 'PG', 'name' => 'Pilihan Ganda', 'count' => 20, 'weight' => 1, 'max_score' => 20],
+                ['no' => 2, 'code' => 'PG KOMPLEKS', 'name' => 'Pilihan Ganda Kompleks', 'count' => 10, 'weight' => 3, 'max_score' => 30],
+                ['no' => 3, 'code' => 'BENAR / SALAH', 'name' => 'Benar / Salah', 'count' => 5, 'weight' => 2, 'max_score' => 10],
+                ['no' => 4, 'code' => 'MENJODOHKAN', 'name' => 'Menjodohkan', 'count' => 5, 'weight' => 3, 'max_score' => 15],
+                ['no' => 5, 'code' => 'URAIAN', 'name' => 'Uraian', 'count' => 5, 'weight' => 5, 'max_score' => 25],
+            ];
+        }
 
-        $essayCount = $essay->isNotEmpty() ? $essay->count() : 5;
-        $essayWeight = 5;
-        $essayMaxScore = $essay->isNotEmpty() ? $essay->sum('score_weight') : ($essayCount * $essayWeight);
-        if ($essayMaxScore <= 0) $essayMaxScore = 25;
+        $totalQCount = array_sum(array_column($scoringSummary, 'count'));
+        $totalMaxScore = array_sum(array_column($scoringSummary, 'max_score'));
 
-        $totalQCount = $pgCount + $pgkCount + $tfCount + $matchCount + $essayCount;
-        $totalMaxScore = $pgMaxScore + $pgkMaxScore + $tfMaxScore + $matchMaxScore + $essayMaxScore;
+        // Rumus Nilai Akhir string
+        $formulaCodes = array_column($scoringSummary, 'code');
+        $formulaString = implode(' + ', $formulaCodes);
 
         // Signature image Base64
         $sigPath = public_path('images/signatures/kepala_madrasah.png');
@@ -616,148 +713,260 @@
         </tr>
     </table>
 
-    <!-- 1. PILIHAN GANDA (KOMPAK 2 KOLOM 1-10 & 11-20) -->
-    <div class="section-title">Pilihan Ganda</div>
-    <table class="data-table">
-        <tbody>
-            @for ($i = 1; $i <= 10; $i++)
-                @php
-                    $leftQ = $pgSingle->firstWhere('question_number', $i);
-                    $leftKey = $leftQ ? ($leftQ->correct_answer ?: '-') : ($defaultPg[$i] ?? '-');
-
-                    $rightNo = $i + 10;
-                    $rightQ = $pgSingle->firstWhere('question_number', $rightNo);
-                    $rightKey = $rightQ ? ($rightQ->correct_answer ?: '-') : ($defaultPg[$rightNo] ?? '-');
-                @endphp
-                <tr>
-                    <td style="width: 12%; text-align: center; font-weight: bold;">{{ $i }}</td>
-                    <td style="width: 38%; text-align: center; font-weight: bold;">{{ $leftKey }}</td>
-                    <td style="width: 12%; text-align: center; font-weight: bold;">{{ $rightNo }}</td>
-                    <td style="width: 38%; text-align: center; font-weight: bold;">{{ $rightKey }}</td>
-                </tr>
-            @endfor
-        </tbody>
-    </table>
-
-    <!-- 2. PILIHAN GANDA KOMPLEKS (KOMPAK 2 KOLOM 21-25 & 26-30) -->
-    <div class="section-title">Pilihan Ganda Kompleks</div>
-    <table class="data-table">
-        <tbody>
-            @for ($i = 21; $i <= 25; $i++)
-                @php
-                    $leftQ = $pgComplex->firstWhere('question_number', $i);
-                    $leftKey = $leftQ ? ($leftQ->correct_answer ?: '-') : ($defaultPgk[$i] ?? '-');
-
-                    $rightNo = $i + 5;
-                    $rightQ = $pgComplex->firstWhere('question_number', $rightNo);
-                    $rightKey = $rightQ ? ($rightQ->correct_answer ?: '-') : ($defaultPgk[$rightNo] ?? '-');
-                @endphp
-                <tr>
-                    <td style="width: 12%; text-align: center; font-weight: bold;">{{ $i }}</td>
-                    <td style="width: 38%; text-align: center; font-weight: bold;">{{ $leftKey }}</td>
-                    <td style="width: 12%; text-align: center; font-weight: bold;">{{ $rightNo }}</td>
-                    <td style="width: 38%; text-align: center; font-weight: bold;">{{ $rightKey }}</td>
-                </tr>
-            @endfor
-        </tbody>
-    </table>
-
-    <!-- 3 & 4. BENAR / SALAH & MENJODOHKAN (BERDAMPINGAN DUA KOLOM) -->
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
-        <tr>
-            <!-- Kolom Kiri: Benar / Salah -->
-            <td style="width: 48%; vertical-align: top; padding: 0;">
-                <div class="section-title">Benar / Salah</div>
-                <table class="data-table" style="margin-bottom: 0;">
-                    <tbody>
-                        @for ($i = 31; $i <= 35; $i++)
-                            @php
-                                $tfQ = $trueFalse->firstWhere('question_number', $i);
-                                $tfKey = $tfQ ? ($tfQ->correct_answer ?: '-') : ($defaultTf[$i] ?? '-');
-                            @endphp
-                            <tr>
-                                <td style="width: 25%; text-align: center; font-weight: bold;">{{ $i }}</td>
-                                <td style="width: 75%; text-align: center; font-weight: bold;">{{ $tfKey }}</td>
-                            </tr>
-                        @endfor
-                    </tbody>
-                </table>
-            </td>
-
-            <td style="width: 4%;"></td>
-
-            <!-- Kolom Kanan: Menjodohkan -->
-            <td style="width: 48%; vertical-align: top; padding: 0;">
-                <div class="section-title">Menjodohkan</div>
-                <table class="data-table" style="margin-bottom: 0;">
-                    <tbody>
-                        @for ($i = 36; $i <= 40; $i++)
-                            @php
-                                $mQ = $matching->firstWhere('question_number', $i);
-                                $mKey = $mQ ? ($mQ->correct_answer ?: '-') : ($defaultMatch[$i] ?? '-');
-                            @endphp
-                            <tr>
-                                <td style="width: 25%; text-align: center; font-weight: bold;">{{ $i }}</td>
-                                <td style="width: 75%; text-align: center; font-weight: bold;">{{ $mKey }}</td>
-                            </tr>
-                        @endfor
-                    </tbody>
-                </table>
-            </td>
-        </tr>
-    </table>
-
-    <!-- 5. URAIAN / ESSAY -->
-    <div class="section-title" style="margin-top: 10px;">URAIAN</div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th style="width: 8%; text-align: center;">NO</th>
-                <th style="width: 80%; text-align: center;">JAWABAN</th>
-                <th style="width: 12%; text-align: center;">SKOR</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if ($essay->isNotEmpty())
-                @php $sumEssayScore = 0; @endphp
-                @foreach ($essay as $q)
-                    @php 
-                        $score = $q->score_weight ?: 5; 
-                        $sumEssayScore += $score;
+    <!-- 1. PILIHAN GANDA -->
+    @if ($hasRealQuestions ? $pgSingle->isNotEmpty() : true)
+        @php
+            $pgItems = $hasRealQuestions ? $pgSingle : collect(range(1, 20))->map(fn($n) => (object)['question_number' => $n, 'correct_answer' => $defaultPg[$n] ?? '-']);
+            $halfPg = (int) ceil($pgItems->count() / 2);
+        @endphp
+        <div class="section-title">Pilihan Ganda</div>
+        <table class="data-table">
+            <tbody>
+                @for ($i = 0; $i < $halfPg; $i++)
+                    @php
+                        $leftQ = $pgItems->get($i);
+                        $rightQ = $pgItems->get($i + $halfPg);
                     @endphp
                     <tr>
-                        <td style="text-align: center; font-weight: bold; vertical-align: top;">{{ $q->question_number }}</td>
-                        <td style="padding: 4px 6px; text-align: justify; vertical-align: top;">
-                            {!! nl2br(e($q->correct_answer ?: ($q->rubric ?: 'Jawaban lengkap dan sesuai konsep materi.'))) !!}
-                        </td>
-                        <td style="text-align: center; font-weight: bold; vertical-align: top;">{{ $score }}</td>
+                        <td style="width: 12%; text-align: center; font-weight: bold;">{{ $leftQ->question_number }}</td>
+                        <td style="width: 38%; text-align: center; font-weight: bold;">{{ $formatAnswer($leftQ->correct_answer) }}</td>
+                        @if ($rightQ)
+                            <td style="width: 12%; text-align: center; font-weight: bold;">{{ $rightQ->question_number }}</td>
+                            <td style="width: 38%; text-align: center; font-weight: bold;">{{ $formatAnswer($rightQ->correct_answer) }}</td>
+                        @else
+                            <td style="width: 12%; text-align: center; font-weight: bold; background: #fafafa;">-</td>
+                            <td style="width: 38%; text-align: center; font-weight: bold; background: #fafafa;">-</td>
+                        @endif
                     </tr>
-                @endforeach
-                <tr style="font-weight: bold; background: #f9f9f9;">
-                    <td colspan="2" style="text-align: right; padding-right: 15px;">JUMLAH</td>
-                    <td style="text-align: center;">{{ $sumEssayScore }}</td>
-                </tr>
-            @else
-                @php $sumEssayScore = 0; @endphp
-                @foreach ($defaultEssay as $item)
-                    @php $sumEssayScore += $item['score']; @endphp
-                    <tr>
-                        <td style="text-align: center; font-weight: bold; vertical-align: top;">{{ $item['no'] }}</td>
-                        <td style="padding: 4px 6px; text-align: justify; vertical-align: top;">
-                            {!! $item['text'] !!}
-                        </td>
-                        <td style="text-align: center; font-weight: bold; vertical-align: top;">{{ $item['score'] }}</td>
-                    </tr>
-                @endforeach
-                <tr style="font-weight: bold; background: #f9f9f9;">
-                    <td colspan="2" style="text-align: right; padding-right: 15px;">JUMLAH</td>
-                    <td style="text-align: center;">{{ $sumEssayScore }}</td>
-                </tr>
-            @endif
-        </tbody>
-    </table>
+                @endfor
+            </tbody>
+        </table>
+    @endif
 
-    <!-- 6. PERHITUNGAN PENILAIAN & BOBOT SKOR -->
+    <!-- 2. PILIHAN GANDA KOMPLEKS -->
+    @if ($hasRealQuestions ? $pgComplex->isNotEmpty() : true)
+        @php
+            $pgkItems = $hasRealQuestions ? $pgComplex : collect(range(21, 30))->map(fn($n) => (object)['question_number' => $n, 'correct_answer' => $defaultPgk[$n] ?? '-']);
+            $halfPgk = (int) ceil($pgkItems->count() / 2);
+        @endphp
+        <div class="section-title">Pilihan Ganda Kompleks</div>
+        <table class="data-table">
+            <tbody>
+                @for ($i = 0; $i < $halfPgk; $i++)
+                    @php
+                        $leftQ = $pgkItems->get($i);
+                        $rightQ = $pgkItems->get($i + $halfPgk);
+                    @endphp
+                    <tr>
+                        <td style="width: 12%; text-align: center; font-weight: bold;">{{ $leftQ->question_number }}</td>
+                        <td style="width: 38%; text-align: center; font-weight: bold;">{{ $formatAnswer($leftQ->correct_answer) }}</td>
+                        @if ($rightQ)
+                            <td style="width: 12%; text-align: center; font-weight: bold;">{{ $rightQ->question_number }}</td>
+                            <td style="width: 38%; text-align: center; font-weight: bold;">{{ $formatAnswer($rightQ->correct_answer) }}</td>
+                        @else
+                            <td style="width: 12%; text-align: center; font-weight: bold; background: #fafafa;">-</td>
+                            <td style="width: 38%; text-align: center; font-weight: bold; background: #fafafa;">-</td>
+                        @endif
+                    </tr>
+                @endfor
+            </tbody>
+        </table>
+    @endif
+
+    <!-- 3 & 4. BENAR / SALAH & MENJODOHKAN -->
+    @php
+        $showTf = $hasRealQuestions ? $trueFalse->isNotEmpty() : true;
+        $showMatch = $hasRealQuestions ? $matching->isNotEmpty() : true;
+        $tfItems = $hasRealQuestions ? $trueFalse : collect(range(31, 35))->map(fn($n) => (object)['question_number' => $n, 'correct_answer' => $defaultTf[$n] ?? 'B']);
+        $matchItems = $hasRealQuestions ? $matching : collect(range(36, 40))->map(fn($n) => (object)['question_number' => $n, 'correct_answer' => $defaultMatch[$n] ?? 'A']);
+    @endphp
+
+    @if ($showTf && $showMatch)
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+            <tr>
+                <!-- Kolom Kiri: Benar / Salah -->
+                <td style="width: 48%; vertical-align: top; padding: 0;">
+                    <div class="section-title">Benar / Salah</div>
+                    <table class="data-table" style="margin-bottom: 0;">
+                        <tbody>
+                            @foreach ($tfItems as $q)
+                                <tr>
+                                    <td style="width: 25%; text-align: center; font-weight: bold;">{{ $q->question_number }}</td>
+                                    <td style="width: 75%; text-align: center; font-weight: bold;">{{ $formatTfAnswer($q->correct_answer) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </td>
+
+                <td style="width: 4%;"></td>
+
+                <!-- Kolom Kanan: Menjodohkan -->
+                <td style="width: 48%; vertical-align: top; padding: 0;">
+                    <div class="section-title">Menjodohkan</div>
+                    <table class="data-table" style="margin-bottom: 0;">
+                        <tbody>
+                            @foreach ($matchItems as $q)
+                                <tr>
+                                    <td style="width: 25%; text-align: center; font-weight: bold;">{{ $q->question_number }}</td>
+                                    <td style="width: 75%; text-align: center; font-weight: bold;">{{ $formatAnswer($q->correct_answer) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    @elseif ($showTf)
+        <div class="section-title">Benar / Salah</div>
+        @php
+            $halfTf = (int) ceil($tfItems->count() / 2);
+        @endphp
+        <table class="data-table" style="margin-bottom: 8px;">
+            <tbody>
+                @for ($i = 0; $i < $halfTf; $i++)
+                    @php
+                        $leftQ = $tfItems->get($i);
+                        $rightQ = $tfItems->get($i + $halfTf);
+                    @endphp
+                    <tr>
+                        <td style="width: 12%; text-align: center; font-weight: bold;">{{ $leftQ->question_number }}</td>
+                        <td style="width: 38%; text-align: center; font-weight: bold;">{{ $formatTfAnswer($leftQ->correct_answer) }}</td>
+                        @if ($rightQ)
+                            <td style="width: 12%; text-align: center; font-weight: bold;">{{ $rightQ->question_number }}</td>
+                            <td style="width: 38%; text-align: center; font-weight: bold;">{{ $formatTfAnswer($rightQ->correct_answer) }}</td>
+                        @else
+                            <td style="width: 12%; text-align: center; font-weight: bold; background: #fafafa;">-</td>
+                            <td style="width: 38%; text-align: center; font-weight: bold; background: #fafafa;">-</td>
+                        @endif
+                    </tr>
+                @endfor
+            </tbody>
+        </table>
+    @elseif ($showMatch)
+        <div class="section-title">Menjodohkan</div>
+        @php
+            $halfM = (int) ceil($matchItems->count() / 2);
+        @endphp
+        <table class="data-table" style="margin-bottom: 8px;">
+            <tbody>
+                @for ($i = 0; $i < $halfM; $i++)
+                    @php
+                        $leftQ = $matchItems->get($i);
+                        $rightQ = $matchItems->get($i + $halfM);
+                    @endphp
+                    <tr>
+                        <td style="width: 12%; text-align: center; font-weight: bold;">{{ $leftQ->question_number }}</td>
+                        <td style="width: 38%; text-align: center; font-weight: bold;">{{ $formatAnswer($leftQ->correct_answer) }}</td>
+                        @if ($rightQ)
+                            <td style="width: 12%; text-align: center; font-weight: bold;">{{ $rightQ->question_number }}</td>
+                            <td style="width: 38%; text-align: center; font-weight: bold;">{{ $formatAnswer($rightQ->correct_answer) }}</td>
+                        @else
+                            <td style="width: 12%; text-align: center; font-weight: bold; background: #fafafa;">-</td>
+                            <td style="width: 38%; text-align: center; font-weight: bold; background: #fafafa;">-</td>
+                        @endif
+                    </tr>
+                @endfor
+            </tbody>
+        </table>
+    @endif
+
+    <!-- 5. ISIAN SINGKAT -->
+    @if ($hasRealQuestions && $shortAnswer->isNotEmpty())
+        <div class="section-title" style="margin-top: 10px;">Isian Singkat</div>
+        @php
+            $halfSa = (int) ceil($shortAnswer->count() / 2);
+        @endphp
+        @if ($shortAnswer->count() > 4)
+            <table class="data-table" style="margin-bottom: 8px;">
+                <tbody>
+                    @for ($i = 0; $i < $halfSa; $i++)
+                        @php
+                            $leftQ = $shortAnswer->get($i);
+                            $rightQ = $shortAnswer->get($i + $halfSa);
+                        @endphp
+                        <tr>
+                            <td style="width: 12%; text-align: center; font-weight: bold;">{{ $leftQ->question_number }}</td>
+                            <td style="width: 38%; text-align: center; font-weight: bold;">{{ $leftQ->correct_answer ?: '-' }}</td>
+                            @if ($rightQ)
+                                <td style="width: 12%; text-align: center; font-weight: bold;">{{ $rightQ->question_number }}</td>
+                                <td style="width: 38%; text-align: center; font-weight: bold;">{{ $rightQ->correct_answer ?: '-' }}</td>
+                            @else
+                                <td style="width: 12%; text-align: center; font-weight: bold; background: #fafafa;">-</td>
+                                <td style="width: 38%; text-align: center; font-weight: bold; background: #fafafa;">-</td>
+                            @endif
+                        </tr>
+                    @endfor
+                </tbody>
+            </table>
+        @else
+            <table class="data-table" style="margin-bottom: 8px;">
+                <thead>
+                    <tr>
+                        <th style="width: 10%; text-align: center;">NO</th>
+                        <th style="width: 90%; text-align: center;">KUNCI JAWABAN SINGKAT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($shortAnswer as $q)
+                        <tr>
+                            <td style="text-align: center; font-weight: bold;">{{ $q->question_number }}</td>
+                            <td style="padding: 4px 8px; font-weight: bold;">{{ $q->correct_answer ?: '-' }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+    @endif
+
+    <!-- 6. URAIAN / ESSAY -->
+    @if ($hasRealQuestions ? $essay->isNotEmpty() : true)
+        <div class="section-title" style="margin-top: 10px;">URAIAN</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 8%; text-align: center;">NO</th>
+                    <th style="width: 80%; text-align: center;">JAWABAN / RUBRIK</th>
+                    <th style="width: 12%; text-align: center;">SKOR</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php $sumEssayScore = 0; @endphp
+                @if ($hasRealQuestions && $essay->isNotEmpty())
+                    @foreach ($essay as $q)
+                        @php 
+                            $score = $q->score_weight ?: 5; 
+                            $sumEssayScore += $score;
+                        @endphp
+                        <tr>
+                            <td style="text-align: center; font-weight: bold; vertical-align: top;">{{ $q->question_number }}</td>
+                            <td style="padding: 4px 6px; text-align: justify; vertical-align: top;">
+                                {!! nl2br(e($q->correct_answer ?: ($q->rubric ?: 'Kunci jawaban dan kriteria penskoran disesuaikan dengan rumusan materi butir soal terkait.'))) !!}
+                            </td>
+                            <td style="text-align: center; font-weight: bold; vertical-align: top;">{{ $score }}</td>
+                        </tr>
+                    @endforeach
+                @else
+                    @foreach ($defaultEssay as $item)
+                        @php $sumEssayScore += $item['score']; @endphp
+                        <tr>
+                            <td style="text-align: center; font-weight: bold; vertical-align: top;">{{ $item['no'] }}</td>
+                            <td style="padding: 4px 6px; text-align: justify; vertical-align: top;">
+                                {!! $item['text'] !!}
+                            </td>
+                            <td style="text-align: center; font-weight: bold; vertical-align: top;">{{ $item['score'] }}</td>
+                        </tr>
+                    @endforeach
+                @endif
+                <tr style="font-weight: bold; background: #f9f9f9;">
+                    <td colspan="2" style="text-align: right; padding-right: 15px;">JUMLAH</td>
+                    <td style="text-align: center;">{{ $sumEssayScore }}</td>
+                </tr>
+            </tbody>
+        </table>
+    @endif
+
+    <!-- 7. PERHITUNGAN PENILAIAN & BOBOT SKOR -->
     <div style="font-weight: bold; font-size: 9.5pt; margin-top: 14px; margin-bottom: 2px;">
         Perhitungan Penilaian &nbsp;:
     </div>
@@ -776,41 +985,15 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td style="text-align: center;">1</td>
-                <td style="padding-left: 8px;">Pilihan Ganda</td>
-                <td style="text-align: center;">{{ $pgCount }}</td>
-                <td style="text-align: center;">{{ $pgWeight }}</td>
-                <td style="text-align: center;">{{ $pgMaxScore }}</td>
-            </tr>
-            <tr>
-                <td style="text-align: center;">2</td>
-                <td style="padding-left: 8px;">Pilihan Ganda Kompleks</td>
-                <td style="text-align: center;">{{ $pgkCount }}</td>
-                <td style="text-align: center;">{{ $pgkWeight }}</td>
-                <td style="text-align: center;">{{ $pgkMaxScore }}</td>
-            </tr>
-            <tr>
-                <td style="text-align: center;">3</td>
-                <td style="padding-left: 8px;">Benar / Salah</td>
-                <td style="text-align: center;">{{ $tfCount }}</td>
-                <td style="text-align: center;">{{ $tfWeight }}</td>
-                <td style="text-align: center;">{{ $tfMaxScore }}</td>
-            </tr>
-            <tr>
-                <td style="text-align: center;">4</td>
-                <td style="padding-left: 8px;">Menjodohkan</td>
-                <td style="text-align: center;">{{ $matchCount }}</td>
-                <td style="text-align: center;">{{ $matchWeight }}</td>
-                <td style="text-align: center;">{{ $matchMaxScore }}</td>
-            </tr>
-            <tr>
-                <td style="text-align: center;">5</td>
-                <td style="padding-left: 8px;">Uraian</td>
-                <td style="text-align: center;">{{ $essayCount }}</td>
-                <td style="text-align: center;">{{ $essayWeight }}</td>
-                <td style="text-align: center;">{{ $essayMaxScore }}</td>
-            </tr>
+            @foreach ($scoringSummary as $row)
+                <tr>
+                    <td style="text-align: center;">{{ $row['no'] }}</td>
+                    <td style="padding-left: 8px;">{{ $row['name'] }}</td>
+                    <td style="text-align: center;">{{ $row['count'] }}</td>
+                    <td style="text-align: center;">{{ $row['weight'] }}</td>
+                    <td style="text-align: center;">{{ $row['max_score'] }}</td>
+                </tr>
+            @endforeach
             <tr style="font-weight: bold; background: #f2f2f2;">
                 <td colspan="2" style="text-align: center;">TOTAL</td>
                 <td style="text-align: center;">{{ $totalQCount }} Soal</td>
@@ -821,7 +1004,11 @@
     </table>
 
     <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 16px;">
-        Rumus Nilai Akhir : PG + PG KOMPLEKS + BENAR / SALAH + MENJODOHKAN + URAIAN = 100
+        @if ($totalMaxScore == 100)
+            Rumus Nilai Akhir : {{ $formulaString }} = 100
+        @else
+            Rumus Nilai Akhir : {{ $formulaString }} = {{ $totalMaxScore }} (Nilai Akhir = [Skor Perolehan / {{ $totalMaxScore }}] &times; 100)
+        @endif
     </div>
 
     <!-- 7. PENGESAHAN / TANDA TANGAN -->
