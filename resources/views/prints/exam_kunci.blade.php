@@ -15,7 +15,7 @@
     <style>
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 9.5pt;
+            font-size: 10pt;
             line-height: 1.25;
             color: #000;
             margin: 0;
@@ -36,6 +36,25 @@
             border-radius: 4px;
             box-sizing: border-box;
             transition: all 0.2s ease;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 10pt;
+            line-height: 1.25;
+        }
+
+        /* Harmonisasi menyeluruh font & angka Times New Roman */
+        .print-sheet,
+        .print-sheet *,
+        .header-kop,
+        .header-kop *,
+        .meta-table,
+        .meta-table *,
+        .data-table,
+        .data-table *,
+        .formula-box,
+        .formula-box *,
+        .signatures,
+        .signatures * {
+            font-family: 'Times New Roman', Times, serif !important;
         }
 
         /* FLOATING PRINT TOOLBAR (SCREEN ONLY) */
@@ -683,15 +702,115 @@
         // Signature image Base64
         $sigPath = public_path('images/signatures/kepala_madrasah.png');
         $sigBase64 = file_exists($sigPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($sigPath)) : null;
+
+        // Logo Base64
+        $logoBase64 = null;
+        $logoPath = null;
+        if (!empty($school->logo)) {
+            $checkPath = public_path('storage/' . $school->logo);
+            if (file_exists($checkPath)) {
+                $logoPath = $checkPath;
+            }
+        }
+        if (!$logoPath) {
+            $defaultLogo = public_path('images/logo_madrasah.png');
+            if (file_exists($defaultLogo)) {
+                $logoPath = $defaultLogo;
+            }
+        }
+        if ($logoPath) {
+            $logoData = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+        }
+
+        // Kode Ujian Baku
+        $yearStr = $package->academicYear->year ?? '2026/2027';
+        $yearParts = explode('/', $yearStr);
+        $yearShort = count($yearParts) === 2 ? substr($yearParts[0], 2, 2) . '/' . substr($yearParts[1], 2, 2) : '26/27';
+
+        $rawSubjName = strtolower($package->subject->name ?? '');
+        $rawSubjCode = strtoupper(trim($package->subject->code ?? ''));
+
+        $subjMap = [
+            'akidah' => 'AA',
+            'aqidah' => 'AA',
+            'qur\'an' => 'QH',
+            'quran' => 'QH',
+            'hadis' => 'QH',
+            'hadits' => 'QH',
+            'fikih' => 'FIK',
+            'fiqih' => 'FIK',
+            'sejarah kebudayaan' => 'SKI',
+            'ski' => 'SKI',
+            'bahasa arab' => 'ARB',
+            'bahasa indonesia' => 'BIN',
+            'bahasa inggris' => 'BIG',
+            'matematika' => 'MTK',
+            'ilmu pengetahuan alam' => 'IPA',
+            'ipa' => 'IPA',
+            'ilmu pengetahuan sosial' => 'IPS',
+            'ips' => 'IPS',
+            'informatika' => 'INF',
+            'ppkn' => 'PPKN',
+            'pkn' => 'PPKN',
+            'pjok' => 'PJOK',
+            'jasmani' => 'PJOK',
+            'olahraga' => 'PJOK',
+            'seni' => 'SBK',
+            'prakarya' => 'PRK',
+            'sunda' => 'BSD',
+        ];
+
+        $matchedSubj = null;
+        foreach ($subjMap as $key => $code) {
+            if (str_contains($rawSubjName, $key)) {
+                $matchedSubj = $code;
+                break;
+            }
+        }
+
+        if ($matchedSubj) {
+            $subjCode = $matchedSubj;
+        } elseif (!empty($rawSubjCode) && strlen($rawSubjCode) >= 2) {
+            $subjCode = $rawSubjCode;
+        } else {
+            $subjCode = strtoupper(substr($package->subject->code ?? ($package->subject->name ?? 'INF'), 0, 3));
+        }
+
+        $examCode = strtoupper($package->exam_type ?? 'ASAS') . '-' . $semNum . '.' . $yearShort . '- ' . $subjCode;
     @endphp
 
+    <!-- KOTAK KODE NASKAH UJIAN (POJOK KANAN ATAS) -->
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 4px;">
+        <div style="border: 1.5px solid #000; padding: 2px 10px; font-size: 9.5pt; font-family: 'Times New Roman', Times, serif; font-weight: bold; line-height: 1.2; background: #fff; display: inline-block;">
+            <span id="display-exam-code">{{ $examCode }}</span>
+        </div>
+    </div>
+
     <!-- HEADER / KOP RESMI -->
-    <div class="header-kop">
-        <h2>YAYASAN AL-HASANAH CIOMAS</h2>
-        <h3>PROVINSI JAWA BARAT</h3>
-        <h3><span id="display-event-title">{{ $fullTitle }}</span></h3>
-        <h3>TAHUN PELAJARAN {{ $package->academicYear->year ?? '2026/2027' }}</h3>
-        <div class="title-kunci">KUNCI JAWABAN</div>
+    <div class="header-kop" style="display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 3px double #000; padding-bottom: 6px; margin-bottom: 10px;">
+        @if($logoBase64)
+            <div style="position: absolute; left: 10px; top: 0;">
+                <img src="{{ $logoBase64 }}" alt="Logo Madrasah" style="height: 64px; width: auto; object-fit: contain;">
+            </div>
+        @endif
+        <div style="text-align: center; width: 100%; padding: 0 80px;">
+            <div style="font-size: 13pt; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif; line-height: 1.2;">
+                MADRASAH TSANAWIYAH AL HASANAH
+            </div>
+            <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif; line-height: 1.2; margin-top: 2px;">
+                KECAMATAN CIOMAS KABUPATEN BOGOR
+            </div>
+            <div style="font-size: 11.5pt; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif; line-height: 1.2; margin-top: 2px;">
+                <span id="display-event-title">{{ $fullTitle }}</span>
+            </div>
+            <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman', serif; line-height: 1.2; margin-top: 2px;">
+                TAHUN PELAJARAN {{ $package->academicYear->year ?? '2026/2027' }}
+            </div>
+            <div style="font-size: 11.5pt; font-weight: bold; text-transform: uppercase; text-decoration: underline; margin-top: 4px;">
+                KUNCI JAWABAN & PEDOMAN PENSKORAN
+            </div>
+        </div>
     </div>
 
     <!-- IDENTITAS -->
@@ -1098,6 +1217,14 @@
             if (titleEl) {
                 titleEl.textContent = titleText;
             }
+
+            const codeEl = document.getElementById('display-exam-code');
+            if (codeEl) {
+                const yearShort = '{{ $yearShort }}';
+                const subjCode = '{{ $subjCode }}';
+                const semNum = isGenap ? '2' : '1';
+                codeEl.textContent = eventVal + '-' + semNum + '.' + yearShort + '- ' + subjCode;
+            }
         }
 
         function updatePrintDate(val) {
@@ -1137,21 +1264,58 @@
                 if (!sheetEl) throw new Error('Elemen print-sheet tidak ditemukan');
                 const clone = sheetEl.cloneNode(true);
 
-                // Adaptasi Tanda Tangan Gambar ke MHTML
+                // Koleksi Gambar untuk MHTML
+                const imgParts = [];
+                const logoBase64Data = @json($logoBase64);
+                let logoFileName = '';
+                if (logoBase64Data) {
+                    logoFileName = 'logo_madrasah.png';
+                    const cleanLogoB64 = logoBase64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+                    imgParts.push({
+                        name: logoFileName,
+                        type: 'image/png',
+                        base64: cleanLogoB64
+                    });
+                }
+
                 const sigBase64Data = @json($sigBase64);
-                const sigImgs = clone.querySelectorAll('img');
-                sigImgs.forEach(img => {
-                    if (sigBase64Data) {
-                        img.setAttribute('src', 'signature_kepala.png');
-                        img.setAttribute('width', '130');
-                        img.setAttribute('height', '50');
-                        img.style.border = 'none';
-                        img.style.display = 'block';
-                        img.style.objectFit = 'contain';
+                let sigFileName = '';
+                if (sigBase64Data) {
+                    sigFileName = 'signature_kepala.png';
+                    const cleanSigB64 = sigBase64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+                    imgParts.push({
+                        name: sigFileName,
+                        type: 'image/png',
+                        base64: cleanSigB64
+                    });
+                }
+
+                const headerLogoImg = clone.querySelector('.header-kop img');
+                if (headerLogoImg) {
+                    if (logoFileName) {
+                        headerLogoImg.setAttribute('src', logoFileName);
+                        headerLogoImg.setAttribute('width', '60');
+                        headerLogoImg.setAttribute('height', '60');
+                        headerLogoImg.style.border = 'none';
+                        headerLogoImg.style.display = 'block';
                     } else {
-                        img.remove();
+                        headerLogoImg.remove();
                     }
-                });
+                }
+
+                const sigImg = clone.querySelector('.signatures img');
+                if (sigImg) {
+                    if (sigFileName) {
+                        sigImg.setAttribute('src', sigFileName);
+                        sigImg.setAttribute('width', '130');
+                        sigImg.setAttribute('height', '50');
+                        sigImg.style.border = 'none';
+                        sigImg.style.display = 'block';
+                        sigImg.style.objectFit = 'contain';
+                    } else {
+                        sigImg.remove();
+                    }
+                }
 
                 // Pastikan border table data-table solid hitam di Word
                 const dataTables = clone.querySelectorAll('table.data-table');
@@ -1253,13 +1417,15 @@
     div.Section1 {
       page: Section1;
       font-family: 'Times New Roman', Times, serif;
-      font-size: 9.5pt;
+      font-size: 10pt;
+      line-height: 1.25;
       color: #000000;
     }
     table {
       border-collapse: collapse;
       mso-table-lspace: 0pt;
       mso-table-rspace: 0pt;
+      font-family: 'Times New Roman', Times, serif;
     }
   </style>
 </head>
@@ -1283,16 +1449,15 @@
                 mhtml += "Content-Transfer-Encoding: 8bit\r\n\r\n";
                 mhtml += wordHtml + "\r\n\r\n";
 
-                // Part 2: Disematkan Gambar Tanda Tangan Kepala Madrasah jika ada
-                if (sigBase64Data) {
-                    const cleanB64 = sigBase64Data.replace(/^data:image\/[a-z]+;base64,/, '');
-                    const wrappedB64 = cleanB64.replace(/(.{76})/g, "$1\r\n");
+                // Part 2: Disematkan Gambar (Logo & Tanda Tangan)
+                imgParts.forEach(part => {
+                    const wrappedB64 = part.base64.replace(/(.{76})/g, "$1\r\n");
                     mhtml += `--${boundary}\r\n`;
-                    mhtml += "Content-Type: image/png\r\n";
+                    mhtml += `Content-Type: ${part.type}\r\n`;
                     mhtml += "Content-Transfer-Encoding: base64\r\n";
-                    mhtml += "Content-Location: signature_kepala.png\r\n\r\n";
+                    mhtml += `Content-Location: ${part.name}\r\n\r\n`;
                     mhtml += wrappedB64 + "\r\n\r\n";
-                }
+                });
 
                 mhtml += `--${boundary}--\r\n`;
 

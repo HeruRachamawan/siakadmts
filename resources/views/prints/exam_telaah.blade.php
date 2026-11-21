@@ -11,7 +11,7 @@
     </style>
     <style>
         body {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'Times New Roman', Times, serif;
             font-size: 8.5pt;
             line-height: 1.25;
             color: #000;
@@ -20,6 +20,20 @@
             background: #e2e8f0;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
+        }
+
+        /* Harmonisasi menyeluruh font & angka Times New Roman */
+        .print-sheet,
+        .print-sheet *,
+        .header,
+        .header *,
+        .meta-table,
+        .meta-table *,
+        .matrix-table,
+        .matrix-table *,
+        .signatures,
+        .signatures * {
+            font-family: 'Times New Roman', Times, serif !important;
         }
 
         .print-sheet {
@@ -266,7 +280,31 @@
                 padding: 0 !important;
             }
         }
-                .btn-excel {
+                .btn-word {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+            transition: all 0.15s ease;
+        }
+        .btn-word:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.6);
+        }
+        .btn-word:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-excel {
             background: linear-gradient(135deg, #107c41 0%, #0b5c30 100%);
             color: #ffffff;
             border: none;
@@ -397,6 +435,11 @@
                     <button type="button" class="btn-tool" id="btn-scale-95" onclick="setScale(95)">95%</button>
                     <button type="button" class="btn-tool" id="btn-scale-90" onclick="setScale(90)">90%</button>
                 </div>
+
+                <!-- Word (.doc) Download Button -->
+                <button type="button" class="btn-word" id="btn-unduh-word" onclick="downloadTelaahWord()" title="Unduh format Microsoft Word (.doc) resmi">
+                    📄 Unduh Word (.doc)
+                </button>
 
                 <!-- Excel Download Button -->
                 <button type="button" class="btn-excel" id="btn-unduh-excel" onclick="downloadTelaahExcel()" title="Unduh format Microsoft Excel resmi">
@@ -989,6 +1032,136 @@ ${excelWorkbookXml}
                 if (btnExcel) {
                     btnExcel.innerHTML = originalText;
                     btnExcel.disabled = false;
+                }
+            }
+        }
+
+        // Fungsi Ekspor Resmi Dokumen Telaah ke Microsoft Word (.doc)
+        function downloadTelaahWord() {
+            const btnWord = document.getElementById('btn-unduh-word');
+            const originalText = btnWord ? btnWord.innerHTML : '📄 Unduh Word (.doc)';
+            if (btnWord) {
+                btnWord.innerHTML = '⏳ Menyiapkan Word...';
+                btnWord.disabled = true;
+            }
+
+            try {
+                const isF4 = document.getElementById('btn-paper-f4')?.classList.contains('active');
+                const paperName = isF4 ? 'F4' : 'A4';
+                const paperSizeCss = isF4 ? '330.2mm 215.9mm' : '297mm 210mm';
+                const paperMarginCss = '8mm 10mm 8mm 10mm';
+
+                const subjectName = "{{ $package->subject->name ?? 'Informatika' }}";
+                const classDisplay = "{{ $classDisplay }}";
+                const safeEvent = document.getElementById('select-event')?.value || 'ASAS';
+
+                const sheetEl = document.getElementById('print-sheet');
+                if (!sheetEl) throw new Error('Elemen lembar telaah tidak ditemukan.');
+                const clone = sheetEl.cloneNode(true);
+
+                // Pastikan border table di Word rapi
+                clone.querySelectorAll('table.matrix-table').forEach(tbl => {
+                    tbl.setAttribute('border', '1');
+                    tbl.setAttribute('cellspacing', '0');
+                    tbl.setAttribute('cellpadding', '2');
+                    tbl.style.borderCollapse = 'collapse';
+                    tbl.style.border = '1pt solid #000000';
+                    tbl.style.fontSize = '7pt';
+                    tbl.querySelectorAll('th, td').forEach(c => {
+                        c.style.border = '1pt solid #000000';
+                        c.style.padding = '2pt 1pt';
+                        c.style.fontFamily = "'Times New Roman', Times, serif";
+                    });
+                });
+
+                clone.querySelectorAll('[contenteditable]').forEach(el => {
+                    el.removeAttribute('contenteditable');
+                    el.style.backgroundColor = 'transparent';
+                    el.style.outline = 'none';
+                });
+
+                const wordHtml = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Telaah Soal - ${subjectName}</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    @page Section1 {
+      size: ${paperSizeCss};
+      mso-page-orientation: landscape;
+      margin: ${paperMarginCss};
+    }
+    div.Section1 {
+      page: Section1;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 8pt;
+      line-height: 1.2;
+      color: #000000;
+    }
+    table {
+      border-collapse: collapse;
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+      font-family: 'Times New Roman', Times, serif;
+    }
+  </style>
+</head>
+<body style="font-family: 'Times New Roman', Times, serif; color: #000000; margin: 0; padding: 0;">
+  <div class="Section1">
+    ${clone.innerHTML}
+  </div>
+</body>
+</html>`;
+
+                const boundary = "----=_NextPart_SiakadMts_Telaah_" + Date.now();
+                let mhtml = "";
+
+                mhtml += "MIME-Version: 1.0\r\n";
+                mhtml += `Content-Type: multipart/related; boundary="${boundary}"\r\n\r\n`;
+
+                mhtml += `--${boundary}\r\n`;
+                mhtml += "Content-Type: text/html; charset=utf-8\r\n";
+                mhtml += "Content-Transfer-Encoding: 8bit\r\n\r\n";
+                mhtml += wordHtml + "\r\n\r\n";
+
+                mhtml += `--${boundary}--\r\n`;
+
+                const blob = new Blob([mhtml], { type: 'application/msword;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const safeMapel = (subjectName || 'Mapel').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const safeClass = (classDisplay || 'Kelas').replace(/[^a-zA-Z0-9_-]/g, '_');
+                a.href = url;
+                a.download = `Telaah_Soal_${safeMapel}_${safeClass}_${safeEvent}_${paperName}.doc`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                if (btnWord) {
+                    btnWord.innerHTML = '✅ Terunduh!';
+                    setTimeout(() => {
+                        btnWord.innerHTML = originalText;
+                        btnWord.disabled = false;
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Word export error:', err);
+                alert('Gagal mengunduh dokumen Word. Silakan coba kembali.');
+                if (btnWord) {
+                    btnWord.innerHTML = originalText;
+                    btnWord.disabled = false;
                 }
             }
         }

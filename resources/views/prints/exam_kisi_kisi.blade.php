@@ -43,11 +43,11 @@
         .header {
             text-align: center;
             margin-bottom: 12px;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'Times New Roman', Times, serif;
         }
         .header h2 { 
             margin: 0; 
-            font-size: 11pt; 
+            font-size: 12pt; 
             font-weight: 800; 
             text-transform: uppercase; 
             letter-spacing: 0.5px;
@@ -62,6 +62,22 @@
             letter-spacing: 0.5px;
             line-height: 1.3;
             color: #000;
+        }
+
+        /* Harmonisasi menyeluruh font & angka Times New Roman */
+        .print-sheet,
+        .print-sheet *,
+        .header,
+        .header *,
+        .meta-table,
+        .meta-table *,
+        .data-table,
+        .data-table *,
+        .stats-box,
+        .stats-box *,
+        .signatures,
+        .signatures * {
+            font-family: 'Times New Roman', Times, serif !important;
         }
 
         .meta-table {
@@ -310,6 +326,30 @@
             cursor: not-allowed;
             transform: none;
         }
+        .btn-excel {
+            background: linear-gradient(135deg, #107c41 0%, #0b5c30 100%);
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(16, 124, 65, 0.4);
+            transition: all 0.15s ease;
+        }
+        .btn-excel:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 124, 65, 0.6);
+        }
+        .btn-excel:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
         .btn-print {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: #ffffff;
@@ -426,6 +466,11 @@
                 <!-- Word (.doc) Download Button -->
                 <button type="button" class="btn-word" id="btn-download-word" onclick="downloadWordDoc()" title="Unduh Lembar Kisi-Kisi dalam Format Microsoft Word (.doc)">
                     📄 Unduh Word (.doc)
+                </button>
+
+                <!-- Excel (.xls) Download Button -->
+                <button type="button" class="btn-excel" id="btn-download-excel" onclick="downloadKisiExcel()" title="Unduh Lembar Kisi-Kisi dalam Format Microsoft Excel (.xls)">
+                    📊 Unduh Excel (.xls)
                 </button>
 
                 <!-- Print Trigger Button -->
@@ -1031,6 +1076,196 @@
                 if (btnWord) {
                     btnWord.innerHTML = originalText;
                     btnWord.disabled = false;
+                }
+            }
+        }
+
+        function downloadKisiExcel() {
+            const btnExcel = document.getElementById('btn-download-excel');
+            const originalText = btnExcel ? btnExcel.innerHTML : '📊 Unduh Excel (.xls)';
+            if (btnExcel) {
+                btnExcel.innerHTML = '⏳ Menyiapkan Excel...';
+                btnExcel.disabled = true;
+            }
+
+            try {
+                const isA4 = document.getElementById('btn-paper-a4')?.classList.contains('active');
+                const paperName = isA4 ? 'A4' : 'F4';
+                const paperIndex = isA4 ? 9 : 14;
+
+                const subjectName = @json($package->subject->name ?? 'Informatika');
+                const teacherName = @json($package->teacher->user->name ?? ($package->teacher->name ?? 'Guru'));
+                const academicYear = @json($package->academicYear->year ?? '2026/2027');
+                const classDisplay = document.getElementById('display-semester-table')?.getAttribute('data-base-class') || @json($classDisplay ?? 'Kelas');
+                const eventTitle = document.getElementById('display-event-title')?.textContent.trim() || 'ASESMEN SUMATIF';
+                const printCity = document.getElementById('display-print-city')?.textContent.trim() || 'Bogor';
+                const printDate = document.getElementById('display-print-date')?.textContent.trim() || 'Desember 2026';
+                const headmasterName = @json($school->headmaster_name ?? 'Drs. H. Ahmad Fauzi, M.Pd');
+                const headmasterNip = @json($school->headmaster_nip ?? '-');
+                const teacherNip = @json($package->teacher->nip ?? '-');
+
+                // Kloning tabel data kisi-kisi
+                const originalTable = document.querySelector('table.data-table');
+                if (!originalTable) throw new Error('Tabel kisi-kisi tidak ditemukan');
+                const tableClone = originalTable.cloneNode(true);
+                tableClone.setAttribute('border', '1');
+                tableClone.style.borderCollapse = 'collapse';
+                tableClone.querySelectorAll('th').forEach(th => {
+                    th.style.backgroundColor = '#f1f5f9';
+                    th.style.fontWeight = 'bold';
+                    th.style.textAlign = 'center';
+                    th.style.border = '1pt solid #000000';
+                    th.style.padding = '4pt';
+                });
+                tableClone.querySelectorAll('td').forEach(td => {
+                    td.style.border = '1pt solid #000000';
+                    td.style.padding = '3pt 4pt';
+                    td.style.verticalAlign = 'top';
+                });
+
+                const xmlPageSetup = `
+<!--[if gte mso 9]>
+<xml>
+  <` + `x:ExcelWorkbook>
+    <` + `x:ExcelWorksheets>
+      <` + `x:ExcelWorksheet>
+        <` + `x:Name>Kisi-Kisi Soal<` + `/x:Name>
+        <` + `x:WorksheetOptions>
+          <` + `x:Print>
+            <` + `x:ValidPrinterInfo/>
+            <` + `x:PaperSizeIndex>` + paperIndex + `<` + `/x:PaperSizeIndex>
+            <` + `x:HorizontalResolution>600<` + `/x:HorizontalResolution>
+            <` + `x:VerticalResolution>600<` + `/x:VerticalResolution>
+            <` + `x:Scale>85<` + `/x:Scale>
+          <` + `/x:Print>
+          <` + `x:Selected/>
+          <` + `x:DoNotDisplayGridlines/>
+        <` + `/x:WorksheetOptions>
+      <` + `/x:ExcelWorksheet>
+    <` + `/x:ExcelWorksheets>
+  <` + `/x:ExcelWorkbook>
+</xml>
+<![endif]-->
+`;
+
+                const excelHtml = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:x="urn:schemas-microsoft-com:office:excel"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Kisi-Kisi Soal - ${subjectName}</title>
+${xmlPageSetup}
+<style>
+  @page {
+    mso-page-orientation: landscape;
+    margin: 8mm 10mm 8mm 10mm;
+  }
+  body, table {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 9pt;
+    color: #000000;
+  }
+  table {
+    border-collapse: collapse;
+    mso-table-lspace: 0pt;
+    mso-table-rspace: 0pt;
+  }
+</style>
+</head>
+<body style="font-family: 'Times New Roman', serif;">
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 8pt;">
+    <tr>
+      <td colspan="7" style="text-align: center; font-size: 12pt; font-weight: bold; text-transform: uppercase;">
+        KISI-KISI PENULISAN SOAL ${eventTitle}
+      </td>
+    </tr>
+    <tr>
+      <td colspan="7" style="text-align: center; font-size: 11pt; font-weight: bold; text-transform: uppercase;">
+        MADRASAH TSANAWIYAH AL HASANAH
+      </td>
+    </tr>
+    <tr>
+      <td colspan="7" style="text-align: center; font-size: 10.5pt; font-weight: bold; text-transform: uppercase;">
+        TAHUN PELAJARAN ${academicYear}
+      </td>
+    </tr>
+    <tr style="height: 6pt;"><td colspan="7"></td></tr>
+    <tr>
+      <td colspan="2" style="font-weight: bold; width: 140pt;">Mata Pelajaran</td>
+      <td style="width: 12pt; text-align: center;">:</td>
+      <td style="width: 200pt;">${subjectName}</td>
+      <td style="font-weight: bold; width: 120pt;">Kelas / Semester</td>
+      <td style="width: 12pt; text-align: center;">:</td>
+      <td>${classDisplay}</td>
+    </tr>
+    <tr>
+      <td colspan="2" style="font-weight: bold;">Guru Penyusun</td>
+      <td style="text-align: center;">:</td>
+      <td>${teacherName}</td>
+      <td style="font-weight: bold;">Alokasi Waktu</td>
+      <td style="text-align: center;">:</td>
+      <td>90 Menit</td>
+    </tr>
+    <tr style="height: 8pt;"><td colspan="7"></td></tr>
+  </table>
+
+  ${tableClone.outerHTML}
+
+  <table style="width: 100%; border-collapse: collapse; margin-top: 14pt;">
+    <tr style="height: 10pt;"><td colspan="7"></td></tr>
+    <tr>
+      <td colspan="3" style="text-align: left; vertical-align: top; font-size: 9.5pt;">
+        Mengetahui,<br>
+        <strong>Kepala Madrasah</strong><br>
+        <br><br><br>
+        <strong><u>${headmasterName}</u></strong><br>
+        <span>NIP. ${headmasterNip}</span>
+      </td>
+      <td colspan="4" style="text-align: right; vertical-align: top; font-size: 9.5pt;">
+        <table style="display: inline-table; text-align: left; border-collapse: collapse; border: none;">
+          <tr>
+            <td style="border: none; font-size: 9.5pt;">
+              ${printCity}, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${printDate}<br>
+              <strong>Guru Mata Pelajaran</strong><br>
+              <br><br><br>
+              <strong><u>${teacherName}</u></strong><br>
+              <span>NIP. ${teacherNip}</span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+                const blob = new Blob(['\uFEFF' + excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const safeMapel = (subjectName || 'Mapel').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const safeClass = (classDisplay || 'Kelas').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const safeEvent = (document.getElementById('select-event')?.value || 'ASAS').replace(/[^a-zA-Z0-9_-]/g, '_');
+                a.href = url;
+                a.download = `Kisi_Kisi_${safeMapel}_${safeClass}_${safeEvent}_${paperName}.xls`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                if (btnExcel) {
+                    btnExcel.innerHTML = '✅ Terunduh!';
+                    setTimeout(() => {
+                        btnExcel.innerHTML = originalText;
+                        btnExcel.disabled = false;
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Excel export error:', err);
+                alert('Gagal mengunduh file Excel. Silakan coba kembali.');
+                if (btnExcel) {
+                    btnExcel.innerHTML = originalText;
+                    btnExcel.disabled = false;
                 }
             }
         }
