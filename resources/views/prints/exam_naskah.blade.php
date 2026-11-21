@@ -633,12 +633,66 @@
                 $yearShort = substr(trim($parts[0]), -2) . '/' . substr(trim($parts[1]), -2);
             }
         }
-        $subjCode = strtoupper(substr($package->subject->code ?? ($package->subject->name ?? 'INF'), 0, 3));
+        // Pemetaan Kode Singkatan Baku Mapel Madrasah
+        $rawSubjName = strtolower(trim($package->subject->name ?? ''));
+        $rawSubjCode = strtoupper(trim(preg_replace('/\d+/', '', $package->subject->code ?? '')));
+
+        $subjMap = [
+            'akidah' => 'AA',
+            'aqidah' => 'AA',
+            'qur' => 'QH',
+            'hadits' => 'QH',
+            'hadis' => 'QH',
+            'fikih' => 'FIK',
+            'fiqih' => 'FIK',
+            'sejarah kebudayaan' => 'SKI',
+            'ski' => 'SKI',
+            'bahasa arab' => 'BA',
+            'arab' => 'BA',
+            'indonesia' => 'BIN',
+            'inggris' => 'BIG',
+            'matematika' => 'MTK',
+            'ipa' => 'IPA',
+            'alam' => 'IPA',
+            'ips' => 'IPS',
+            'sosial' => 'IPS',
+            'informatika' => 'INF',
+            'komputer' => 'INF',
+            'pancasila' => 'PPKN',
+            'ppkn' => 'PPKN',
+            'pkn' => 'PPKN',
+            'pjok' => 'PJOK',
+            'jasmani' => 'PJOK',
+            'olahraga' => 'PJOK',
+            'seni' => 'SBK',
+            'prakarya' => 'PRK',
+            'sunda' => 'BSD',
+        ];
+
+        $matchedSubj = null;
+        foreach ($subjMap as $key => $code) {
+            if (str_contains($rawSubjName, $key)) {
+                $matchedSubj = $code;
+                break;
+            }
+        }
+
+        if ($matchedSubj) {
+            $subjCode = $matchedSubj;
+        } elseif (!empty($rawSubjCode) && strlen($rawSubjCode) >= 2) {
+            $subjCode = $rawSubjCode;
+        } else {
+            $subjCode = strtoupper(substr($package->subject->code ?? ($package->subject->name ?? 'INF'), 0, 3));
+        }
+
         $examCode = strtoupper($package->exam_type ?? 'ASAS') . '-' . $semNum . '.' . $yearShort . '- ' . $subjCode;
     @endphp
 
-    <div style="display: flex; justify-content: flex-end; font-size: 8.5pt; font-family: Arial, sans-serif; font-weight: bold; margin-bottom: 2px;">
-        <span id="display-exam-code">{{ $examCode }}</span>
+    <!-- KOTAK KODE NASKAH UJIAN (POJOK KANAN ATAS) -->
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 4px;">
+        <div style="border: 1.5px solid #000; padding: 2px 10px; font-size: 8.5pt; font-family: Arial, sans-serif; font-weight: bold; line-height: 1.2; background: #fff; display: inline-block;">
+            <span id="display-exam-code">{{ $examCode }}</span>
+        </div>
     </div>
 
     <div class="header-kop" style="display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 3px double #000; padding-bottom: 6px; margin-bottom: 8px;">
@@ -1441,11 +1495,17 @@ xmlns="http://www.w3.org/TR/REC-html40">
 </head>
 <body style="font-family: 'Times New Roman', Times, serif; color: #000000; margin: 0; padding: 0;">
   <div class="Section1">
-    <!-- KODE UJIAN -->
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 2pt; border: none;">
+    <!-- KODE UJIAN (KOTAK PERSEGI PANJANG) -->
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 4pt; border: none;">
       <tr>
-        <td style="text-align: right; font-size: 8.5pt; font-family: Arial, sans-serif; font-weight: bold; border: none;">
-          ${examCode}
+        <td style="text-align: right; border: none; padding: 0;">
+          <table style="display: inline-table; border: 1.5pt solid #000000; border-collapse: collapse;">
+            <tr>
+              <td style="border: 1.5pt solid #000000; padding: 2pt 8pt; font-size: 8.5pt; font-family: Arial, sans-serif; font-weight: bold; text-align: center;">
+                ${examCode}
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
     </table>
