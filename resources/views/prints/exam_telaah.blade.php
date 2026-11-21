@@ -88,7 +88,9 @@
         .matrix-table td.col-v {
             text-align: center;
             font-weight: bold;
-            font-size: 8pt;
+            font-size: 9pt;
+            line-height: 1;
+            color: #000;
         }
         .matrix-table tr {
             break-inside: avoid;
@@ -264,6 +266,29 @@
                 padding: 0 !important;
             }
         }
+                .btn-excel {
+            background: linear-gradient(135deg, #107c41 0%, #0b5c30 100%);
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(16, 124, 65, 0.4);
+            transition: all 0.15s ease;
+        }
+        .btn-excel:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 124, 65, 0.6);
+        }
+        .btn-excel:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
         .btn-print {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: #ffffff;
@@ -372,6 +397,11 @@
                     <button type="button" class="btn-tool" id="btn-scale-95" onclick="setScale(95)">95%</button>
                     <button type="button" class="btn-tool" id="btn-scale-90" onclick="setScale(90)">90%</button>
                 </div>
+
+                <!-- Excel Download Button -->
+                <button type="button" class="btn-excel" id="btn-unduh-excel" onclick="downloadTelaahExcel()" title="Unduh format Microsoft Excel resmi">
+                    📊 Unduh Excel (.xls)
+                </button>
 
                 <!-- Print Trigger Button -->
                 <button type="button" class="btn-print" onclick="window.print()">
@@ -525,7 +555,7 @@
                 <td class="center">1</td>
                 <td style="padding-left: 4px;">Soal menggunakan stimulus yang menarik (baru, mendorong peserta didik untuk membaca).</td>
                 @for ($n = 1; $n <= $totalQ; $n++)
-                    <td class="col-v">{{ $isV('stimulus_menarik', $n) ? 'V' : '' }}</td>
+                    <td class="col-v">{{ $isV('stimulus_menarik', $n) ? '✓' : '' }}</td>
                 @endfor
             </tr>
 
@@ -534,7 +564,7 @@
                 <td class="center">2</td>
                 <td style="padding-left: 4px;">soal menggunakan stimulus yang kontekstual (gambar/grafik, teks, visualisasi, dll, sesuai dengan dunia nyata)</td>
                 @for ($n = 1; $n <= $totalQ; $n++)
-                    <td class="col-v">{{ $isV('stimulus_kontekstual', $n) ? 'V' : '' }}</td>
+                    <td class="col-v">{{ $isV('stimulus_kontekstual', $n) ? '✓' : '' }}</td>
                 @endfor
             </tr>
 
@@ -552,7 +582,7 @@
                 <td class="center"></td>
                 <td style="padding-left: 12px;">● Transfer satu konsep ke konsep lainnya</td>
                 @for ($n = 1; $n <= $totalQ; $n++)
-                    <td class="col-v">{{ $isV('transfer_konsep', $n) ? 'V' : '' }}</td>
+                    <td class="col-v">{{ $isV('transfer_konsep', $n) ? '✓' : '' }}</td>
                 @endfor
             </tr>
 
@@ -561,7 +591,7 @@
                 <td class="center"></td>
                 <td style="padding-left: 12px;">● memproses dan menerapkan informasi</td>
                 @for ($n = 1; $n <= $totalQ; $n++)
-                    <td class="col-v">{{ $isV('memproses_info', $n) ? 'V' : '' }}</td>
+                    <td class="col-v">{{ $isV('memproses_info', $n) ? '✓' : '' }}</td>
                 @endfor
             </tr>
 
@@ -570,7 +600,7 @@
                 <td class="center"></td>
                 <td style="padding-left: 12px;">● mencari kaitan dari berbagai informasi yang berbeda-beda</td>
                 @for ($n = 1; $n <= $totalQ; $n++)
-                    <td class="col-v">{{ $isV('mencari_kaitan', $n) ? 'V' : '' }}</td>
+                    <td class="col-v">{{ $isV('mencari_kaitan', $n) ? '✓' : '' }}</td>
                 @endfor
             </tr>
 
@@ -579,7 +609,7 @@
                 <td class="center"></td>
                 <td style="padding-left: 12px;">● menggunakan informasi untuk menyelesaikan masalah</td>
                 @for ($n = 1; $n <= $totalQ; $n++)
-                    <td class="col-v">{{ $isV('menyelesaikan_masalah', $n) ? 'V' : '' }}</td>
+                    <td class="col-v">{{ $isV('menyelesaikan_masalah', $n) ? '✓' : '' }}</td>
                 @endfor
             </tr>
 
@@ -588,7 +618,7 @@
                 <td class="center"></td>
                 <td style="padding-left: 12px;">● Menelaah ide dan informasi secara kritis</td>
                 @for ($n = 1; $n <= $totalQ; $n++)
-                    <td class="col-v">{{ $isV('menelaah_kritis', $n) ? 'V' : '' }}</td>
+                    <td class="col-v">{{ $isV('menelaah_kritis', $n) ? '✓' : '' }}</td>
                 @endfor
             </tr>
 
@@ -597,7 +627,7 @@
                 <td class="center">4</td>
                 <td style="padding-left: 4px;">Jawaban tersirat pada stimulus</td>
                 @for ($n = 1; $n <= $totalQ; $n++)
-                    <td class="col-v">{{ $isV('tersirat_stimulus', $n) ? 'V' : '' }}</td>
+                    <td class="col-v">{{ $isV('tersirat_stimulus', $n) ? '✓' : '' }}</td>
                 @endfor
             </tr>
         </tbody>
@@ -728,6 +758,236 @@
                 });
             }
         });
+
+        // Fungsi Ekspor Resmi Dokumen Telaah ke Microsoft Excel (.xls)
+        function downloadTelaahExcel() {
+            const btnExcel = document.getElementById('btn-unduh-excel');
+            const originalText = btnExcel ? btnExcel.innerHTML : '';
+            if (btnExcel) {
+                btnExcel.innerHTML = '⏳ Menyiapkan Excel...';
+                btnExcel.disabled = true;
+            }
+
+            try {
+                const isF4 = document.getElementById('btn-paper-f4')?.classList.contains('active');
+                const paperName = isF4 ? 'F4' : 'A4';
+                const paperSizeIndex = isF4 ? 14 : 9; // 14: Folio/F4 (8.5x13 in), 9: A4 (210x297 mm)
+                const paperSizeMm = isF4 ? '330mm 215mm' : '297mm 210mm';
+
+                const eventTitle = document.getElementById('display-event-title')?.textContent.trim() || 'ASESMEN';
+                const rawSchool = document.querySelectorAll('.header .title-sub')[0]?.textContent.trim() || 'MADRASAH TSANAWIYAH AL-HASANAH';
+                const yearTitle = document.querySelectorAll('.header .title-sub')[1]?.textContent.trim() || 'TAHUN PELAJARAN 2026/2027';
+
+                const teacherName = "{{ $package->teacher->user->name ?? ($package->teacher->name ?? 'Heru Rachmawan') }}";
+                const subjectName = "{{ $package->subject->name ?? 'Informatika' }}";
+                const classDisplay = "{{ $classDisplay }}";
+                const totalQ = {{ $totalQ }};
+                const totalCols = totalQ + 2;
+
+                const printCity = document.getElementById('display-print-city')?.textContent.trim() || 'Bogor';
+                const printDate = document.getElementById('display-print-date')?.textContent.trim() || '{{ $package->execution_date ?: \Carbon\Carbon::now()->translatedFormat("F Y") }}';
+
+                // Ambil elemen tabel matriks asli dari DOM
+                const matrixOriginal = document.querySelector('.matrix-table');
+                if (!matrixOriginal) throw new Error('Tabel matriks tidak ditemukan.');
+
+                // Kloning matriks dan pastikan styling inline Excel rapi
+                const matrixClone = matrixOriginal.cloneNode(true);
+                matrixClone.setAttribute('border', '1');
+                matrixClone.style.borderCollapse = 'collapse';
+                matrixClone.style.width = '100%';
+                matrixClone.style.fontFamily = 'Arial, sans-serif';
+                matrixClone.style.fontSize = '8pt';
+
+                const ths = matrixClone.querySelectorAll('th');
+                ths.forEach(th => {
+                    th.style.border = '0.5pt solid #000000';
+                    th.style.backgroundColor = '#F1F5F9';
+                    th.style.fontWeight = 'bold';
+                    th.style.textAlign = 'center';
+                    th.style.verticalAlign = 'middle';
+                    th.style.padding = '4px 2px';
+                    th.style.fontFamily = 'Arial, sans-serif';
+                });
+
+                const trs = matrixClone.querySelectorAll('tbody tr');
+                trs.forEach(tr => {
+                    const tds = tr.querySelectorAll('td');
+                    tds.forEach((td, idx) => {
+                        td.style.border = '0.5pt solid #000000';
+                        td.style.padding = '3px 2px';
+                        td.style.verticalAlign = 'middle';
+                        td.style.fontFamily = 'Arial, sans-serif';
+                        if (idx === 0) {
+                            td.style.textAlign = 'center';
+                            td.style.fontWeight = 'bold';
+                        } else if (idx === 1) {
+                            td.style.textAlign = 'left';
+                            td.style.fontSize = '8pt';
+                        } else {
+                            td.style.textAlign = 'center';
+                            td.style.fontWeight = 'bold';
+                            td.style.fontSize = '9.5pt';
+                            // Format teks mso-number-format agar simbol ceklis tidak rusak
+                            td.setAttribute('style', td.getAttribute('style') + '; mso-number-format:"\\@";');
+                        }
+                    });
+                });
+
+                const halfCols = Math.floor(totalCols / 2);
+                const remCols = totalCols - halfCols;
+
+                let excelContent = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:x="urn:schemas-microsoft-com:office:excel"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!--[if gte mso 9]>
+<xml>
+ <x:ExcelWorkbook>
+  <x:ExcelWorksheets>
+   <x:ExcelWorksheet>
+    <x:Name>Telaah Butir Soal</x:Name>
+    <x:WorksheetOptions>
+     <x:Print>
+      <x:ValidPrinterInfo/>
+      <x:PaperSizeIndex>${paperSizeIndex}</x:PaperSizeIndex>
+      <x:Orientation>Landscape</x:Orientation>
+      <x:FitWidth>1</x:FitWidth>
+      <x:FitHeight>1</x:FitHeight>
+     </x:Print>
+     <x:FitToPage/>
+     <x:Selected/>
+     <x:DoNotDisplayGridlines/>
+    </x:WorksheetOptions>
+   </x:ExcelWorksheet>
+  </x:ExcelWorksheets>
+ </x:ExcelWorkbook>
+</xml>
+<![endif]-->
+<style>
+  @page {
+    size: ${paperSizeMm};
+    mso-page-orientation: landscape;
+    margin: 0.35in 0.4in 0.35in 0.4in;
+    mso-header-margin: 0in;
+    mso-footer-margin: 0in;
+  }
+  body, table {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 8.5pt;
+    color: #000000;
+  }
+  table {
+    border-collapse: collapse;
+    mso-table-lspace: 0pt;
+    mso-table-rspace: 0pt;
+  }
+  td, th {
+    mso-style-parent: "";
+  }
+</style>
+</head>
+<body style="font-family: Arial, sans-serif;">
+  <table style="width: 100%; border-collapse: collapse;">
+    <!-- HEADER -->
+    <tr>
+      <td colspan="${totalCols}" style="text-align: center; font-size: 11.5pt; font-weight: bold; text-transform: uppercase; font-family: Arial, sans-serif;">
+        INSTRUMEN TELAAH SOAL ${eventTitle}
+      </td>
+    </tr>
+    <tr>
+      <td colspan="${totalCols}" style="text-align: center; font-size: 10pt; font-weight: bold; text-transform: uppercase; font-family: Arial, sans-serif;">
+        ${rawSchool}
+      </td>
+    </tr>
+    <tr>
+      <td colspan="${totalCols}" style="text-align: center; font-size: 10pt; font-weight: bold; text-transform: uppercase; font-family: Arial, sans-serif;">
+        ${yearTitle}
+      </td>
+    </tr>
+    <tr style="height: 8pt;"><td colspan="${totalCols}"></td></tr>
+
+    <!-- IDENTITAS -->
+    <tr>
+      <td colspan="2" style="font-weight: bold; font-size: 8.5pt; width: 220pt;">NAMA PENGEMBANG SOAL</td>
+      <td style="font-weight: bold; text-align: center; width: 15pt;">:</td>
+      <td colspan="${totalQ - 1}" style="font-size: 8.5pt;">${teacherName}</td>
+    </tr>
+    <tr>
+      <td colspan="2" style="font-weight: bold; font-size: 8.5pt;">MATA PELAJARAN</td>
+      <td style="font-weight: bold; text-align: center;">:</td>
+      <td colspan="${totalQ - 1}" style="font-size: 8.5pt;">${subjectName}</td>
+    </tr>
+    <tr>
+      <td colspan="2" style="font-weight: bold; font-size: 8.5pt;">KELAS</td>
+      <td style="font-weight: bold; text-align: center;">:</td>
+      <td colspan="${totalQ - 1}" style="font-size: 8.5pt;">${classDisplay}</td>
+    </tr>
+    <tr style="height: 8pt;"><td colspan="${totalCols}"></td></tr>
+  </table>
+
+  <!-- TABEL MATRIKS TELAAH -->
+  ${matrixClone.outerHTML}
+
+  <!-- TANDA TANGAN -->
+  <table style="width: 100%; border-collapse: collapse; margin-top: 14pt;">
+    <tr style="height: 10pt;"><td colspan="${totalCols}"></td></tr>
+    <tr>
+      <td colspan="${halfCols}" style="text-align: left; vertical-align: top; padding-left: 20px; font-size: 9pt; border: none;">
+        Mengetahui,<br>
+        <strong>Kepala Madrasah</strong><br>
+        <br><br><br>
+        <strong><u>H. Umar Usman Ali, S.Pd.,S.Pd.I</u></strong>
+      </td>
+      <td colspan="${remCols}" style="text-align: right; vertical-align: top; padding-right: 20px; font-size: 9pt; border: none;">
+        <table style="display: inline-table; text-align: left; border-collapse: collapse; border: none;">
+          <tr>
+            <td style="border: none; font-size: 9pt;">
+              ${printCity}, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${printDate}<br>
+              <strong>Guru Mapel</strong><br>
+              <br><br><br>
+              <strong><u>${teacherName}</u></strong>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+                // Gunakan UTF-8 BOM agar Excel di Windows membaca simbol ceklis (✓) dengan sempurna tanpa rusak
+                const blob = new Blob(['\uFEFF' + excelContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const safeMapel = (subjectName || 'Mapel').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const safeClass = (classDisplay || 'Kelas').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const safeEvent = (document.getElementById('select-event')?.value || 'ASAS').replace(/[^a-zA-Z0-9_-]/g, '_');
+                a.href = url;
+                a.download = `Telaah_Soal_${safeMapel}_${safeClass}_${safeEvent}_${paperName}.xls`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                if (btnExcel) {
+                    btnExcel.innerHTML = '✅ Terunduh!';
+                    setTimeout(() => {
+                        btnExcel.innerHTML = originalText;
+                        btnExcel.disabled = false;
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Excel export error:', err);
+                alert('Gagal mengunduh file Excel. Silakan coba kembali.');
+                if (btnExcel) {
+                    btnExcel.innerHTML = originalText;
+                    btnExcel.disabled = false;
+                }
+            }
+        }
     </script>
 </body>
 </html>
