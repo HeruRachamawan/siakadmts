@@ -4039,6 +4039,14 @@ const openEditor = async (packageId) => {
     if (res.status === 'success' || d.status === 'success') {
       activePackage.value = d.data || d;
       activeQuestions.value = activePackage.value.questions || [];
+      // Clean up legacy questions where E is empty and not used as answer only once upon initial load
+      activeQuestions.value.forEach(q => {
+        if (q.options && typeof q.options === 'object' && !Array.isArray(q.options)) {
+          if (q.options.E !== undefined && q.options.E === '' && (!q.correct_answer || !q.correct_answer.includes('E'))) {
+            delete q.options.E;
+          }
+        }
+      });
       currentQuestionIndex.value = 0;
     }
   } catch (err) {
@@ -4055,13 +4063,8 @@ const closeEditor = () => {
 const ALL_OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
 const ensureOptions = (q) => {
-  if (!q.options || typeof q.options !== 'object' || Array.isArray(q.options)) {
+  if (!q.options || typeof q.options !== 'object' || Array.isArray(q.options) || q.options.mode !== undefined) {
     q.options = { A: '', B: '', C: '', D: '' };
-  } else {
-    // If q has legacy empty E and E is not in correct_answer, clean it up so it defaults to A-D for MTs
-    if (q.options.E !== undefined && q.options.E === '' && (!q.correct_answer || !q.correct_answer.includes('E'))) {
-      delete q.options.E;
-    }
   }
   return q.options;
 };
@@ -4100,7 +4103,7 @@ const addOption = (q) => {
   const keys = getOptionKeys(q);
   const nextLetter = ALL_OPTION_LETTERS.find(l => !keys.includes(l));
   if (nextLetter) {
-    opts[nextLetter] = '';
+    q.options = { ...opts, [nextLetter]: '' };
   }
 };
 
@@ -4113,6 +4116,7 @@ const removeOption = (q, opt) => {
   }
   
   delete opts[opt];
+  q.options = { ...opts };
   
   // Clean up correct_answer if this option was selected
   if (q.question_type === 'pg' && q.correct_answer === opt) {
@@ -4189,6 +4193,9 @@ const sanitizeAllQuestionsBeforeSave = () => {
           q.options[letter] = cleanOptionPrefix(q.options[letter]);
         }
       });
+      if (q.options.E !== undefined && (!q.options.E || q.options.E.trim() === '') && (!q.correct_answer || !q.correct_answer.includes('E'))) {
+        delete q.options.E;
+      }
     }
     // 3. Sanitize true_false
     if (q.question_type === 'true_false') {
@@ -4241,7 +4248,7 @@ const handleTypeChange = (q) => {
       q.correct_answer = 'A';
     }
     ensureSingleMatching(q);
-  } else if (q.question_type === 'pg') {
+  } else if (q.question_type === 'pg' || q.question_type === 'pg_complex') {
     ensureOptions(q);
   }
 };
