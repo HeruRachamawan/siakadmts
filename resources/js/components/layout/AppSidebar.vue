@@ -12,14 +12,14 @@
       :class="[
         isCollapsed ? 'w-[68px]' : 'w-[260px] max-w-[85vw] sm:w-[240px]',
         isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0',
-        'bg-[#0f172a] border-r border-slate-800 text-slate-300 flex flex-col transition-all duration-150 z-40 flex-shrink-0 fixed sm:relative h-full shadow-lg no-print'
+        'bg-white border-r border-slate-200/80 text-slate-700 flex flex-col transition-all duration-150 z-40 flex-shrink-0 fixed sm:relative h-full shadow-xs no-print'
       ]"
     >
       <!-- Logo Area -->
-      <div class="h-16 flex items-center justify-between border-b border-slate-800 flex-shrink-0 bg-slate-950/80"
+      <div class="h-16 flex items-center justify-between border-b border-slate-100 flex-shrink-0 bg-white"
            :class="isCollapsed ? 'justify-center px-0' : 'px-4'">
         <div class="flex items-center gap-3 min-w-0">
-          <div class="w-8 h-8 bg-emerald-700 rounded-md flex items-center justify-center shadow-xs border border-emerald-600/50 flex-shrink-0 overflow-hidden p-1">
+          <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center shadow-xs border border-emerald-500/30 flex-shrink-0 overflow-hidden p-1">
             <img 
               v-if="appSettings?.app_logo && !logoError" 
               :src="resolveImageUrl(appSettings.app_logo)" 
@@ -31,8 +31,8 @@
           </div>
           <Transition name="label-fade">
             <div v-if="!isCollapsed" class="flex flex-col overflow-hidden">
-              <span class="font-bold text-sm text-white tracking-tight leading-none truncate max-w-[130px] uppercase font-sans">{{ appSettings?.app_name || 'PORTAL' }}</span>
-              <span class="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider mt-1 whitespace-nowrap">
+              <span class="font-bold text-sm text-slate-900 tracking-tight leading-none truncate max-w-[130px] uppercase font-sans">{{ appSettings?.app_name || 'PORTAL' }}</span>
+              <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-1 whitespace-nowrap">
                 {{ currentRole }} &bull; T.A. 2026/2027
               </span>
             </div>
@@ -43,7 +43,7 @@
         <button
           v-if="!isCollapsed"
           @click="$emit('close-mobile-sidebar')"
-          class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors sm:hidden cursor-pointer flex-shrink-0"
+          class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors sm:hidden cursor-pointer flex-shrink-0"
           title="Tutup Menu"
         >
           <X class="w-5 h-5" />
@@ -51,19 +51,19 @@
       </div>
 
       <!-- DUAL-ROLE QUICK SWITCH CARD IN SIDEBAR -->
-      <div v-if="auth.isDualRole && !isCollapsed" class="px-3 py-2 border-b border-slate-800 bg-slate-900/90 space-y-1.5 flex-shrink-0">
+      <div v-if="auth.isDualRole && !isCollapsed" class="px-3 py-2 border-b border-slate-100 bg-slate-50/70 space-y-1.5 flex-shrink-0">
         <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 tracking-wider">
           <span>PERAN AKTIF</span>
           <span
-            class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase"
-            :class="currentRole === 'teacher' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-300 border border-slate-700'"
+            class="px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase"
+            :class="currentRole === 'teacher' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-200/80 text-slate-700 border border-slate-300/80'"
           >
             {{ currentRole === 'teacher' ? 'Dewan Guru' : (auth.primaryRole === 'kurikulum' ? 'Kurikulum' : (auth.primaryRole === 'kepala_sekolah' ? 'Kepala Madrasah' : 'Operator TU')) }}
           </span>
         </div>
         <button
           @click="handleSidebarSwitchRole(currentRole === 'teacher' ? (auth.primaryRole || 'operator') : 'teacher')"
-          class="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer border bg-slate-800/80 hover:bg-slate-800 text-slate-300 border-slate-700"
+          class="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer border bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs"
         >
           <ArrowRightLeft class="w-3.5 h-3.5 text-slate-400" />
           <span>Ganti ke Mode {{ currentRole === 'teacher' ? (auth.primaryRole === 'kurikulum' ? 'Kurikulum' : (auth.primaryRole === 'kepala_sekolah' ? 'Kepala Madrasah' : 'Operator TU')) : 'Guru' }}</span>
@@ -71,12 +71,12 @@
       </div>
 
       <!-- Navigation Links -->
-      <nav class="flex-1 py-3 overflow-y-auto custom-scrollbar-dark"
+      <nav class="flex-1 py-3 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200"
            :class="isCollapsed ? 'px-2 space-y-1' : 'px-3 space-y-1'">
 
         <!-- 1. MENU UTAMA -->
         <div v-if="!isCollapsed" class="nav-section">Utama</div>
-        <div v-else class="my-1 border-t border-slate-200/50"></div>
+        <div v-else class="my-1 border-t border-slate-100"></div>
 
         <!-- Dashboard -->
         <RouterLink
@@ -103,16 +103,16 @@
             <span class="flex items-center gap-2 truncate">
               <span
                 class="w-1.5 h-1.5 rounded-full transition-colors duration-150 flex-shrink-0"
-                :class="isSectionOpen('administrasi') ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-slate-600 group-hover:bg-slate-400'"
+                :class="isSectionOpen('administrasi') ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300 group-hover:bg-slate-400'"
               ></span>
-              <span class="truncate">Administrasi & Keuangan</span>
+              <span class="truncate">Administrasi</span>
             </span>
             <ChevronDown
-              class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-transform duration-200 flex-shrink-0"
+              class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 flex-shrink-0"
               :class="{ '-rotate-90': !isSectionOpen('administrasi') }"
             />
           </button>
-          <div v-else class="my-1 border-t border-slate-800"></div>
+          <div v-else class="my-1 border-t border-slate-100"></div>
 
           <div v-show="isCollapsed || isSectionOpen('administrasi')" class="space-y-0.5">
             <!-- Keuangan & Pembayaran SPP (Admin, Operator, Bendahara, Kepala Madrasah) -->
@@ -124,9 +124,9 @@
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
             >
-              <Wallet class="w-4 h-4 flex-shrink-0 text-emerald-400" />
+              <Wallet class="w-4 h-4 flex-shrink-0 text-emerald-600" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Keuangan & Kasir SPP</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Keuangan & SPP</span>
               </Transition>
             </RouterLink>
 
@@ -141,7 +141,7 @@
             >
               <FileText class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Buku Agenda Surat</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Persuratan</span>
               </Transition>
             </RouterLink>
 
@@ -155,7 +155,7 @@
             >
               <Printer class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Pusat Cetak Dokumen</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Pusat Cetak</span>
               </Transition>
             </RouterLink>
 
@@ -167,9 +167,9 @@
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
             >
-              <GraduationCap class="w-4 h-4 flex-shrink-0 text-emerald-400" />
+              <GraduationCap class="w-4 h-4 flex-shrink-0 text-emerald-600" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rekap Ijazah (PDUM)</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Nilai Ijazah</span>
               </Transition>
             </RouterLink>
           </div>
@@ -187,16 +187,16 @@
             <span class="flex items-center gap-2 truncate">
               <span
                 class="w-1.5 h-1.5 rounded-full transition-colors duration-150 flex-shrink-0"
-                :class="isSectionOpen('kurikulum_kbm') ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-slate-600 group-hover:bg-slate-400'"
+                :class="isSectionOpen('kurikulum_kbm') ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300 group-hover:bg-slate-400'"
               ></span>
               <span class="truncate">Kurikulum & KBM</span>
             </span>
             <ChevronDown
-              class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-transform duration-200 flex-shrink-0"
+              class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 flex-shrink-0"
               :class="{ '-rotate-90': !isSectionOpen('kurikulum_kbm') }"
             />
           </button>
-          <div v-else class="my-1 border-t border-slate-800"></div>
+          <div v-else class="my-1 border-t border-slate-100"></div>
 
           <div v-show="isCollapsed || isSectionOpen('kurikulum_kbm')" class="space-y-0.5">
             <RouterLink
@@ -239,7 +239,7 @@
             </RouterLink>
           </div>
 
-          <!-- B. Asesmen & Rapor -->
+          <!-- B. Asesmen & Nilai -->
           <button
             v-if="!isCollapsed"
             type="button"
@@ -249,16 +249,16 @@
             <span class="flex items-center gap-2 truncate">
               <span
                 class="w-1.5 h-1.5 rounded-full transition-colors duration-150 flex-shrink-0"
-                :class="isSectionOpen('kurikulum_asesmen') ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-slate-600 group-hover:bg-slate-400'"
+                :class="isSectionOpen('kurikulum_asesmen') ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300 group-hover:bg-slate-400'"
               ></span>
-              <span class="truncate">Asesmen & Rapor</span>
+              <span class="truncate">Asesmen & Nilai</span>
             </span>
             <ChevronDown
-              class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-transform duration-200 flex-shrink-0"
+              class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 flex-shrink-0"
               :class="{ '-rotate-90': !isSectionOpen('kurikulum_asesmen') }"
             />
           </button>
-          <div v-else class="my-1 border-t border-slate-800"></div>
+          <div v-else class="my-1 border-t border-slate-100"></div>
 
           <div v-show="isCollapsed || isSectionOpen('kurikulum_asesmen')" class="space-y-0.5">
             <!-- Telaah & Review Soal Kurikulum -->
@@ -271,7 +271,7 @@
             >
               <ClipboardCheck class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Telaah & Review Soal</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Review Soal</span>
               </Transition>
             </RouterLink>
 
@@ -284,7 +284,7 @@
             >
               <FileCheck2 class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Koreksi</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Koreksi Ujian</span>
               </Transition>
             </RouterLink>
 
@@ -297,7 +297,7 @@
             >
               <Award class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rekap Nilai Siswa</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rekap Nilai</span>
               </Transition>
             </RouterLink>
 
@@ -309,9 +309,9 @@
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
             >
-              <TableProperties class="w-4 h-4 flex-shrink-0 text-emerald-400" />
+              <TableProperties class="w-4 h-4 flex-shrink-0 text-emerald-600" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Leger Wali Kelas</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Leger Nilai</span>
               </Transition>
             </RouterLink>
 
@@ -325,7 +325,7 @@
             >
               <Sliders class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring & KKTP</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Standar KKTP</span>
               </Transition>
             </RouterLink>
           </div>
@@ -340,28 +340,28 @@
             <span class="flex items-center gap-2 truncate">
               <span
                 class="w-1.5 h-1.5 rounded-full transition-colors duration-150 flex-shrink-0"
-                :class="isSectionOpen('kurikulum_supervisi') ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-slate-600 group-hover:bg-slate-400'"
+                :class="isSectionOpen('kurikulum_supervisi') ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300 group-hover:bg-slate-400'"
               ></span>
-              <span class="truncate">Supervisi Kehadiran</span>
+              <span class="truncate">Supervisi Guru</span>
             </span>
             <ChevronDown
-              class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-transform duration-200 flex-shrink-0"
+              class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 flex-shrink-0"
               :class="{ '-rotate-90': !isSectionOpen('kurikulum_supervisi') }"
             />
           </button>
-          <div v-else class="my-1 border-t border-slate-800"></div>
+          <div v-else class="my-1 border-t border-slate-100"></div>
 
           <div v-show="isCollapsed || isSectionOpen('kurikulum_supervisi')" class="space-y-0.5">
             <RouterLink
               to="/admin/teacher-presensi-monitoring"
-              :title="isCollapsed ? 'Monitoring Absen Guru' : ''"
+              :title="isCollapsed ? 'Monitoring Presensi Guru' : ''"
               class="nav-link"
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
             >
               <MapPin class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Absen Guru</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Presensi Guru</span>
               </Transition>
             </RouterLink>
           </div>
@@ -378,16 +378,16 @@
             <span class="flex items-center gap-2 truncate">
               <span
                 class="w-1.5 h-1.5 rounded-full transition-colors duration-150 flex-shrink-0"
-                :class="isSectionOpen('data_master') ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-slate-600 group-hover:bg-slate-400'"
+                :class="isSectionOpen('data_master') ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300 group-hover:bg-slate-400'"
               ></span>
               <span class="truncate">Data Master</span>
             </span>
             <ChevronDown
-              class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-transform duration-200 flex-shrink-0"
+              class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 flex-shrink-0"
               :class="{ '-rotate-90': !isSectionOpen('data_master') }"
             />
           </button>
-          <div v-else class="my-1 border-t border-slate-800"></div>
+          <div v-else class="my-1 border-t border-slate-100"></div>
 
           <div v-show="isCollapsed || isSectionOpen('data_master')" class="space-y-0.5">
             <!-- Data Siswa -->
@@ -412,7 +412,7 @@
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
             >
-              <ArrowRightLeft class="w-4 h-4 flex-shrink-0 text-emerald-400" />
+              <ArrowRightLeft class="w-4 h-4 flex-shrink-0 text-emerald-600" />
               <Transition name="label-fade">
                 <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Kenaikan Kelas</span>
               </Transition>
@@ -426,9 +426,9 @@
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
             >
-              <BookOpen class="w-4 h-4 flex-shrink-0 text-indigo-400" />
+              <BookOpen class="w-4 h-4 flex-shrink-0 text-indigo-600" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Buku Induk Alumni</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Buku Alumni</span>
               </Transition>
             </RouterLink>
 
@@ -458,7 +458,7 @@
             >
               <Building2 class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Manajemen Kelas</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rombel & Kelas</span>
               </Transition>
             </RouterLink>
 
@@ -503,7 +503,7 @@
             >
               <UserPlus class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Penerimaan Siswa (PPDB)</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">PPDB</span>
               </Transition>
             </RouterLink>
           </div>
@@ -521,43 +521,43 @@
             <span class="flex items-center gap-2 truncate">
               <span
                 class="w-1.5 h-1.5 rounded-full transition-colors duration-150 flex-shrink-0"
-                :class="isSectionOpen('teacher_presensi') ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-slate-600 group-hover:bg-slate-400'"
+                :class="isSectionOpen('teacher_presensi') ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300 group-hover:bg-slate-400'"
               ></span>
-              <span class="truncate">Presensi & Jadwal Guru</span>
+              <span class="truncate">Presensi & Jadwal</span>
             </span>
             <ChevronDown
-              class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-transform duration-200 flex-shrink-0"
+              class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 flex-shrink-0"
               :class="{ '-rotate-90': !isSectionOpen('teacher_presensi') }"
             />
           </button>
-          <div v-else class="my-1 border-t border-slate-800"></div>
+          <div v-else class="my-1 border-t border-slate-100"></div>
 
           <div v-show="isCollapsed || isSectionOpen('teacher_presensi')" class="space-y-0.5">
             <!-- Absensi Saya GPS -->
             <RouterLink
               to="/teacher/presensi"
-              :title="isCollapsed ? 'Absensi Saya (GPS)' : ''"
+              :title="isCollapsed ? 'Presensi GPS' : ''"
               class="nav-link"
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
             >
               <MapPin class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Absensi Saya (GPS)</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Presensi GPS</span>
               </Transition>
             </RouterLink>
 
             <!-- Rekap Absensi Saya -->
             <RouterLink
               to="/teacher/presensi-recap"
-              :title="isCollapsed ? 'Rekap Absensi Saya' : ''"
+              :title="isCollapsed ? 'Rekap Presensi Saya' : ''"
               class="nav-link"
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
             >
               <FileSpreadsheet class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rekap Absensi Saya</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rekap Presensi</span>
               </Transition>
             </RouterLink>
 
@@ -585,7 +585,7 @@
             >
               <Calendar class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Kalender Akademik</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Kalender</span>
               </Transition>
             </RouterLink>
           </div>
@@ -600,30 +600,30 @@
             <span class="flex items-center gap-2 truncate">
               <span
                 class="w-1.5 h-1.5 rounded-full transition-colors duration-150 flex-shrink-0"
-                :class="isSectionOpen('teacher_pembelajaran') ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-slate-600 group-hover:bg-slate-400'"
+                :class="isSectionOpen('teacher_pembelajaran') ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300 group-hover:bg-slate-400'"
               ></span>
-              <span class="truncate">Pembelajaran & Asesmen</span>
+              <span class="truncate">Pembelajaran</span>
             </span>
             <ChevronDown
-              class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-transform duration-200 flex-shrink-0"
+              class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 flex-shrink-0"
               :class="{ '-rotate-90': !isSectionOpen('teacher_pembelajaran') }"
             />
           </button>
-          <div v-else class="my-1 border-t border-slate-800"></div>
+          <div v-else class="my-1 border-t border-slate-100"></div>
 
           <div v-show="isCollapsed || isSectionOpen('teacher_pembelajaran')" class="space-y-0.5">
             <!-- Bank Soal & Kisi-Kisi Ujian -->
             <RouterLink
               v-if="isTeaching"
               to="/teacher/exam-bank"
-              :title="isCollapsed ? 'Bank Soal & Kisi-Kisi' : ''"
+              :title="isCollapsed ? 'Bank Soal' : ''"
               class="nav-link"
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
             >
               <BookOpen class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Bank Soal & Kisi-Kisi</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Bank Soal</span>
               </Transition>
             </RouterLink>
 
@@ -631,14 +631,14 @@
             <RouterLink
               v-if="isTeaching"
               to="/teacher/attendance"
-              :title="isCollapsed ? 'Input Presensi Kelas' : ''"
+              :title="isCollapsed ? 'Presensi & Jurnal Kelas' : ''"
               class="nav-link"
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
             >
               <ClipboardCheck class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Presensi Mapel</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Jurnal & Presensi</span>
               </Transition>
             </RouterLink>
 
@@ -646,14 +646,14 @@
             <RouterLink
               v-if="isTeaching"
               to="/teacher/exam-corrections"
-              :title="isCollapsed ? 'Koreksi Soal & Asesmen' : ''"
+              :title="isCollapsed ? 'Koreksi Ujian' : ''"
               class="nav-link"
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
             >
               <FileCheck2 class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Koreksi Soal</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Koreksi Ujian</span>
               </Transition>
             </RouterLink>
 
@@ -661,21 +661,21 @@
             <RouterLink
               v-if="isTeaching"
               to="/teacher/grades"
-              :title="isCollapsed ? 'Input Nilai' : ''"
+              :title="isCollapsed ? 'Input Nilai Siswa' : ''"
               class="nav-link"
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
             >
               <Award class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Nilai & Transkrip</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Input Nilai</span>
               </Transition>
             </RouterLink>
 
             <!-- Ekstrakurikuler (Pembina Ekskul & Dewan Guru) -->
             <RouterLink
               to="/teacher/extracurriculars"
-              :title="isCollapsed ? 'Penilaian Ekstrakurikuler' : ''"
+              :title="isCollapsed ? 'Ekstrakurikuler' : ''"
               class="nav-link"
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
@@ -684,7 +684,7 @@
               <Transition name="label-fade">
                 <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
                   <span class="text-sm whitespace-nowrap overflow-hidden">Ekstrakurikuler</span>
-                  <span v-if="isExtracurricularAdvisor" class="px-1.5 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-[9px] font-bold uppercase">Pembina</span>
+                  <span v-if="isExtracurricularAdvisor" class="px-1.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded text-[9px] font-bold uppercase">Pembina</span>
                 </div>
               </Transition>
             </RouterLink>
@@ -701,23 +701,23 @@
               <span class="flex items-center gap-2 truncate">
                 <span
                   class="w-1.5 h-1.5 rounded-full transition-colors duration-150 flex-shrink-0"
-                  :class="isSectionOpen('teacher_homeroom') ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-slate-600 group-hover:bg-slate-400'"
+                  :class="isSectionOpen('teacher_homeroom') ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300 group-hover:bg-slate-400'"
                 ></span>
-                <span class="truncate">Ruang Wali Kelas</span>
-                <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[8px] font-extrabold uppercase">Wali</span>
+                <span class="truncate">Wali Kelas</span>
+                <span class="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-[8px] font-extrabold uppercase">Wali</span>
               </span>
               <ChevronDown
-                class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-transform duration-200 flex-shrink-0"
+                class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 flex-shrink-0"
                 :class="{ '-rotate-90': !isSectionOpen('teacher_homeroom') }"
               />
             </button>
-            <div v-else class="my-1 border-t border-slate-800"></div>
+            <div v-else class="my-1 border-t border-slate-100"></div>
 
             <div v-show="isCollapsed || isSectionOpen('teacher_homeroom')" class="space-y-0.5">
               <!-- Absensi Harian Kelas (Khusus Wali Kelas) -->
               <RouterLink
                 to="/teacher/homeroom-attendance"
-                :title="isCollapsed ? 'Absensi Harian Kelas' : ''"
+                :title="isCollapsed ? 'Presensi Harian Kelas' : ''"
                 class="nav-link"
                 :class="isCollapsed ? 'justify-center' : ''"
                 active-class="nav-link-active"
@@ -725,8 +725,8 @@
                 <ClipboardList class="w-4 h-4 flex-shrink-0" />
                 <Transition name="label-fade">
                   <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
-                    <span class="text-sm whitespace-nowrap overflow-hidden">Absensi Harian</span>
-                    <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold uppercase">Wali</span>
+                    <span class="text-sm whitespace-nowrap overflow-hidden">Presensi Harian</span>
+                    <span class="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-[9px] font-bold uppercase">Wali</span>
                   </div>
                 </Transition>
               </RouterLink>
@@ -742,8 +742,8 @@
                 <Users class="w-4 h-4 flex-shrink-0" />
                 <Transition name="label-fade">
                   <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
-                    <span class="text-sm whitespace-nowrap overflow-hidden">Data Siswa</span>
-                    <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold uppercase">Wali</span>
+                    <span class="text-sm whitespace-nowrap overflow-hidden">Siswa Binaan</span>
+                    <span class="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-[9px] font-bold uppercase">Wali</span>
                   </div>
                 </Transition>
               </RouterLink>
@@ -760,7 +760,7 @@
                 <Transition name="label-fade">
                   <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
                     <span class="text-sm whitespace-nowrap overflow-hidden">Rapor ASTS</span>
-                    <span class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold uppercase">Wali</span>
+                    <span class="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-[9px] font-bold uppercase">Wali</span>
                   </div>
                 </Transition>
               </RouterLink>
@@ -777,16 +777,16 @@
             <span class="flex items-center gap-2 truncate">
               <span
                 class="w-1.5 h-1.5 rounded-full transition-colors duration-150 flex-shrink-0"
-                :class="isSectionOpen('teacher_extra') ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-slate-600 group-hover:bg-slate-400'"
+                :class="isSectionOpen('teacher_extra') ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300 group-hover:bg-slate-400'"
               ></span>
-              <span class="truncate">Tugas Tambahan & Akun</span>
+              <span class="truncate">Panitia & Akun</span>
             </span>
             <ChevronDown
-              class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-transform duration-200 flex-shrink-0"
+              class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 flex-shrink-0"
               :class="{ '-rotate-90': !isSectionOpen('teacher_extra') }"
             />
           </button>
-          <div v-else class="my-1 border-t border-slate-800"></div>
+          <div v-else class="my-1 border-t border-slate-100"></div>
 
           <div v-show="isCollapsed || isSectionOpen('teacher_extra')" class="space-y-0.5">
             <!-- Panitia PPDB (Jika Ditugaskan) -->
@@ -831,16 +831,16 @@
             <span class="flex items-center gap-2 truncate">
               <span
                 class="w-1.5 h-1.5 rounded-full transition-colors duration-150 flex-shrink-0"
-                :class="isSectionOpen('admin_supervisi') ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-slate-600 group-hover:bg-slate-400'"
+                :class="isSectionOpen('admin_supervisi') ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300 group-hover:bg-slate-400'"
               ></span>
               <span class="truncate">Supervisi & Monitoring</span>
             </span>
             <ChevronDown
-              class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-transform duration-200 flex-shrink-0"
+              class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 flex-shrink-0"
               :class="{ '-rotate-90': !isSectionOpen('admin_supervisi') }"
             />
           </button>
-          <div v-else class="my-1 border-t border-slate-800"></div>
+          <div v-else class="my-1 border-t border-slate-100"></div>
 
           <div v-show="isCollapsed || isSectionOpen('admin_supervisi')" class="space-y-0.5">
             <!-- Monitoring Absensi Siswa Harian -->
@@ -867,7 +867,7 @@
             >
               <ClipboardCheck class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Telaah & Review Soal</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Review Soal</span>
               </Transition>
             </RouterLink>
 
@@ -881,7 +881,7 @@
             >
               <FileCheck2 class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Koreksi</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Koreksi Ujian</span>
               </Transition>
             </RouterLink>
 
@@ -907,9 +907,9 @@
               :class="isCollapsed ? 'justify-center' : ''"
               active-class="nav-link-active"
             >
-              <TableProperties class="w-4 h-4 flex-shrink-0 text-emerald-400" />
+              <TableProperties class="w-4 h-4 flex-shrink-0 text-emerald-600" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Leger Wali Kelas</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Leger Nilai</span>
               </Transition>
             </RouterLink>
 
@@ -923,10 +923,9 @@
             >
               <Sliders class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring & KKTP</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Standar KKTP</span>
               </Transition>
             </RouterLink>
-
 
             <!-- Rekap Presensi -->
             <RouterLink
@@ -938,7 +937,7 @@
             >
               <FileSpreadsheet class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rekap Presensi Siswa</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Rekap Presensi</span>
               </Transition>
             </RouterLink>
 
@@ -952,7 +951,7 @@
             >
               <CalendarCheck class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Jadwal & Kegiatan</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Jadwal KBM</span>
               </Transition>
             </RouterLink>
 
@@ -966,7 +965,7 @@
             >
               <MapPin class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Monitoring Absen Guru</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Presensi Guru</span>
               </Transition>
             </RouterLink>
           </div>
@@ -974,8 +973,8 @@
 
         <!-- Student Links -->
         <template v-if="currentRole === 'student'">
-          <div v-if="!isCollapsed" class="nav-section">Akademik & Nilai Siswa</div>
-          <div v-else class="my-1 border-t border-slate-800"></div>
+          <div v-if="!isCollapsed" class="nav-section">Akademik Siswa</div>
+          <div v-else class="my-1 border-t border-slate-100"></div>
 
           <RouterLink
             to="/student/profile"
@@ -990,36 +989,36 @@
 
           <RouterLink
             to="/student/attendances"
-            :title="isCollapsed ? 'Kehadiran Saya' : ''"
+            :title="isCollapsed ? 'Presensi Saya' : ''"
             class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
             <ClipboardCheck class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade"><span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Kehadiran Saya</span></Transition>
+            <Transition name="label-fade"><span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Presensi Saya</span></Transition>
           </RouterLink>
 
           <RouterLink
             to="/student/transcript"
-            :title="isCollapsed ? 'Transkrip Nilai' : ''"
+            :title="isCollapsed ? 'Nilai & Rapor' : ''"
             class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
             <Award class="w-4 h-4 flex-shrink-0" />
-            <Transition name="label-fade"><span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Transkrip Nilai</span></Transition>
+            <Transition name="label-fade"><span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Nilai & Rapor</span></Transition>
           </RouterLink>
 
           <!-- Buku SPP & Pembayaran Siswa -->
           <RouterLink
             to="/student/finance"
-            :title="isCollapsed ? 'Buku SPP & Pembayaran' : ''"
+            :title="isCollapsed ? 'Tagihan SPP' : ''"
             class="nav-link"
             :class="isCollapsed ? 'justify-center' : ''"
             active-class="nav-link-active"
           >
-            <Wallet class="w-4 h-4 flex-shrink-0 text-emerald-400" />
-            <Transition name="label-fade"><span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">SPP & Pembayaran</span></Transition>
+            <Wallet class="w-4 h-4 flex-shrink-0 text-emerald-600" />
+            <Transition name="label-fade"><span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Tagihan SPP</span></Transition>
           </RouterLink>
         </template>
 
@@ -1034,16 +1033,16 @@
             <span class="flex items-center gap-2 truncate">
               <span
                 class="w-1.5 h-1.5 rounded-full transition-colors duration-150 flex-shrink-0"
-                :class="isSectionOpen('admin_website') ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-slate-600 group-hover:bg-slate-400'"
+                :class="isSectionOpen('admin_website') ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300 group-hover:bg-slate-400'"
               ></span>
-              <span class="truncate">Manajemen Website</span>
+              <span class="truncate">Website Sekolah</span>
             </span>
             <ChevronDown
-              class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-transform duration-200 flex-shrink-0"
+              class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 flex-shrink-0"
               :class="{ '-rotate-90': !isSectionOpen('admin_website') }"
             />
           </button>
-          <div v-else class="my-1 border-t border-slate-800"></div>
+          <div v-else class="my-1 border-t border-slate-100"></div>
 
           <div v-show="isCollapsed || isSectionOpen('admin_website')" class="space-y-0.5">
             <!-- Berita & Artikel -->
@@ -1056,7 +1055,7 @@
             >
               <Newspaper class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Berita & Artikel</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Berita</span>
               </Transition>
             </RouterLink>
 
@@ -1070,7 +1069,7 @@
             >
               <ImageIcon class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Galeri Foto</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Galeri</span>
               </Transition>
             </RouterLink>
 
@@ -1084,7 +1083,7 @@
             >
               <Trophy class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Prestasi Siswa</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Prestasi</span>
               </Transition>
             </RouterLink>
 
@@ -1098,7 +1097,7 @@
             >
               <Warehouse class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Sarana Prasarana</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Fasilitas</span>
               </Transition>
             </RouterLink>
           </div>
@@ -1113,16 +1112,16 @@
             <span class="flex items-center gap-2 truncate">
               <span
                 class="w-1.5 h-1.5 rounded-full transition-colors duration-150 flex-shrink-0"
-                :class="isSectionOpen('admin_sistem') ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-slate-600 group-hover:bg-slate-400'"
+                :class="isSectionOpen('admin_sistem') ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300 group-hover:bg-slate-400'"
               ></span>
-              <span class="truncate">Sistem & Keamanan</span>
+              <span class="truncate">Pengaturan Sistem</span>
             </span>
             <ChevronDown
-              class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-transform duration-200 flex-shrink-0"
+              class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 flex-shrink-0"
               :class="{ '-rotate-90': !isSectionOpen('admin_sistem') }"
             />
           </button>
-          <div v-else class="my-1 border-t border-slate-800"></div>
+          <div v-else class="my-1 border-t border-slate-100"></div>
 
           <div v-show="isCollapsed || isSectionOpen('admin_sistem')" class="space-y-0.5">
             <!-- Kalender Akademik -->
@@ -1152,7 +1151,7 @@
               </div>
               <Transition name="label-fade">
                 <div v-if="!isCollapsed" class="flex items-center justify-between w-full">
-                  <span class="text-sm whitespace-nowrap overflow-hidden">Permintaan Reset</span>
+                  <span class="text-sm whitespace-nowrap overflow-hidden">Reset Password</span>
                   <span v-if="pendingResetRequestsCount > 0" class="px-2 py-0.5 text-[10px] font-bold bg-rose-500 text-white rounded-full">
                     {{ pendingResetRequestsCount }}
                   </span>
@@ -1170,7 +1169,7 @@
             >
               <Users class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Manajemen Pengguna</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Pengguna</span>
               </Transition>
             </RouterLink>
 
@@ -1198,7 +1197,7 @@
             >
               <Database class="w-4 h-4 flex-shrink-0" />
               <Transition name="label-fade">
-                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Backup Database</span>
+                <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Backup Data</span>
               </Transition>
             </RouterLink>
           </div>
@@ -1206,8 +1205,8 @@
 
         <!-- 6. PROFIL & BIODATA STAF (Admin, Kurikulum, Operator, Kepala Madrasah, Bendahara) -->
         <template v-if="currentRole === 'admin' || currentRole === 'operator' || currentRole === 'kurikulum' || currentRole === 'kepala_sekolah' || currentRole === 'bendahara'">
-          <div v-if="!isCollapsed" class="nav-section">Akun & Profil</div>
-          <div v-else class="my-1 border-t border-slate-200/50"></div>
+          <div v-if="!isCollapsed" class="nav-section">Akun Saya</div>
+          <div v-else class="my-1 border-t border-slate-100"></div>
 
           <RouterLink
             to="/admin/profile"
@@ -1218,19 +1217,19 @@
           >
             <UserCircle class="w-4 h-4 flex-shrink-0" />
             <Transition name="label-fade">
-              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Profil & Biodata Diri</span>
+              <span v-if="!isCollapsed" class="text-sm whitespace-nowrap overflow-hidden">Profil Staf</span>
             </Transition>
           </RouterLink>
         </template>
       </nav>
 
       <!-- Bottom: Logout -->
-      <div class="border-t border-slate-800 flex-shrink-0 bg-slate-950/40"
+      <div class="border-t border-slate-100 flex-shrink-0 bg-slate-50/50"
            :class="isCollapsed ? 'p-2 space-y-1' : 'p-3 space-y-1'">
         <button
           @click="$emit('logout')"
           :title="isCollapsed ? 'Keluar Aplikasi' : ''"
-          class="flex items-center gap-2.5 px-3 py-2 text-slate-400 font-medium text-xs rounded-md transition-colors hover:text-rose-400 hover:bg-rose-950/30 cursor-pointer w-full text-left"
+          class="flex items-center gap-2.5 px-3 py-2 text-slate-500 font-medium text-xs rounded-xl transition-colors hover:text-rose-600 hover:bg-rose-50 cursor-pointer w-full text-left"
           :class="isCollapsed ? 'justify-center' : ''"
         >
           <LogOut class="w-4 h-4 flex-shrink-0" />
@@ -1347,7 +1346,17 @@ function isSectionOpen(key) {
 
 function toggleSection(key) {
   const current = isSectionOpen(key);
-  openSections.value[key] = !current;
+  if (!current) {
+    // Smart Accordion: close other non-route sections to prevent endless scrolling
+    for (const k of Object.keys(routeSectionMap)) {
+      if (k !== key && !isRouteInSection(k)) {
+        openSections.value[k] = false;
+      }
+    }
+    openSections.value[key] = true;
+  } else {
+    openSections.value[key] = false;
+  }
 }
 
 watch(() => route?.path, (newPath) => {
