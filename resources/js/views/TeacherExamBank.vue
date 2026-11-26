@@ -274,6 +274,36 @@
                   <span>Semester {{ pkg.semester === 'ganjil' ? 'Ganjil' : 'Genap' }} ({{ pkg.academic_phase || 'Fase D' }})</span>
                   <span v-if="pkg.execution_date" class="text-slate-400">&bull; {{ pkg.execution_date }}</span>
                 </div>
+                <div v-if="pkg.target_grade" class="pt-1 flex items-center gap-1.5 flex-wrap">
+                  <span
+                    v-if="pkg.correction_children && pkg.correction_children.length > 0"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  >
+                    <CheckCircle2 class="w-3 h-3" />
+                    Koreksi Terpisah: {{ pkg.correction_children.map(c => c.class_room?.name).filter(Boolean).join(', ') }}
+                  </span>
+                  <span
+                    v-else-if="pkg.package_scope === 'bank_only'"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200"
+                  >
+                    🔒 Hanya di Bank Soal
+                  </span>
+                  <span
+                    v-else
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200"
+                  >
+                    🌐 Koreksi Gabungan Global
+                  </span>
+                  <button
+                    type="button"
+                    @click="openSplitModal(pkg)"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition cursor-pointer"
+                    title="Atur atau pecah penyaluran ke Menu Koreksi per kelas (9A / 9B)"
+                  >
+                    <Layers class="w-3 h-3" />
+                    {{ pkg.correction_children?.length ? 'Kelola Kelas Koreksi' : 'Pecah ke Koreksi' }}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -436,7 +466,7 @@
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Kelas Target *</label>
-              <select v-model="createForm.target_selection" required class="form-select text-xs font-medium">
+              <select v-model="createForm.target_selection" @change="syncCreateCorrectionClasses" required class="form-select text-xs font-medium">
                 <option value="">Pilih Kelas Target</option>
                 <optgroup v-if="globalTargetOptions.length" label="🌐 Tingkat Global (Soal Bersama / ASAS / ASTS)">
                   <option v-for="opt in globalTargetOptions" :key="opt.key" :value="opt.key">
@@ -735,6 +765,69 @@
               <span v-else class="text-[10px] text-slate-400">Total persentase bobot = 100%</span>
             </div>
           </div>
+
+          <!-- Penyaluran ke Menu Koreksi (Khusus Paket Global) -->
+          <div v-if="isCreateGlobalSelected" class="p-3.5 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-2.5">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <label class="block text-xs font-bold text-indigo-900">
+                  🌐 Penyaluran ke Menu Koreksi (Kelas {{ selectedCreateGrade }})
+                </label>
+                <p class="text-[11px] text-indigo-700/80 leading-relaxed mt-0.5">
+                  Bank Soal tetap menjadi <strong>1 Master Global</strong> untuk telaah kurikulum. Pilih bagaimana paket ini muncul di Menu Koreksi:
+                </p>
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition"
+                :class="createForm.correction_mode === 'split_selected' ? 'bg-white border-emerald-400 shadow-2xs' : 'bg-white/60 border-indigo-100 hover:bg-white'">
+                <input type="radio" v-model="createForm.correction_mode" value="split_selected" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" />
+                <div class="flex-1 text-xs">
+                  <div class="font-bold text-slate-800">Pecah per Kelas di Menu Koreksi (Disarankan)</div>
+                  <div class="text-[11px] text-slate-500">Buat paket koreksi terpisah per rombel dan hubungkan otomatis ke guru pengampu masing-masing kelas.</div>
+                  <div v-if="createForm.correction_mode === 'split_selected' && createGradeRombelClasses.length" class="mt-2 pt-2 border-t border-slate-100">
+                    <div class="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1.5">Pilih Rombel Kelas yang Ingin Langsung Diisi:</div>
+                    <div class="flex flex-wrap gap-2">
+                      <label
+                        v-for="cls in createGradeRombelClasses"
+                        :key="cls.id"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold cursor-pointer transition"
+                        :class="createForm.correction_class_ids.includes(cls.id) ? 'bg-emerald-50 border-emerald-400 text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-500'"
+                      >
+                        <input
+                          type="checkbox"
+                          :value="cls.id"
+                          v-model="createForm.correction_class_ids"
+                          class="rounded text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span>Kelas {{ cls.name }}</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </label>
+
+              <label class="flex items-start gap-2.5 p-2 rounded-lg border cursor-pointer transition"
+                :class="createForm.correction_mode === 'global_single' ? 'bg-white border-indigo-400 shadow-2xs' : 'bg-white/60 border-indigo-100 hover:bg-white'">
+                <input type="radio" v-model="createForm.correction_mode" value="global_single" class="mt-0.5 text-indigo-600 focus:ring-indigo-500" />
+                <div class="text-xs">
+                  <div class="font-bold text-slate-800">1 Paket Koreksi Gabungan Global</div>
+                  <div class="text-[11px] text-slate-500">Semua kelas tingkat {{ selectedCreateGrade }} berada dalam 1 paket koreksi (dapat dipecah nanti).</div>
+                </div>
+              </label>
+
+              <label class="flex items-start gap-2.5 p-2 rounded-lg border cursor-pointer transition"
+                :class="createForm.correction_mode === 'none' ? 'bg-white border-amber-400 shadow-2xs' : 'bg-white/60 border-indigo-100 hover:bg-white'">
+                <input type="radio" v-model="createForm.correction_mode" value="none" class="mt-0.5 text-amber-600 focus:ring-amber-500" />
+                <div class="text-xs">
+                  <div class="font-bold text-slate-800">Simpan di Bank Soal Saja (Tarik Manual per Guru)</div>
+                  <div class="text-[11px] text-slate-500">Tidak otomatis masuk Menu Koreksi; masing-masing guru menarik ke kelasnya lewat tombol "Tarik dari Bank Soal".</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div class="pt-3 sticky bottom-0 bg-white/95 backdrop-blur-xs flex justify-end gap-2 border-t border-slate-100 mt-4 -mx-6 -mb-6 p-6 shrink-0">
             <button type="button" @click="showCreateModal = false" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 cursor-pointer">
               Batal
@@ -744,6 +837,57 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Modal Pecah / Salurkan Paket Global ke Menu Koreksi -->
+    <div v-if="showSplitModal && splitTargetPkg" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+      <div class="bg-white w-full max-w-md rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+          <div>
+            <h3 class="text-base font-bold text-slate-800">Salurkan ke Menu Koreksi</h3>
+            <p class="text-xs text-slate-500 line-clamp-1">{{ splitTargetPkg.title }}</p>
+          </div>
+          <button @click="showSplitModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-xs text-indigo-800 leading-relaxed">
+            Pilih rombel kelas tingkat <strong>Kelas {{ splitTargetPkg.target_grade }}</strong> yang ingin dibuatkan paket koreksinya secara terpisah.
+            <span v-if="splitTargetPkg.correction_children?.length" class="block mt-1 font-semibold text-emerald-700">
+              Sudah tersalur ke: {{ splitTargetPkg.correction_children.map(c => c.class_room?.name).filter(Boolean).join(', ') }}
+            </span>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Rombel Tujuan di Menu Koreksi:</label>
+            <div class="flex flex-wrap gap-2">
+              <label
+                v-for="cls in splitModalClasses"
+                :key="cls.id"
+                class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold cursor-pointer transition"
+                :class="splitSelectedClassIds.includes(cls.id) ? 'bg-emerald-50 border-emerald-400 text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-600'"
+              >
+                <input type="checkbox" :value="cls.id" v-model="splitSelectedClassIds" class="rounded text-emerald-600 focus:ring-emerald-500" />
+                <span>Kelas {{ cls.name }}</span>
+              </label>
+            </div>
+            <p v-if="splitModalClasses.length === 0" class="text-xs text-rose-600 mt-1">Tidak ditemukan daftar rombel untuk tingkat ini.</p>
+          </div>
+          <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button type="button" @click="showSplitModal = false" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 cursor-pointer">
+              Batal
+            </button>
+            <button
+              type="button"
+              @click="submitSplitToCorrection"
+              :disabled="submittingSplit || splitSelectedClassIds.length === 0"
+              class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer"
+            >
+              {{ submittingSplit ? 'Menyalurkan...' : 'Salurkan ke Menu Koreksi' }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2606,8 +2750,77 @@ const createForm = reactive({
   kkm: 75,
   academic_phase: 'Fase D',
   pg_weight: 75,
-  essay_weight: 25
+  essay_weight: 25,
+  correction_mode: 'split_selected',
+  correction_class_ids: []
 });
+
+const isCreateGlobalSelected = computed(() => String(createForm.target_selection || '').startsWith('global_'));
+const selectedCreateGrade = computed(() => {
+  if (!isCreateGlobalSelected.value) return '';
+  return String(createForm.target_selection).replace('global_', '');
+});
+const isStandaloneLokalClass = (c) => {
+  const raw = String(c?.name || '').trim();
+  const clean = raw.replace(/^(kelas|kls)\s*/i, '').trim().toLowerCase();
+  const lower = raw.toLowerCase();
+  return ['7', '8', '9'].includes(clean) || lower.includes('lokal') || lower.startsWith('l-') || lower.startsWith('lok-');
+};
+const getRombelsForGrade = (grade) => {
+  if (!grade) return [];
+  const all = (options.classes || []).filter(c => String(c.grade_level) === String(grade));
+  const regular = all.filter(c => !isStandaloneLokalClass(c));
+  return regular.length > 0 ? regular : all;
+};
+const createGradeRombelClasses = computed(() => getRombelsForGrade(selectedCreateGrade.value));
+
+const syncCreateCorrectionClasses = () => {
+  if (isCreateGlobalSelected.value) {
+    createForm.correction_mode = 'split_selected';
+    createForm.correction_class_ids = createGradeRombelClasses.value.map(c => c.id);
+  } else {
+    createForm.correction_mode = 'global_single';
+    createForm.correction_class_ids = [];
+  }
+};
+
+// Split existing global package to Menu Koreksi modal state
+const showSplitModal = ref(false);
+const splitTargetPkg = ref(null);
+const splitSelectedClassIds = ref([]);
+const submittingSplit = ref(false);
+const splitModalClasses = computed(() => getRombelsForGrade(splitTargetPkg.value?.target_grade));
+
+const openSplitModal = (pkg) => {
+  splitTargetPkg.value = pkg;
+  const available = getRombelsForGrade(pkg.target_grade);
+  const existingIds = (pkg.correction_children || []).map(c => c.class_room_id);
+  splitSelectedClassIds.value = existingIds.length > 0
+    ? [...new Set(existingIds)]
+    : available.map(c => c.id);
+  showSplitModal.value = true;
+};
+
+const submitSplitToCorrection = async () => {
+  if (!splitTargetPkg.value || splitSelectedClassIds.value.length === 0) return;
+  submittingSplit.value = true;
+  try {
+    const res = await api.post(`/teacher/exam-corrections/${splitTargetPkg.value.id}/split-by-class`, {
+      class_room_ids: splitSelectedClassIds.value,
+      hide_master_from_correction: true
+    });
+    const d = res.data || res;
+    if (res.status === 'success' || d.status === 'success') {
+      toast.success(d.message || 'Paket berhasil disalurkan ke Menu Koreksi!');
+      showSplitModal.value = false;
+      await fetchPackages();
+    }
+  } catch (err) {
+    toast.error(err.response?.data?.message || err.message || 'Gagal menyalurkan paket ke Menu Koreksi.');
+  } finally {
+    submittingSplit.value = false;
+  }
+};
 
 const recalculateCustomDistribution = () => {
   const pg = Math.max(0, parseInt(createForm.custom_counts?.pg) || 0);
@@ -3909,6 +4122,7 @@ const openCreateModal = () => {
   createForm.academic_phase = 'Fase D';
   createForm.pg_weight = 75;
   createForm.essay_weight = 25;
+  syncCreateCorrectionClasses();
   showCreateModal.value = true;
 };
 
@@ -4010,6 +4224,10 @@ const updatePackageInfo = async () => {
 };
 
 const createPackage = async () => {
+  if (isCreateGlobalSelected.value && createForm.correction_mode === 'split_selected' && (!createForm.correction_class_ids || createForm.correction_class_ids.length === 0)) {
+    toast.error('Pilih minimal satu rombel kelas tujuan koreksi, atau pilih mode lain.');
+    return;
+  }
   submitting.value = true;
   try {
     const chosenOpt = allTargetOptions.value.find(o => o.key === createForm.target_selection);

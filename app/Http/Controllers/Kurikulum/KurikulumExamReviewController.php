@@ -21,7 +21,10 @@ class KurikulumExamReviewController extends Controller
      */
     public function index(Request $request)
     {
-        $query = ExamPackage::with(['classRoom', 'subject', 'academicYear', 'teacher.user', 'reviewedBy'])
+        $query = ExamPackage::when(ExamPackage::hasSplitColumns(), function ($q) {
+                $q->where('package_scope', '!=', 'correction_only');
+            })
+            ->with(['classRoom', 'subject', 'academicYear', 'teacher.user', 'reviewedBy'])
             ->withCount([
                 'questions',
                 'questions as pg_count' => function ($q) {

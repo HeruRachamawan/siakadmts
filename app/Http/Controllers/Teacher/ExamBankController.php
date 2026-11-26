@@ -39,7 +39,16 @@ class ExamBankController extends Controller
         $user = $request->user();
         $isPrivileged = in_array($user->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah']);
 
-        $query = ExamPackage::with(['classRoom', 'subject', 'academicYear', 'teacher.user'])
+        $with = ['classRoom', 'subject', 'academicYear', 'teacher.user'];
+        if (ExamPackage::hasSplitColumns()) {
+            $with[] = 'correctionChildren:id,source_package_id,class_room_id,teacher_id';
+            $with[] = 'correctionChildren.classRoom:id,name';
+        }
+
+        $query = ExamPackage::when(ExamPackage::hasSplitColumns(), function ($q) {
+                $q->where('package_scope', '!=', 'correction_only');
+            })
+            ->with($with)
             ->withCount([
                 'questions',
                 'questions as pg_count' => function ($q) {
@@ -238,6 +247,9 @@ class ExamBankController extends Controller
             'execution_date' => 'nullable|string|max:60',
             'target_grade' => 'nullable|string|max:10',
             'teacher_id' => 'nullable|exists:teachers,id',
+            'correction_mode' => 'nullable|string|in:split_selected,global_single,none',
+            'correction_class_ids' => 'nullable|array',
+            'correction_class_ids.*' => 'exists:classes,id',
         ]);
 
         $teacherId = null;
@@ -475,10 +487,27 @@ class ExamBankController extends Controller
             }
         }
 
+        // Penyaluran otomatis Master Global ke Menu Koreksi (pecah per kelas, global 1 paket, atau bank saja)
+        if (!empty($validated['target_grade']) && ExamPackage::hasSplitColumns()) {
+            $correctionMode = $validated['correction_mode'] ?? 'global_single';
+            $selectedClassIds = array_values(array_unique(array_map('intval', $validated['correction_class_ids'] ?? [])));
+            if ($correctionMode === 'split_selected' && !empty($selectedClassIds)) {
+                app(\App\Services\ExamPackageSplitService::class)->splitMasterToClasses(
+                    $package,
+                    $selectedClassIds,
+                    [],
+                    false,
+                    true
+                );
+            } elseif ($correctionMode === 'none') {
+                $package->update(['package_scope' => 'bank_only']);
+            }
+        }
+
         return response()->json([
             'status' => 'success',
             'message' => 'Paket soal berhasil dibuat. Silakan input butir soal & kisi-kisi.',
-            'data' => $package->load(['classRoom', 'subject', 'academicYear'])
+            'data' => $package->fresh(['classRoom', 'subject', 'academicYear'])
         ], 201);
     }
 
@@ -557,6 +586,8 @@ class ExamBankController extends Controller
             ExamQuestion::insert($newQuestions);
         }
 
+        app(\App\Services\ExamPackageSplitService::class)->syncMasterToChildren($package);
+
         return response()->json([
             'status' => 'success',
             'message' => 'Informasi paket soal berhasil diperbarui.',
@@ -577,6 +608,19 @@ class ExamBankController extends Controller
                 'status' => 'error',
                 'message' => 'Paket soal yang telah disetujui kurikulum tidak dapat dihapus.'
             ], 422);
+        }
+
+        if (ExamPackage::hasSplitColumns()) {
+            $hasChildSubmissions = $package->correctionChildren()
+                ->whereHas('submissions')
+                ->exists();
+            if ($hasChildSubmissions) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Paket soal ini sudah memiliki data jawaban/koreksi siswa di Menu Koreksi sehingga tidak dapat dihapus.'
+                ], 422);
+            }
+            $package->correctionChildren()->delete();
         }
 
         $package->delete();
@@ -694,6 +738,8 @@ class ExamBankController extends Controller
             if (!empty($updateData)) {
                 $package->update($updateData);
             }
+
+            app(\App\Services\ExamPackageSplitService::class)->syncMasterToChildren($package);
 
             DB::commit();
 
@@ -1004,6 +1050,8 @@ class ExamBankController extends Controller
             if ($totalActual > $package->total_questions) {
                 $package->update(['total_questions' => $totalActual]);
             }
+
+            app(\App\Services\ExamPackageSplitService::class)->syncMasterToChildren($package);
 
             DB::commit();
 

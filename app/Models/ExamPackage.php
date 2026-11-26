@@ -4,12 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class ExamPackage extends Model
 {
     use HasFactory;
 
+    protected static ?bool $splitColumnsExist = null;
+
     protected $fillable = [
+        'source_package_id',
         'teacher_id',
         'class_room_id',
         'target_grade',
@@ -23,6 +27,7 @@ class ExamPackage extends Model
         'pg_weight',
         'essay_weight',
         'status',
+        'package_scope',
         'status_kurikulum',
         'review_notes',
         'reviewed_by',
@@ -32,6 +37,25 @@ class ExamPackage extends Model
         'description',
         'execution_date',
     ];
+
+    public static function hasSplitColumns(): bool
+    {
+        if (static::$splitColumnsExist === null) {
+            static::$splitColumnsExist = Schema::hasColumn('exam_packages', 'package_scope')
+                && Schema::hasColumn('exam_packages', 'source_package_id');
+        }
+        return static::$splitColumnsExist;
+    }
+
+    public function sourcePackage()
+    {
+        return $this->belongsTo(ExamPackage::class, 'source_package_id');
+    }
+
+    public function correctionChildren()
+    {
+        return $this->hasMany(ExamPackage::class, 'source_package_id');
+    }
 
     protected $casts = [
         'total_questions' => 'integer',

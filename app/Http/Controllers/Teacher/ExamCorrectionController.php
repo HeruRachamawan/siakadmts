@@ -116,6 +116,10 @@ class ExamCorrectionController extends Controller
         $query = ExamPackage::with(['classRoom', 'subject', 'academicYear', 'teacher'])
             ->withCount(['questions', 'submissions']);
 
+        if (ExamPackage::hasSplitColumns()) {
+            $query->where('package_scope', '!=', 'bank_only');
+        }
+
         if ($teacher && $user->role !== 'admin' && $user->role !== 'super_admin') {
             $query->where('teacher_id', $teacher->id);
         }
@@ -173,6 +177,160 @@ class ExamCorrectionController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => $exams
+        ]);
+    }
+
+    /**
+     * List Global Bank Soal packages available to be pulled into Menu Koreksi per-rombel.
+     */
+    public function globalBankPackages(Request $request)
+    {
+        $teacher = $this->getTeacher($request);
+        $splitService = app(\App\Services\ExamPackageSplitService::class);
+
+        $query = ExamPackage::with([
+                'subject:id,name',
+                'academicYear:id,name,is_active',
+                'teacher',
+                'teacher.user:id,name',
+            ])
+            ->withCount(['questions']);
+
+        if (ExamPackage::hasSplitColumns()) {
+            $query->where('package_scope', '!=', 'correction_only')
+                  ->with([
+                      'correctionChildren:id,source_package_id,class_room_id,teacher_id',
+                      'correctionChildren.classRoom:id,name',
+                  ]);
+        }
+
+        $query->whereNotNull('target_grade')
+              ->where('target_grade', '!=', '');
+
+        if ($request->filled('subject_id')) {
+            $query->where('subject_id', $request->subject_id);
+        }
+
+        $packages = $query->orderByDesc('created_at')->get();
+
+        $gradeClassesCache = [];
+        $enriched = $packages->map(function ($pkg) use ($splitService, &$gradeClassesCache, $teacher) {
+            $grade = (string) $pkg->target_grade;
+            if (!isset($gradeClassesCache[$grade])) {
+                $gradeClassesCache[$grade] = $splitService->getGradeClasses($grade)
+                    ->map(fn($c) => ['id' => $c->id, 'name' => $c->name, 'grade_level' => $c->grade_level])
+                    ->values();
+            }
+            $pkgArr = $pkg->toArray();
+            $pkgArr['grade_classes'] = $gradeClassesCache[$grade];
+            $pkgArr['teacher_cloned_class_ids'] = $teacher && $pkg->relationLoaded('correctionChildren')
+                ? $pkg->correctionChildren->where('teacher_id', $teacher->id)->pluck('class_room_id')->values()
+                : [];
+            return $pkgArr;
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $enriched,
+        ]);
+    }
+
+    /**
+     * Pull/clone a Global Bank Soal package into per-class correction package(s) for the current teacher.
+     */
+    public function cloneFromGlobalBank(Request $request)
+    {
+        $validated = $request->validate([
+            'source_package_id' => 'required|exists:exam_packages,id',
+            'class_room_ids' => 'required|array|min:1',
+            'class_room_ids.*' => 'exists:classes,id',
+        ]);
+
+        if (!ExamPackage::hasSplitColumns()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Fitur ini memerlukan migrasi database (php artisan migrate) terlebih dahulu.'
+            ], 422);
+        }
+
+        $master = ExamPackage::findOrFail($validated['source_package_id']);
+        $teacher = $this->getTeacher($request);
+        $teacherId = $teacher ? $teacher->id : ($request->user()->teacher_id ?? $master->teacher_id);
+
+        $splitService = app(\App\Services\ExamPackageSplitService::class);
+        $created = [];
+        foreach (array_unique(array_map('intval', $validated['class_room_ids'])) as $classId) {
+            $created[] = $splitService->cloneFromGlobalBankForTeacher($master, $classId, (int) $teacherId);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Berhasil menarik paket Bank Soal ke Menu Koreksi untuk ' . count($created) . ' kelas.',
+            'data' => $created,
+        ], 201);
+    }
+
+    /**
+     * Split an existing Global ExamPackage into separate per-class correction packages (e.g. 9A, 9B).
+     */
+    public function splitByClass(Request $request, $id)
+    {
+        if (!ExamPackage::hasSplitColumns()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Fitur ini memerlukan migrasi database (php artisan migrate) terlebih dahulu.'
+            ], 422);
+        }
+
+        $master = ExamPackage::findOrFail($id);
+        $user = $request->user();
+        $teacher = $this->getTeacher($request);
+        $isPrivileged = in_array($user->role, ['admin', 'operator', 'kurikulum', 'kepala_sekolah']);
+
+        if (!$isPrivileged && (!$teacher || $master->teacher_id !== $teacher->id)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Hanya pembuat paket soal atau Admin/Kurikulum yang dapat memecah paket ini.'
+            ], 403);
+        }
+
+        if (empty($master->target_grade) && !$request->filled('class_room_ids')) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Paket ini bukan paket tingkat Global dan tidak memiliki target kelas pecahan.'
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'class_room_ids' => 'nullable|array',
+            'class_room_ids.*' => 'exists:classes,id',
+            'hide_master_from_correction' => 'nullable|boolean',
+        ]);
+
+        $splitService = app(\App\Services\ExamPackageSplitService::class);
+        $classIds = !empty($validated['class_room_ids'])
+            ? array_values(array_unique(array_map('intval', $validated['class_room_ids'])))
+            : $splitService->getGradeClasses((string) $master->target_grade)->pluck('id')->all();
+
+        if (empty($classIds)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tidak ditemukan rombel kelas untuk tingkat yang dipilih.'
+            ], 422);
+        }
+
+        $children = $splitService->splitMasterToClasses(
+            $master,
+            $classIds,
+            [],
+            true,
+            $request->boolean('hide_master_from_correction', true)
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Paket berhasil dipecah menjadi ' . $children->count() . ' paket koreksi per kelas.',
+            'data' => $children,
         ]);
     }
 

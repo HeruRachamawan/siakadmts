@@ -12,7 +12,15 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
+        <button
+          v-if="!showCreateModal && !activeExam"
+          @click="openPullGlobalModal"
+          class="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold rounded-2xl text-xs transition-all shadow-2xs flex items-center gap-2 cursor-pointer"
+        >
+          <Download class="w-4 h-4" />
+          <span>Tarik dari Bank Soal Global</span>
+        </button>
         <button
           v-if="!showCreateModal && !activeExam"
           @click="openCreateModal"
@@ -253,6 +261,9 @@
                   <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">
                     🏫 Kelas {{ exam.class_room?.name || '-' }}
                   </span>
+                  <span v-if="exam.source_package_id" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200" title="Terhubung dengan Master Bank Soal">
+                    🔗 Bank Soal
+                  </span>
                 </div>
 
                 <span class="text-[10px] font-mono text-slate-400 font-semibold bg-slate-50 px-2 py-0.5 rounded border border-slate-150">
@@ -311,6 +322,16 @@
             >
               <Sliders class="w-3.5 h-3.5" />
               <span>Buka & Koreksi</span>
+            </button>
+
+            <button
+              v-if="exam.target_grade && exam.package_scope !== 'correction_only'"
+              @click="openSplitGlobalModal(exam)"
+              title="Pecah Paket Global ke Kelas Terpisah (mis. 9A & 9B)"
+              class="px-2.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer border border-indigo-200 shadow-2xs"
+            >
+              <Layers class="w-3.5 h-3.5" />
+              <span>Pecah</span>
             </button>
 
             <button
@@ -404,6 +425,16 @@
                   >
                     <Sliders class="w-3.5 h-3.5" />
                     <span>Buka & Koreksi</span>
+                  </button>
+
+                  <button
+                    v-if="exam.target_grade && exam.package_scope !== 'correction_only'"
+                    @click="openSplitGlobalModal(exam)"
+                    title="Pecah Paket Global ke Kelas Terpisah (mis. 9A & 9B)"
+                    class="px-2 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <Layers class="w-3.5 h-3.5" />
+                    <span>Pecah</span>
                   </button>
 
                   <button
@@ -3777,6 +3808,154 @@
         </div>
       </div>
     </div>
+
+    <!-- MODAL: TARIK DARI BANK SOAL GLOBAL (KHUSUS PER KELAS GURU) -->
+    <div v-if="showPullGlobalModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[88vh]">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+          <div>
+            <h3 class="text-base font-black text-slate-800 font-lexend">Tarik dari Bank Soal Global</h3>
+            <p class="text-xs text-slate-500">Ambil naskah soal global (misal Kelas 9) ke kelas yang Anda ampu saja (9A / 9B).</p>
+          </div>
+          <button @click="showPullGlobalModal = false" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <div class="p-4 border-b border-slate-100 bg-white">
+          <div class="relative">
+            <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              v-model="pullGlobalSearch"
+              type="text"
+              placeholder="Cari judul paket atau mata pelajaran global..."
+              class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-400"
+            />
+          </div>
+        </div>
+
+        <div class="p-5 overflow-y-auto flex-1 space-y-3 bg-slate-50/50">
+          <div v-if="loadingGlobalBank" class="py-10 text-center text-xs text-slate-500">
+            Memuat daftar Bank Soal Global...
+          </div>
+          <div v-else-if="filteredGlobalBankList.length === 0" class="py-10 text-center text-xs text-slate-500 bg-white rounded-2xl border border-dashed border-slate-200">
+            Tidak ada paket Bank Soal Global yang ditemukan.
+          </div>
+          <div
+            v-else
+            v-for="pkg in filteredGlobalBankList"
+            :key="'global-bank-' + pkg.id"
+            class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    {{ examTypeLabel(pkg.exam_type) }}
+                  </span>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200">
+                    🌐 Kelas {{ pkg.target_grade }} (Global)
+                  </span>
+                  <span class="text-[10px] font-bold text-slate-500">
+                    {{ pkg.questions_count || pkg.total_questions }} Soal &bull; Sem {{ pkg.semester }}
+                  </span>
+                </div>
+                <h4 class="text-sm font-black text-slate-800">{{ pkg.title }}</h4>
+                <p class="text-[11px] text-slate-500">
+                  {{ pkg.subject?.name }} &bull; Pembuat: {{ pkg.teacher?.full_name || pkg.teacher?.user?.name || 'Guru' }}
+                </p>
+              </div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span class="text-[10px] font-bold text-slate-500 mr-1">Kelas Tujuan:</span>
+                <label
+                  v-for="cls in pkg.grade_classes"
+                  :key="cls.id"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold cursor-pointer transition"
+                  :class="(pullClassSelections[pkg.id] || []).includes(cls.id) ? 'bg-teal-50 border-teal-400 text-teal-800' : 'bg-slate-50 border-slate-200 text-slate-600'"
+                >
+                  <input
+                    type="checkbox"
+                    :value="cls.id"
+                    :checked="(pullClassSelections[pkg.id] || []).includes(cls.id)"
+                    @change="togglePullClassSelection(pkg.id, cls.id)"
+                    class="rounded text-teal-600 focus:ring-teal-500"
+                  />
+                  <span>{{ cls.name }}</span>
+                  <span
+                    v-if="(pkg.teacher_cloned_class_ids || []).includes(cls.id)"
+                    class="text-[9px] px-1 py-0.2 rounded bg-emerald-100 text-emerald-700 font-extrabold"
+                  >Ada</span>
+                </label>
+              </div>
+
+              <button
+                type="button"
+                @click="pullGlobalPackage(pkg)"
+                :disabled="pullingPackageId === pkg.id || !(pullClassSelections[pkg.id]?.length)"
+                class="px-3.5 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs whitespace-nowrap transition cursor-pointer shadow-2xs"
+              >
+                {{ pullingPackageId === pkg.id ? 'Menarik...' : 'Tarik ke Kelas Terpilih' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: PECAH PAKET GLOBAL PER ROMBEL (MISAL 9 -> 9A & 9B) -->
+    <div v-if="showSplitGlobalModal && splitTargetExam" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+          <div>
+            <h3 class="text-base font-black text-slate-800 font-lexend">Pecah Paket Global per Kelas</h3>
+            <p class="text-xs text-slate-500 line-clamp-1">{{ splitTargetExam.title }}</p>
+          </div>
+          <button @click="showSplitGlobalModal = false" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="p-3.5 bg-indigo-50 border border-indigo-100 rounded-2xl text-xs text-indigo-800 leading-relaxed">
+            Master Bank Soal <strong>Kelas {{ splitTargetExam.target_grade }}</strong> tetap utuh 1 paket di menu Bank Soal, sedangkan di Menu Koreksi akan dipecah terpisah per rombel (jawaban siswa yang sudah ada juga ikut dipindahkan ke rombelnya masing-masing).
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Pilih Rombel Tujuan Pecahan:</label>
+            <div class="flex flex-wrap gap-2">
+              <label
+                v-for="cls in splitTargetClasses"
+                :key="cls.id"
+                class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold cursor-pointer transition"
+                :class="splitGlobalClassIds.includes(cls.id) ? 'bg-teal-50 border-teal-400 text-teal-800' : 'bg-slate-50 border-slate-200 text-slate-600'"
+              >
+                <input type="checkbox" :value="cls.id" v-model="splitGlobalClassIds" class="rounded text-teal-600 focus:ring-teal-500" />
+                <span>Kelas {{ cls.name }}</span>
+              </label>
+            </div>
+            <p v-if="splitTargetClasses.length === 0" class="text-xs text-rose-600 mt-1">Tidak ditemukan daftar rombel untuk tingkat ini.</p>
+          </div>
+          <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              @click="showSplitGlobalModal = false"
+              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              @click="submitSplitGlobalExam"
+              :disabled="splittingGlobal || splitGlobalClassIds.length === 0"
+              class="px-5 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-sm cursor-pointer"
+            >
+              {{ splittingGlobal ? 'Memecah...' : 'Pecah Sekarang' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -5229,6 +5408,118 @@ async function fetchExams() {
     toast.error('Gagal memuat daftar ujian.');
   } finally {
     loading.value = false;
+  }
+}
+
+// Tarik dari Bank Soal Global & Pecah Paket Global per Rombel
+const showPullGlobalModal = ref(false);
+const loadingGlobalBank = ref(false);
+const globalBankList = ref([]);
+const pullGlobalSearch = ref('');
+const pullClassSelections = reactive({});
+const pullingPackageId = ref(null);
+
+const filteredGlobalBankList = computed(() => {
+  const q = pullGlobalSearch.value.trim().toLowerCase();
+  if (!q) return globalBankList.value;
+  return globalBankList.value.filter(pkg =>
+    String(pkg.title || '').toLowerCase().includes(q) ||
+    String(pkg.subject?.name || '').toLowerCase().includes(q) ||
+    String(pkg.target_grade || '').toLowerCase().includes(q)
+  );
+});
+
+async function openPullGlobalModal() {
+  showPullGlobalModal.value = true;
+  loadingGlobalBank.value = true;
+  try {
+    const res = await api.get('/teacher/exam-corrections/global-bank-packages');
+    const d = res.data || res;
+    globalBankList.value = d.data || [];
+    globalBankList.value.forEach(pkg => {
+      if (!pullClassSelections[pkg.id]) {
+        const clsList = pkg.grade_classes || [];
+        pullClassSelections[pkg.id] = clsList.map(c => c.id);
+      }
+    });
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal memuat Bank Soal Global.');
+  } finally {
+    loadingGlobalBank.value = false;
+  }
+}
+
+function togglePullClassSelection(pkgId, classId) {
+  const cur = pullClassSelections[pkgId] || [];
+  if (cur.includes(classId)) {
+    pullClassSelections[pkgId] = cur.filter(id => id !== classId);
+  } else {
+    pullClassSelections[pkgId] = [...cur, classId];
+  }
+}
+
+async function pullGlobalPackage(pkg) {
+  const classIds = pullClassSelections[pkg.id] || [];
+  if (classIds.length === 0) {
+    toast.error('Pilih minimal satu kelas tujuan.');
+    return;
+  }
+  pullingPackageId.value = pkg.id;
+  try {
+    const res = await api.post('/teacher/exam-corrections/clone-from-bank', {
+      source_package_id: pkg.id,
+      class_room_ids: classIds
+    });
+    const d = res.data || res;
+    toast.success(d.message || 'Paket Bank Soal berhasil ditarik ke Menu Koreksi!');
+    await Promise.all([fetchExams(), openPullGlobalModal()]);
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal menarik paket dari Bank Soal.');
+  } finally {
+    pullingPackageId.value = null;
+  }
+}
+
+const showSplitGlobalModal = ref(false);
+const splitTargetExam = ref(null);
+const splitGlobalClassIds = ref([]);
+const splittingGlobal = ref(false);
+
+const splitTargetClasses = computed(() => {
+  if (!splitTargetExam.value?.target_grade) return [];
+  const grade = String(splitTargetExam.value.target_grade);
+  const all = (classes.value || []).filter(c => String(c.grade_level) === grade);
+  const regular = all.filter(c => {
+    const raw = String(c.name || '').trim();
+    const clean = raw.replace(/^(kelas|kls)\s*/i, '').trim().toLowerCase();
+    const lower = raw.toLowerCase();
+    return !['7', '8', '9'].includes(clean) && !lower.includes('lokal') && !lower.startsWith('l-') && !lower.startsWith('lok-');
+  });
+  return regular.length > 0 ? regular : all;
+});
+
+function openSplitGlobalModal(exam) {
+  splitTargetExam.value = exam;
+  splitGlobalClassIds.value = splitTargetClasses.value.map(c => c.id);
+  showSplitGlobalModal.value = true;
+}
+
+async function submitSplitGlobalExam() {
+  if (!splitTargetExam.value || splitGlobalClassIds.value.length === 0) return;
+  splittingGlobal.value = true;
+  try {
+    const res = await api.post(`/teacher/exam-corrections/${splitTargetExam.value.id}/split-by-class`, {
+      class_room_ids: splitGlobalClassIds.value,
+      hide_master_from_correction: true
+    });
+    const d = res.data || res;
+    toast.success(d.message || 'Paket Global berhasil dipecah per kelas!');
+    showSplitGlobalModal.value = false;
+    await fetchExams();
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal memecah paket global.');
+  } finally {
+    splittingGlobal.value = false;
   }
 }
 

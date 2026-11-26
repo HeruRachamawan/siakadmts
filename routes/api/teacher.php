@@ -69,8 +69,11 @@ Route::middleware(['auth:sanctum', 'role:teacher,admin,operator,kurikulum,kepala
     Route::get('exam-corrections', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'index']);
     Route::get('exam-corrections/options', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'options']);
     Route::get('exam-corrections/settings', [\App\Http\Controllers\Admin\AdminExamCorrectionController::class, 'getSettings']);
+    Route::get('exam-corrections/global-bank-packages', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'globalBankPackages']);
+    Route::post('exam-corrections/clone-from-bank', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'cloneFromGlobalBank']);
     Route::post('exam-corrections', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'store']);
     Route::get('exam-corrections/{id}', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'show']);
+    Route::post('exam-corrections/{id}/split-by-class', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'splitByClass']);
     Route::put('exam-corrections/{id}', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'update']);
     Route::delete('exam-corrections/{id}', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'destroy']);
     Route::post('exam-corrections/{id}/keys', [\App\Http\Controllers\Teacher\ExamCorrectionController::class, 'saveKeys']);

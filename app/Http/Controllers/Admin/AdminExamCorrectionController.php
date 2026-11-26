@@ -24,6 +24,10 @@ class AdminExamCorrectionController extends Controller
         $query = ExamPackage::with(['classRoom', 'subject', 'academicYear', 'teacher'])
             ->withCount(['questions', 'submissions']);
 
+        if (ExamPackage::hasSplitColumns()) {
+            $query->where('package_scope', '!=', 'bank_only');
+        }
+
         if ($request->filled('class_room_id')) {
             $query->where('class_room_id', $request->class_room_id);
         }
