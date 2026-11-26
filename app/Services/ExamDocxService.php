@@ -422,10 +422,17 @@ class ExamDocxService
             }
         }
 
+        $typeCounts = [];
+        foreach ($questions as $q) {
+            $t = $q['question_type'] ?: 'pg';
+            $typeCounts[$t] = ($typeCounts[$t] ?? 0) + 1;
+        }
+
         return [
             'questions' => array_values($questions),
             'warnings' => $warnings,
             'total_parsed' => count($questions),
+            'type_counts' => $typeCounts,
         ];
     }
 
@@ -1553,7 +1560,7 @@ class ExamDocxService
 
     private function isSectionSubInstructionLine(string $line): bool
     {
-        return (bool) preg_match('/^(?:Pilihlah\s+(?:satu|salah\s+satu|lebih\s+dari|beberapa)\s+jawaban.*|Berilah\s+tanda\s+(?:silang|centang).*|Tentukan\s+Benar.*|Pasangkan\s+pernyataan.*|Jodohkan(?:lah)?\s+.*|Isilah\s+titik.*|Jawablah\s+pertanyaan.*|PG|PGK|BENAR\s*\/\s*SALAH|MENJODOHKAN|ISIAN\s+SINGKAT|URAIAN)$/iu', $line);
+        return (bool) preg_match('/^(?:Pilihlah\s+(?:satu|salah\s+satu|lebih\s+dari|beberapa)\s+.*|Berilah\s+tanda\s+(?:silang|centang).*|Tentukan\s+(?:Benar|pernyataan).*|Pasangkan\s+pernyataan.*|Jodohkan(?:lah)?\s+.*|Isilah\s+(?:titik|kolom|kotak).*|Jawablah\s+pertanyaan.*|Kerjakan(?:lah)?\s+soal.*|Amati(?:lah)?\s+tabel.*|Perhatikan(?:lah)?\s+tabel.*|Petunjuk\s*:.*|Contoh\s*:.*|KOLOM\s+[AB]|JAWABAN|PG|PGK|BENAR\s*\/\s*SALAH|MENJODOHKAN|ISIAN\s+SINGKAT|URAIAN)$/iu', $line);
     }
 
     private function detectSectionHeaderType(string $line): ?string

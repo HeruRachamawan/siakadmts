@@ -1013,19 +1013,31 @@
 
         <!-- Preview Stage (after parsing .docx or bulk text) -->
         <div v-if="importPreviewQuestions.length > 0" class="flex flex-col flex-1 overflow-hidden">
-          <div class="px-6 py-3 bg-emerald-50 border-b border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
-            <div class="text-xs text-emerald-900 font-semibold">
-              ✅ Berhasil membaca <strong>{{ importPreviewQuestions.length }}</strong> butir soal. Cek sekilas di bawah sebelum dimasukkan ke paket!
+          <div class="px-6 py-3 bg-emerald-50 border-b border-emerald-100 space-y-2 shrink-0">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="text-xs text-emerald-900 font-semibold">
+                ✅ Berhasil membaca <strong>{{ importPreviewQuestions.length }}</strong> butir soal. Cek sekilas di bawah sebelum dimasukkan ke paket!
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <label class="inline-flex items-center gap-1 cursor-pointer font-semibold text-slate-700">
+                  <input type="radio" v-model="importCommitMode" value="merge" class="text-emerald-600" />
+                  <span>Gabung/Timpa Nomor Sama</span>
+                </label>
+                <label class="inline-flex items-center gap-1 cursor-pointer font-semibold text-rose-700">
+                  <input type="radio" v-model="importCommitMode" value="replace" class="text-rose-600" />
+                  <span>Ganti Semua Soal</span>
+                </label>
+              </div>
             </div>
-            <div class="flex items-center gap-2 text-xs">
-              <label class="inline-flex items-center gap-1 cursor-pointer font-semibold text-slate-700">
-                <input type="radio" v-model="importCommitMode" value="merge" class="text-emerald-600" />
-                <span>Gabung/Timpa Nomor Sama</span>
-              </label>
-              <label class="inline-flex items-center gap-1 cursor-pointer font-semibold text-rose-700">
-                <input type="radio" v-model="importCommitMode" value="replace" class="text-rose-600" />
-                <span>Ganti Semua Soal</span>
-              </label>
+            <!-- Ringkasan Hitung Per Tipe Soal -->
+            <div class="flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
+              <span class="text-emerald-800 mr-1">Rekap Tipe:</span>
+              <span v-if="importPreviewTypeCounts.pg" class="px-2 py-0.5 rounded-full bg-white text-emerald-700 border border-emerald-200">PG: {{ importPreviewTypeCounts.pg }}</span>
+              <span v-if="importPreviewTypeCounts.pg_complex" class="px-2 py-0.5 rounded-full bg-white text-indigo-700 border border-indigo-200">PGK: {{ importPreviewTypeCounts.pg_complex }}</span>
+              <span v-if="importPreviewTypeCounts.true_false" class="px-2 py-0.5 rounded-full bg-white text-purple-700 border border-purple-200">Benar/Salah: {{ importPreviewTypeCounts.true_false }}</span>
+              <span v-if="importPreviewTypeCounts.matching" class="px-2 py-0.5 rounded-full bg-white text-teal-700 border border-teal-200">Menjodohkan: {{ importPreviewTypeCounts.matching }}</span>
+              <span v-if="importPreviewTypeCounts.short_answer" class="px-2 py-0.5 rounded-full bg-white text-amber-700 border border-amber-200">Isian: {{ importPreviewTypeCounts.short_answer }}</span>
+              <span v-if="importPreviewTypeCounts.essay" class="px-2 py-0.5 rounded-full bg-white text-blue-700 border border-blue-200">Uraian: {{ importPreviewTypeCounts.essay }}</span>
             </div>
           </div>
 
@@ -1051,7 +1063,8 @@
                         <th class="px-3 py-2 text-center w-12 font-bold border-r border-slate-200">No</th>
                         <th class="px-3 py-2 text-left font-bold border-r border-slate-200">Kolom A (Pernyataan)</th>
                         <th class="px-3 py-2 text-center w-20 font-bold border-r border-slate-200">Kunci</th>
-                        <th class="px-3 py-2 text-left font-bold">Kolom B (Pilihan Pasangan)</th>
+                        <th class="px-3 py-2 text-left font-bold border-r border-slate-200">Kolom B (Pilihan Pasangan)</th>
+                        <th class="px-2 py-2 text-center w-10 font-bold">Hapus</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -1068,9 +1081,19 @@
                             class="w-10 text-center font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded py-0.5 uppercase"
                           />
                         </td>
-                        <td class="px-3 py-2 text-slate-700 align-top">
+                        <td class="px-3 py-2 text-slate-700 border-r border-slate-100 align-top">
                           <span class="font-bold text-slate-900">{{ mq.options?.key || mq.correct_answer || 'A' }}.</span>
                           {{ mq.options?.right_text || '-' }}
+                        </td>
+                        <td class="px-2 py-2 text-center align-middle">
+                          <button
+                            type="button"
+                            @click="removePreviewQuestion(mq)"
+                            class="p-1 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                            title="Hapus baris ini & urutkan ulang nomor"
+                          >
+                            <Trash2 class="w-3.5 h-3.5" />
+                          </button>
                         </td>
                       </tr>
                     </tbody>
@@ -1090,8 +1113,9 @@
                       <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
                         <th class="px-3 py-2 text-center w-12 font-bold border-r border-slate-200">No</th>
                         <th class="px-3 py-2 text-left font-bold border-r border-slate-200">Pernyataan</th>
-                        <th class="px-3 py-2 text-center w-16 font-bold border-r border-slate-200">B</th>
-                        <th class="px-3 py-2 text-center w-16 font-bold">S</th>
+                        <th class="px-3 py-2 text-center w-14 font-bold border-r border-slate-200">B</th>
+                        <th class="px-3 py-2 text-center w-14 font-bold border-r border-slate-200">S</th>
+                        <th class="px-2 py-2 text-center w-10 font-bold">Hapus</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -1108,13 +1132,23 @@
                             :class="tq.correct_answer === 'B' ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'"
                           >B</button>
                         </td>
-                        <td class="px-3 py-2 text-center align-middle">
+                        <td class="px-3 py-2 text-center border-r border-slate-100 align-middle">
                           <button
                             type="button"
                             @click="setPreviewTfKey(tq, 'S')"
                             class="w-7 h-7 rounded-lg font-bold transition cursor-pointer"
                             :class="tq.correct_answer === 'S' ? 'bg-rose-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'"
                           >S</button>
+                        </td>
+                        <td class="px-2 py-2 text-center align-middle">
+                          <button
+                            type="button"
+                            @click="removePreviewQuestion(tq)"
+                            class="p-1 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                            title="Hapus baris ini & urutkan ulang nomor"
+                          >
+                            <Trash2 class="w-3.5 h-3.5" />
+                          </button>
                         </td>
                       </tr>
                     </tbody>
@@ -1148,6 +1182,14 @@
                     </span>
                     <span v-else class="px-2 py-0.5 rounded bg-slate-100 text-slate-500">Kunci belum diset</span>
                     <span class="text-slate-400 font-semibold">Bobot: {{ blk.q.score_weight }}</span>
+                    <button
+                      type="button"
+                      @click="removePreviewQuestion(blk.q)"
+                      class="p-1 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                      title="Hapus item ini & urutkan ulang nomor"
+                    >
+                      <Trash2 class="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
                 <div class="text-slate-800 leading-relaxed" v-html="blk.q.question_text || '<i>(Soal gambar / teks kosong)</i>'"></div>
@@ -3219,6 +3261,23 @@ const importPreviewBlocks = computed(() => {
 const setPreviewTfKey = (tq, ans) => {
   tq.correct_answer = ans;
   tq.options = { mode: 'single', answer: ans };
+};
+
+const importPreviewTypeCounts = computed(() => {
+  const counts = { pg: 0, pg_complex: 0, true_false: 0, matching: 0, short_answer: 0, essay: 0 };
+  importPreviewQuestions.value.forEach(q => {
+    const t = q.question_type || 'pg';
+    counts[t] = (counts[t] || 0) + 1;
+  });
+  return counts;
+});
+
+const removePreviewQuestion = (targetQ) => {
+  const filtered = importPreviewQuestions.value.filter(q => q !== targetQ);
+  filtered.forEach((q, idx) => {
+    q.question_number = idx + 1;
+  });
+  importPreviewQuestions.value = filtered;
 };
 
 // Fullscreen Studio Workspace
