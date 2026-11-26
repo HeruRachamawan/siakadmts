@@ -1161,17 +1161,31 @@ const stripLeadingCharsInElement = (container, charCount) => {
   toClear.forEach(n => { n.nodeValue = ''; });
 };
 
+const unwrapNode = (node) => {
+  if (!node || !node.parentNode) return;
+  const frag = document.createDocumentFragment();
+  while (node.firstChild) {
+    frag.appendChild(node.firstChild);
+  }
+  node.replaceWith(frag);
+};
+
 const unwrapLeadingSingleOrderedList = (body) => {
-  // Find first significant child (skipping empty text/comment nodes or single wrapper div)
-  let root = body;
   const getSignificantChildren = (parent) => Array.from(parent.childNodes).filter(n => {
     if (n.nodeType === 8) return false;
     if (n.nodeType === 3) return Boolean(n.nodeValue && n.nodeValue.trim());
+    if (n.nodeType === 1 && ['META', 'STYLE', 'LINK', 'SCRIPT'].includes(n.tagName)) return false;
     return true;
   });
 
+  // Descend through any outer generic/Google Docs wrappers (div, b[font-weight:normal], span, section)
+  let root = body;
   let sig = getSignificantChildren(root);
-  if (sig.length === 1 && sig[0].nodeType === 1 && sig[0].tagName === 'DIV') {
+  while (
+    sig.length === 1 &&
+    sig[0].nodeType === 1 &&
+    ['DIV', 'B', 'SPAN', 'SECTION', 'ARTICLE'].includes(sig[0].tagName)
+  ) {
     root = sig[0];
     sig = getSignificantChildren(root);
   }
@@ -1180,18 +1194,14 @@ const unwrapLeadingSingleOrderedList = (body) => {
   if (firstEl && firstEl.nodeType === 1 && firstEl.tagName === 'OL') {
     const listItems = Array.from(firstEl.children).filter(c => c.tagName === 'LI');
     if (listItems.length === 1) {
-      const li = listItems[0];
-      const frag = document.createDocumentFragment();
-      while (li.firstChild) {
-        frag.appendChild(li.firstChild);
-      }
-      firstEl.replaceWith(frag);
+      unwrapNode(listItems[0]);
+      unwrapNode(firstEl);
     }
   }
 };
 
 const stripLeadingPrefixFromDocBody = (body) => {
-  // Check first block element or body text across possibly split inline spans (e.g. <span>1</span><span>. </span>)
+  // Check first significant block element or body text across possibly split inline spans
   const firstEl = body.firstElementChild;
   const target = (firstEl && /^(P|DIV|H[1-6]|SPAN)$/i.test(firstEl.tagName)) ? firstEl : body;
   const rawText = target.textContent || '';
@@ -1217,6 +1227,12 @@ const onEditorPaste = (e) => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlData, 'text/html');
 
+      // 0. Strip metadata tags & unwrap Google Docs internal wrapper (<b id="docs-internal-guid-..."> / font-weight:normal)
+      doc.body.querySelectorAll('meta, style, link, script, title').forEach(el => el.remove());
+      doc.body.querySelectorAll('b[id^="docs-internal-guid"], span[id^="docs-internal-guid"], b[style*="font-weight:normal"], b[style*="font-weight: normal"]').forEach(el => {
+        unwrapNode(el);
+      });
+
       // 1. Remove Word list ignore markers (with or without space after colon) & Word bullet spans
       doc.querySelectorAll('span.MsoListBullet, [style*="mso-list"]').forEach(el => {
         const style = el.getAttribute('style') || '';
@@ -1225,16 +1241,23 @@ const onEditorPaste = (e) => {
         }
       });
 
-      // 2. Unwrap single-item <ol><li>...</li></ol> generated when copying numbered question #1 from Word
+      // 2. Unwrap single-item <ol><li>...</li></ol> generated when copying numbered question #1 from Google Docs or Word
       unwrapLeadingSingleOrderedList(doc.body);
 
-      // 3. Remove negative text-indent, negative margin-left, and Word Mso* classes
+      // 3. Remove negative text-indent, hanging-indent margins, aria-level, and Word Mso* classes
       doc.querySelectorAll('*').forEach(el => {
+        el.removeAttribute('aria-level');
+        if (el.getAttribute('role') === 'presentation') {
+          el.removeAttribute('role');
+        }
         if (el.style) {
-          if (el.style.textIndent && el.style.textIndent.includes('-')) {
+          const hadNegativeIndent = el.style.textIndent && el.style.textIndent.includes('-');
+          if (hadNegativeIndent) {
             el.style.textIndent = '0px';
-          }
-          if (el.style.marginLeft && el.style.marginLeft.includes('-')) {
+            if (el.style.marginLeft) {
+              el.style.marginLeft = '0px';
+            }
+          } else if (el.style.marginLeft && el.style.marginLeft.includes('-')) {
             el.style.marginLeft = '0px';
           }
         }
@@ -1273,6 +1296,7 @@ const onEditorPaste = (e) => {
   }
 
   nextTick(() => {
+    updateActiveFormats();
     emitContent();
   });
 };
