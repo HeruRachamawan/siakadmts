@@ -1080,7 +1080,24 @@
 
             {{-- 3A. TABEL UTUH BENAR / SALAH MODE PER-NOMOR (No. 31 s/d 35) --}}
             @if (!empty($singleTfList))
+                @php
+                    $tfStimulus = null;
+                    foreach ($singleTfList as $tfQ) {
+                        $tfOpts = is_array($tfQ->options) ? $tfQ->options : json_decode($tfQ->options, true);
+                        if (!empty($tfOpts['stimulus'])) {
+                            $tfStimulus = $tfOpts['stimulus'];
+                            break;
+                        }
+                    }
+                @endphp
                 <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">Bacalah setiap pernyataan berikut dengan teliti, kemudian berikan tanda centang (✓) pada kolom Benar jika pernyataan sesuai atau pada kolom Salah jika pernyataan tidak sesuai!</p>
+
+                @if ($tfStimulus)
+                    <div style="border: 1px solid #94a3b8; background: #f8fafc; padding: 6px 8px; margin: 4px 0 8px 0; text-align: justify; font-size: 9.5pt; line-height: 1.3;">
+                        <strong style="display: block; margin-bottom: 2px;">Wacana / Bacaan:</strong>
+                        {!! render_exam_question_html($tfStimulus) !!}
+                    </div>
+                @endif
 
                 <table class="akm-table" style="margin-bottom: 14px;">
                     <thead>
@@ -1230,9 +1247,26 @@
                     $letterRangeStr = ($firstLetter == $lastLetter) ? "Huruf {$firstLetter}" : "Huruf {$firstLetter}-{$lastLetter}";
                 @endphp
 
+                @php
+                    $matchStimulus = null;
+                    foreach ($singleMatchingList as $mqStim) {
+                        $mqOpts = is_array($mqStim->options) ? $mqStim->options : json_decode($mqStim->options, true);
+                        if (!empty($mqOpts['stimulus'])) {
+                            $matchStimulus = $mqOpts['stimulus'];
+                            break;
+                        }
+                    }
+                @endphp
                 <p class="section-desc" style="font-weight: bold; margin: 4px 0 8px 0;">
                     Pasangkan pernyataan/istilah pada Lajur Kiri ({{ $matchRangeStr }}) dengan pilihan jawaban yang paling tepat pada Lajur Kanan ({{ $letterRangeStr }})! Tuliskan huruf pilihannya saja pada kolom Jawaban di tengah!
                 </p>
+
+                @if ($matchStimulus)
+                    <div style="border: 1px solid #94a3b8; background: #f8fafc; padding: 6px 8px; margin: 4px 0 8px 0; text-align: justify; font-size: 9.5pt; line-height: 1.3;">
+                        <strong style="display: block; margin-bottom: 2px;">Wacana / Bacaan:</strong>
+                        {!! render_exam_question_html($matchStimulus) !!}
+                    </div>
+                @endif
 
                 <table class="akm-table" style="margin-bottom: 14px;">
                     <thead>

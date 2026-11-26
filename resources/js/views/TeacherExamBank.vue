@@ -1056,6 +1056,10 @@
                   <span class="font-bold text-teal-900">🔗 Bagian Menjodohkan ({{ blk.items.length }} Soal)</span>
                   <span class="text-[11px] text-teal-700">Terbaca sebagai Tabel 2 Kolom + Kolom Kunci</span>
                 </div>
+                <div v-if="blk.items[0]?.options?.stimulus" class="px-4 py-2.5 bg-amber-50/70 border-b border-amber-200 text-xs text-slate-800 leading-relaxed">
+                  <span class="text-[10px] font-bold uppercase tracking-wide text-amber-800 block mb-0.5">📖 Wacana / Bacaan Pengantar Tabel:</span>
+                  <div v-html="blk.items[0].options.stimulus"></div>
+                </div>
                 <div class="overflow-x-auto">
                   <table class="w-full text-xs border-collapse">
                     <thead>
@@ -1106,6 +1110,10 @@
                 <div class="px-4 py-2 bg-purple-50 border-b border-purple-200 flex items-center justify-between text-xs">
                   <span class="font-bold text-purple-900">⚖️ Bagian Benar / Salah ({{ blk.items.length }} Pernyataan)</span>
                   <span class="text-[11px] text-purple-700">Terbaca sebagai Tabel B / S</span>
+                </div>
+                <div v-if="blk.items[0]?.options?.stimulus" class="px-4 py-2.5 bg-amber-50/70 border-b border-amber-200 text-xs text-slate-800 leading-relaxed">
+                  <span class="text-[10px] font-bold uppercase tracking-wide text-amber-800 block mb-0.5">📖 Wacana / Bacaan Pengantar Tabel:</span>
+                  <div v-html="blk.items[0].options.stimulus"></div>
                 </div>
                 <div class="overflow-x-auto">
                   <table class="w-full text-xs border-collapse">
@@ -2087,6 +2095,18 @@
                       <div class="text-[11px] text-slate-500">Pernyataan bernilai keliru / tidak valid</div>
                     </div>
                   </button>
+                </div>
+
+                <div v-if="activeQuestions[currentQuestionIndex].options?.stimulus" class="p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-slate-800 space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold uppercase tracking-wide text-amber-800">📖 Wacana / Bacaan Pengantar Tabel (Otomatis Tampil di Naskah Cetak):</span>
+                    <button
+                      type="button"
+                      @click="delete activeQuestions[currentQuestionIndex].options.stimulus"
+                      class="text-[10px] text-rose-600 hover:underline font-semibold cursor-pointer"
+                    >Hapus Wacana</button>
+                  </div>
+                  <div class="leading-relaxed" v-html="activeQuestions[currentQuestionIndex].options.stimulus"></div>
                 </div>
 
                 <div class="flex items-center gap-2 text-xs text-slate-500 pt-1">
@@ -4808,11 +4828,16 @@ const sanitizeAllQuestionsBeforeSave = () => {
     }
     // 3. Sanitize true_false
     if (q.question_type === 'true_false') {
+      const preservedStimulus = q.options?.stimulus;
       if (isTfSingleMode(q)) {
         if (!q.correct_answer || (q.correct_answer !== 'B' && q.correct_answer !== 'S')) {
           q.correct_answer = 'B';
         }
-        q.options = { mode: 'single', answer: q.correct_answer };
+        q.options = {
+          mode: 'single',
+          answer: q.correct_answer,
+          ...(preservedStimulus ? { stimulus: preservedStimulus } : {})
+        };
       } else if (q.options?.statements && Array.isArray(q.options.statements)) {
         q.options.mode = 'matrix';
         q.options.statements.forEach(st => {
@@ -4823,6 +4848,7 @@ const sanitizeAllQuestionsBeforeSave = () => {
     }
     // 4. Sanitize matching
     if (q.question_type === 'matching') {
+      const preservedStimulus = q.options?.stimulus;
       if (isMatchingSingleMode(q)) {
         const single = ensureSingleMatching(q);
         if (single.right_text) single.right_text = cleanOptionPrefix(single.right_text);
@@ -4830,7 +4856,8 @@ const sanitizeAllQuestionsBeforeSave = () => {
         q.options = {
           mode: 'single',
           right_text: single.right_text,
-          key: single.key || 'A'
+          key: single.key || 'A',
+          ...(preservedStimulus ? { stimulus: preservedStimulus } : {})
         };
       } else if (q.options?.pairs && Array.isArray(q.options.pairs)) {
         q.options.mode = 'matrix';

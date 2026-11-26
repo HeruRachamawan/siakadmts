@@ -240,11 +240,22 @@ class ExamDocxService
 
         foreach ($blocks as $idx => $block) {
             if (($block['kind'] ?? '') === 'structured_table') {
-                $flushCurrent();
+                $pendingStimulus = null;
+                if ($current && !empty($current['is_unnumbered_preamble'])) {
+                    $pendingStimulus = trim((string) ($current['question_text'] ?? ''));
+                    $current = null;
+                } else {
+                    $flushCurrent();
+                }
+
                 $inQuestionsArea = true;
                 $currentType = $block['table_type'] ?? $currentType;
                 $lastTarget = null;
-                foreach (($block['items'] ?? []) as $tblItem) {
+                $tblItems = $block['items'] ?? [];
+                if ($pendingStimulus !== null && $pendingStimulus !== '' && !empty($tblItems)) {
+                    $tblItems[0]['stimulus'] = $pendingStimulus;
+                }
+                foreach ($tblItems as $tblItem) {
                     $questions[] = $this->finalizeQuestionItem($tblItem);
                 }
                 continue;
@@ -358,6 +369,7 @@ class ExamDocxService
                 $inQuestionsArea = true;
                 $nextNum = count($questions) + 1;
                 $current = $this->initEmptyQuestion($nextNum, $currentType, $line, $html ?: e($line), $image);
+                $current['is_unnumbered_preamble'] = true;
                 $lastTarget = 'question';
                 continue;
             }
@@ -579,6 +591,18 @@ class ExamDocxService
     private function buildSectionBlockXml(string $typeKey, $questions, array $meta, array &$mediaFiles, int &$nextRelNum): string
     {
         $xml = $this->buildSectionHeaderXml($meta['roman'], $meta['label'], $meta['tag'], $meta['desc']);
+
+        if (in_array($typeKey, ['true_false', 'matching'], true)) {
+            foreach ($questions as $qItem) {
+                $qOpts = is_array($qItem->options) ? $qItem->options : (json_decode((string) $qItem->options, true) ?: []);
+                if (!empty($qOpts['stimulus'])) {
+                    foreach ($this->splitHtmlIntoParagraphFragments((string) $qOpts['stimulus']) as $sFrag) {
+                        $xml .= '<w:p><w:pPr><w:spacing w:before="40" w:after="60"/></w:pPr>' . $this->htmlFragmentToWordRuns($sFrag) . '</w:p>';
+                    }
+                    break;
+                }
+            }
+        }
 
         if ($typeKey === 'true_false') {
             $xml .= $this->buildTrueFalseTableXml($questions, $mediaFiles, $nextRelNum);
@@ -1758,20 +1782,25 @@ class ExamDocxService
     private function finalizeQuestionItem(array $item): array
     {
         $type = $item['question_type'];
+        $stimulus = !empty($item['stimulus']) ? trim((string) $item['stimulus']) : null;
         if ($type === 'true_false') {
             $ans = strtoupper((string) ($item['correct_answer'] ?? 'B'));
             if (str_starts_with($ans, 'S')) $ans = 'S';
             else $ans = 'B';
             $item['correct_answer'] = $ans;
-            $item['options'] = ['mode' => 'single', 'answer' => $ans];
+            $opts = ['mode' => 'single', 'answer' => $ans];
+            if ($stimulus) $opts['stimulus'] = $stimulus;
+            $item['options'] = $opts;
         } elseif ($type === 'matching') {
             $ans = strtoupper(substr(trim((string) ($item['correct_answer'] ?? 'A')), 0, 1)) ?: 'A';
             $item['correct_answer'] = $ans;
-            $item['options'] = [
+            $opts = [
                 'mode' => 'single',
                 'right_text' => $item['matching_right_text'] ?? '',
                 'key' => $ans,
             ];
+            if ($stimulus) $opts['stimulus'] = $stimulus;
+            $item['options'] = $opts;
         } elseif (in_array($type, ['pg', 'pg_complex'], true)) {
             $opts = is_array($item['options']) ? $item['options'] : [];
             if (isset($opts['E']) && trim((string) $opts['E']) === '') {
@@ -1782,7 +1811,7 @@ class ExamDocxService
             $item['options'] = null;
         }
 
-        unset($item['matching_right_text']);
+        unset($item['matching_right_text'], $item['is_unnumbered_preamble'], $item['stimulus']);
         return $item;
     }
 
