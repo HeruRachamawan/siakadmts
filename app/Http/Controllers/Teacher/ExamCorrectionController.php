@@ -1197,7 +1197,7 @@ class ExamCorrectionController extends Controller
                 $studentAns = $answers[(string)$num] ?? null;
                 $correctAns = $q->correct_answer;
 
-                if ($q->question_type === 'short_answer') {
+                if (in_array($q->question_type, ['short_answer', 'matching'])) {
                     $eScore = $essayScoresInput[(string)$num] ?? null;
                     if ($eScore !== null && $eScore !== '') {
                         $val = min(max(0, floatval($eScore)), $q->score_weight);

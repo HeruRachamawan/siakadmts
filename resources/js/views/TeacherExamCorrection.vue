@@ -606,11 +606,20 @@
             <!-- Total and weights pill -->
             <div class="text-xs font-bold text-slate-600 flex items-center gap-2 flex-wrap">
               <span class="px-2.5 py-1 rounded-xl bg-teal-100/80 text-teal-800 font-black">
-                {{ pgQuestionsCount }} Butir Objektif ({{ activeExam?.pg_weight || 70 }}%)
+                {{ pgQuestionsCount }} Butir Objektif ({{ activeExam?.pg_weight ?? 70 }}%)
               </span>
               <span class="px-2.5 py-1 rounded-xl bg-amber-100/80 text-amber-800 font-black">
-                {{ essayQuestionsCount }} Butir Uraian ({{ activeExam?.essay_weight || 30 }}%)
+                {{ essayQuestionsCount }} Butir Uraian ({{ activeExam?.essay_weight ?? 30 }}%)
               </span>
+              <button
+                type="button"
+                @click="syncExistingExamWeightsToPoints"
+                :disabled="syncingWeights"
+                class="px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition-all cursor-pointer shadow-2xs disabled:opacity-50"
+                title="Hitung ulang rasio Bobot Objektif & Uraian otomatis sesuai jumlah poin per butir soal"
+              >
+                {{ syncingWeights ? 'Menyesuaikan...' : '⚡ Sesuaikan Bobot ke Poin Soal' }}
+              </button>
             </div>
           </div>
 
@@ -1992,14 +2001,14 @@
             <!-- 7 Question Type Counter Cards Grid -->
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               <!-- 1. PG Biasa -->
-              <div class="p-3 bg-white rounded-2xl border border-teal-200/80 space-y-1 text-center shadow-2xs">
+              <div class="p-3 bg-white rounded-2xl border border-teal-200/80 space-y-1.5 text-center shadow-2xs flex flex-col justify-between">
                 <span class="block text-[10px] font-black text-teal-800 uppercase">1. Pilihan Ganda (PG)</span>
                 <div class="grid grid-cols-2 gap-1.5 pt-1">
                   <div>
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
                     <input
                       v-model.number="examForm.pg_count"
-                      @input="updateTotalQuestions"
+                      @input="onPointOrCountChange"
                       type="number"
                       min="0"
                       max="100"
@@ -2010,6 +2019,7 @@
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin/Butir</label>
                     <input
                       v-model.number="examForm.pg_point"
+                      @input="onPointOrCountChange"
                       type="number"
                       min="0.5"
                       step="0.5"
@@ -2018,17 +2028,20 @@
                     />
                   </div>
                 </div>
+                <div v-if="examForm.pg_count > 0 && typeWeightMap.pg" class="text-[10px] font-bold text-teal-700 bg-teal-50/80 rounded-lg py-0.5 px-1 border border-teal-100">
+                  {{ typeWeightMap.pg.totalPoints }} pt &bull; {{ typeWeightMap.pg.effectivePercent }}% nilai
+                </div>
               </div>
 
               <!-- 2. PG Kompleks -->
-              <div class="p-3 bg-white rounded-2xl border border-purple-200/80 space-y-1 text-center shadow-2xs">
+              <div class="p-3 bg-white rounded-2xl border border-purple-200/80 space-y-1.5 text-center shadow-2xs flex flex-col justify-between">
                 <span class="block text-[10px] font-black text-purple-800 uppercase">2. PG Kompleks</span>
                 <div class="grid grid-cols-2 gap-1.5 pt-1">
                   <div>
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
                     <input
                       v-model.number="examForm.pg_complex_count"
-                      @input="updateTotalQuestions"
+                      @input="onPointOrCountChange"
                       type="number"
                       min="0"
                       max="100"
@@ -2039,6 +2052,7 @@
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin/Butir</label>
                     <input
                       v-model.number="examForm.pg_complex_point"
+                      @input="onPointOrCountChange"
                       type="number"
                       min="0.5"
                       step="0.5"
@@ -2047,17 +2061,20 @@
                     />
                   </div>
                 </div>
+                <div v-if="examForm.pg_complex_count > 0 && typeWeightMap.pg_complex" class="text-[10px] font-bold text-purple-700 bg-purple-50/80 rounded-lg py-0.5 px-1 border border-purple-100">
+                  {{ typeWeightMap.pg_complex.totalPoints }} pt &bull; {{ typeWeightMap.pg_complex.effectivePercent }}% nilai
+                </div>
               </div>
 
               <!-- 3. Benar / Salah -->
-              <div class="p-3 bg-white rounded-2xl border border-sky-200/80 space-y-1 text-center shadow-2xs">
+              <div class="p-3 bg-white rounded-2xl border border-sky-200/80 space-y-1.5 text-center shadow-2xs flex flex-col justify-between">
                 <span class="block text-[10px] font-black text-sky-800 uppercase">3. Benar / Salah</span>
                 <div class="grid grid-cols-2 gap-1.5 pt-1">
                   <div>
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
                     <input
                       v-model.number="examForm.true_false_count"
-                      @input="updateTotalQuestions"
+                      @input="onPointOrCountChange"
                       type="number"
                       min="0"
                       max="100"
@@ -2068,6 +2085,7 @@
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin/Butir</label>
                     <input
                       v-model.number="examForm.true_false_point"
+                      @input="onPointOrCountChange"
                       type="number"
                       min="0.5"
                       step="0.5"
@@ -2076,17 +2094,20 @@
                     />
                   </div>
                 </div>
+                <div v-if="examForm.true_false_count > 0 && typeWeightMap.true_false" class="text-[10px] font-bold text-sky-700 bg-sky-50/80 rounded-lg py-0.5 px-1 border border-sky-100">
+                  {{ typeWeightMap.true_false.totalPoints }} pt &bull; {{ typeWeightMap.true_false.effectivePercent }}% nilai
+                </div>
               </div>
 
               <!-- 4. Setuju / Tidak Setuju -->
-              <div class="p-3 bg-white rounded-2xl border border-indigo-200/80 space-y-1 text-center shadow-2xs">
+              <div class="p-3 bg-white rounded-2xl border border-indigo-200/80 space-y-1.5 text-center shadow-2xs flex flex-col justify-between">
                 <span class="block text-[10px] font-black text-indigo-800 uppercase">4. Setuju / Tdk</span>
                 <div class="grid grid-cols-2 gap-1.5 pt-1">
                   <div>
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
                     <input
                       v-model.number="examForm.agree_disagree_count"
-                      @input="updateTotalQuestions"
+                      @input="onPointOrCountChange"
                       type="number"
                       min="0"
                       max="100"
@@ -2097,6 +2118,7 @@
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin/Butir</label>
                     <input
                       v-model.number="examForm.agree_disagree_point"
+                      @input="onPointOrCountChange"
                       type="number"
                       min="0.5"
                       step="0.5"
@@ -2105,17 +2127,20 @@
                     />
                   </div>
                 </div>
+                <div v-if="examForm.agree_disagree_count > 0 && typeWeightMap.agree_disagree" class="text-[10px] font-bold text-indigo-700 bg-indigo-50/80 rounded-lg py-0.5 px-1 border border-indigo-100">
+                  {{ typeWeightMap.agree_disagree.totalPoints }} pt &bull; {{ typeWeightMap.agree_disagree.effectivePercent }}% nilai
+                </div>
               </div>
 
               <!-- 5. Menjodohkan -->
-              <div class="p-3 bg-white rounded-2xl border border-emerald-200/80 space-y-1 text-center shadow-2xs">
+              <div class="p-3 bg-white rounded-2xl border border-emerald-200/80 space-y-1.5 text-center shadow-2xs flex flex-col justify-between">
                 <span class="block text-[10px] font-black text-emerald-800 uppercase">5. Menjodohkan</span>
                 <div class="grid grid-cols-2 gap-1.5 pt-1">
                   <div>
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
                     <input
                       v-model.number="examForm.matching_count"
-                      @input="updateTotalQuestions"
+                      @input="onPointOrCountChange"
                       type="number"
                       min="0"
                       max="100"
@@ -2126,6 +2151,7 @@
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin/Butir</label>
                     <input
                       v-model.number="examForm.matching_point"
+                      @input="onPointOrCountChange"
                       type="number"
                       min="0.5"
                       step="0.5"
@@ -2134,17 +2160,20 @@
                     />
                   </div>
                 </div>
+                <div v-if="examForm.matching_count > 0 && typeWeightMap.matching" class="text-[10px] font-bold text-emerald-700 bg-emerald-50/80 rounded-lg py-0.5 px-1 border border-emerald-100">
+                  {{ typeWeightMap.matching.totalPoints }} pt &bull; {{ typeWeightMap.matching.effectivePercent }}% nilai
+                </div>
               </div>
 
               <!-- 6. Isian Singkat -->
-              <div class="p-3 bg-white rounded-2xl border border-blue-200/80 space-y-1 text-center shadow-2xs">
+              <div class="p-3 bg-white rounded-2xl border border-blue-200/80 space-y-1.5 text-center shadow-2xs flex flex-col justify-between">
                 <span class="block text-[10px] font-black text-blue-800 uppercase">6. Isian Singkat</span>
                 <div class="grid grid-cols-2 gap-1.5 pt-1">
                   <div>
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
                     <input
                       v-model.number="examForm.short_answer_count"
-                      @input="updateTotalQuestions"
+                      @input="onPointOrCountChange"
                       type="number"
                       min="0"
                       max="100"
@@ -2155,6 +2184,7 @@
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin/Butir</label>
                     <input
                       v-model.number="examForm.short_answer_point"
+                      @input="onPointOrCountChange"
                       type="number"
                       min="0.5"
                       step="0.5"
@@ -2163,17 +2193,20 @@
                     />
                   </div>
                 </div>
+                <div v-if="examForm.short_answer_count > 0 && typeWeightMap.short_answer" class="text-[10px] font-bold text-blue-700 bg-blue-50/80 rounded-lg py-0.5 px-1 border border-blue-100">
+                  {{ typeWeightMap.short_answer.totalPoints }} pt &bull; {{ typeWeightMap.short_answer.effectivePercent }}% nilai
+                </div>
               </div>
 
               <!-- 7. Uraian / Essay -->
-              <div class="p-3 bg-white rounded-2xl border border-amber-200/80 space-y-1 text-center shadow-2xs col-span-2 sm:col-span-1 md:col-span-2">
+              <div class="p-3 bg-white rounded-2xl border border-amber-200/80 space-y-1.5 text-center shadow-2xs col-span-2 sm:col-span-1 md:col-span-2 flex flex-col justify-between">
                 <span class="block text-[10px] font-black text-amber-800 uppercase">7. Uraian / Essay</span>
                 <div class="grid grid-cols-2 gap-1.5 pt-1">
                   <div>
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
                     <input
                       v-model.number="examForm.essay_count"
-                      @input="updateTotalQuestions"
+                      @input="onPointOrCountChange"
                       type="number"
                       min="0"
                       max="50"
@@ -2184,13 +2217,17 @@
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin Maks/Butir</label>
                     <input
                       v-model.number="examForm.essay_point"
+                      @input="onPointOrCountChange"
                       type="number"
-                      min="1"
-                      step="1"
+                      min="0.5"
+                      step="0.5"
                       max="100"
                       class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-amber-700 focus:ring-2 focus:ring-teal-400"
                     />
                   </div>
+                </div>
+                <div v-if="examForm.essay_count > 0 && typeWeightMap.essay" class="text-[10px] font-bold text-amber-700 bg-amber-50/80 rounded-lg py-0.5 px-1 border border-amber-100">
+                  {{ typeWeightMap.essay.totalPoints }} pt &bull; {{ typeWeightMap.essay.effectivePercent }}% nilai
                 </div>
               </div>
             </div>
@@ -2198,12 +2235,12 @@
             <!-- Total Soal & Live Effective Breakdown Card -->
             <div class="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2.5">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-bold">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <span class="px-2.5 py-1 rounded-xl bg-teal-600 text-white font-mono font-black">
                     Total: {{ examForm.total_questions }} Soal
                   </span>
-                  <span class="text-slate-500 font-medium">
-                    ({{ objectiveTotalCount }} Objektif + {{ examForm.essay_count || 0 }} Uraian)
+                  <span class="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-mono font-bold border border-slate-200">
+                    Total Poin: {{ totalPointsSummary.total }} pt ({{ totalPointsSummary.obj }} Obj + {{ totalPointsSummary.essay }} Uraian)
                   </span>
                 </div>
                 <div class="text-slate-600">
@@ -2234,6 +2271,58 @@
             </div>
           </div>
 
+          <!-- Weight Calculation Mode Selector (Auto by Points vs Fixed Ratio) -->
+          <div class="p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-200/80 space-y-2.5">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <span class="text-xs font-black text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                🎯 Mode Perhitungan Bobot Nilai Akhir
+              </span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" :class="weightMode === 'auto' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'">
+                {{ weightMode === 'auto' ? 'Mode Akurat Otomatis' : 'Mode Rasio Tetap Manual' }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                @click="setWeightMode('auto')"
+                class="p-3 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-2.5"
+                :class="weightMode === 'auto'
+                  ? 'bg-white border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
+                  : 'bg-white/60 border-slate-200 hover:bg-white'"
+              >
+                <div class="w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0 flex items-center justify-center" :class="weightMode === 'auto' ? 'border-emerald-600' : 'border-slate-300'">
+                  <div v-if="weightMode === 'auto'" class="w-2 h-2 rounded-full bg-emerald-600"></div>
+                </div>
+                <div>
+                  <div class="text-xs font-black text-slate-800">Otomatis Ikuti Poin Butir (Disarankan)</div>
+                  <p class="text-[10px] text-slate-500 leading-relaxed mt-0.5">
+                    Persentase bobot otomatis disesuaikan dari total poin tiap bentuk soal di atas. Angka bulat, adil, dan bebas selisih desimal.
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                @click="setWeightMode('manual')"
+                class="p-3 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-2.5"
+                :class="weightMode === 'manual'
+                  ? 'bg-white border-teal-500 ring-2 ring-teal-500/20 shadow-xs'
+                  : 'bg-white/60 border-slate-200 hover:bg-white'"
+              >
+                <div class="w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0 flex items-center justify-center" :class="weightMode === 'manual' ? 'border-teal-600' : 'border-slate-300'">
+                  <div v-if="weightMode === 'manual'" class="w-2 h-2 rounded-full bg-teal-600"></div>
+                </div>
+                <div>
+                  <div class="text-xs font-black text-slate-800">Rasio Tetap (Objektif % vs Uraian %)</div>
+                  <p class="text-[10px] text-slate-500 leading-relaxed mt-0.5">
+                    Mengunci porsi nilai akhir (misal wajib 70% : 30%), terlepas dari total poin mentah butir soal.
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
+
           <!-- KKM & Weights -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="space-y-1.5">
@@ -2255,32 +2344,53 @@
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">
-                Bobot Soal Objektif (%) *
-              </label>
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                  Bobot Objektif (%) *
+                </label>
+                <span v-if="weightMode === 'auto'" class="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 uppercase">
+                  Auto Poin
+                </span>
+              </div>
               <input
                 v-model.number="examForm.pg_weight"
                 type="number"
                 min="0"
                 max="100"
+                step="0.01"
                 required
+                :readonly="weightMode === 'auto'"
                 @input="onPgWeightInput"
-                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 text-center focus:ring-2 focus:ring-teal-400"
+                :class="weightMode === 'auto'
+                  ? 'bg-emerald-50/70 border-emerald-200 text-emerald-800 cursor-not-allowed'
+                  : 'bg-slate-50 border-slate-200 text-slate-800 focus:ring-2 focus:ring-teal-400'"
+                class="w-full border rounded-xl px-4 py-2.5 text-xs font-bold text-center"
               />
-              <p class="text-[10px] text-slate-500 font-medium">Mencakup PG, PGK, B/S, S/TS, Menjodohkan, Isian</p>
+              <p class="text-[10px] text-slate-500 font-medium">
+                {{ weightMode === 'auto' ? 'Otomatis: (Poin Objektif ÷ Total Poin) × 100%' : 'Mencakup PG, PGK, B/S, S/TS, Menjodohkan, Isian' }}
+              </p>
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">
-                Bobot Soal Uraian (%) *
-              </label>
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                  Bobot Uraian (%) *
+                </label>
+                <span v-if="weightMode === 'auto'" class="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 uppercase">
+                  Auto Poin
+                </span>
+              </div>
               <input
                 v-model.number="examForm.essay_weight"
                 type="number"
                 min="0"
                 max="100"
+                step="0.01"
                 readonly
-                class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500 text-center cursor-not-allowed"
+                :class="weightMode === 'auto'
+                  ? 'bg-emerald-50/70 border-emerald-200 text-emerald-800'
+                  : 'bg-slate-100 border-slate-200 text-slate-500'"
+                class="w-full border rounded-xl px-4 py-2.5 text-xs font-bold text-center cursor-not-allowed"
               />
               <p class="text-[10px] text-slate-500 font-medium">Otomatis (100% dikurangi Bobot Objektif)</p>
             </div>
@@ -2289,14 +2399,14 @@
           <!-- Quick Presets Bobot Populer Pilihan Bebas Guru -->
           <div class="p-3 bg-slate-50/80 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-              ⚡ Pilihan Cepat Bobot (atau ketik bebas):
+              ⚡ Rasio Tetap Cepat (klik untuk ganti ke mode rasio tetap):
             </span>
             <div class="flex items-center gap-1.5 flex-wrap">
               <button
                 type="button"
                 @click="setBobotPreset(100, 0)"
                 class="px-2 py-1 text-[10px] font-bold rounded-lg border cursor-pointer transition-all"
-                :class="examForm.pg_weight === 100 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+                :class="weightMode === 'manual' && examForm.pg_weight === 100 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
                 title="100% Objektif murni tanpa uraian"
               >
                 100 : 0
@@ -2305,7 +2415,7 @@
                 type="button"
                 @click="setBobotPreset(80, 20)"
                 class="px-2 py-1 text-[10px] font-bold rounded-lg border cursor-pointer transition-all"
-                :class="examForm.pg_weight === 80 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+                :class="weightMode === 'manual' && examForm.pg_weight === 80 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
               >
                 80 : 20
               </button>
@@ -2313,7 +2423,7 @@
                 type="button"
                 @click="setBobotPreset(70, 30)"
                 class="px-2 py-1 text-[10px] font-bold rounded-lg border cursor-pointer transition-all"
-                :class="examForm.pg_weight === 70 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+                :class="weightMode === 'manual' && examForm.pg_weight === 70 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
               >
                 70 : 30
               </button>
@@ -2321,7 +2431,7 @@
                 type="button"
                 @click="setBobotPreset(60, 40)"
                 class="px-2 py-1 text-[10px] font-bold rounded-lg border cursor-pointer transition-all"
-                :class="examForm.pg_weight === 60 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+                :class="weightMode === 'manual' && examForm.pg_weight === 60 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
               >
                 60 : 40
               </button>
@@ -2329,7 +2439,7 @@
                 type="button"
                 @click="setBobotPreset(50, 50)"
                 class="px-2 py-1 text-[10px] font-bold rounded-lg border cursor-pointer transition-all"
-                :class="examForm.pg_weight === 50 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+                :class="weightMode === 'manual' && examForm.pg_weight === 50 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
               >
                 50 : 50
               </button>
@@ -2337,7 +2447,7 @@
                 type="button"
                 @click="setBobotPreset(40, 60)"
                 class="px-2 py-1 text-[10px] font-bold rounded-lg border cursor-pointer transition-all"
-                :class="examForm.pg_weight === 40 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+                :class="weightMode === 'manual' && examForm.pg_weight === 40 ? 'bg-teal-600 text-white border-teal-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
               >
                 40 : 60
               </button>
@@ -3902,6 +4012,26 @@ const objectiveTotalCount = computed(() => {
     (Number(examForm.short_answer_count) || 0);
 });
 
+const weightMode = ref('auto'); // 'auto' (Otomatis ikuti poin butir) | 'manual' (Rasio tetap %)
+const syncingWeights = ref(false);
+
+const totalPointsSummary = computed(() => {
+  const obj =
+    ((Number(examForm.pg_count) || 0) * (Number(examForm.pg_point) || 0)) +
+    ((Number(examForm.pg_complex_count) || 0) * (Number(examForm.pg_complex_point) || 0)) +
+    ((Number(examForm.true_false_count) || 0) * (Number(examForm.true_false_point) || 0)) +
+    ((Number(examForm.agree_disagree_count) || 0) * (Number(examForm.agree_disagree_point) || 0)) +
+    ((Number(examForm.matching_count) || 0) * (Number(examForm.matching_point) || 0)) +
+    ((Number(examForm.short_answer_count) || 0) * (Number(examForm.short_answer_point) || 0));
+  const essay = (Number(examForm.essay_count) || 0) * (Number(examForm.essay_point) || 0);
+  const total = Math.round((obj + essay) * 100) / 100;
+  return {
+    obj: Math.round(obj * 100) / 100,
+    essay: Math.round(essay * 100) / 100,
+    total
+  };
+});
+
 const effectiveTypeWeights = computed(() => {
   const types = [
     { key: 'pg', label: 'PG Biasa', count: Number(examForm.pg_count) || 0, point: Number(examForm.pg_point) || 1, isEssay: false },
@@ -3918,7 +4048,7 @@ const effectiveTypeWeights = computed(() => {
   const essayWeight = Number(examForm.essay_weight) || 0;
 
   return types.map(t => {
-    const totalPoints = t.count * t.point;
+    const totalPoints = Math.round(t.count * t.point * 100) / 100;
     let effectivePercent = 0;
     if (t.isEssay) {
       effectivePercent = t.count > 0 ? essayWeight : 0;
@@ -3935,17 +4065,53 @@ const effectiveTypeWeights = computed(() => {
   });
 });
 
+const typeWeightMap = computed(() => {
+  const map = {};
+  effectiveTypeWeights.value.forEach(item => {
+    map[item.key] = item;
+  });
+  return map;
+});
+
+function syncAutoWeights() {
+  const { obj, total } = totalPointsSummary.value;
+  if (total <= 0) {
+    examForm.pg_weight = 100;
+    examForm.essay_weight = 0;
+    return;
+  }
+  const pgPct = Math.round((obj / total) * 10000) / 100;
+  const esPct = Math.round((100 - pgPct) * 100) / 100;
+  examForm.pg_weight = pgPct;
+  examForm.essay_weight = esPct;
+}
+
+function setWeightMode(mode) {
+  weightMode.value = mode;
+  if (mode === 'auto') {
+    syncAutoWeights();
+  }
+}
+
+function onPointOrCountChange() {
+  updateTotalQuestions();
+}
+
 function updateTotalQuestions() {
   const obj = objectiveTotalCount.value;
   const es = Number(examForm.essay_count) || 0;
   examForm.total_questions = Math.max(1, obj + es);
 
-  if (es === 0) {
-    examForm.pg_weight = 100;
-    examForm.essay_weight = 0;
-  } else if (examForm.pg_weight === 100) {
-    examForm.pg_weight = 70;
-    examForm.essay_weight = 30;
+  if (weightMode.value === 'auto') {
+    syncAutoWeights();
+  } else {
+    if (es === 0) {
+      examForm.pg_weight = 100;
+      examForm.essay_weight = 0;
+    } else if (examForm.pg_weight === 100) {
+      examForm.pg_weight = 70;
+      examForm.essay_weight = 30;
+    }
   }
 }
 
@@ -3989,14 +4155,55 @@ function applyModalPreset(preset) {
 }
 
 function onPgWeightInput() {
+  if (weightMode.value === 'auto') return;
   const pg = Math.min(100, Math.max(0, Number(examForm.pg_weight) || 0));
   examForm.pg_weight = pg;
-  examForm.essay_weight = Math.max(0, 100 - pg);
+  examForm.essay_weight = Math.round((100 - pg) * 100) / 100;
 }
 
 function setBobotPreset(pg, essay) {
+  weightMode.value = 'manual';
   examForm.pg_weight = pg;
-  examForm.essay_weight = essay !== undefined ? essay : Math.max(0, 100 - pg);
+  examForm.essay_weight = essay !== undefined ? essay : Math.round((100 - pg) * 100) / 100;
+}
+
+async function syncExistingExamWeightsToPoints() {
+  if (!activeExam.value || !activeQuestions.value.length) return;
+  let objPts = 0;
+  let essayPts = 0;
+  activeQuestions.value.forEach(q => {
+    const w = Number(q.score_weight) || 1;
+    if (q.question_type === 'essay') essayPts += w;
+    else objPts += w;
+  });
+  const total = objPts + essayPts;
+  if (total <= 0) return;
+
+  const pgWeight = Math.round((objPts / total) * 10000) / 100;
+  const essayWeight = Math.round((100 - pgWeight) * 100) / 100;
+
+  syncingWeights.value = true;
+  try {
+    await api.put(`/teacher/exam-corrections/${activeExam.value.id}`, {
+      title: activeExam.value.title,
+      class_room_id: activeExam.value.class_room_id,
+      subject_id: activeExam.value.subject_id,
+      exam_type: activeExam.value.exam_type,
+      semester: activeExam.value.semester || 'ganjil',
+      kkm: activeExam.value.kkm ?? 75,
+      pg_weight: pgWeight,
+      essay_weight: essayWeight,
+      description: activeExam.value.description,
+      status: activeExam.value.status || 'draft'
+    });
+    toast.success(`Rasio bobot disesuaikan otomatis (${pgWeight}% Objektif : ${essayWeight}% Uraian) & nilai siswa dihitung ulang!`);
+    await openExamDetail(activeExam.value.id);
+    await fetchExams();
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal menyesuaikan rasio bobot.');
+  } finally {
+    syncingWeights.value = false;
+  }
 }
 
 // Active Exam Workspace States
@@ -4965,6 +5172,7 @@ function onExamSubjectChange() {
 
 function openCreateModal() {
   editingExamId.value = null;
+  weightMode.value = 'auto';
   examForm.title = '';
   const classWithStudents = classes.value.find(c => (c.students_count || 0) > 0) || classes.value[0];
   examForm.class_room_id = classWithStudents?.id || '';
@@ -4992,6 +5200,7 @@ function openCreateModal() {
   examForm.essay_weight = 0;
   examForm.quick_keys = '';
   onExamSubjectChange();
+  syncAutoWeights();
   showCreateModal.value = true;
 }
 
@@ -5003,9 +5212,9 @@ async function openEditExam(exam) {
   examForm.subject_id = exam.subject_id || '';
   examForm.exam_type = exam.exam_type || 'uh';
   examForm.semester = exam.semester || 'ganjil';
-  examForm.kkm = exam.kkm ?? 75;
-  examForm.pg_weight = exam.pg_weight ?? 70;
-  examForm.essay_weight = exam.essay_weight ?? 30;
+  examForm.kkm = exam.kkm !== undefined && exam.kkm !== null ? Number(exam.kkm) : 75;
+  examForm.pg_weight = exam.pg_weight !== undefined && exam.pg_weight !== null ? Number(exam.pg_weight) : 70;
+  examForm.essay_weight = exam.essay_weight !== undefined && exam.essay_weight !== null ? Number(exam.essay_weight) : 30;
   examForm.total_questions = exam.total_questions || 0;
   examForm.description = exam.description || '';
   examForm.status = exam.status || 'draft';
@@ -5033,6 +5242,14 @@ async function openEditExam(exam) {
     } catch (e) {
       console.warn('Gagal memuat komposisi soal untuk modal edit:', e);
     }
+  }
+
+  const { obj, total } = totalPointsSummary.value;
+  if (total > 0) {
+    const autoPg = Math.round((obj / total) * 10000) / 100;
+    weightMode.value = Math.abs(Number(examForm.pg_weight) - autoPg) < 0.05 ? 'auto' : 'manual';
+  } else {
+    weightMode.value = 'manual';
   }
 
   showCreateModal.value = true;
