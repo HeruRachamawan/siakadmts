@@ -278,25 +278,32 @@ class ExamBankController extends Controller
         $essayWeight = $validated['essay_weight'] ?? 30.00;
         $totalQuestions = $validated['total_questions'];
 
+        $resolvedCounts = [
+            'pg' => max(0, intval($customCounts['pg'] ?? 0)),
+            'pg_complex' => max(0, intval($customCounts['pg_complex'] ?? 0)),
+            'true_false' => max(0, intval($customCounts['true_false'] ?? 0)),
+            'matching' => max(0, intval($customCounts['matching'] ?? 0)),
+            'short_answer' => max(0, intval($customCounts['short_answer'] ?? 0)),
+            'essay' => max(0, intval($customCounts['essay'] ?? 0)),
+        ];
+
         // Jika menggunakan Preset Standar MTs (45 Butir), otomatis gunakan bobot resmi 75 : 25
         if ($compositionPreset === 'standard_mts_45') {
             $totalQuestions = 45;
             $pgWeight = 75.00;
             $essayWeight = 25.00;
         } elseif ($compositionPreset === 'custom_distribution' && !empty($customCounts)) {
-            $cPg = max(0, intval($customCounts['pg'] ?? 0));
-            $cPgk = max(0, intval($customCounts['pg_complex'] ?? 0));
-            $cTf = max(0, intval($customCounts['true_false'] ?? 0));
-            $cMatch = max(0, intval($customCounts['matching'] ?? 0));
-            $cEssay = max(0, intval($customCounts['essay'] ?? 0));
-
-            $calcTotal = $cPg + $cPgk + $cTf + $cMatch + $cEssay;
+            $calcTotal = array_sum($resolvedCounts);
             if ($calcTotal > 0) {
                 $totalQuestions = $calcTotal;
             }
 
-            $objPoints = ($cPg * 1) + ($cPgk * 3) + ($cTf * 2) + ($cMatch * 3);
-            $essayPoints = ($cEssay * 5);
+            $objPoints = ($resolvedCounts['pg'] * 1)
+                + ($resolvedCounts['pg_complex'] * 3)
+                + ($resolvedCounts['true_false'] * 2)
+                + ($resolvedCounts['matching'] * 3)
+                + ($resolvedCounts['short_answer'] * 2);
+            $essayPoints = ($resolvedCounts['essay'] * 5);
             $sumPoints = $objPoints + $essayPoints;
             if ($sumPoints > 0) {
                 $pgWeight = round(($objPoints / $sumPoints) * 100, 2);
@@ -331,15 +338,9 @@ class ExamBankController extends Controller
             $newQuestions = [];
 
             if ($compositionPreset === 'custom_distribution' && !empty($customCounts)) {
-                $cPg = max(0, intval($customCounts['pg'] ?? 0));
-                $cPgk = max(0, intval($customCounts['pg_complex'] ?? 0));
-                $cTf = max(0, intval($customCounts['true_false'] ?? 0));
-                $cMatch = max(0, intval($customCounts['matching'] ?? 0));
-                $cEssay = max(0, intval($customCounts['essay'] ?? 0));
-
                 $qNum = 1;
                 // 1. PG Tunggal
-                for ($k = 0; $k < $cPg; $k++) {
+                for ($k = 0; $k < $resolvedCounts['pg']; $k++) {
                     $newQuestions[] = [
                         'exam_package_id' => $package->id,
                         'question_number' => $qNum++,
@@ -356,7 +357,7 @@ class ExamBankController extends Controller
                     ];
                 }
                 // 2. PG Kompleks
-                for ($k = 0; $k < $cPgk; $k++) {
+                for ($k = 0; $k < $resolvedCounts['pg_complex']; $k++) {
                     $newQuestions[] = [
                         'exam_package_id' => $package->id,
                         'question_number' => $qNum++,
@@ -373,7 +374,7 @@ class ExamBankController extends Controller
                     ];
                 }
                 // 3. Benar / Salah
-                for ($k = 0; $k < $cTf; $k++) {
+                for ($k = 0; $k < $resolvedCounts['true_false']; $k++) {
                     $newQuestions[] = [
                         'exam_package_id' => $package->id,
                         'question_number' => $qNum++,
@@ -390,7 +391,7 @@ class ExamBankController extends Controller
                     ];
                 }
                 // 4. Menjodohkan
-                for ($k = 0; $k < $cMatch; $k++) {
+                for ($k = 0; $k < $resolvedCounts['matching']; $k++) {
                     $newQuestions[] = [
                         'exam_package_id' => $package->id,
                         'question_number' => $qNum++,
@@ -406,8 +407,25 @@ class ExamBankController extends Controller
                         'updated_at' => now(),
                     ];
                 }
-                // 5. Uraian / Essay
-                for ($k = 0; $k < $cEssay; $k++) {
+                // 5. Isian Singkat
+                for ($k = 0; $k < $resolvedCounts['short_answer']; $k++) {
+                    $newQuestions[] = [
+                        'exam_package_id' => $package->id,
+                        'question_number' => $qNum++,
+                        'question_type' => 'short_answer',
+                        'question_text' => null,
+                        'options' => null,
+                        'correct_answer' => null,
+                        'score_weight' => 2.00,
+                        'cognitive_level' => 'L1',
+                        'difficulty_level' => 'sedang',
+                        'telaah_status' => 'layak',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+                // 6. Uraian / Essay
+                for ($k = 0; $k < $resolvedCounts['essay']; $k++) {
                     $newQuestions[] = [
                         'exam_package_id' => $package->id,
                         'question_number' => $qNum++,

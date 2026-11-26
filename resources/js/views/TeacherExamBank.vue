@@ -669,6 +669,28 @@
                   </div>
                 </div>
 
+                <!-- Isian Singkat -->
+                <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/80 rounded-lg border border-slate-100">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-md bg-amber-100 text-amber-800 font-bold text-[10px] flex items-center justify-center">ISI</span>
+                    <div>
+                      <div class="font-bold text-slate-800 text-[11px]">Isian Singkat (Short Answer)</div>
+                      <div class="text-[10px] text-slate-400">Bobot: 2 Poin per nomor</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      v-model.number="createForm.custom_counts.short_answer"
+                      min="0"
+                      max="100"
+                      class="form-input w-16 py-1 text-center font-bold text-xs"
+                      @input="recalculateCustomDistribution"
+                    />
+                    <span class="text-[11px] text-slate-500 w-8">butir</span>
+                  </div>
+                </div>
+
                 <!-- Uraian / Essay -->
                 <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/80 rounded-lg border border-slate-100">
                   <div class="flex items-center gap-2">
@@ -2744,6 +2766,7 @@ const createForm = reactive({
     pg_complex: 10,
     true_false: 5,
     matching: 5,
+    short_answer: 0,
     essay: 5
   },
   total_questions: 45,
@@ -2822,17 +2845,22 @@ const submitSplitToCorrection = async () => {
   }
 };
 
-const recalculateCustomDistribution = () => {
-  const pg = Math.max(0, parseInt(createForm.custom_counts?.pg) || 0);
-  const pgk = Math.max(0, parseInt(createForm.custom_counts?.pg_complex) || 0);
-  const tf = Math.max(0, parseInt(createForm.custom_counts?.true_false) || 0);
-  const match = Math.max(0, parseInt(createForm.custom_counts?.matching) || 0);
-  const essay = Math.max(0, parseInt(createForm.custom_counts?.essay) || 0);
+const getParsedCustomCounts = () => ({
+  pg: Math.max(0, parseInt(createForm.custom_counts?.pg) || 0),
+  pgk: Math.max(0, parseInt(createForm.custom_counts?.pg_complex) || 0),
+  tf: Math.max(0, parseInt(createForm.custom_counts?.true_false) || 0),
+  match: Math.max(0, parseInt(createForm.custom_counts?.matching) || 0),
+  shortAns: Math.max(0, parseInt(createForm.custom_counts?.short_answer) || 0),
+  essay: Math.max(0, parseInt(createForm.custom_counts?.essay) || 0),
+});
 
-  const totalQ = pg + pgk + tf + match + essay;
+const recalculateCustomDistribution = () => {
+  const { pg, pgk, tf, match, shortAns, essay } = getParsedCustomCounts();
+
+  const totalQ = pg + pgk + tf + match + shortAns + essay;
   createForm.total_questions = totalQ > 0 ? totalQ : 1;
 
-  const objPoints = (pg * 1) + (pgk * 3) + (tf * 2) + (match * 3);
+  const objPoints = (pg * 1) + (pgk * 3) + (tf * 2) + (match * 3) + (shortAns * 2);
   const essayPoints = (essay * 5);
   const totalPoints = objPoints + essayPoints;
 
@@ -2843,20 +2871,12 @@ const recalculateCustomDistribution = () => {
 };
 
 const customTotalPoints = computed(() => {
-  const pg = Math.max(0, parseInt(createForm.custom_counts?.pg) || 0);
-  const pgk = Math.max(0, parseInt(createForm.custom_counts?.pg_complex) || 0);
-  const tf = Math.max(0, parseInt(createForm.custom_counts?.true_false) || 0);
-  const match = Math.max(0, parseInt(createForm.custom_counts?.matching) || 0);
-  const essay = Math.max(0, parseInt(createForm.custom_counts?.essay) || 0);
-  return (pg * 1) + (pgk * 3) + (tf * 2) + (match * 3) + (essay * 5);
+  const { pg, pgk, tf, match, shortAns, essay } = getParsedCustomCounts();
+  return (pg * 1) + (pgk * 3) + (tf * 2) + (match * 3) + (shortAns * 2) + (essay * 5);
 });
 
 const customDistributionPlanText = computed(() => {
-  const pg = Math.max(0, parseInt(createForm.custom_counts?.pg) || 0);
-  const pgk = Math.max(0, parseInt(createForm.custom_counts?.pg_complex) || 0);
-  const tf = Math.max(0, parseInt(createForm.custom_counts?.true_false) || 0);
-  const match = Math.max(0, parseInt(createForm.custom_counts?.matching) || 0);
-  const essay = Math.max(0, parseInt(createForm.custom_counts?.essay) || 0);
+  const { pg, pgk, tf, match, shortAns, essay } = getParsedCustomCounts();
 
   const segments = [];
   let curr = 1;
@@ -2875,6 +2895,10 @@ const customDistributionPlanText = computed(() => {
   if (match > 0) {
     segments.push(`No ${curr}–${curr + match - 1} Jodoh`);
     curr += match;
+  }
+  if (shortAns > 0) {
+    segments.push(`No ${curr}–${curr + shortAns - 1} Isian`);
+    curr += shortAns;
   }
   if (essay > 0) {
     segments.push(`No ${curr}–${curr + essay - 1} Essay`);
@@ -4115,6 +4139,7 @@ const openCreateModal = () => {
     pg_complex: 10,
     true_false: 5,
     matching: 5,
+    short_answer: 0,
     essay: 5
   };
   createForm.total_questions = 45;
