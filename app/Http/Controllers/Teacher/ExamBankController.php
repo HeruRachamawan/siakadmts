@@ -238,6 +238,8 @@ class ExamBankController extends Controller
             'total_questions' => 'required|integer|min:1|max:100',
             'composition_preset' => 'nullable|string|in:standard_mts_45,custom_distribution,classic_pg_essay,custom',
             'custom_counts' => 'nullable|array',
+            'custom_points' => 'nullable|array',
+            'custom_points.*' => 'nullable|numeric|min:0.1|max:100',
             'kkm' => 'nullable|numeric|min:0|max:100',
             'pg_weight' => 'nullable|numeric|min:0|max:100',
             'essay_weight' => 'nullable|numeric|min:0|max:100',
@@ -273,19 +275,28 @@ class ExamBankController extends Controller
 
         $compositionPreset = $request->input('composition_preset', 'standard_mts_45');
         $customCounts = $request->input('custom_counts', []);
+        $customPoints = $request->input('custom_points', []);
 
         $pgWeight = $validated['pg_weight'] ?? 70.00;
         $essayWeight = $validated['essay_weight'] ?? 30.00;
         $totalQuestions = $validated['total_questions'];
 
-        $resolvedCounts = [
-            'pg' => max(0, intval($customCounts['pg'] ?? 0)),
-            'pg_complex' => max(0, intval($customCounts['pg_complex'] ?? 0)),
-            'true_false' => max(0, intval($customCounts['true_false'] ?? 0)),
-            'matching' => max(0, intval($customCounts['matching'] ?? 0)),
-            'short_answer' => max(0, intval($customCounts['short_answer'] ?? 0)),
-            'essay' => max(0, intval($customCounts['essay'] ?? 0)),
+        $defaultPoints = [
+            'pg' => 1.0,
+            'pg_complex' => 3.0,
+            'true_false' => 2.0,
+            'matching' => 3.0,
+            'short_answer' => 2.0,
+            'essay' => 5.0,
         ];
+
+        $resolvedCounts = [];
+        $resolvedPoints = [];
+        foreach ($defaultPoints as $typeKey => $defaultPt) {
+            $resolvedCounts[$typeKey] = max(0, intval($customCounts[$typeKey] ?? 0));
+            $rawPt = floatval($customPoints[$typeKey] ?? $defaultPt);
+            $resolvedPoints[$typeKey] = $rawPt > 0 ? round($rawPt, 2) : $defaultPt;
+        }
 
         // Jika menggunakan Preset Standar MTs (45 Butir), otomatis gunakan bobot resmi 75 : 25
         if ($compositionPreset === 'standard_mts_45') {
@@ -298,12 +309,11 @@ class ExamBankController extends Controller
                 $totalQuestions = $calcTotal;
             }
 
-            $objPoints = ($resolvedCounts['pg'] * 1)
-                + ($resolvedCounts['pg_complex'] * 3)
-                + ($resolvedCounts['true_false'] * 2)
-                + ($resolvedCounts['matching'] * 3)
-                + ($resolvedCounts['short_answer'] * 2);
-            $essayPoints = ($resolvedCounts['essay'] * 5);
+            $objPoints = 0.0;
+            foreach (['pg', 'pg_complex', 'true_false', 'matching', 'short_answer'] as $objType) {
+                $objPoints += ($resolvedCounts[$objType] * $resolvedPoints[$objType]);
+            }
+            $essayPoints = $resolvedCounts['essay'] * $resolvedPoints['essay'];
             $sumPoints = $objPoints + $essayPoints;
             if ($sumPoints > 0) {
                 $pgWeight = round(($objPoints / $sumPoints) * 100, 2);
@@ -339,107 +349,62 @@ class ExamBankController extends Controller
 
             if ($compositionPreset === 'custom_distribution' && !empty($customCounts)) {
                 $qNum = 1;
-                // 1. PG Tunggal
-                for ($k = 0; $k < $resolvedCounts['pg']; $k++) {
-                    $newQuestions[] = [
-                        'exam_package_id' => $package->id,
-                        'question_number' => $qNum++,
-                        'question_type' => 'pg',
-                        'question_text' => null,
+                $typeConfigs = [
+                    'pg' => [
                         'options' => json_encode(['A' => '', 'B' => '', 'C' => '', 'D' => '']),
                         'correct_answer' => null,
-                        'score_weight' => 1.00,
                         'cognitive_level' => 'L1',
                         'difficulty_level' => 'sedang',
-                        'telaah_status' => 'layak',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-                // 2. PG Kompleks
-                for ($k = 0; $k < $resolvedCounts['pg_complex']; $k++) {
-                    $newQuestions[] = [
-                        'exam_package_id' => $package->id,
-                        'question_number' => $qNum++,
-                        'question_type' => 'pg_complex',
-                        'question_text' => null,
+                    ],
+                    'pg_complex' => [
                         'options' => json_encode(['A' => '', 'B' => '', 'C' => '', 'D' => '']),
                         'correct_answer' => null,
-                        'score_weight' => 3.00,
                         'cognitive_level' => 'L2',
                         'difficulty_level' => 'sedang',
-                        'telaah_status' => 'layak',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-                // 3. Benar / Salah
-                for ($k = 0; $k < $resolvedCounts['true_false']; $k++) {
-                    $newQuestions[] = [
-                        'exam_package_id' => $package->id,
-                        'question_number' => $qNum++,
-                        'question_type' => 'true_false',
-                        'question_text' => null,
+                    ],
+                    'true_false' => [
                         'options' => json_encode(['mode' => 'single', 'answer' => 'B']),
                         'correct_answer' => 'B',
-                        'score_weight' => 2.00,
                         'cognitive_level' => 'L1',
                         'difficulty_level' => 'sedang',
-                        'telaah_status' => 'layak',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-                // 4. Menjodohkan
-                for ($k = 0; $k < $resolvedCounts['matching']; $k++) {
-                    $newQuestions[] = [
-                        'exam_package_id' => $package->id,
-                        'question_number' => $qNum++,
-                        'question_type' => 'matching',
-                        'question_text' => null,
+                    ],
+                    'matching' => [
                         'options' => json_encode(['mode' => 'single', 'right_text' => '', 'key' => 'A']),
                         'correct_answer' => 'A',
-                        'score_weight' => 3.00,
                         'cognitive_level' => 'L2',
                         'difficulty_level' => 'sedang',
-                        'telaah_status' => 'layak',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-                // 5. Isian Singkat
-                for ($k = 0; $k < $resolvedCounts['short_answer']; $k++) {
-                    $newQuestions[] = [
-                        'exam_package_id' => $package->id,
-                        'question_number' => $qNum++,
-                        'question_type' => 'short_answer',
-                        'question_text' => null,
+                    ],
+                    'short_answer' => [
                         'options' => null,
                         'correct_answer' => null,
-                        'score_weight' => 2.00,
                         'cognitive_level' => 'L1',
                         'difficulty_level' => 'sedang',
-                        'telaah_status' => 'layak',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-                // 6. Uraian / Essay
-                for ($k = 0; $k < $resolvedCounts['essay']; $k++) {
-                    $newQuestions[] = [
-                        'exam_package_id' => $package->id,
-                        'question_number' => $qNum++,
-                        'question_type' => 'essay',
-                        'question_text' => null,
+                    ],
+                    'essay' => [
                         'options' => null,
                         'correct_answer' => null,
-                        'score_weight' => 5.00,
                         'cognitive_level' => 'L3',
                         'difficulty_level' => 'sukar',
-                        'telaah_status' => 'layak',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
+                    ],
+                ];
+
+                foreach ($typeConfigs as $qType => $cfg) {
+                    for ($k = 0; $k < $resolvedCounts[$qType]; $k++) {
+                        $newQuestions[] = [
+                            'exam_package_id' => $package->id,
+                            'question_number' => $qNum++,
+                            'question_type' => $qType,
+                            'question_text' => null,
+                            'options' => $cfg['options'],
+                            'correct_answer' => $cfg['correct_answer'],
+                            'score_weight' => $resolvedPoints[$qType],
+                            'cognitive_level' => $cfg['cognitive_level'],
+                            'difficulty_level' => $cfg['difficulty_level'],
+                            'telaah_status' => 'layak',
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+                    }
                 }
             } else {
                 for ($i = $existingCount + 1; $i <= $package->total_questions; $i++) {

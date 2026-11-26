@@ -444,7 +444,7 @@
 
     <!-- Modal Buat Paket Soal Baru -->
     <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto">
-      <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] my-auto">
+      <div class="bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] my-auto">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
           <h3 class="text-base font-bold text-slate-800">Buat Paket Soal Baru</h3>
           <button @click="showCreateModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">
@@ -569,147 +569,75 @@
               </p>
             </div>
 
-            <!-- Builder Kustom Pembagian Butir per Tipe Soal -->
+            <!-- Builder Kustom Pembagian Butir & Poin per Tipe Soal -->
             <div v-if="createForm.composition_preset === 'custom_distribution'" class="bg-white p-3 rounded-xl border border-indigo-200 text-xs text-slate-700 space-y-2.5 shadow-2xs">
               <div class="flex items-center justify-between border-b border-indigo-50 pb-1.5">
                 <span class="font-bold text-indigo-950 flex items-center gap-1.5">
-                  <span>✏️ Tentukan Jumlah Butir Tiap Tipe:</span>
+                  <span>✏️ Tentukan Jumlah Butir & Poin Tiap Tipe:</span>
                 </span>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" :class="customTotalPoints === 100 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" :class="Math.abs(customTotalPoints - 100) < 0.01 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'">
                   Total Skor: {{ customTotalPoints }} Poin
                 </span>
               </div>
 
+              <!-- Column Captions (Desktop) -->
+              <div class="hidden sm:grid sm:grid-cols-[1fr_auto_auto_84px] gap-2 px-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                <span>Tipe Soal</span>
+                <span class="w-[88px] text-center">Jumlah</span>
+                <span class="w-[82px] text-center">Poin/Butir</span>
+                <span class="text-right">Bobot Nilai</span>
+              </div>
+
               <div class="space-y-1.5">
-                <!-- PG Tunggal -->
-                <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/80 rounded-lg border border-slate-100">
-                  <div class="flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[10px] flex items-center justify-center">PG</span>
-                    <div>
-                      <div class="font-bold text-slate-800 text-[11px]">Pilihan Ganda Tunggal</div>
-                      <div class="text-[10px] text-slate-400">Bobot: 1 Poin per nomor</div>
+                <div
+                  v-for="qt in customQuestionTypes"
+                  :key="qt.key"
+                  class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 bg-slate-50/80 rounded-lg border border-slate-100"
+                >
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-7 h-7 shrink-0 rounded-md font-bold text-[10px] flex items-center justify-center" :class="qt.badgeClass">{{ qt.badge }}</span>
+                    <div class="min-w-0">
+                      <div class="font-bold text-slate-800 text-[11px] truncate">{{ qt.label }}</div>
+                      <div class="text-[10px] text-slate-400">
+                        {{ qt.isEssay ? 'Kelompok Uraian' : 'Kelompok Objektif' }} &bull; Default {{ qt.defaultPoint }} pt
+                      </div>
                     </div>
                   </div>
-                  <div class="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      v-model.number="createForm.custom_counts.pg"
-                      min="0"
-                      max="100"
-                      class="form-input w-16 py-1 text-center font-bold text-xs"
-                      @input="recalculateCustomDistribution"
-                    />
-                    <span class="text-[11px] text-slate-500 w-8">butir</span>
-                  </div>
-                </div>
-
-                <!-- PG Kompleks -->
-                <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/80 rounded-lg border border-slate-100">
-                  <div class="flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-md bg-indigo-100 text-indigo-800 font-bold text-[10px] flex items-center justify-center">PGK</span>
-                    <div>
-                      <div class="font-bold text-slate-800 text-[11px]">Pilihan Ganda Kompleks</div>
-                      <div class="text-[10px] text-slate-400">Bobot: 3 Poin per nomor</div>
+                  <div class="flex items-center justify-end gap-1.5 shrink-0">
+                    <div class="flex items-center gap-1">
+                      <input
+                        type="number"
+                        v-model.number="createForm.custom_counts[qt.key]"
+                        min="0"
+                        max="100"
+                        class="form-input w-14 py-1 text-center font-bold text-xs"
+                        @input="recalculateCustomDistribution"
+                      />
+                      <span class="text-[10px] text-slate-500">btr</span>
                     </div>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      v-model.number="createForm.custom_counts.pg_complex"
-                      min="0"
-                      max="100"
-                      class="form-input w-16 py-1 text-center font-bold text-xs"
-                      @input="recalculateCustomDistribution"
-                    />
-                    <span class="text-[11px] text-slate-500 w-8">butir</span>
-                  </div>
-                </div>
-
-                <!-- Benar / Salah -->
-                <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/80 rounded-lg border border-slate-100">
-                  <div class="flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-md bg-purple-100 text-purple-800 font-bold text-[10px] flex items-center justify-center">B/S</span>
-                    <div>
-                      <div class="font-bold text-slate-800 text-[11px]">Benar / Salah</div>
-                      <div class="text-[10px] text-slate-400">Bobot: 2 Poin per nomor</div>
+                    <span class="text-[11px] text-slate-400 font-bold">&times;</span>
+                    <div class="flex items-center gap-1">
+                      <input
+                        type="number"
+                        v-model.number="createForm.custom_points[qt.key]"
+                        min="0.5"
+                        step="0.5"
+                        max="100"
+                        class="form-input w-14 py-1 text-center font-bold text-xs text-indigo-700"
+                        @input="recalculateCustomDistribution"
+                      />
+                      <span class="text-[10px] text-slate-500">pt</span>
                     </div>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      v-model.number="createForm.custom_counts.true_false"
-                      min="0"
-                      max="100"
-                      class="form-input w-16 py-1 text-center font-bold text-xs"
-                      @input="recalculateCustomDistribution"
-                    />
-                    <span class="text-[11px] text-slate-500 w-8">butir</span>
-                  </div>
-                </div>
-
-                <!-- Menjodohkan -->
-                <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/80 rounded-lg border border-slate-100">
-                  <div class="flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-md bg-teal-100 text-teal-800 font-bold text-[10px] flex items-center justify-center">JOD</span>
-                    <div>
-                      <div class="font-bold text-slate-800 text-[11px]">Menjodohkan (Matching)</div>
-                      <div class="text-[10px] text-slate-400">Bobot: 3 Poin per nomor</div>
+                    <div class="w-[84px] text-right">
+                      <span
+                        v-if="customTypeBreakdown[qt.key]?.count > 0"
+                        class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold border"
+                        :class="qt.isEssay ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'"
+                      >
+                        {{ customTypeBreakdown[qt.key].subtotal }} pt ({{ customTypeBreakdown[qt.key].percent }}%)
+                      </span>
+                      <span v-else class="text-[10px] text-slate-300 font-medium">0 pt (0%)</span>
                     </div>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      v-model.number="createForm.custom_counts.matching"
-                      min="0"
-                      max="100"
-                      class="form-input w-16 py-1 text-center font-bold text-xs"
-                      @input="recalculateCustomDistribution"
-                    />
-                    <span class="text-[11px] text-slate-500 w-8">butir</span>
-                  </div>
-                </div>
-
-                <!-- Isian Singkat -->
-                <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/80 rounded-lg border border-slate-100">
-                  <div class="flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-md bg-amber-100 text-amber-800 font-bold text-[10px] flex items-center justify-center">ISI</span>
-                    <div>
-                      <div class="font-bold text-slate-800 text-[11px]">Isian Singkat (Short Answer)</div>
-                      <div class="text-[10px] text-slate-400">Bobot: 2 Poin per nomor</div>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      v-model.number="createForm.custom_counts.short_answer"
-                      min="0"
-                      max="100"
-                      class="form-input w-16 py-1 text-center font-bold text-xs"
-                      @input="recalculateCustomDistribution"
-                    />
-                    <span class="text-[11px] text-slate-500 w-8">butir</span>
-                  </div>
-                </div>
-
-                <!-- Uraian / Essay -->
-                <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/80 rounded-lg border border-slate-100">
-                  <div class="flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-md bg-blue-100 text-blue-800 font-bold text-[10px] flex items-center justify-center">ESS</span>
-                    <div>
-                      <div class="font-bold text-slate-800 text-[11px]">Uraian / Essay</div>
-                      <div class="text-[10px] text-slate-400">Bobot: 5 Poin per nomor</div>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      v-model.number="createForm.custom_counts.essay"
-                      min="0"
-                      max="100"
-                      class="form-input w-16 py-1 text-center font-bold text-xs"
-                      @input="recalculateCustomDistribution"
-                    />
-                    <span class="text-[11px] text-slate-500 w-8">butir</span>
                   </div>
                 </div>
               </div>
@@ -2769,6 +2697,14 @@ const createForm = reactive({
     short_answer: 0,
     essay: 5
   },
+  custom_points: {
+    pg: 1,
+    pg_complex: 3,
+    true_false: 2,
+    matching: 3,
+    short_answer: 2,
+    essay: 5
+  },
   total_questions: 45,
   kkm: 75,
   academic_phase: 'Fase D',
@@ -2845,65 +2781,68 @@ const submitSplitToCorrection = async () => {
   }
 };
 
-const getParsedCustomCounts = () => ({
-  pg: Math.max(0, parseInt(createForm.custom_counts?.pg) || 0),
-  pgk: Math.max(0, parseInt(createForm.custom_counts?.pg_complex) || 0),
-  tf: Math.max(0, parseInt(createForm.custom_counts?.true_false) || 0),
-  match: Math.max(0, parseInt(createForm.custom_counts?.matching) || 0),
-  shortAns: Math.max(0, parseInt(createForm.custom_counts?.short_answer) || 0),
-  essay: Math.max(0, parseInt(createForm.custom_counts?.essay) || 0),
-});
+const customQuestionTypes = [
+  { key: 'pg', badge: 'PG', shortLabel: 'PG', label: 'Pilihan Ganda Tunggal', defaultPoint: 1, badgeClass: 'bg-emerald-100 text-emerald-800', isEssay: false },
+  { key: 'pg_complex', badge: 'PGK', shortLabel: 'PGK', label: 'Pilihan Ganda Kompleks', defaultPoint: 3, badgeClass: 'bg-indigo-100 text-indigo-800', isEssay: false },
+  { key: 'true_false', badge: 'B/S', shortLabel: 'B/S', label: 'Benar / Salah', defaultPoint: 2, badgeClass: 'bg-purple-100 text-purple-800', isEssay: false },
+  { key: 'matching', badge: 'JOD', shortLabel: 'Jodoh', label: 'Menjodohkan (Matching)', defaultPoint: 3, badgeClass: 'bg-teal-100 text-teal-800', isEssay: false },
+  { key: 'short_answer', badge: 'ISI', shortLabel: 'Isian', label: 'Isian Singkat (Short Answer)', defaultPoint: 2, badgeClass: 'bg-amber-100 text-amber-800', isEssay: false },
+  { key: 'essay', badge: 'ESS', shortLabel: 'Essay', label: 'Uraian / Essay', defaultPoint: 5, badgeClass: 'bg-blue-100 text-blue-800', isEssay: true },
+];
 
-const recalculateCustomDistribution = () => {
-  const { pg, pgk, tf, match, shortAns, essay } = getParsedCustomCounts();
-
-  const totalQ = pg + pgk + tf + match + shortAns + essay;
-  createForm.total_questions = totalQ > 0 ? totalQ : 1;
-
-  const objPoints = (pg * 1) + (pgk * 3) + (tf * 2) + (match * 3) + (shortAns * 2);
-  const essayPoints = (essay * 5);
-  const totalPoints = objPoints + essayPoints;
-
-  if (totalPoints > 0) {
-    createForm.pg_weight = Math.round((objPoints / totalPoints) * 100);
-    createForm.essay_weight = 100 - createForm.pg_weight;
-  }
+const getParsedCustomRows = () => {
+  return customQuestionTypes.map(qt => {
+    const count = Math.max(0, parseInt(createForm.custom_counts?.[qt.key]) || 0);
+    const rawPt = parseFloat(createForm.custom_points?.[qt.key]);
+    const point = rawPt > 0 ? rawPt : qt.defaultPoint;
+    const subtotal = Math.round(count * point * 100) / 100;
+    return { ...qt, count, point, subtotal };
+  });
 };
 
 const customTotalPoints = computed(() => {
-  const { pg, pgk, tf, match, shortAns, essay } = getParsedCustomCounts();
-  return (pg * 1) + (pgk * 3) + (tf * 2) + (match * 3) + (shortAns * 2) + (essay * 5);
+  const sum = getParsedCustomRows().reduce((acc, r) => acc + r.subtotal, 0);
+  return Math.round(sum * 100) / 100;
 });
 
-const customDistributionPlanText = computed(() => {
-  const { pg, pgk, tf, match, shortAns, essay } = getParsedCustomCounts();
+const customTypeBreakdown = computed(() => {
+  const rows = getParsedCustomRows();
+  const total = rows.reduce((acc, r) => acc + r.subtotal, 0);
+  const map = {};
+  rows.forEach(r => {
+    map[r.key] = {
+      ...r,
+      percent: total > 0 ? Math.round((r.subtotal / total) * 1000) / 10 : 0,
+    };
+  });
+  return map;
+});
 
+const recalculateCustomDistribution = () => {
+  const rows = getParsedCustomRows();
+  const totalQ = rows.reduce((acc, r) => acc + r.count, 0);
+  createForm.total_questions = totalQ > 0 ? totalQ : 1;
+
+  const objPoints = rows.filter(r => !r.isEssay).reduce((acc, r) => acc + r.subtotal, 0);
+  const essayPoints = rows.filter(r => r.isEssay).reduce((acc, r) => acc + r.subtotal, 0);
+  const totalPoints = objPoints + essayPoints;
+
+  if (totalPoints > 0) {
+    createForm.pg_weight = Math.round((objPoints / totalPoints) * 10000) / 100;
+    createForm.essay_weight = Math.round((100 - createForm.pg_weight) * 100) / 100;
+  }
+};
+
+const customDistributionPlanText = computed(() => {
+  const rows = getParsedCustomRows();
   const segments = [];
   let curr = 1;
-  if (pg > 0) {
-    segments.push(`No ${curr}–${curr + pg - 1} PG`);
-    curr += pg;
-  }
-  if (pgk > 0) {
-    segments.push(`No ${curr}–${curr + pgk - 1} PGK`);
-    curr += pgk;
-  }
-  if (tf > 0) {
-    segments.push(`No ${curr}–${curr + tf - 1} B/S`);
-    curr += tf;
-  }
-  if (match > 0) {
-    segments.push(`No ${curr}–${curr + match - 1} Jodoh`);
-    curr += match;
-  }
-  if (shortAns > 0) {
-    segments.push(`No ${curr}–${curr + shortAns - 1} Isian`);
-    curr += shortAns;
-  }
-  if (essay > 0) {
-    segments.push(`No ${curr}–${curr + essay - 1} Essay`);
-    curr += essay;
-  }
+  rows.forEach(r => {
+    if (r.count > 0) {
+      segments.push(`No ${curr}–${curr + r.count - 1} ${r.shortLabel}`);
+      curr += r.count;
+    }
+  });
 
   return segments.length > 0 ? segments.join(' • ') : 'Belum ada butir soal';
 });
@@ -4140,6 +4079,14 @@ const openCreateModal = () => {
     true_false: 5,
     matching: 5,
     short_answer: 0,
+    essay: 5
+  };
+  createForm.custom_points = {
+    pg: 1,
+    pg_complex: 3,
+    true_false: 2,
+    matching: 3,
+    short_answer: 2,
     essay: 5
   };
   createForm.total_questions = 45;
