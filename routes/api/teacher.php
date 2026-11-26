@@ -55,6 +55,7 @@ Route::middleware(['auth:sanctum', 'role:teacher,admin,operator,kurikulum,kepala
     // Modul Bank Soal, Kisi-Kisi & Telaah Ujian (Teacher)
     Route::get('exam-bank/options', [\App\Http\Controllers\Teacher\ExamBankController::class, 'options']);
     Route::get('exam-bank/template', [\App\Http\Controllers\Teacher\ExamBankController::class, 'downloadTemplate']);
+    Route::get('exam-bank/template-docx', [\App\Http\Controllers\Teacher\ExamBankController::class, 'downloadDocxTemplate']);
     Route::get('exam-bank', [\App\Http\Controllers\Teacher\ExamBankController::class, 'index']);
     Route::post('exam-bank', [\App\Http\Controllers\Teacher\ExamBankController::class, 'store']);
     Route::get('exam-bank/{id}', [\App\Http\Controllers\Teacher\ExamBankController::class, 'show']);
@@ -63,6 +64,9 @@ Route::middleware(['auth:sanctum', 'role:teacher,admin,operator,kurikulum,kepala
     Route::post('exam-bank/{id}/questions', [\App\Http\Controllers\Teacher\ExamBankController::class, 'saveQuestions']);
     Route::post('exam-bank/{id}/upload-image', [\App\Http\Controllers\Teacher\ExamBankController::class, 'uploadImage']);
     Route::post('exam-bank/{id}/import-excel', [\App\Http\Controllers\Teacher\ExamBankController::class, 'importExcel']);
+    Route::get('exam-bank/{id}/export-docx', [\App\Http\Controllers\Teacher\ExamBankController::class, 'exportDocx']);
+    Route::post('exam-bank/{id}/import-docx-preview', [\App\Http\Controllers\Teacher\ExamBankController::class, 'previewDocxOrTextImport']);
+    Route::post('exam-bank/{id}/import-questions-batch', [\App\Http\Controllers\Teacher\ExamBankController::class, 'commitImportedQuestions']);
     Route::post('exam-bank/{id}/submit-kurikulum', [\App\Http\Controllers\Teacher\ExamBankController::class, 'submitToKurikulum']);
 
     // Modul Koreksi Soal & Analisis Butir Soal (Teacher)

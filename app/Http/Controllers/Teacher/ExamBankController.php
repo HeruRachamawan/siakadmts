@@ -1056,6 +1056,204 @@ class ExamBankController extends Controller
     }
 
     /**
+     * Download official Word (.docx) Naskah Soal template ready for import.
+     */
+    public function downloadDocxTemplate(\App\Services\ExamDocxService $docxService)
+    {
+        $tmpPath = $docxService->createDocxFile(null, true);
+        $fileName = 'Template_Naskah_Soal_MTs_' . date('Ymd') . '.docx';
+
+        return response()->download($tmpPath, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Export an existing ExamPackage to Word (.docx) using the official Naskah Soal template layout.
+     */
+    public function exportDocx(Request $request, $id, \App\Services\ExamDocxService $docxService)
+    {
+        $package = ExamPackage::with(['subject', 'classRoom', 'academicYear', 'questions'])->findOrFail($id);
+        $this->authorizePackageAccess($request, $package);
+
+        $tmpPath = $docxService->createDocxFile($package, false);
+        $slugTitle = preg_replace('/[^a-zA-Z0-9_\-]+/', '_', trim((string) $package->title));
+        $fileName = 'Naskah_Soal_' . ($slugTitle ?: ('Paket_' . $package->id)) . '.docx';
+
+        return response()->download($tmpPath, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Parse an uploaded .docx file OR pasted raw Word/Google Docs text and return structured preview questions.
+     */
+    public function previewDocxOrTextImport(Request $request, $id, \App\Services\ExamDocxService $docxService)
+    {
+        $package = ExamPackage::findOrFail($id);
+        $this->authorizePackageAccess($request, $package);
+
+        $request->validate([
+            'file' => 'nullable|file|mimes:docx|max:10240',
+            'raw_text' => 'nullable|string|max:500000',
+        ]);
+
+        if (!$request->hasFile('file') && trim((string) $request->input('raw_text', '')) === '') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Pilih file Word (.docx) atau tempel teks soal terlebih dahulu.'
+            ], 422);
+        }
+
+        try {
+            if ($request->hasFile('file')) {
+                $parsed = $docxService->parseDocx($request->file('file')->getRealPath());
+            } else {
+                $parsed = $docxService->parsePlainText((string) $request->input('raw_text'));
+            }
+
+            if (empty($parsed['questions'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Tidak ada butir soal bernomor yang dapat dikenali. Pastikan format diawali nomor (contoh: 1. Teks soal...) dan opsi A. B. C. D.'
+                ], 422);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $parsed,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], 422);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal membaca dokumen naskah soal: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Save confirmed batch-imported questions (from .docx or bulk Word paste) into the ExamPackage.
+     */
+    public function commitImportedQuestions(Request $request, $id)
+    {
+        $package = ExamPackage::findOrFail($id);
+        $this->authorizePackageAccess($request, $package);
+
+        $validated = $request->validate([
+            'mode' => 'required|in:merge,replace',
+            'questions' => 'required|array|min:1|max:200',
+            'questions.*.question_number' => 'required|integer|min:1|max:200',
+            'questions.*.question_type' => 'required|in:pg,pg_complex,true_false,agree_disagree,matching,short_answer,essay',
+            'questions.*.question_text' => 'nullable|string',
+            'questions.*.question_image' => 'nullable|string|max:500',
+            'questions.*.options' => 'nullable|array',
+            'questions.*.correct_answer' => 'nullable|string|max:5000',
+            'questions.*.score_weight' => 'nullable|numeric|min:0.1|max:100',
+            'questions.*.material' => 'nullable|string|max:500',
+            'questions.*.indicator' => 'nullable|string|max:1000',
+            'questions.*.cognitive_level' => 'nullable|string|in:L1,L2,L3',
+            'questions.*.difficulty_level' => 'nullable|string|in:mudah,sedang,sukar',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $importedNumbers = [];
+            foreach ($validated['questions'] as $item) {
+                $qNum = intval($item['question_number']);
+                $qType = $item['question_type'];
+                $importedNumbers[] = $qNum;
+
+                ExamQuestion::updateOrCreate(
+                    [
+                        'exam_package_id' => $package->id,
+                        'question_number' => $qNum,
+                    ],
+                    [
+                        'question_type' => $qType,
+                        'question_text' => $item['question_text'] ?? null,
+                        'question_image' => $item['question_image'] ?? null,
+                        'options' => $item['options'] ?? null,
+                        'correct_answer' => $item['correct_answer'] ?? null,
+                        'score_weight' => floatval($item['score_weight'] ?? 1.00),
+                        'material' => $item['material'] ?? null,
+                        'indicator' => $item['indicator'] ?? null,
+                        'cognitive_level' => $item['cognitive_level'] ?? ($qType === 'essay' ? 'L3' : 'L1'),
+                        'difficulty_level' => $item['difficulty_level'] ?? ($qType === 'essay' ? 'sukar' : 'sedang'),
+                        'telaah_status' => 'layak',
+                        'telaah_materi' => [
+                            'sesuai_indikator' => true,
+                            'materi_sesuai_fase' => true,
+                            'kunci_hanya_satu' => true,
+                            'pilihan_homogen' => true,
+                        ],
+                        'telaah_konstruksi' => [
+                            'pokok_soal_tegas' => true,
+                            'bebas_petunjuk_kunci' => true,
+                            'bebas_negatif_ganda' => true,
+                            'panjang_opsi_relatif_sama' => true,
+                        ],
+                        'telaah_bahasa' => [
+                            'bahasa_baku_eyd' => true,
+                            'komunikatif_mudah_dipahami' => true,
+                            'bebas_sara_dan_bias' => true,
+                        ],
+                    ]
+                );
+            }
+
+            if ($validated['mode'] === 'replace' && !empty($importedNumbers)) {
+                ExamQuestion::where('exam_package_id', $package->id)
+                    ->whereNotIn('question_number', $importedNumbers)
+                    ->delete();
+            }
+
+            // Recompute package total_questions & weights from saved questions
+            $allQuestions = $package->questions()->orderBy('question_number')->get();
+            $objPoints = 0.0;
+            $essayPoints = 0.0;
+            foreach ($allQuestions as $qRow) {
+                $w = floatval($qRow->score_weight ?? 1.0);
+                if ($qRow->question_type === 'essay') {
+                    $essayPoints += $w;
+                } else {
+                    $objPoints += $w;
+                }
+            }
+            $sumPoints = $objPoints + $essayPoints;
+            $updatePkg = ['total_questions' => $allQuestions->count()];
+            if ($sumPoints > 0) {
+                $updatePkg['pg_weight'] = round(($objPoints / $sumPoints) * 100, 2);
+                $updatePkg['essay_weight'] = round(($essayPoints / $sumPoints) * 100, 2);
+            }
+            $package->update($updatePkg);
+
+            app(\App\Services\ExamPackageSplitService::class)->syncMasterToChildren($package);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Berhasil memasukkan ' . count($importedNumbers) . ' butir soal ke paket soal.',
+                'data' => [
+                    'package' => $package->fresh(['classRoom', 'subject', 'academicYear']),
+                    'questions' => $allQuestions,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal menyimpan soal hasil import: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Check if user is allowed to modify the package.
      */
     private function authorizePackageAccess(Request $request, ExamPackage $package)

@@ -14,8 +14,17 @@
       <div class="flex flex-wrap items-center gap-2">
         <button
           type="button"
+          @click="downloadDocxTemplate"
+          class="inline-flex items-center gap-2 px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-sm font-semibold rounded-xl transition cursor-pointer"
+          title="Download Template Naskah Soal Word (.docx) yang siap diisi dan di-import balik"
+        >
+          <Printer class="w-4 h-4 text-indigo-600" />
+          <span>Template Naskah (.docx)</span>
+        </button>
+        <button
+          type="button"
           @click="downloadTemplate"
-          class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition"
+          class="inline-flex items-center gap-2 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition cursor-pointer"
         >
           <FileSpreadsheet class="w-4 h-4 text-emerald-600" />
           <span>Template Excel</span>
@@ -23,7 +32,7 @@
         <button
           type="button"
           @click="openCreateModal"
-          class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-sm transition"
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-sm transition cursor-pointer"
         >
           <Plus class="w-4 h-4" />
           <span>Buat Paket Soal</span>
@@ -353,8 +362,8 @@
                 <button
                   type="button"
                   @click="openImportModal(pkg)"
-                  class="p-2 text-slate-600 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 rounded-xl transition"
-                  title="Import dari Excel"
+                  class="p-2 text-slate-600 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 rounded-xl transition cursor-pointer"
+                  title="Import Soal (.docx / Copy-Paste Word / Excel)"
                 >
                   <Upload class="w-4 h-4" />
                 </button>
@@ -402,6 +411,16 @@
                         <span>🔑</span>
                         <span>Kunci & Rubrik Nilai</span>
                       </a>
+                    </div>
+                    <div class="py-1">
+                      <button
+                        type="button"
+                        @click="exportPackageDocx(pkg)"
+                        class="w-full text-left flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 font-semibold transition cursor-pointer"
+                      >
+                        <span>📝</span>
+                        <span>Export Word (.docx)</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -974,41 +993,233 @@
       </div>
     </div>
 
-    <!-- Modal Upload Excel -->
-    <div v-if="showImportModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-      <div class="bg-white w-full max-w-md rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h3 class="text-base font-bold text-slate-800">Import Soal dari Excel</h3>
-          <button @click="showImportModal = false" class="text-slate-400 hover:text-slate-600">
+    <!-- Modal Import Soal (Naskah Word .docx / Paste Sekaligus / Excel) -->
+    <div v-if="showImportModal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div
+        class="bg-white w-full rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]"
+        :class="importPreviewQuestions.length > 0 ? 'max-w-4xl' : 'max-w-xl'"
+      >
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
+          <div>
+            <h3 class="text-base font-bold text-slate-800">Import Naskah Soal Otomatis</h3>
+            <p class="text-xs text-slate-500">
+              {{ targetImportPackage?.title }} &mdash; tanpa ketik satu per satu
+            </p>
+          </div>
+          <button @click="showImportModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">
             <X class="w-5 h-5" />
           </button>
         </div>
-        <div class="p-6 space-y-4">
-          <p class="text-xs text-slate-500">
-            Pastikan format kolom sesuai dengan <strong>Template Excel Resmi</strong>. Teks soal, opsi A-D, kunci, materi, indikator, dan level kognitif akan langsung terisi.
-          </p>
-          <div class="border-2 border-dashed border-slate-200 hover:border-emerald-500 rounded-xl p-6 text-center cursor-pointer transition">
-            <input type="file" ref="excelFileInput" accept=".xlsx, .xls" class="hidden" @change="handleExcelFileSelect" />
-            <div @click="$refs.excelFileInput.click()" class="space-y-2">
-              <UploadCloud class="w-8 h-8 text-emerald-600 mx-auto" />
-              <div class="text-xs font-semibold text-slate-700">
-                {{ selectedExcelFile ? selectedExcelFile.name : 'Klik untuk memilih file Excel (.xlsx)' }}
-              </div>
-              <div class="text-[11px] text-slate-400">Maksimal ukuran file 5 MB</div>
+
+        <!-- Preview Stage (after parsing .docx or bulk text) -->
+        <div v-if="importPreviewQuestions.length > 0" class="flex flex-col flex-1 overflow-hidden">
+          <div class="px-6 py-3 bg-emerald-50 border-b border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
+            <div class="text-xs text-emerald-900 font-semibold">
+              ✅ Berhasil membaca <strong>{{ importPreviewQuestions.length }}</strong> butir soal. Cek sekilas di bawah sebelum dimasukkan ke paket!
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <label class="inline-flex items-center gap-1 cursor-pointer font-semibold text-slate-700">
+                <input type="radio" v-model="importCommitMode" value="merge" class="text-emerald-600" />
+                <span>Gabung/Timpa Nomor Sama</span>
+              </label>
+              <label class="inline-flex items-center gap-1 cursor-pointer font-semibold text-rose-700">
+                <input type="radio" v-model="importCommitMode" value="replace" class="text-rose-600" />
+                <span>Ganti Semua Soal</span>
+              </label>
             </div>
           </div>
-          <div class="pt-2 flex justify-end gap-2">
-            <button type="button" @click="showImportModal = false" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50">
-              Batal
+
+          <div v-if="importPreviewWarnings.length > 0" class="px-6 py-2.5 bg-amber-50 border-b border-amber-200 text-[11px] text-amber-800 max-h-24 overflow-y-auto shrink-0">
+            <strong class="block mb-0.5">⚠️ Catatan Pemeriksaan ({{ importPreviewWarnings.length }}):</strong>
+            <ul class="list-disc pl-4 space-y-0.5">
+              <li v-for="(w, wIdx) in importPreviewWarnings" :key="wIdx">{{ w }}</li>
+            </ul>
+          </div>
+
+          <div class="p-5 overflow-y-auto flex-1 space-y-3 bg-slate-50/60">
+            <div
+              v-for="pq in importPreviewQuestions"
+              :key="'prev-' + pq.question_number"
+              class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs space-y-2 text-xs"
+            >
+              <div class="flex items-center justify-between gap-2 flex-wrap border-b border-slate-100 pb-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white font-bold text-[11px]">No. {{ pq.question_number }}</span>
+                  <select v-model="pq.question_type" class="border border-slate-200 rounded-lg px-2 py-0.5 text-[11px] font-bold text-indigo-700 bg-indigo-50/50">
+                    <option value="pg">Pilihan Ganda</option>
+                    <option value="pg_complex">PG Kompleks</option>
+                    <option value="true_false">Benar / Salah</option>
+                    <option value="matching">Menjodohkan</option>
+                    <option value="short_answer">Isian Singkat</option>
+                    <option value="essay">Uraian / Essay</option>
+                  </select>
+                  <span v-if="pq.question_image" class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                    🖼️ Ada Gambar
+                  </span>
+                </div>
+                <div class="flex items-center gap-2 text-[11px]">
+                  <span v-if="pq.correct_answer" class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                    Kunci: {{ pq.correct_answer }}
+                  </span>
+                  <span v-else class="px-2 py-0.5 rounded bg-slate-100 text-slate-500">Kunci belum diset</span>
+                  <span class="text-slate-400 font-semibold">Bobot: {{ pq.score_weight }}</span>
+                </div>
+              </div>
+              <div class="text-slate-800 leading-relaxed" v-html="pq.question_text || '<i>(Soal gambar / teks kosong)</i>'"></div>
+              <div v-if="pq.options && ['pg', 'pg_complex'].includes(pq.question_type)" class="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-1 text-[11px] text-slate-600">
+                <div v-for="(val, key) in pq.options" :key="key" class="px-2 py-1 rounded bg-slate-50 border border-slate-100">
+                  <strong class="text-slate-800">{{ key }}.</strong> {{ val || '-' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-6 py-4 border-t border-slate-100 bg-white flex items-center justify-between gap-2 shrink-0">
+            <button
+              type="button"
+              @click="resetDocxPreview"
+              class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 cursor-pointer"
+            >
+              &larr; Kembali / Pilih Ulang
             </button>
             <button
               type="button"
-              @click="submitImportExcel"
-              :disabled="!selectedExcelFile || importing"
-              class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-sm font-semibold shadow-sm"
+              @click="commitDocxOrTextImport"
+              :disabled="importing"
+              class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer"
             >
-              {{ importing ? 'Mengimpor...' : 'Mulai Import' }}
+              {{ importing ? 'Menyimpan...' : `Masukkan ${importPreviewQuestions.length} Soal ke Paket` }}
             </button>
+          </div>
+        </div>
+
+        <!-- Input Stage (Tabs: Word .docx / Bulk Paste / Excel) -->
+        <div v-else class="flex flex-col flex-1 overflow-hidden">
+          <div class="px-6 pt-3 border-b border-slate-100 flex items-center gap-1.5 bg-white shrink-0">
+            <button
+              type="button"
+              @click="importTab = 'docx'"
+              class="px-3 py-2 text-xs font-bold border-b-2 transition cursor-pointer"
+              :class="importTab === 'docx' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-800'"
+            >
+              📝 File Word (.docx)
+            </button>
+            <button
+              type="button"
+              @click="importTab = 'paste'"
+              class="px-3 py-2 text-xs font-bold border-b-2 transition cursor-pointer"
+              :class="importTab === 'paste' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-800'"
+            >
+              📋 Paste Sekaligus (Google Docs/Word)
+            </button>
+            <button
+              type="button"
+              @click="importTab = 'excel'"
+              class="px-3 py-2 text-xs font-bold border-b-2 transition cursor-pointer"
+              :class="importTab === 'excel' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:text-slate-800'"
+            >
+              📊 Excel (.xlsx)
+            </button>
+          </div>
+
+          <!-- Tab 1: Upload Word .docx -->
+          <div v-if="importTab === 'docx'" class="p-6 space-y-4 overflow-y-auto flex-1">
+            <div class="p-3 bg-indigo-50/80 border border-indigo-200 rounded-xl text-xs text-indigo-900 space-y-1.5">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <span class="font-bold">Gunakan Template Naskah Soal (.docx) atau File .docx Biasa:</span>
+                <button
+                  type="button"
+                  @click="downloadDocxTemplate"
+                  class="px-2.5 py-1 bg-white hover:bg-indigo-100 text-indigo-700 border border-indigo-300 rounded-lg text-[11px] font-bold transition cursor-pointer"
+                >
+                  ⬇️ Download Template (.docx)
+                </button>
+              </div>
+              <p class="text-[11px] text-indigo-700 leading-relaxed">
+                Otomatis membaca teks soal, tulisan Arab, format tebal/miring, gambar soal, opsi A–D, bagian tipe soal (`[PG]`, `[PGK]`, `[BENAR_SALAH]`, `[ISIAN]`, `[ESSAY]`), serta tag `[Kunci: ...]`. Jika file dibuka di Google Docs, pilih <em>File &rarr; Download &rarr; Microsoft Word (.docx)</em>.
+              </p>
+            </div>
+
+            <div class="border-2 border-dashed border-slate-200 hover:border-indigo-500 rounded-xl p-6 text-center cursor-pointer transition">
+              <input type="file" ref="docxFileInput" accept=".docx" class="hidden" @change="handleDocxFileSelect" />
+              <div @click="$refs.docxFileInput.click()" class="space-y-2">
+                <UploadCloud class="w-8 h-8 text-indigo-600 mx-auto" />
+                <div class="text-xs font-semibold text-slate-700">
+                  {{ selectedDocxFile ? selectedDocxFile.name : 'Klik untuk memilih file Naskah Word (.docx)' }}
+                </div>
+                <div class="text-[11px] text-slate-400">Maksimal ukuran file 10 MB</div>
+              </div>
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2">
+              <button type="button" @click="showImportModal = false" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 cursor-pointer">
+                Batal
+              </button>
+              <button
+                type="button"
+                @click="previewDocxImport"
+                :disabled="!selectedDocxFile || parsingImport"
+                class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer"
+              >
+                {{ parsingImport ? 'Membaca Dokumen...' : 'Baca & Preview Soal' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab 2: Bulk Copy-Paste from Word / Google Docs -->
+          <div v-if="importTab === 'paste'" class="p-6 space-y-3 overflow-y-auto flex-1">
+            <div class="p-3 bg-indigo-50/80 border border-indigo-200 rounded-xl text-[11px] text-indigo-900 leading-relaxed">
+              Blok &amp; copy puluhan soal sekaligus (mis. No. 1 sampai No. 45 beserta opsi A–D) dari <strong>Google Docs atau Microsoft Word</strong>, lalu tempel (<strong>Ctrl+V</strong>) di bawah ini:
+            </div>
+            <textarea
+              v-model="bulkPasteText"
+              rows="10"
+              placeholder="Contoh:&#10;I. PILIHAN GANDA [PG]&#10;1. Teks soal pertama...&#10;A. Pilihan A&#10;B. Pilihan B&#10;C. Pilihan C&#10;D. Pilihan D&#10;[Kunci: A]&#10;&#10;2. Teks soal kedua..."
+              class="w-full rounded-xl border border-slate-300 p-3 text-xs font-sans focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500"
+            ></textarea>
+            <div class="flex justify-end gap-2 pt-1">
+              <button type="button" @click="showImportModal = false" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 cursor-pointer">
+                Batal
+              </button>
+              <button
+                type="button"
+                @click="previewBulkPasteImport"
+                :disabled="!bulkPasteText.trim() || parsingImport"
+                class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer"
+              >
+                {{ parsingImport ? 'Memproses...' : 'Proses & Preview Soal' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab 3: Legacy Excel Upload -->
+          <div v-if="importTab === 'excel'" class="p-6 space-y-4 overflow-y-auto flex-1">
+            <p class="text-xs text-slate-500">
+              Pastikan format kolom sesuai dengan <strong>Template Excel Resmi</strong>. Teks soal, opsi A-D, kunci, materi, indikator, dan level kognitif akan langsung terisi.
+            </p>
+            <div class="border-2 border-dashed border-slate-200 hover:border-emerald-500 rounded-xl p-6 text-center cursor-pointer transition">
+              <input type="file" ref="excelFileInput" accept=".xlsx, .xls" class="hidden" @change="handleExcelFileSelect" />
+              <div @click="$refs.excelFileInput.click()" class="space-y-2">
+                <UploadCloud class="w-8 h-8 text-emerald-600 mx-auto" />
+                <div class="text-xs font-semibold text-slate-700">
+                  {{ selectedExcelFile ? selectedExcelFile.name : 'Klik untuk memilih file Excel (.xlsx)' }}
+                </div>
+                <div class="text-[11px] text-slate-400">Maksimal ukuran file 5 MB</div>
+              </div>
+            </div>
+            <div class="pt-2 flex justify-end gap-2">
+              <button type="button" @click="showImportModal = false" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 cursor-pointer">
+                Batal
+              </button>
+              <button
+                type="button"
+                @click="submitImportExcel"
+                :disabled="!selectedExcelFile || importing"
+                class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer"
+              >
+                {{ importing ? 'Mengimpor...' : 'Mulai Import Excel' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1071,6 +1282,24 @@
 
           <!-- Quick Print Preview (Desktop) -->
           <div class="hidden md:flex items-center gap-1">
+            <button
+              type="button"
+              @click="openImportModal(activePackage, 'docx')"
+              class="px-2.5 py-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg border border-indigo-500 transition flex items-center gap-1 cursor-pointer"
+              title="Import Naskah Word (.docx) atau Paste Sekaligus dari Word / Google Docs"
+            >
+              <Upload class="w-3.5 h-3.5" />
+              <span class="hidden xl:inline">Import Naskah</span>
+            </button>
+            <button
+              type="button"
+              @click="exportPackageDocx(activePackage)"
+              class="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition flex items-center gap-1 cursor-pointer"
+              title="Export Paket Soal ke File Word (.docx)"
+            >
+              <Printer class="w-3.5 h-3.5 text-indigo-300" />
+              <span class="hidden xl:inline">Export .docx</span>
+            </button>
             <button
               type="button"
               @click="previewNaskah"
@@ -2863,11 +3092,18 @@ const handleCompositionPresetChange = () => {
   }
 };
 
-// Excel Import
+// Import & Export (.docx Word Template, Bulk Copy-Paste, & Excel)
 const showImportModal = ref(false);
 const targetImportPackage = ref(null);
 const selectedExcelFile = ref(null);
 const importing = ref(false);
+const importTab = ref('docx'); // 'docx' | 'paste' | 'excel'
+const selectedDocxFile = ref(null);
+const bulkPasteText = ref('');
+const parsingImport = ref(false);
+const importPreviewQuestions = ref([]);
+const importPreviewWarnings = ref([]);
+const importCommitMode = ref('merge'); // 'merge' | 'replace'
 
 // Fullscreen Studio Workspace
 const activePackage = ref(null);
@@ -4756,19 +4992,126 @@ const deletePackage = async (pkg) => {
   }
 };
 
-// Excel Template & Import
-const downloadTemplate = () => {
-  window.open('/api/teacher/exam-bank/template', '_blank');
+// Shared Blob Download + Word (.docx) & Excel Template / Import / Export
+const triggerBlobDownload = async (endpoint, fallbackFilename) => {
+  try {
+    const blobData = await api.get(endpoint, { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([blobData]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fallbackFilename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal mengunduh file.');
+  }
 };
 
-const openImportModal = (pkg) => {
+const downloadTemplate = () => {
+  triggerBlobDownload('/teacher/exam-bank/template', 'Template_Soal_KisiKisi.xlsx');
+};
+
+const downloadDocxTemplate = () => {
+  triggerBlobDownload('/teacher/exam-bank/template-docx', 'Template_Naskah_Soal_MTs.docx');
+};
+
+const exportPackageDocx = (pkg) => {
+  if (!pkg) return;
+  const safeName = String(pkg.title || `Paket_${pkg.id}`).replace(/[^a-zA-Z0-9_\-]+/g, '_');
+  triggerBlobDownload(`/teacher/exam-bank/${pkg.id}/export-docx`, `Naskah_Soal_${safeName}.docx`);
+};
+
+const openImportModal = (pkg, initialTab = 'docx') => {
   targetImportPackage.value = pkg;
   selectedExcelFile.value = null;
+  selectedDocxFile.value = null;
+  bulkPasteText.value = '';
+  importPreviewQuestions.value = [];
+  importPreviewWarnings.value = [];
+  importCommitMode.value = 'merge';
+  importTab.value = initialTab;
   showImportModal.value = true;
 };
 
 const handleExcelFileSelect = (event) => {
   selectedExcelFile.value = event.target.files[0] || null;
+};
+
+const handleDocxFileSelect = (event) => {
+  selectedDocxFile.value = event.target.files[0] || null;
+};
+
+const resetDocxPreview = () => {
+  importPreviewQuestions.value = [];
+  importPreviewWarnings.value = [];
+};
+
+const previewDocxImport = async () => {
+  if (!selectedDocxFile.value || !targetImportPackage.value) return;
+  parsingImport.value = true;
+  const formData = new FormData();
+  formData.append('file', selectedDocxFile.value);
+
+  try {
+    const res = await api.postForm(`/teacher/exam-bank/${targetImportPackage.value.id}/import-docx-preview`, formData);
+    const d = res.data || res;
+    if (res.status === 'success' || d.status === 'success') {
+      const payload = d.data || d;
+      importPreviewQuestions.value = payload.questions || [];
+      importPreviewWarnings.value = payload.warnings || [];
+    }
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal membaca file Word (.docx).');
+  } finally {
+    parsingImport.value = false;
+  }
+};
+
+const previewBulkPasteImport = async () => {
+  if (!bulkPasteText.value.trim() || !targetImportPackage.value) return;
+  parsingImport.value = true;
+  try {
+    const res = await api.post(`/teacher/exam-bank/${targetImportPackage.value.id}/import-docx-preview`, {
+      raw_text: bulkPasteText.value
+    });
+    const d = res.data || res;
+    if (res.status === 'success' || d.status === 'success') {
+      const payload = d.data || d;
+      importPreviewQuestions.value = payload.questions || [];
+      importPreviewWarnings.value = payload.warnings || [];
+    }
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal memproses teks soal.');
+  } finally {
+    parsingImport.value = false;
+  }
+};
+
+const commitDocxOrTextImport = async () => {
+  if (!importPreviewQuestions.value.length || !targetImportPackage.value) return;
+  importing.value = true;
+  try {
+    const res = await api.post(`/teacher/exam-bank/${targetImportPackage.value.id}/import-questions-batch`, {
+      mode: importCommitMode.value,
+      questions: importPreviewQuestions.value
+    });
+    const d = res.data || res;
+    if (res.status === 'success' || d.status === 'success') {
+      toast.success(d.message || 'Butir soal berhasil dimasukkan ke paket!');
+      showImportModal.value = false;
+      const savedPkgId = targetImportPackage.value.id;
+      await fetchPackages();
+      if (activePackage.value && activePackage.value.id === savedPkgId) {
+        await openEditor(savedPkgId);
+      }
+    }
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal menyimpan soal hasil import.');
+  } finally {
+    importing.value = false;
+  }
 };
 
 const submitImportExcel = async () => {
@@ -4778,13 +5121,15 @@ const submitImportExcel = async () => {
   formData.append('file', selectedExcelFile.value);
 
   try {
-    const res = await api.post(`/teacher/exam-bank/${targetImportPackage.value.id}/import-excel`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    if (res.data?.status === 'success') {
-      toast.success(res.data.message || 'File Excel butir soal berhasil diimpor!');
+    const res = await api.postForm(`/teacher/exam-bank/${targetImportPackage.value.id}/import-excel`, formData);
+    if (res.status === 'success' || res.data?.status === 'success') {
+      toast.success(res.message || res.data?.message || 'File Excel butir soal berhasil diimpor!');
       showImportModal.value = false;
-      fetchPackages();
+      const savedPkgId = targetImportPackage.value.id;
+      await fetchPackages();
+      if (activePackage.value && activePackage.value.id === savedPkgId) {
+        await openEditor(savedPkgId);
+      }
     }
   } catch (err) {
     toast.error(err.response?.data?.message || 'Gagal mengimpor file Excel.');
