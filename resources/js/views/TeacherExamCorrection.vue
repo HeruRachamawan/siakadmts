@@ -24,47 +24,83 @@
       </div>
     </div>
 
-    <!-- Overview Stats Bar (When not viewing an active exam) -->
-    <div v-if="!activeExam" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center gap-4">
-        <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
-          <BookOpen class="w-5 h-5" />
+    <!-- Interactive Assessment Metric Cards (Gaya Card Pengelompokan ASTS & ASAS) -->
+    <div v-if="!activeExam" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <!-- 1. Semua Paket -->
+      <button
+        type="button"
+        @click="setExamTypeTab('all')"
+        class="p-4 rounded-2xl border text-left transition relative overflow-hidden group shadow-2xs cursor-pointer"
+        :class="activeExamTypeTab === 'all'
+          ? 'bg-slate-900 text-white border-slate-900 ring-2 ring-emerald-500 shadow-md'
+          : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200/80'"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider" :class="activeExamTypeTab === 'all' ? 'text-slate-300' : 'text-slate-500'">Semua Paket</span>
+          <div class="p-2 rounded-xl" :class="activeExamTypeTab === 'all' ? 'bg-white/10 text-emerald-400' : 'bg-slate-100 text-slate-600'">
+            <Layers class="w-4 h-4" />
+          </div>
         </div>
-        <div>
-          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Paket Ujian</span>
-          <div class="text-lg font-black text-slate-800 font-lexend">{{ exams.length }} Paket</div>
-        </div>
-      </div>
+        <div class="text-2xl sm:text-3xl font-black font-lexend">{{ examTypeCounts.all }}</div>
+        <div class="text-[11px] mt-1" :class="activeExamTypeTab === 'all' ? 'text-slate-300' : 'text-slate-400'">Total Seluruh Paket Soal</div>
+      </button>
 
-      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center gap-4">
-        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-          <Award class="w-5 h-5" />
+      <!-- 2. ASTS -->
+      <button
+        type="button"
+        @click="setExamTypeTab('sts')"
+        class="p-4 rounded-2xl border text-left transition relative overflow-hidden group shadow-2xs cursor-pointer"
+        :class="activeExamTypeTab === 'sts'
+          ? 'bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-300 shadow-md'
+          : 'bg-white hover:bg-indigo-50/30 text-slate-800 border-slate-200/80'"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider" :class="activeExamTypeTab === 'sts' ? 'text-indigo-100' : 'text-indigo-600'">Kelompok ASTS</span>
+          <div class="p-2 rounded-xl" :class="activeExamTypeTab === 'sts' ? 'bg-white/10 text-white' : 'bg-indigo-50 text-indigo-600'">
+            <BookOpen class="w-4 h-4" />
+          </div>
         </div>
-        <div>
-          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Rata-rata Nilai</span>
-          <div class="text-lg font-black text-blue-600 font-lexend">{{ overallAvgScore }}</div>
-        </div>
-      </div>
+        <div class="text-2xl sm:text-3xl font-black font-lexend">{{ examTypeCounts.sts }}</div>
+        <div class="text-[11px] mt-1" :class="activeExamTypeTab === 'sts' ? 'text-indigo-100' : 'text-slate-400'">Sumatif Tengah Semester</div>
+      </button>
 
-      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center gap-4">
-        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-          <CheckCircle2 class="w-5 h-5" />
+      <!-- 3. ASAS -->
+      <button
+        type="button"
+        @click="setExamTypeTab('sas')"
+        class="p-4 rounded-2xl border text-left transition relative overflow-hidden group shadow-2xs cursor-pointer"
+        :class="activeExamTypeTab === 'sas'
+          ? 'bg-purple-600 text-white border-purple-600 ring-2 ring-purple-300 shadow-md'
+          : 'bg-white hover:bg-purple-50/30 text-slate-800 border-slate-200/80'"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider" :class="activeExamTypeTab === 'sas' ? 'text-purple-100' : 'text-purple-600'">Kelompok ASAS</span>
+          <div class="p-2 rounded-xl" :class="activeExamTypeTab === 'sas' ? 'bg-white/10 text-white' : 'bg-purple-50 text-purple-600'">
+            <Award class="w-4 h-4" />
+          </div>
         </div>
-        <div>
-          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Siswa Tuntas</span>
-          <div class="text-lg font-black text-emerald-600 font-lexend">{{ totalPassedStudents }} Siswa</div>
-        </div>
-      </div>
+        <div class="text-2xl sm:text-3xl font-black font-lexend">{{ examTypeCounts.sas }}</div>
+        <div class="text-[11px] mt-1" :class="activeExamTypeTab === 'sas' ? 'text-purple-100' : 'text-slate-400'">Sumatif Akhir Semester</div>
+      </button>
 
-      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center gap-4">
-        <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-          <AlertCircle class="w-5 h-5" />
+      <!-- 4. Formatif / Lainnya -->
+      <button
+        type="button"
+        @click="setExamTypeTab('other')"
+        class="p-4 rounded-2xl border text-left transition relative overflow-hidden group shadow-2xs cursor-pointer"
+        :class="activeExamTypeTab === 'other'
+          ? 'bg-teal-600 text-white border-teal-600 ring-2 ring-teal-300 shadow-md'
+          : 'bg-white hover:bg-teal-50/30 text-slate-800 border-slate-200/80'"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider" :class="activeExamTypeTab === 'other' ? 'text-teal-100' : 'text-teal-600'">Formatif / Lainnya</span>
+          <div class="p-2 rounded-xl" :class="activeExamTypeTab === 'other' ? 'bg-white/10 text-white' : 'bg-teal-50 text-teal-600'">
+            <Calendar class="w-4 h-4" />
+          </div>
         </div>
-        <div>
-          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Perlu Remedial</span>
-          <div class="text-lg font-black text-rose-600 font-lexend">{{ totalRemedialStudents }} Siswa</div>
-        </div>
-      </div>
+        <div class="text-2xl sm:text-3xl font-black font-lexend">{{ examTypeCounts.other }}</div>
+        <div class="text-[11px] mt-1" :class="activeExamTypeTab === 'other' ? 'text-teal-100' : 'text-slate-400'">Formatif, AM & Lainnya</div>
+      </button>
     </div>
 
     <!-- MAIN VIEW 1: Exam List Table -->
@@ -173,7 +209,7 @@
         <h3 class="text-sm font-bold text-slate-700">Tidak Ada Paket Ujian</h3>
         <p class="text-xs text-slate-400 mt-1">Tidak ditemukan paket ujian yang cocok dengan kriteria filter.</p>
         <button
-          v-if="filterClass || filterSubject || filterType || searchQuery"
+          v-if="filterClass || filterSubject || filterType || searchQuery || activeExamTypeTab !== 'all'"
           type="button"
           @click="resetFilters"
           class="mt-3.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 cursor-pointer transition-colors shadow-2xs"
@@ -3580,7 +3616,9 @@ import {
   Pencil,
   Info,
   LayoutGrid,
-  List
+  List,
+  Layers,
+  Calendar
 } from 'lucide-vue-next';
 
 const toast = useToast();
@@ -3747,6 +3785,29 @@ function formatSemester(sem) {
   if (s === 'odd' || s === 'ganjil' || s === '1') return 'GANJIL';
   if (s === 'even' || s === 'genap' || s === '2') return 'GENAP';
   return s.toUpperCase();
+}
+
+const activeExamTypeTab = ref('all'); // 'all', 'sts', 'sas', 'other'
+
+const examTypeCounts = computed(() => {
+  const counts = {
+    all: exams.value.length,
+    sts: 0,
+    sas: 0,
+    other: 0,
+  };
+  exams.value.forEach(e => {
+    const t = String(e.exam_type || '').toLowerCase();
+    if (t === 'sts' || t === 'asts') counts.sts++;
+    else if (t === 'sas' || t === 'asas') counts.sas++;
+    else counts.other++;
+  });
+  return counts;
+});
+
+function setExamTypeTab(tab) {
+  activeExamTypeTab.value = tab;
+  filterType.value = '';
 }
 
 const viewMode = ref('grid'); // 'grid' (Kartu Asesmen per Kelas) | 'table' (Tabel Ringkas)
@@ -4795,6 +4856,12 @@ const filteredExams = computed(() => {
     if (filterSubject.value !== '' && filterSubject.value !== null && filterSubject.value !== undefined) {
       if (String(e.subject_id) !== String(filterSubject.value)) return false;
     }
+
+    const t = String(e.exam_type || '').toLowerCase();
+    if (activeExamTypeTab.value === 'sts' && t !== 'sts' && t !== 'asts') return false;
+    if (activeExamTypeTab.value === 'sas' && t !== 'sas' && t !== 'asas') return false;
+    if (activeExamTypeTab.value === 'other' && ['sts', 'asts', 'sas', 'asas'].includes(t)) return false;
+
     if (filterType.value && e.exam_type !== filterType.value) return false;
     if (searchQuery.value && !e.title?.toLowerCase().includes(searchQuery.value.toLowerCase())) return false;
     return true;
@@ -4831,6 +4898,10 @@ function selectClassTab(tab) {
         (e.class_room?.name && String(e.class_room.name).toLowerCase() === String(tab.name).replace(/^kelas\s*/i, '').toLowerCase());
       if (!matchesClass) return false;
       if (filterSubject.value && String(e.subject_id) !== String(filterSubject.value)) return false;
+      const t = String(e.exam_type || '').toLowerCase();
+      if (activeExamTypeTab.value === 'sts' && t !== 'sts' && t !== 'asts') return false;
+      if (activeExamTypeTab.value === 'sas' && t !== 'sas' && t !== 'asas') return false;
+      if (activeExamTypeTab.value === 'other' && ['sts', 'asts', 'sas', 'asas'].includes(t)) return false;
       if (filterType.value && e.exam_type !== filterType.value) return false;
       if (searchQuery.value && !e.title?.toLowerCase().includes(searchQuery.value.toLowerCase())) return false;
       return true;
@@ -4846,6 +4917,7 @@ function selectClassTab(tab) {
 }
 
 function resetFilters() {
+  activeExamTypeTab.value = 'all';
   filterClass.value = '';
   filterSubject.value = '';
   filterType.value = '';
