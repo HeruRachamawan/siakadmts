@@ -1135,22 +1135,70 @@ const onEditorBlur = () => {
 };
 
 // Word Paste Sanitizer & Prefix Stripper
+const QUESTION_PREFIX_REGEX = /^[\s\u00A0\u200B-\u200D\uFEFF]*(?:no\.?|soal)?[\s\u00A0]*\(?\d+\)?[\.\:\-\)][\s\u00A0]*/i;
+
 const cleanQuestionNumberPrefix = (text) => {
   if (!text) return '';
-  // Strips leading question number prefixes like: "9. ", "9) ", "No. 9. ", "Soal No. 9: ", "9 - "
-  return text.replace(/^(\s*(?:no\.?|soal)?\s*\(?\d+\)?[\.\:\-\)]\s*)/i, '');
+  return text.replace(QUESTION_PREFIX_REGEX, '');
 };
 
-const getFirstTextNode = (node) => {
-  if (!node) return null;
-  if (node.nodeType === 3 && node.nodeValue && node.nodeValue.trim()) {
-    return node;
+const stripLeadingCharsInElement = (container, charCount) => {
+  let remaining = charCount;
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+  const toClear = [];
+  let node;
+  while ((node = walker.nextNode()) && remaining > 0) {
+    const val = node.nodeValue || '';
+    if (!val) continue;
+    if (val.length <= remaining) {
+      remaining -= val.length;
+      toClear.push(node);
+    } else {
+      node.nodeValue = val.slice(remaining);
+      remaining = 0;
+    }
   }
-  for (let i = 0; i < node.childNodes.length; i++) {
-    const res = getFirstTextNode(node.childNodes[i]);
-    if (res) return res;
+  toClear.forEach(n => { n.nodeValue = ''; });
+};
+
+const unwrapLeadingSingleOrderedList = (body) => {
+  // Find first significant child (skipping empty text/comment nodes or single wrapper div)
+  let root = body;
+  const getSignificantChildren = (parent) => Array.from(parent.childNodes).filter(n => {
+    if (n.nodeType === 8) return false;
+    if (n.nodeType === 3) return Boolean(n.nodeValue && n.nodeValue.trim());
+    return true;
+  });
+
+  let sig = getSignificantChildren(root);
+  if (sig.length === 1 && sig[0].nodeType === 1 && sig[0].tagName === 'DIV') {
+    root = sig[0];
+    sig = getSignificantChildren(root);
   }
-  return null;
+
+  const firstEl = sig[0];
+  if (firstEl && firstEl.nodeType === 1 && firstEl.tagName === 'OL') {
+    const listItems = Array.from(firstEl.children).filter(c => c.tagName === 'LI');
+    if (listItems.length === 1) {
+      const li = listItems[0];
+      const frag = document.createDocumentFragment();
+      while (li.firstChild) {
+        frag.appendChild(li.firstChild);
+      }
+      firstEl.replaceWith(frag);
+    }
+  }
+};
+
+const stripLeadingPrefixFromDocBody = (body) => {
+  // Check first block element or body text across possibly split inline spans (e.g. <span>1</span><span>. </span>)
+  const firstEl = body.firstElementChild;
+  const target = (firstEl && /^(P|DIV|H[1-6]|SPAN)$/i.test(firstEl.tagName)) ? firstEl : body;
+  const rawText = target.textContent || '';
+  const match = rawText.match(QUESTION_PREFIX_REGEX);
+  if (match && match[0]) {
+    stripLeadingCharsInElement(target, match[0].length);
+  }
 };
 
 const onEditorPaste = (e) => {
@@ -1158,20 +1206,29 @@ const onEditorPaste = (e) => {
   const clipboardData = e.clipboardData || window.clipboardData;
   if (!clipboardData) return;
 
-  const htmlData = clipboardData.getData('text/html');
+  let htmlData = clipboardData.getData('text/html');
   const textData = clipboardData.getData('text/plain') || '';
 
   if (htmlData) {
     try {
+      // Remove Word conditional list markers before parsing DOM
+      htmlData = htmlData.replace(/<!--\[if\s*!supportLists\]-->[\s\S]*?<!--\[endif\]-->/gi, '');
+
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlData, 'text/html');
 
-      // 1. Remove Word list ignore markers & Word bullet spans
-      doc.querySelectorAll('[style*="mso-list:Ignore"], span.MsoListBullet').forEach(el => {
-        el.remove();
+      // 1. Remove Word list ignore markers (with or without space after colon) & Word bullet spans
+      doc.querySelectorAll('span.MsoListBullet, [style*="mso-list"]').forEach(el => {
+        const style = el.getAttribute('style') || '';
+        if (/mso-list\s*:\s*ignore/i.test(style) || el.classList.contains('MsoListBullet')) {
+          el.remove();
+        }
       });
 
-      // 2. Remove negative text-indent and negative margin-left on all elements
+      // 2. Unwrap single-item <ol><li>...</li></ol> generated when copying numbered question #1 from Word
+      unwrapLeadingSingleOrderedList(doc.body);
+
+      // 3. Remove negative text-indent, negative margin-left, and Word Mso* classes
       doc.querySelectorAll('*').forEach(el => {
         if (el.style) {
           if (el.style.textIndent && el.style.textIndent.includes('-')) {
@@ -1186,11 +1243,8 @@ const onEditorPaste = (e) => {
         }
       });
 
-      // 3. Strip leading question number from first text node
-      const firstText = getFirstTextNode(doc.body);
-      if (firstText && firstText.nodeValue) {
-        firstText.nodeValue = cleanQuestionNumberPrefix(firstText.nodeValue);
-      }
+      // 4. Strip leading question number prefix (even across split inline tags / NBSP)
+      stripLeadingPrefixFromDocBody(doc.body);
 
       let cleanedHtml = doc.body.innerHTML;
       // Defensive regex to clean any remaining negative text-indent or negative margin in inline styles
