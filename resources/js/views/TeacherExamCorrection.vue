@@ -244,7 +244,10 @@
                   <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide bg-teal-50 text-teal-700 border border-teal-100">
                     {{ examTypeLabel(exam.exam_type) }}
                   </span>
-                  <span v-if="isLokalClassName(exam.class_room?.name)" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span v-if="exam.target_grade" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200">
+                    🌐 {{ getExamClassDisplay(exam) }}
+                  </span>
+                  <span v-else-if="isLokalClassName(exam.class_room?.name)" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200">
                     📍 Kelas {{ exam.class_room?.name }} (Lokal)
                   </span>
                   <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">
@@ -365,7 +368,10 @@
               <td class="px-4 py-4">
                 <div class="font-bold text-slate-800">{{ exam.subject?.name || '-' }}</div>
                 <div class="mt-0.5">
-                  <span v-if="isLokalClassName(exam.class_room?.name)" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold bg-teal-50 text-teal-700 border border-teal-200 shadow-2xs">
+                  <span v-if="exam.target_grade" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+                    🌐 {{ getExamClassDisplay(exam) }}
+                  </span>
+                  <span v-else-if="isLokalClassName(exam.class_room?.name)" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold bg-teal-50 text-teal-700 border border-teal-200 shadow-2xs">
                     📍 Kelas {{ exam.class_room?.name }} (Lokal)
                   </span>
                   <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">
@@ -451,7 +457,7 @@
               </span>
             </div>
             <p class="text-xs text-slate-400 font-medium leading-relaxed mt-0.5">
-              Mapel: <strong>{{ activeExam.subject?.name }}</strong> &bull; Kelas: <strong>{{ activeExam.class_room?.name }}</strong> &bull; KKM: <strong>{{ activeExam.kkm }}</strong> &bull; {{ activeExam.total_questions }} Soal (PG {{ activeExam.pg_weight }}% | Essay {{ activeExam.essay_weight }}%)
+              Mapel: <strong>{{ activeExam.subject?.name }}</strong> &bull; <strong>{{ getExamClassDisplay(activeExam) }}</strong> &bull; KKM: <strong>{{ activeExam.kkm }}</strong> &bull; {{ activeExam.total_questions }} Soal (PG {{ activeExam.pg_weight }}% | Essay {{ activeExam.essay_weight }}%)
             </p>
           </div>
         </div>
@@ -943,6 +949,32 @@
           </div>
         </div>
 
+        <!-- Rombel Switcher (Untuk Paket Global / Multi-Rombel seperti 9A & 9B) -->
+        <div v-if="studentRombelTabs.length > 2" class="flex items-center justify-between gap-3 flex-wrap p-3 bg-slate-50/90 rounded-2xl border border-slate-200/80">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-[11px] font-black text-slate-600 uppercase tracking-wider mr-1">🏫 Pilih Rombel:</span>
+            <button
+              v-for="rtab in studentRombelTabs"
+              :key="'grading-rombel-' + rtab.key"
+              type="button"
+              @click="selectedStudentRombel = rtab.key"
+              class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              :class="selectedStudentRombel === rtab.key ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'"
+            >
+              <span>{{ rtab.label }}</span>
+              <span
+                class="px-1.5 py-0.2 rounded-full text-[10px] font-black"
+                :class="selectedStudentRombel === rtab.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'"
+              >
+                {{ rtab.count }}
+              </span>
+            </button>
+          </div>
+          <span class="text-[11px] font-medium text-slate-500">
+            Menampilkan <strong>{{ filteredActiveStudents.length }}</strong> dari {{ activeStudents.length }} siswa
+          </span>
+        </div>
+
         <!-- Student Answer Rows -->
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-600">
@@ -964,12 +996,12 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-for="(student, idx) in activeStudents" :key="student.id" class="hover:bg-slate-50/70 transition-colors">
+              <tr v-for="(student, idx) in filteredActiveStudents" :key="student.id" class="hover:bg-slate-50/70 transition-colors">
                 <td class="px-4 py-3 text-center font-bold text-slate-400">{{ idx + 1 }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2">
                     <span class="font-bold text-slate-800 font-lexend">{{ student.name }}</span>
-                    <span v-if="isLokalExam && student.origin_class_name && student.origin_class_name !== '-'" class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-teal-50 text-teal-700 border border-teal-200" :title="'Rombel Asal: ' + student.origin_class_name">
+                    <span v-if="isMultiRombelExam && student.origin_class_name && student.origin_class_name !== '-'" class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-teal-50 text-teal-700 border border-teal-200" :title="'Rombel Asal: ' + student.origin_class_name">
                       {{ student.origin_class_name }}
                     </span>
                   </div>
@@ -1323,6 +1355,32 @@
           </div>
         </div>
 
+        <!-- Rombel Switcher (Untuk Paket Global / Multi-Rombel seperti 9A & 9B) -->
+        <div v-if="studentRombelTabs.length > 2" class="flex items-center justify-between gap-3 flex-wrap p-3 bg-slate-50/90 rounded-2xl border border-slate-200/80">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-[11px] font-black text-slate-600 uppercase tracking-wider mr-1">🏫 Pilih Rombel:</span>
+            <button
+              v-for="rtab in studentRombelTabs"
+              :key="'adjusted-rombel-' + rtab.key"
+              type="button"
+              @click="selectedStudentRombel = rtab.key"
+              class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              :class="selectedStudentRombel === rtab.key ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'"
+            >
+              <span>{{ rtab.label }}</span>
+              <span
+                class="px-1.5 py-0.2 rounded-full text-[10px] font-black"
+                :class="selectedStudentRombel === rtab.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'"
+              >
+                {{ rtab.count }}
+              </span>
+            </button>
+          </div>
+          <span class="text-[11px] font-medium text-slate-500">
+            Menampilkan <strong>{{ filteredActiveStudents.length }}</strong> dari {{ activeStudents.length }} siswa
+          </span>
+        </div>
+
         <!-- TABEL RINCIAN NILAI JADI PER SISWA -->
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-700 border-collapse">
@@ -1342,12 +1400,12 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-for="(student, idx) in activeStudents" :key="student.id" class="hover:bg-amber-50/20 transition-colors">
+              <tr v-for="(student, idx) in filteredActiveStudents" :key="student.id" class="hover:bg-amber-50/20 transition-colors">
                 <td class="px-4 py-3 text-center font-bold text-slate-400">{{ idx + 1 }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2">
                     <span class="font-bold text-slate-900 font-lexend">{{ student.name }}</span>
-                    <span v-if="isLokalExam && student.origin_class_name && student.origin_class_name !== '-'" class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-teal-50 text-teal-700 border border-teal-200" :title="'Rombel Asal: ' + student.origin_class_name">
+                    <span v-if="isMultiRombelExam && student.origin_class_name && student.origin_class_name !== '-'" class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-teal-50 text-teal-700 border border-teal-200" :title="'Rombel Asal: ' + student.origin_class_name">
                       {{ student.origin_class_name }}
                     </span>
                   </div>
@@ -2498,8 +2556,8 @@
             <div>
               <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <h2 class="text-sm sm:text-base font-black text-slate-800 font-lexend">{{ selectedStudent.name }}</h2>
-                <span v-if="isLokalExam && selectedStudent.origin_class_name && selectedStudent.origin_class_name !== '-'" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-teal-50 text-teal-700 border border-teal-200">
-                  Rombel Asal: {{ selectedStudent.origin_class_name }}
+                <span v-if="isMultiRombelExam && selectedStudent.origin_class_name && selectedStudent.origin_class_name !== '-'" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-teal-50 text-teal-700 border border-teal-200">
+                  Rombel: {{ selectedStudent.origin_class_name }}
                 </span>
                 <span class="text-[10px] sm:text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700">NISN: {{ selectedStudent.nisn || '-' }}</span>
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" :class="selectedStudent.gender === 'L' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'">
@@ -2507,8 +2565,8 @@
                 </span>
               </div>
               <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5">
-                Siswa ke-{{ selectedStudentIndex + 1 }} dari {{ activeStudents.length }} siswa • Kelas {{ activeExam?.class_room?.name }}
-                <span v-if="isLokalExam && selectedStudent.origin_class_name && selectedStudent.origin_class_name !== '-'" class="text-teal-600 font-bold"> (Asal: {{ selectedStudent.origin_class_name }})</span>
+                Siswa ke-{{ selectedStudentIndex + 1 }} dari {{ filteredActiveStudents.length }} siswa • {{ printClassDisplay }}
+                <span v-if="isMultiRombelExam && selectedStudent.origin_class_name && selectedStudent.origin_class_name !== '-'" class="text-teal-600 font-bold"> (Asal: {{ selectedStudent.origin_class_name }})</span>
               </p>
             </div>
           </div>
@@ -2527,7 +2585,7 @@
             <button
               type="button"
               @click="nextStudent"
-              :disabled="selectedStudentIndex >= activeStudents.length - 1"
+              :disabled="selectedStudentIndex >= filteredActiveStudents.length - 1"
               class="px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 text-xs font-bold transition-all disabled:opacity-30 cursor-pointer flex items-center gap-1 shadow-2xs"
             >
               <span>Berikutnya</span>
@@ -2819,6 +2877,20 @@
           </div>
 
           <div class="flex items-center gap-2 flex-wrap justify-end">
+            <!-- Rombel Filter inside Print Recap Modal -->
+            <div v-if="studentRombelTabs.length > 2" class="flex items-center bg-slate-200/90 p-1 rounded-xl border border-slate-300 shadow-inner">
+              <button
+                v-for="rtab in studentRombelTabs"
+                :key="'print-rombel-' + rtab.key"
+                type="button"
+                @click="selectedStudentRombel = rtab.key"
+                :class="selectedStudentRombel === rtab.key ? 'bg-white text-teal-800 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                class="px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer"
+              >
+                {{ rtab.key === 'all' ? 'Semua' : rtab.key }}
+              </button>
+            </div>
+
             <!-- Pilihan Ukuran Kertas (A4 / F4) -->
             <div class="flex items-center bg-slate-200/90 p-1 rounded-xl border border-slate-300 shadow-inner">
               <button
@@ -2926,7 +2998,7 @@
             <div class="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs font-medium border border-slate-300 rounded-lg p-3 bg-slate-50/70">
               <div class="space-y-1">
                 <div class="flex"><span class="w-32 font-bold text-slate-700">Mata Pelajaran</span><span class="mr-2">:</span><strong class="text-slate-900">{{ activeExam.subject?.name || '-' }}</strong></div>
-                <div class="flex"><span class="w-32 font-bold text-slate-700">Kelas / Rombel</span><span class="mr-2">:</span><strong class="text-slate-900">Kelas {{ activeExam.class_room?.name || '-' }}</strong></div>
+                <div class="flex"><span class="w-32 font-bold text-slate-700">Kelas / Rombel</span><span class="mr-2">:</span><strong class="text-slate-900">{{ printClassDisplay }}</strong></div>
                 <div class="flex"><span class="w-32 font-bold text-slate-700">Guru Pengampu</span><span class="mr-2">:</span><span>{{ activeExam.teacher?.full_name || activeExam.teacher?.name || '-' }}</span></div>
                 <div class="flex"><span class="w-32 font-bold text-slate-700">Nama Paket Ujian</span><span class="mr-2">:</span><span>{{ activeExam.title }}</span></div>
               </div>
@@ -2969,7 +3041,7 @@
                 </thead>
                 <tbody>
                   <tr
-                    v-for="(student, idx) in activeStudents"
+                    v-for="(student, idx) in filteredActiveStudents"
                     :key="student.id"
                     class="hover:bg-slate-50/50"
                   >
@@ -2977,7 +3049,7 @@
                     <td class="border border-slate-300 px-2.5 py-1.5 text-center font-mono text-slate-600">{{ student.nisn || '-' }}</td>
                     <td class="border border-slate-300 px-3 py-1.5 font-bold text-slate-800">
                       {{ student.name }}
-                      <span v-if="isLokalExam && student.origin_class_name && student.origin_class_name !== '-'" class="ml-1 text-[10px] text-teal-700 font-bold">({{ student.origin_class_name }})</span>
+                      <span v-if="isMultiRombelExam && selectedStudentRombel === 'all' && student.origin_class_name && student.origin_class_name !== '-'" class="ml-1 text-[10px] text-teal-700 font-bold">({{ student.origin_class_name }})</span>
                     </td>
                     <td class="border border-slate-300 px-1.5 py-1.5 text-center font-bold text-slate-600">{{ student.gender || '-' }}</td>
 
@@ -3039,7 +3111,7 @@
                     </td>
                   </tr>
 
-                  <tr v-if="activeStudents.length === 0">
+                  <tr v-if="filteredActiveStudents.length === 0">
                     <td :colspan="8 + activeQuestionTypesList.length" class="border border-slate-300 px-4 py-6 text-center text-slate-400">
                       Tidak ada data siswa pada kelas ini.
                     </td>
@@ -3219,7 +3291,7 @@
             <div class="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs font-medium border border-slate-300 rounded-lg p-3 bg-slate-50/70">
               <div class="space-y-1">
                 <div class="flex"><span class="w-32 font-bold text-slate-700">Mata Pelajaran</span><span class="mr-2">:</span><strong class="text-slate-900">{{ activeExam.subject?.name || '-' }}</strong></div>
-                <div class="flex"><span class="w-32 font-bold text-slate-700">Kelas / Rombel</span><span class="mr-2">:</span><strong class="text-slate-900">Kelas {{ activeExam.class_room?.name || '-' }}</strong></div>
+                <div class="flex"><span class="w-32 font-bold text-slate-700">Kelas / Rombel</span><span class="mr-2">:</span><strong class="text-slate-900">{{ getExamClassDisplay(activeExam) }}</strong></div>
                 <div class="flex"><span class="w-32 font-bold text-slate-700">Guru Pengampu</span><span class="mr-2">:</span><span>{{ activeExam.teacher?.full_name || activeExam.teacher?.name || '-' }}</span></div>
                 <div class="flex"><span class="w-32 font-bold text-slate-700">Nama Paket Ujian</span><span class="mr-2">:</span><span>{{ activeExam.title }}</span></div>
               </div>
@@ -3431,6 +3503,20 @@
           </div>
 
           <div class="flex items-center gap-2 flex-wrap justify-end">
+            <!-- Rombel Filter inside Adjusted Print Modal -->
+            <div v-if="studentRombelTabs.length > 2" class="flex items-center bg-slate-200/90 p-1 rounded-xl border border-slate-300 shadow-inner">
+              <button
+                v-for="rtab in studentRombelTabs"
+                :key="'adj-print-rombel-' + rtab.key"
+                type="button"
+                @click="selectedStudentRombel = rtab.key"
+                :class="selectedStudentRombel === rtab.key ? 'bg-white text-amber-800 shadow font-black' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                class="px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer"
+              >
+                {{ rtab.key === 'all' ? 'Semua' : rtab.key }}
+              </button>
+            </div>
+
             <!-- Pilihan Ukuran Kertas (F4 / A4) & Orientasi (Potret / Lanskap) -->
             <div class="flex items-center gap-1.5 flex-wrap">
               <div class="flex items-center bg-slate-200/90 p-1 rounded-xl border border-slate-300 shadow-inner">
@@ -3549,7 +3635,7 @@
             <div class="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs font-medium border border-slate-300 rounded-lg p-3 bg-slate-50/70">
               <div class="space-y-1">
                 <div class="flex"><span class="w-32 font-bold text-slate-700">Mata Pelajaran</span><span class="mr-2">:</span><strong class="text-slate-900">{{ activeExam.subject?.name || '-' }}</strong></div>
-                <div class="flex"><span class="w-32 font-bold text-slate-700">Kelas / Rombel</span><span class="mr-2">:</span><strong class="text-slate-900">Kelas {{ activeExam.class_room?.name || '-' }}</strong></div>
+                <div class="flex"><span class="w-32 font-bold text-slate-700">Kelas / Rombel</span><span class="mr-2">:</span><strong class="text-slate-900">{{ printClassDisplay }}</strong></div>
                 <div class="flex"><span class="w-32 font-bold text-slate-700">Guru Pengampu</span><span class="mr-2">:</span><span>{{ activeExam.teacher?.full_name || activeExam.teacher?.name || '-' }}</span></div>
                 <div class="flex"><span class="w-32 font-bold text-slate-700">Nama Paket Ujian</span><span class="mr-2">:</span><span>{{ activeExam.title }}</span></div>
               </div>
@@ -3578,13 +3664,16 @@
                 </thead>
                 <tbody>
                   <tr
-                    v-for="(student, idx) in activeStudents"
+                    v-for="(student, idx) in filteredActiveStudents"
                     :key="student.id"
                     class="border-b border-slate-300 hover:bg-slate-50"
                   >
                     <td class="border border-slate-300 px-2 py-1.5 text-center font-bold">{{ idx + 1 }}</td>
                     <td class="border border-slate-300 px-3 py-1.5 text-center font-mono font-medium">{{ student.nisn || '-' }}</td>
-                    <td class="border border-slate-300 px-3 py-1.5 text-left font-bold text-slate-900 uppercase">{{ student.name }}</td>
+                    <td class="border border-slate-300 px-3 py-1.5 text-left font-bold text-slate-900 uppercase">
+                      {{ student.name }}
+                      <span v-if="isMultiRombelExam && selectedStudentRombel === 'all' && student.origin_class_name && student.origin_class_name !== '-'" class="ml-1 text-[10px] text-teal-700 font-bold normal-case">({{ student.origin_class_name }})</span>
+                    </td>
                     <td class="border border-slate-300 px-2 py-1.5 text-center font-medium">{{ student.gender || '-' }}</td>
                     <td class="border border-slate-400 px-3 py-1.5 text-center font-black text-sm bg-amber-50/50 text-slate-900">
                       {{ (student.remedial_score !== null && student.remedial_score !== undefined && student.remedial_score !== '') ? student.remedial_score : (student.total_score !== null ? student.total_score : '-') }}
@@ -3644,7 +3733,7 @@
               <div class="grid grid-cols-4 gap-2 text-[11px] pt-1">
                 <div class="p-2 border border-slate-200 rounded bg-white text-center">
                   <span class="text-slate-500 block text-[10px]">Total Peserta:</span>
-                  <strong class="text-slate-800 text-sm">{{ activeStudents.length }} Siswa</strong>
+                  <strong class="text-slate-800 text-sm">{{ filteredActiveStudents.length }} Siswa</strong>
                 </div>
                 <div class="p-2 border border-slate-200 rounded bg-white text-center">
                   <span class="text-slate-500 block text-[10px]">Rata-rata Nilai Jadi:</span>
@@ -3927,23 +4016,83 @@ const filterType = ref('');
 const searchQuery = ref('');
 const sortBy = ref('oldest'); // 'oldest' (default terlama), 'newest' (terbaru), 'class' (urut kelas)
 
+function getExamClassDisplay(exam) {
+  if (!exam) return '-';
+  if (exam.target_grade) {
+    const g = String(exam.target_grade);
+    const regMatches = (utamaClasses.value || []).filter(c => String(c.grade_level) === g);
+    const matched = regMatches.length > 0
+      ? regMatches
+      : (classes.value || []).filter(c => String(c.grade_level) === g);
+    const names = matched.map(c => c.name).filter(Boolean);
+    return names.length > 0 ? `Kelas ${g} (Global: ${names.join(', ')})` : `Kelas ${g} (Global)`;
+  }
+  if (isLokalClassName(exam.class_room?.name)) {
+    return `Kelas ${exam.class_room.name} (Lokal)`;
+  }
+  return `Kelas ${exam.class_room?.name || '-'}`;
+}
+
+function doesExamMatchClassFilter(exam, selectedRaw) {
+  if (selectedRaw === '' || selectedRaw === null || selectedRaw === undefined) return true;
+  const selected = String(selectedRaw).trim();
+  const examClassId = exam.class_room_id !== null && exam.class_room_id !== undefined ? String(exam.class_room_id).trim() : '';
+  const examClassName = exam.class_room?.name ? String(exam.class_room.name).trim() : '';
+
+  if (examClassId !== '' && examClassId === selected) return true;
+  if (examClassName !== '' && (
+    examClassName.toLowerCase() === selected.toLowerCase() ||
+    `kelas ${examClassName}`.toLowerCase() === selected.toLowerCase() ||
+    (selected.toLowerCase() === 'kelas lainnya' && !exam.class_room_id)
+  )) {
+    return true;
+  }
+
+  if (exam.target_grade) {
+    const selectedCls = (classes.value || []).find(c =>
+      String(c.id) === selected ||
+      String(c.name || '').toLowerCase() === selected.toLowerCase() ||
+      `kelas ${String(c.name || '')}`.toLowerCase() === selected.toLowerCase()
+    );
+    if (selectedCls && String(selectedCls.grade_level) === String(exam.target_grade)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // Tab filter kelas cepat dari seluruh ujian guru
 const classTabs = computed(() => {
   if (!exams.value.length) return [];
 
   const map = new Map();
-  exams.value.forEach(item => {
-    const cId = item.class_room_id ? String(item.class_room_id) : 'other';
-    const cName = item.class_room?.name ? `Kelas ${item.class_room.name}` : 'Kelas Lainnya';
+  const addToTab = (cId, cName, gradeLevel) => {
     if (!map.has(cId)) {
       map.set(cId, {
         id: cId,
         name: cName,
-        gradeLevel: item.class_room?.grade_level || 0,
+        gradeLevel: gradeLevel || 0,
         count: 0
       });
     }
     map.get(cId).count++;
+  };
+
+  exams.value.forEach(item => {
+    if (item.target_grade) {
+      const g = String(item.target_grade);
+      const regMatches = (utamaClasses.value || []).filter(c => String(c.grade_level) === g);
+      const matched = regMatches.length > 0
+        ? regMatches
+        : (classes.value || []).filter(c => String(c.grade_level) === g);
+      if (matched.length > 0) {
+        matched.forEach(c => addToTab(String(c.id), `Kelas ${c.name}`, c.grade_level));
+        return;
+      }
+    }
+    const cId = item.class_room_id ? String(item.class_room_id) : 'other';
+    const cName = item.class_room?.name ? `Kelas ${item.class_room.name}` : 'Kelas Lainnya';
+    addToTab(cId, cName, item.class_room?.grade_level || 0);
   });
 
   const list = Array.from(map.values()).sort((a, b) => {
@@ -4214,6 +4363,45 @@ const isLokalExam = computed(() => {
 const activeTab = ref('keys');
 const activeQuestions = ref([]);
 const activeStudents = ref([]);
+const selectedStudentRombel = ref('all');
+
+const studentRombelTabs = computed(() => {
+  const list = activeStudents.value || [];
+  const countsMap = new Map();
+  list.forEach(s => {
+    const cls = String(s.origin_class_name || '').trim();
+    if (cls && cls !== '-') {
+      countsMap.set(cls, (countsMap.get(cls) || 0) + 1);
+    }
+  });
+  const sortedNames = Array.from(countsMap.keys()).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  return [
+    { key: 'all', label: 'Semua Rombel', count: list.length },
+    ...sortedNames.map(name => ({
+      key: name,
+      label: `Kelas ${name}`,
+      count: countsMap.get(name)
+    }))
+  ];
+});
+
+const isMultiRombelExam = computed(() => {
+  return studentRombelTabs.value.length > 2 || Boolean(activeExam.value?.target_grade) || isLokalExam.value;
+});
+
+const filteredActiveStudents = computed(() => {
+  if (selectedStudentRombel.value === 'all') {
+    return activeStudents.value;
+  }
+  return (activeStudents.value || []).filter(s => s.origin_class_name === selectedStudentRombel.value);
+});
+
+const printClassDisplay = computed(() => {
+  if (selectedStudentRombel.value && selectedStudentRombel.value !== 'all') {
+    return `Kelas ${selectedStudentRombel.value}`;
+  }
+  return getExamClassDisplay(activeExam.value);
+});
 const quickKeyInput = ref('');
 const savingKeys = ref(false);
 const gradingProcessing = ref(false);
@@ -4269,7 +4457,7 @@ const difficultyDistribution = computed(() => {
 });
 
 const adjustedStats = computed(() => {
-  const students = activeStudents.value || [];
+  const students = filteredActiveStudents.value || [];
   const kkm = Number(activeExam.value?.kkm) || 75;
   
   let totalOrigScore = 0;
@@ -4594,7 +4782,7 @@ function prevStudent() {
   if (selectedStudentIndex.value > 0) {
     if (selectedStudent.value) syncStudentAnswerString(selectedStudent.value);
     selectedStudentIndex.value--;
-    selectedStudent.value = activeStudents.value[selectedStudentIndex.value];
+    selectedStudent.value = filteredActiveStudents.value[selectedStudentIndex.value];
     if (!selectedStudent.value.student_answers) selectedStudent.value.student_answers = {};
     if (!selectedStudent.value.essay_scores) selectedStudent.value.essay_scores = {};
     studentInitialSnapshot.value = takeStudentSnapshot(selectedStudent.value);
@@ -4602,10 +4790,10 @@ function prevStudent() {
 }
 
 function nextStudent() {
-  if (selectedStudentIndex.value < activeStudents.value.length - 1) {
+  if (selectedStudentIndex.value < filteredActiveStudents.value.length - 1) {
     if (selectedStudent.value) syncStudentAnswerString(selectedStudent.value);
     selectedStudentIndex.value++;
-    selectedStudent.value = activeStudents.value[selectedStudentIndex.value];
+    selectedStudent.value = filteredActiveStudents.value[selectedStudentIndex.value];
     if (!selectedStudent.value.student_answers) selectedStudent.value.student_answers = {};
     if (!selectedStudent.value.essay_scores) selectedStudent.value.essay_scores = {};
     studentInitialSnapshot.value = takeStudentSnapshot(selectedStudent.value);
@@ -4652,7 +4840,7 @@ async function saveCurrentStudentCorrection(andNext = false) {
     initialStudentsSnapshot.value = getStudentsDataSnapshot();
 
     if (andNext) {
-      if (selectedStudentIndex.value < activeStudents.value.length - 1) {
+      if (selectedStudentIndex.value < filteredActiveStudents.value.length - 1) {
         nextStudent();
       } else {
         toast.info('Semua siswa pada kelas ini telah selesai dikoreksi.');
@@ -5046,20 +5234,7 @@ async function fetchExams() {
 
 const filteredExams = computed(() => {
   const list = exams.value.filter(e => {
-    if (filterClass.value !== '' && filterClass.value !== null && filterClass.value !== undefined) {
-      const selected = String(filterClass.value).trim();
-      const examClassId = e.class_room_id !== null && e.class_room_id !== undefined ? String(e.class_room_id).trim() : '';
-      const examClassName = e.class_room?.name ? String(e.class_room.name).trim() : '';
-      
-      const isIdMatch = examClassId !== '' && examClassId === selected;
-      const isNameMatch = examClassName !== '' && (
-        examClassName.toLowerCase() === selected.toLowerCase() ||
-        `kelas ${examClassName}`.toLowerCase() === selected.toLowerCase() ||
-        (selected.toLowerCase() === 'kelas lainnya' && !e.class_room_id)
-      );
-
-      if (!isIdMatch && !isNameMatch) return false;
-    }
+    if (!doesExamMatchClassFilter(e, filterClass.value)) return false;
     if (filterSubject.value !== '' && filterSubject.value !== null && filterSubject.value !== undefined) {
       if (String(e.subject_id) !== String(filterSubject.value)) return false;
     }
@@ -5101,9 +5276,7 @@ function selectClassTab(tab) {
   // Jika tab kelas tertentu dipilih tapi terhalang filter mapel/pencarian yang menghasilkan 0, otomatis bersihkan sub-filter
   if (tab.id !== '') {
     const hasMatchingExamsWithCurrentFilters = exams.value.some(e => {
-      const matchesClass = String(e.class_room_id) === String(tab.id) ||
-        (e.class_room?.name && String(e.class_room.name).toLowerCase() === String(tab.name).replace(/^kelas\s*/i, '').toLowerCase());
-      if (!matchesClass) return false;
+      if (!doesExamMatchClassFilter(e, tab.id)) return false;
       if (filterSubject.value && String(e.subject_id) !== String(filterSubject.value)) return false;
       const t = String(e.exam_type || '').toLowerCase();
       if (activeExamTypeTab.value === 'sts' && t !== 'sts' && t !== 'asts') return false;
@@ -5348,6 +5521,7 @@ async function updateExam() {
 
 async function openExamDetail(id) {
   loading.value = true;
+  selectedStudentRombel.value = 'all';
   try {
     const res = await api.get(`/teacher/exam-corrections/${id}`);
     const data = res?.data || res || {};
@@ -5527,7 +5701,7 @@ function applyBoostToKKM() {
   let boostedCount = 0;
   let preservedCount = 0;
 
-  activeStudents.value.forEach(s => {
+  filteredActiveStudents.value.forEach(s => {
     // Lewati siswa yang belum mengikuti ujian sama sekali
     if (!s.has_submitted && s.total_score === null) return;
 
@@ -5546,14 +5720,14 @@ function applyBoostToKKM() {
   if (boostedCount > 0) {
     toast.success(`${boostedCount} siswa di bawah KKM berhasil didongkrak ke KKM (${kkm}). ${preservedCount} siswa yang tuntas tetap mempertahankan nilai aslinya.`);
   } else {
-    toast.info(`Semua siswa yang mengikuti ujian sudah mencapai batas KKM (${kkm}). Nilai asli tetap dipertahankan.`);
+    toast.info(`Semua siswa yang ditampilkan sudah mencapai batas KKM (${kkm}). Nilai asli tetap dipertahankan.`);
   }
 }
 
 function applyProportionalCurve() {
   if (!activeExam.value) return;
   const kkm = Number(activeExam.value.kkm) || 75;
-  const validScores = activeStudents.value
+  const validScores = filteredActiveStudents.value
     .map(s => Number(s.total_score))
     .filter(n => !isNaN(n) && n !== null);
 
@@ -5566,7 +5740,7 @@ function applyProportionalCurve() {
   const maxRaw = Math.max(...validScores);
   const targetMax = Math.max(98, maxRaw);
 
-  activeStudents.value.forEach(s => {
+  filteredActiveStudents.value.forEach(s => {
     const raw = Number(s.total_score);
     if (isNaN(raw)) return;
 
@@ -5587,26 +5761,26 @@ function applyProportionalCurve() {
 
 function applyFlatBonus(pts) {
   if (!activeExam.value) return;
-  activeStudents.value.forEach(s => {
+  filteredActiveStudents.value.forEach(s => {
     const base = Number(s.remedial_score ?? s.total_score);
     if (isNaN(base)) return;
     s.remedial_score = Math.min(100, Math.max(0, Math.round(base + pts)));
   });
-  toast.success(`Bonus +${pts} poin berhasil ditambahkan ke seluruh siswa.`);
+  toast.success(`Bonus +${pts} poin berhasil ditambahkan.`);
 }
 
 function resetAdjustedToOriginal() {
-  activeStudents.value.forEach(s => {
+  filteredActiveStudents.value.forEach(s => {
     s.remedial_score = s.total_score;
   });
   toast.info('Nilai jadi dikembalikan sama persis dengan nilai asli koreksi.');
 }
 
 function clearRemedialScores() {
-  activeStudents.value.forEach(s => {
+  filteredActiveStudents.value.forEach(s => {
     s.remedial_score = null;
   });
-  toast.info('Seluruh nilai jadi berhasil dikosongkan.');
+  toast.info('Nilai jadi berhasil dikosongkan.');
 }
 
 async function saveAdjustedScores() {
@@ -5637,8 +5811,34 @@ async function saveAdjustedScores() {
   }
 }
 
-function downloadExcel(id) {
-  window.open(`/api/teacher/exam-corrections/${id}/export-excel`, '_blank');
+async function downloadExcel(id) {
+  try {
+    const token = localStorage.getItem('token') || '';
+    const params = new URLSearchParams();
+    if (activeExam.value && Number(activeExam.value.id) === Number(id) && selectedStudentRombel.value !== 'all') {
+      params.set('rombel', selectedStudentRombel.value);
+    }
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetch(`/api/teacher/exam-corrections/${id}/export-excel${qs}`, {
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/json',
+      },
+    });
+    if (!response.ok) throw new Error('Gagal mengunduh file Excel');
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Rekap_Ujian_${id}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+  } catch (err) {
+    toast.error(err.message || 'Gagal mengunduh file Excel.');
+  }
 }
 
 async function confirmDelete(exam) {
@@ -5842,7 +6042,7 @@ function getExamTypeFullName(type) {
 }
 
 const printStats = computed(() => {
-  const students = activeStudents.value || [];
+  const students = filteredActiveStudents.value || [];
   if (students.length === 0) {
     return {
       total: 0,
@@ -6701,7 +6901,7 @@ async function exportToWord() {
   }
 
   // 3. Baris Data Siswa (Teks hitam pekat tegas & kontras tinggi)
-  const students = activeStudents.value || [];
+  const students = filteredActiveStudents.value || [];
   const kkm = Number(activeExam.value?.kkm || 75);
 
   let rowsHtml = '';
@@ -6743,11 +6943,15 @@ async function exportToWord() {
         statusHtml = '<span style="color: #64748b; font-size: 8pt; font-weight: bold;">BELUM UJIAN</span>';
       }
 
+      const rombelTag = (isMultiRombelExam.value && selectedStudentRombel.value === 'all' && student.origin_class_name && student.origin_class_name !== '-')
+        ? ` <span style="font-size: 8pt; color: #0f766e;">(${student.origin_class_name})</span>`
+        : '';
+
       return `
         <tr style="background-color: ${idx % 2 === 1 ? '#f8fafc' : '#ffffff'};">
           <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; font-weight: bold; color: #000000; font-size: 8.5pt;">${idx + 1}</td>
           <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; font-family: Arial, sans-serif; font-size: 8.5pt; font-weight: bold; color: #000000;">${student.nisn || '-'}</td>
-          <td align="left" style="border: 1pt solid #000000; padding: 3.5pt 6pt; font-weight: bold; font-size: 9pt; color: #000000;">${student.name}</td>
+          <td align="left" style="border: 1pt solid #000000; padding: 3.5pt 6pt; font-weight: bold; font-size: 9pt; color: #000000;">${student.name}${rombelTag}</td>
           <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt; font-weight: bold; font-size: 8.5pt; color: #000000;">${student.gender || '-'}</td>
           ${typeScoresHtml}
           <td align="center" style="border: 1pt solid #000000; padding: 3.5pt 2pt;">${initialScoreHtml}</td>
@@ -6847,7 +7051,7 @@ async function exportToWord() {
       <tr>
         <td width="50%" valign="top" style="padding: 6pt 10pt; font-size: 9pt; color: #000000; line-height: 1.5; border: none;">
           <div><b style="color: #000000;">Mata Pelajaran :</b> <span style="font-weight: 900; color: #000000;">${activeExam.value.subject?.name || '-'}</span></div>
-          <div><b style="color: #000000;">Kelas / Rombel :</b> <span style="font-weight: 900; color: #000000;">Kelas ${activeExam.value.class_room?.name || '-'}</span></div>
+          <div><b style="color: #000000;">Kelas / Rombel :</b> <span style="font-weight: 900; color: #000000;">${printClassDisplay.value}</span></div>
           <div><b style="color: #000000;">Guru Pengampu :</b> <span style="font-weight: bold; color: #000000;">${activeExam.value.teacher?.full_name || activeExam.value.teacher?.name || '-'}</span></div>
           <div><b style="color: #000000;">Nama Paket Ujian :</b> <span style="font-weight: bold; color: #000000;">${activeExam.value.title}</span></div>
         </td>

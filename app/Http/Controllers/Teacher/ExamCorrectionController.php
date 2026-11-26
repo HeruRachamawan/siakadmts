@@ -121,7 +121,13 @@ class ExamCorrectionController extends Controller
         }
 
         if ($request->filled('class_room_id')) {
-            $query->where('class_room_id', $request->class_room_id);
+            $filterCls = \App\Models\ClassRoom::find($request->class_room_id);
+            $query->where(function ($q) use ($request, $filterCls) {
+                $q->where('class_room_id', $request->class_room_id);
+                if ($filterCls && $filterCls->grade_level) {
+                    $q->orWhere('target_grade', (string)$filterCls->grade_level);
+                }
+            });
         }
         if ($request->filled('subject_id')) {
             $query->where('subject_id', $request->subject_id);
@@ -331,43 +337,8 @@ class ExamCorrectionController extends Controller
             }
         }
 
-        // Fetch all active students in this classroom (either regular or lokal class)
-        $targetClass = $exam->classRoom;
-        $isLokalClass = false;
-        if ($targetClass) {
-            $name = trim($targetClass->name);
-            $lower = strtolower($name);
-            $isClass9A = in_array($name, ['9A', '9a', '9-A', '9-a']) || in_array($lower, ['kelas 9a', 'kelas 9-a', 'ix-a', 'ix a']);
-            $isClass9B = in_array($name, ['9B', '9b', '9-B', '9-b']) || in_array($lower, ['kelas 9b', 'kelas 9-b', 'ix-b', 'ix b']);
-            $isLokalClass = in_array($name, ['7', '8']) || in_array($lower, ['kelas 7', 'kelas 8']) ||
-                $isClass9A || $isClass9B ||
-                str_contains($lower, 'lokal') || str_starts_with($lower, 'l-') || str_starts_with($lower, 'lok-');
-        }
-
-        if ($exam->target_grade) {
-            $classIds = \App\Models\ClassRoom::where('grade_level', $exam->target_grade)->pluck('id');
-            $students = Student::with('classRoom')
-                ->where(function ($q) use ($classIds) {
-                    $q->whereIn('class_id', $classIds)
-                      ->orWhereIn('lokal_class_id', $classIds);
-                })
-                ->orderBy('class_id', 'asc')
-                ->orderBy('full_name', 'asc')
-                ->get();
-        } elseif ($isLokalClass) {
-            $students = Student::with('classRoom')
-                ->where(function ($q) use ($exam) {
-                    $q->where('lokal_class_id', $exam->class_room_id)
-                      ->orWhere('class_id', $exam->class_room_id);
-                })
-                ->orderBy('full_name', 'asc')
-                ->get();
-        } else {
-            $students = Student::with('classRoom')
-                ->where('class_id', $exam->class_room_id)
-                ->orderBy('full_name', 'asc')
-                ->get();
-        }
+        // Fetch all active students in this exam package (supports target_grade global, lokal, and regular classes)
+        $students = $this->resolveExamStudents($exam);
 
         // Fetch existing submissions
         $submissions = ExamSubmission::where('exam_package_id', $exam->id)
@@ -1071,14 +1042,63 @@ class ExamCorrectionController extends Controller
     }
 
     /**
-     * Download Excel template or export scores.
+     * Resolve all students participating in an exam package (supports target_grade global, lokal, and regular classes).
      */
-    public function exportExcel($id)
+    private function resolveExamStudents(ExamPackage $exam)
     {
-        $exam = ExamPackage::with(['questions', 'classRoom', 'subject'])->findOrFail($id);
-        $students = Student::where('class_id', $exam->class_room_id)
+        $targetClass = $exam->classRoom;
+        $isLokalClass = false;
+        if ($targetClass) {
+            $name = trim($targetClass->name);
+            $lower = strtolower($name);
+            $isClass9A = in_array($name, ['9A', '9a', '9-A', '9-a']) || in_array($lower, ['kelas 9a', 'kelas 9-a', 'ix-a', 'ix a']);
+            $isClass9B = in_array($name, ['9B', '9b', '9-B', '9-b']) || in_array($lower, ['kelas 9b', 'kelas 9-b', 'ix-b', 'ix b']);
+            $isLokalClass = in_array($name, ['7', '8']) || in_array($lower, ['kelas 7', 'kelas 8']) ||
+                $isClass9A || $isClass9B ||
+                str_contains($lower, 'lokal') || str_starts_with($lower, 'l-') || str_starts_with($lower, 'lok-');
+        }
+
+        if ($exam->target_grade) {
+            $classIds = \App\Models\ClassRoom::where('grade_level', $exam->target_grade)->pluck('id');
+            return Student::with('classRoom')
+                ->where(function ($q) use ($classIds) {
+                    $q->whereIn('class_id', $classIds)
+                      ->orWhereIn('lokal_class_id', $classIds);
+                })
+                ->orderBy('class_id', 'asc')
+                ->orderBy('full_name', 'asc')
+                ->get();
+        }
+
+        if ($isLokalClass) {
+            return Student::with('classRoom')
+                ->where(function ($q) use ($exam) {
+                    $q->where('lokal_class_id', $exam->class_room_id)
+                      ->orWhere('class_id', $exam->class_room_id);
+                })
+                ->orderBy('class_id', 'asc')
+                ->orderBy('full_name', 'asc')
+                ->get();
+        }
+
+        return Student::with('classRoom')
+            ->where('class_id', $exam->class_room_id)
             ->orderBy('full_name', 'asc')
             ->get();
+    }
+
+    /**
+     * Download Excel template or export scores.
+     */
+    public function exportExcel(Request $request, $id)
+    {
+        $exam = ExamPackage::with(['questions', 'classRoom', 'subject'])->findOrFail($id);
+        $students = $this->resolveExamStudents($exam);
+
+        if ($request->filled('rombel') && $request->rombel !== 'all') {
+            $targetRombel = trim((string) $request->rombel);
+            $students = $students->filter(fn($s) => ($s->classRoom?->name ?? '-') === $targetRombel)->values();
+        }
 
         $submissions = ExamSubmission::where('exam_package_id', $exam->id)
             ->get()
@@ -1089,7 +1109,7 @@ class ExamCorrectionController extends Controller
         $sheet->setTitle('Rekap Nilai Ujian');
 
         // Headers
-        $headers = ['No', 'NISN', 'NIS', 'Nama Siswa', 'L/P'];
+        $headers = ['No', 'NISN', 'NIS', 'Nama Siswa', 'Kelas', 'L/P'];
         foreach ($exam->questions as $q) {
             $headers[] = 'No ' . $q->question_number;
         }
@@ -1120,6 +1140,7 @@ class ExamCorrectionController extends Controller
                 $student->nisn,
                 $student->nis,
                 $student->full_name ?? $student->name ?? '-',
+                $student->classRoom?->name ?? '-',
                 $student->gender,
             ];
 
