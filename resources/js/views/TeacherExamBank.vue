@@ -1036,42 +1036,128 @@
             </ul>
           </div>
 
-          <div class="p-5 overflow-y-auto flex-1 space-y-3 bg-slate-50/60">
-            <div
-              v-for="pq in importPreviewQuestions"
-              :key="'prev-' + pq.question_number"
-              class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs space-y-2 text-xs"
-            >
-              <div class="flex items-center justify-between gap-2 flex-wrap border-b border-slate-100 pb-2">
-                <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white font-bold text-[11px]">No. {{ pq.question_number }}</span>
-                  <select v-model="pq.question_type" class="border border-slate-200 rounded-lg px-2 py-0.5 text-[11px] font-bold text-indigo-700 bg-indigo-50/50">
-                    <option value="pg">Pilihan Ganda</option>
-                    <option value="pg_complex">PG Kompleks</option>
-                    <option value="true_false">Benar / Salah</option>
-                    <option value="matching">Menjodohkan</option>
-                    <option value="short_answer">Isian Singkat</option>
-                    <option value="essay">Uraian / Essay</option>
-                  </select>
-                  <span v-if="pq.question_image" class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
-                    🖼️ Ada Gambar
-                  </span>
+          <div class="p-5 overflow-y-auto flex-1 space-y-4 bg-slate-50/60">
+            <template v-for="blk in importPreviewBlocks" :key="blk.key">
+              <!-- TABEL MENJODOHKAN -->
+              <div v-if="blk.kind === 'matching_table'" class="bg-white rounded-xl border border-teal-200 shadow-2xs overflow-hidden">
+                <div class="px-4 py-2 bg-teal-50 border-b border-teal-200 flex items-center justify-between text-xs">
+                  <span class="font-bold text-teal-900">🔗 Bagian Menjodohkan ({{ blk.items.length }} Soal)</span>
+                  <span class="text-[11px] text-teal-700">Terbaca sebagai Tabel 2 Kolom + Kolom Kunci</span>
                 </div>
-                <div class="flex items-center gap-2 text-[11px]">
-                  <span v-if="pq.correct_answer" class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
-                    Kunci: {{ pq.correct_answer }}
-                  </span>
-                  <span v-else class="px-2 py-0.5 rounded bg-slate-100 text-slate-500">Kunci belum diset</span>
-                  <span class="text-slate-400 font-semibold">Bobot: {{ pq.score_weight }}</span>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-xs border-collapse">
+                    <thead>
+                      <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                        <th class="px-3 py-2 text-center w-12 font-bold border-r border-slate-200">No</th>
+                        <th class="px-3 py-2 text-left font-bold border-r border-slate-200">Kolom A (Pernyataan)</th>
+                        <th class="px-3 py-2 text-center w-20 font-bold border-r border-slate-200">Kunci</th>
+                        <th class="px-3 py-2 text-left font-bold">Kolom B (Pilihan Pasangan)</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      <tr v-for="mq in blk.items" :key="'pm-' + mq.question_number" class="hover:bg-slate-50/70">
+                        <td class="px-3 py-2 text-center font-bold text-slate-800 border-r border-slate-100 align-top">{{ mq.question_number }}.</td>
+                        <td class="px-3 py-2 text-slate-800 border-r border-slate-100 align-top">
+                          <div v-html="mq.question_text || '-'"></div>
+                        </td>
+                        <td class="px-3 py-2 text-center border-r border-slate-100 align-middle">
+                          <input
+                            type="text"
+                            v-model="mq.correct_answer"
+                            maxlength="2"
+                            class="w-10 text-center font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded py-0.5 uppercase"
+                          />
+                        </td>
+                        <td class="px-3 py-2 text-slate-700 align-top">
+                          <span class="font-bold text-slate-900">{{ mq.options?.key || mq.correct_answer || 'A' }}.</span>
+                          {{ mq.options?.right_text || '-' }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
-              <div class="text-slate-800 leading-relaxed" v-html="pq.question_text || '<i>(Soal gambar / teks kosong)</i>'"></div>
-              <div v-if="pq.options && ['pg', 'pg_complex'].includes(pq.question_type)" class="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-1 text-[11px] text-slate-600">
-                <div v-for="(val, key) in pq.options" :key="key" class="px-2 py-1 rounded bg-slate-50 border border-slate-100">
-                  <strong class="text-slate-800">{{ key }}.</strong> {{ val || '-' }}
+
+              <!-- TABEL BENAR / SALAH -->
+              <div v-else-if="blk.kind === 'tf_table'" class="bg-white rounded-xl border border-purple-200 shadow-2xs overflow-hidden">
+                <div class="px-4 py-2 bg-purple-50 border-b border-purple-200 flex items-center justify-between text-xs">
+                  <span class="font-bold text-purple-900">⚖️ Bagian Benar / Salah ({{ blk.items.length }} Pernyataan)</span>
+                  <span class="text-[11px] text-purple-700">Terbaca sebagai Tabel B / S</span>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-xs border-collapse">
+                    <thead>
+                      <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                        <th class="px-3 py-2 text-center w-12 font-bold border-r border-slate-200">No</th>
+                        <th class="px-3 py-2 text-left font-bold border-r border-slate-200">Pernyataan</th>
+                        <th class="px-3 py-2 text-center w-16 font-bold border-r border-slate-200">B</th>
+                        <th class="px-3 py-2 text-center w-16 font-bold">S</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      <tr v-for="tq in blk.items" :key="'ptf-' + tq.question_number" class="hover:bg-slate-50/70">
+                        <td class="px-3 py-2 text-center font-bold text-slate-800 border-r border-slate-100 align-top">{{ tq.question_number }}.</td>
+                        <td class="px-3 py-2 text-slate-800 border-r border-slate-100 align-top">
+                          <div v-html="tq.question_text || '-'"></div>
+                        </td>
+                        <td class="px-3 py-2 text-center border-r border-slate-100 align-middle">
+                          <button
+                            type="button"
+                            @click="setPreviewTfKey(tq, 'B')"
+                            class="w-7 h-7 rounded-lg font-bold transition cursor-pointer"
+                            :class="tq.correct_answer === 'B' ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'"
+                          >B</button>
+                        </td>
+                        <td class="px-3 py-2 text-center align-middle">
+                          <button
+                            type="button"
+                            @click="setPreviewTfKey(tq, 'S')"
+                            class="w-7 h-7 rounded-lg font-bold transition cursor-pointer"
+                            :class="tq.correct_answer === 'S' ? 'bg-rose-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'"
+                          >S</button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            </div>
+
+              <!-- KARTU BIASA (PG, PGK, ISIAN, URAIAN) -->
+              <div
+                v-else
+                class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs space-y-2 text-xs"
+              >
+                <div class="flex items-center justify-between gap-2 flex-wrap border-b border-slate-100 pb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white font-bold text-[11px]">No. {{ blk.q.question_number }}</span>
+                    <select v-model="blk.q.question_type" class="border border-slate-200 rounded-lg px-2 py-0.5 text-[11px] font-bold text-indigo-700 bg-indigo-50/50">
+                      <option value="pg">Pilihan Ganda</option>
+                      <option value="pg_complex">PG Kompleks</option>
+                      <option value="true_false">Benar / Salah</option>
+                      <option value="matching">Menjodohkan</option>
+                      <option value="short_answer">Isian Singkat</option>
+                      <option value="essay">Uraian / Essay</option>
+                    </select>
+                    <span v-if="blk.q.question_image" class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                      🖼️ Ada Gambar
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2 text-[11px]">
+                    <span v-if="blk.q.correct_answer" class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                      Kunci: {{ blk.q.correct_answer }}
+                    </span>
+                    <span v-else class="px-2 py-0.5 rounded bg-slate-100 text-slate-500">Kunci belum diset</span>
+                    <span class="text-slate-400 font-semibold">Bobot: {{ blk.q.score_weight }}</span>
+                  </div>
+                </div>
+                <div class="text-slate-800 leading-relaxed" v-html="blk.q.question_text || '<i>(Soal gambar / teks kosong)</i>'"></div>
+                <div v-if="blk.q.options && ['pg', 'pg_complex'].includes(blk.q.question_type)" class="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-1 text-[11px] text-slate-600">
+                  <div v-for="(val, key) in blk.q.options" :key="key" class="px-2 py-1 rounded bg-slate-50 border border-slate-100">
+                    <strong class="text-slate-800">{{ key }}.</strong> {{ val || '-' }}
+                  </div>
+                </div>
+              </div>
+            </template>
           </div>
 
           <div class="px-6 py-4 border-t border-slate-100 bg-white flex items-center justify-between gap-2 shrink-0">
@@ -3104,6 +3190,36 @@ const parsingImport = ref(false);
 const importPreviewQuestions = ref([]);
 const importPreviewWarnings = ref([]);
 const importCommitMode = ref('merge'); // 'merge' | 'replace'
+
+const importPreviewBlocks = computed(() => {
+  const blocks = [];
+  let activeTable = null;
+
+  importPreviewQuestions.value.forEach((q, idx) => {
+    if (q.question_type === 'matching' || q.question_type === 'true_false') {
+      const kind = q.question_type === 'matching' ? 'matching_table' : 'tf_table';
+      if (activeTable && activeTable.kind === kind) {
+        activeTable.items.push(q);
+      } else {
+        if (activeTable) blocks.push(activeTable);
+        activeTable = { kind, key: `${kind}-${idx}`, items: [q] };
+      }
+    } else {
+      if (activeTable) {
+        blocks.push(activeTable);
+        activeTable = null;
+      }
+      blocks.push({ kind: 'card', key: `card-${q.question_number}-${idx}`, q });
+    }
+  });
+  if (activeTable) blocks.push(activeTable);
+  return blocks;
+});
+
+const setPreviewTfKey = (tq, ans) => {
+  tq.correct_answer = ans;
+  tq.options = { mode: 'single', answer: ans };
+};
 
 // Fullscreen Studio Workspace
 const activePackage = ref(null);

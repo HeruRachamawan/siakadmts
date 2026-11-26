@@ -83,11 +83,7 @@ class ExamDocxService
                     continue;
                 }
 
-                $bodyXml .= $this->buildSectionHeaderXml($meta['roman'], $meta['label'], $meta['tag'], $meta['desc']);
-
-                foreach ($qs as $q) {
-                    $bodyXml .= $this->buildQuestionBlockXml($q, $mediaFiles, $nextRelNum);
-                }
+                $bodyXml .= $this->buildSectionBlockXml($typeKey, $qs, $meta, $mediaFiles, $nextRelNum);
             }
         }
 
@@ -179,20 +175,17 @@ class ExamDocxService
         $numCounters = []; // [numId => [ilvl => currentCount]]
         $blocks = [];
 
-        // Extract every paragraph in document order (covers both normal paragraphs & table cells)
-        $pNodes = $xpath->query('//w:body//w:p');
-        foreach ($pNodes as $pNode) {
-            $autoPrefix = $this->resolveParagraphNumberPrefix($xpath, $pNode, $numberingDefs, $numCounters);
-            $parsed = $this->extractParagraphContent($xpath, $pNode, $zip, $relsMap, $extractedImagesCache);
-
-            $plainText = $autoPrefix !== '' ? ($autoPrefix . ' ' . $parsed['text']) : $parsed['text'];
-            $htmlText = $autoPrefix !== '' ? (e($autoPrefix) . ' ' . $parsed['html']) : $parsed['html'];
-
-            $blocks[] = [
-                'text' => trim($plainText),
-                'html' => trim($htmlText),
-                'image' => $parsed['image'],
-            ];
+        // Extract top-level body nodes in order so Word tables (<w:tbl>) are parsed by row & cell
+        $bodyChildren = $xpath->query('/w:document/w:body/*');
+        foreach ($bodyChildren as $node) {
+            if ($node->nodeName === 'w:p') {
+                $blocks[] = $this->extractSingleParagraphBlock($xpath, $node, $zip, $relsMap, $numberingDefs, $numCounters, $extractedImagesCache);
+            } elseif ($node->nodeName === 'w:tbl') {
+                $tableBlocks = $this->extractTableBlocks($xpath, $node, $zip, $relsMap, $numberingDefs, $numCounters, $extractedImagesCache);
+                foreach ($tableBlocks as $tb) {
+                    $blocks[] = $tb;
+                }
+            }
         }
 
         $zip->close();
@@ -246,6 +239,17 @@ class ExamDocxService
         };
 
         foreach ($blocks as $idx => $block) {
+            if (($block['kind'] ?? '') === 'structured_table') {
+                $flushCurrent();
+                $inQuestionsArea = true;
+                $currentType = $block['table_type'] ?? $currentType;
+                $lastTarget = null;
+                foreach (($block['items'] ?? []) as $tblItem) {
+                    $questions[] = $this->finalizeQuestionItem($tblItem);
+                }
+                continue;
+            }
+
             $line = trim(preg_replace('/\x{00A0}/u', ' ', (string) ($block['text'] ?? '')));
             $html = trim((string) ($block['html'] ?? ''));
             $image = $block['image'] ?? null;
@@ -294,6 +298,18 @@ class ExamDocxService
                 continue;
             }
 
+            // Detect post-table per-number metadata line: [No. 4 | Materi: ... | Indikator: ...]
+            if (!$current && !empty($questions) && preg_match('/^\[\s*No\.?\s*(\d+)\s*\|(.+)\]$/iu', $line, $metaNoMatch)) {
+                $targetNo = intval($metaNoMatch[1]);
+                for ($qi = count($questions) - 1; $qi >= 0; $qi--) {
+                    if (intval($questions[$qi]['question_number']) === $targetNo) {
+                        $this->tryApplyMetadataLine('[' . $metaNoMatch[2] . ']', $questions[$qi]);
+                        break;
+                    }
+                }
+                continue;
+            }
+
             // Detect metadata tags ([Kunci: ...], [Materi: ...], [Indikator: ...], [Level: ...])
             if ($current && $this->tryApplyMetadataLine($line, $current)) {
                 continue;
@@ -334,8 +350,11 @@ class ExamDocxService
                 }
             }
 
-            // If we reach text before any question started (rare: question #1 copied without number "1.")
+            // If we reach text before any question started: skip section sub-instructions (e.g. "Pilihlah satu jawaban...")
             if (!$current) {
+                if ($this->isSectionSubInstructionLine($line)) {
+                    continue;
+                }
                 $inQuestionsArea = true;
                 $nextNum = count($questions) + 1;
                 $current = $this->initEmptyQuestion($nextNum, $currentType, $line, $html ?: e($line), $image);
@@ -545,12 +564,188 @@ class ExamDocxService
             if (!$list) {
                 continue;
             }
-            $xml .= $this->buildSectionHeaderXml($meta['roman'], $meta['label'], $meta['tag'], $meta['desc']);
-            foreach ($list as $q) {
-                $xml .= $this->buildQuestionBlockXml($q, $dummyMedia, $dummyNum);
-            }
+            $xml .= $this->buildSectionBlockXml($typeKey, $list, $meta, $dummyMedia, $dummyNum);
         }
         return $xml;
+    }
+
+    private function buildSectionBlockXml(string $typeKey, $questions, array $meta, array &$mediaFiles, int &$nextRelNum): string
+    {
+        $xml = $this->buildSectionHeaderXml($meta['roman'], $meta['label'], $meta['tag'], $meta['desc']);
+
+        if ($typeKey === 'true_false') {
+            $xml .= $this->buildTrueFalseTableXml($questions, $mediaFiles, $nextRelNum);
+            foreach ($questions as $q) {
+                $parts = [];
+                if (!empty($q->material)) $parts[] = 'Materi: ' . $q->material;
+                if (!empty($q->indicator)) $parts[] = 'Indikator: ' . $q->indicator;
+                $lvl = $q->cognitive_level ?: 'L1';
+                $diff = $q->difficulty_level ?: 'sedang';
+                $wt = floatval($q->score_weight ?: 2);
+                $parts[] = "Level: {$lvl} | Kesukaran: {$diff} | Bobot: {$wt}";
+                $xml .= $this->buildMetadataLineXml("[No. {$q->question_number} | " . implode(' | ', $parts) . ']');
+            }
+            return $xml;
+        }
+
+        if ($typeKey === 'matching') {
+            $xml .= $this->buildMatchingTableXml($questions, $mediaFiles, $nextRelNum);
+            foreach ($questions as $q) {
+                $parts = [];
+                if (!empty($q->material)) $parts[] = 'Materi: ' . $q->material;
+                if (!empty($q->indicator)) $parts[] = 'Indikator: ' . $q->indicator;
+                $lvl = $q->cognitive_level ?: 'L2';
+                $diff = $q->difficulty_level ?: 'sedang';
+                $wt = floatval($q->score_weight ?: 3);
+                $parts[] = "Level: {$lvl} | Kesukaran: {$diff} | Bobot: {$wt}";
+                $xml .= $this->buildMetadataLineXml("[No. {$q->question_number} | " . implode(' | ', $parts) . ']');
+            }
+            return $xml;
+        }
+
+        foreach ($questions as $q) {
+            $xml .= $this->buildQuestionBlockXml($q, $mediaFiles, $nextRelNum);
+        }
+
+        return $xml;
+    }
+
+    private function buildBorderedWordTableXml(array $colWidths, array $headerTitles, array $rowsXml): string
+    {
+        $tblPr = '<w:tblPr><w:tblW w:w="' . array_sum($colWidths) . '" w:type="dxa"/>'
+            . '<w:tblBorders>'
+            . '<w:top w:val="single" w:sz="6" w:space="0" w:color="334155"/>'
+            . '<w:left w:val="single" w:sz="6" w:space="0" w:color="334155"/>'
+            . '<w:bottom w:val="single" w:sz="6" w:space="0" w:color="334155"/>'
+            . '<w:right w:val="single" w:sz="6" w:space="0" w:color="334155"/>'
+            . '<w:insideH w:val="single" w:sz="4" w:space="0" w:color="94A3B8"/>'
+            . '<w:insideV w:val="single" w:sz="4" w:space="0" w:color="94A3B8"/>'
+            . '</w:tblBorders>'
+            . '<w:tblCellMar><w:top w:w="70" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="70" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar>'
+            . '</w:tblPr>';
+
+        $grid = '<w:tblGrid>';
+        foreach ($colWidths as $w) {
+            $grid .= '<w:gridCol w:w="' . $w . '"/>';
+        }
+        $grid .= '</w:tblGrid>';
+
+        $headerRow = '<w:tr><w:trPr><w:tblHeader/></w:trPr>';
+        foreach ($headerTitles as $idx => $title) {
+            $w = $colWidths[$idx] ?? 1000;
+            $jc = in_array(strtoupper($title), ['NO', 'B', 'S', 'JAWABAN', 'BENAR', 'SALAH'], true) ? 'center' : 'left';
+            $headerRow .= '<w:tc><w:tcPr><w:tcW w:w="' . $w . '" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="E2E8F0"/></w:tcPr>'
+                . '<w:p><w:pPr><w:jc w:val="' . $jc . '"/><w:spacing w:before="20" w:after="20"/></w:pPr>'
+                . '<w:r><w:rPr><w:b/><w:sz w:val="20"/><w:color w:val="0F172A"/></w:rPr>'
+                . '<w:t xml:space="preserve">' . $this->xmlEsc($title) . '</w:t></w:r></w:p></w:tc>';
+        }
+        $headerRow .= '</w:tr>';
+
+        return '<w:tbl>' . $tblPr . $grid . $headerRow . implode('', $rowsXml) . '</w:tbl>'
+            . '<w:p><w:pPr><w:spacing w:after="60"/></w:pPr></w:p>';
+    }
+
+    private function buildTrueFalseTableXml($questions, array &$mediaFiles, int &$nextRelNum): string
+    {
+        $colWidths = [800, 7480, 900, 900];
+        $rowsXml = [];
+
+        foreach ($questions as $q) {
+            $ans = strtoupper(trim((string) ($q->correct_answer ?? 'B')));
+            $isB = str_starts_with($ans, 'B');
+            $isS = str_starts_with($ans, 'S');
+            $pFrags = $this->splitHtmlIntoParagraphFragments($q->question_text ?: 'Pernyataan...');
+            $stmtXml = '';
+            foreach ($pFrags as $pf) {
+                $stmtXml .= '<w:p><w:pPr><w:spacing w:before="20" w:after="20"/></w:pPr>' . $this->htmlFragmentToWordRuns($pf) . '</w:p>';
+            }
+            if (!empty($q->question_image)) {
+                $imgXml = $this->tryBuildQuestionImageXml($q->question_image, $mediaFiles, $nextRelNum);
+                if ($imgXml !== '') $stmtXml .= $imgXml;
+            }
+
+            $rowsXml[] = '<w:tr>'
+                . '<w:tc><w:tcPr><w:tcW w:w="' . $colWidths[0] . '" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="22"/></w:rPr><w:t>' . $this->xmlEsc($q->question_number . '.') . '</w:t></w:r></w:p></w:tc>'
+                . '<w:tc><w:tcPr><w:tcW w:w="' . $colWidths[1] . '" w:type="dxa"/></w:tcPr>' . $stmtXml . '</w:tc>'
+                . '<w:tc><w:tcPr><w:tcW w:w="' . $colWidths[2] . '" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="22"/></w:rPr><w:t>' . ($isB ? '✓' : '') . '</w:t></w:r></w:p></w:tc>'
+                . '<w:tc><w:tcPr><w:tcW w:w="' . $colWidths[3] . '" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="22"/></w:rPr><w:t>' . ($isS ? '✓' : '') . '</w:t></w:r></w:p></w:tc>'
+                . '</w:tr>';
+        }
+
+        return $this->buildBorderedWordTableXml($colWidths, ['No', 'Pernyataan', 'B', 'S'], $rowsXml);
+    }
+
+    private function buildMatchingTableXml($questions, array &$mediaFiles, int &$nextRelNum): string
+    {
+        $colWidths = [800, 4100, 1180, 4000];
+        $rowsXml = [];
+        $idx = 0;
+
+        foreach ($questions as $q) {
+            $opts = is_array($q->options) ? $q->options : (json_decode((string) $q->options, true) ?: []);
+            $rightText = trim((string) ($opts['right_text'] ?? ''));
+            $ansKey = strtoupper(trim((string) ($q->correct_answer ?: ($opts['key'] ?? chr(65 + $idx)))));
+            $rightLetter = strtoupper(trim((string) ($opts['key'] ?? $ansKey ?: chr(65 + $idx))));
+
+            $pFrags = $this->splitHtmlIntoParagraphFragments($q->question_text ?: 'Pernyataan...');
+            $leftXml = '';
+            foreach ($pFrags as $pf) {
+                $leftXml .= '<w:p><w:pPr><w:spacing w:before="20" w:after="20"/></w:pPr>' . $this->htmlFragmentToWordRuns($pf) . '</w:p>';
+            }
+            if (!empty($q->question_image)) {
+                $imgXml = $this->tryBuildQuestionImageXml($q->question_image, $mediaFiles, $nextRelNum);
+                if ($imgXml !== '') $leftXml .= $imgXml;
+            }
+
+            $rightRuns = $rightText !== ''
+                ? '<w:r><w:rPr><w:b/><w:sz w:val="22"/></w:rPr><w:t xml:space="preserve">' . $this->xmlEsc("{$rightLetter}. ") . '</w:t></w:r>' . $this->htmlFragmentToWordRuns(e($rightText))
+                : '<w:r><w:t></w:t></w:r>';
+
+            $rowsXml[] = '<w:tr>'
+                . '<w:tc><w:tcPr><w:tcW w:w="' . $colWidths[0] . '" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="22"/></w:rPr><w:t>' . $this->xmlEsc($q->question_number . '.') . '</w:t></w:r></w:p></w:tc>'
+                . '<w:tc><w:tcPr><w:tcW w:w="' . $colWidths[1] . '" w:type="dxa"/></w:tcPr>' . $leftXml . '</w:tc>'
+                . '<w:tc><w:tcPr><w:tcW w:w="' . $colWidths[2] . '" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="22"/><w:color w:val="059669"/></w:rPr><w:t>' . $this->xmlEsc($ansKey) . '</w:t></w:r></w:p></w:tc>'
+                . '<w:tc><w:tcPr><w:tcW w:w="' . $colWidths[3] . '" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:spacing w:before="20" w:after="20"/></w:pPr>' . $rightRuns . '</w:p></w:tc>'
+                . '</w:tr>';
+            $idx++;
+        }
+
+        return $this->buildBorderedWordTableXml($colWidths, ['No', 'Kolom A (Pernyataan)', 'Jawaban', 'Kolom B (Pilihan Pasangan)'], $rowsXml);
+    }
+
+    private function tryBuildQuestionImageXml(string $questionImage, array &$mediaFiles, int &$nextRelNum): string
+    {
+        $relPath = ltrim(preg_replace('/^(\/?storage\/)+/', '', $questionImage), '/');
+        $fullImgPath = storage_path('app/public/' . $relPath);
+        if (!is_file($fullImgPath)) {
+            $altPath = storage_path('app/public/exam-questions/' . basename($relPath));
+            if (is_file($altPath)) {
+                $fullImgPath = $altPath;
+            }
+        }
+        if (!is_file($fullImgPath)) {
+            return '';
+        }
+        $ext = strtolower(pathinfo($fullImgPath, PATHINFO_EXTENSION)) ?: 'png';
+        if (!in_array($ext, self::ALLOWED_IMAGE_EXTS, true)) {
+            return '';
+        }
+        $imgInfo = @getimagesize($fullImgPath);
+        $pxW = $imgInfo[0] ?? 400;
+        $pxH = $imgInfo[1] ?? 240;
+        $maxW = 360;
+        $scale = $pxW > $maxW ? ($maxW / $pxW) : 1;
+        $emuW = intval(round($pxW * $scale * 9525));
+        $emuH = intval(round($pxH * $scale * 9525));
+        $rId = 'rId' . ($nextRelNum++);
+        $zipName = 'word/media/img_' . count($mediaFiles) . '.' . ($ext === 'jpeg' ? 'jpg' : $ext);
+        $mediaFiles[] = [
+            'relId' => $rId,
+            'zipPath' => $zipName,
+            'srcPath' => $fullImgPath,
+            'ext' => $ext === 'jpeg' ? 'jpg' : $ext,
+        ];
+        return $this->buildInlineImageParagraphXml($rId, $emuW, $emuH, $nextRelNum);
     }
 
     private function buildQuestionBlockXml(ExamQuestion $q, array &$mediaFiles, int &$nextRelNum): string
@@ -948,6 +1143,318 @@ class ExamDocxService
         return "{$val}.";
     }
 
+    private function extractSingleParagraphBlock(
+        \DOMXPath $xpath,
+        \DOMNode $pNode,
+        ZipArchive $zip,
+        array $relsMap,
+        array $numberingDefs,
+        array &$numCounters,
+        array &$extractedImagesCache
+    ): array {
+        $autoPrefix = $this->resolveParagraphNumberPrefix($xpath, $pNode, $numberingDefs, $numCounters);
+        $parsed = $this->extractParagraphContent($xpath, $pNode, $zip, $relsMap, $extractedImagesCache);
+
+        $plainText = $autoPrefix !== '' ? ($autoPrefix . ' ' . $parsed['text']) : $parsed['text'];
+        $htmlText = $autoPrefix !== '' ? (e($autoPrefix) . ' ' . $parsed['html']) : $parsed['html'];
+
+        return [
+            'kind' => 'paragraph',
+            'text' => trim($plainText),
+            'html' => trim($htmlText),
+            'image' => $parsed['image'],
+        ];
+    }
+
+    private function extractTableBlocks(
+        \DOMXPath $xpath,
+        \DOMNode $tblNode,
+        ZipArchive $zip,
+        array $relsMap,
+        array $numberingDefs,
+        array &$numCounters,
+        array &$extractedImagesCache
+    ): array {
+        $rawRows = [];
+        $trNodes = $xpath->query('./w:tr', $tblNode);
+        foreach ($trNodes as $trNode) {
+            $rowCells = [];
+            $tcNodes = $xpath->query('./w:tc', $trNode);
+            foreach ($tcNodes as $tcNode) {
+                $cellTexts = [];
+                $cellHtmls = [];
+                $cellImg = null;
+                $pNodes = $xpath->query('.//w:p', $tcNode);
+                foreach ($pNodes as $pNode) {
+                    $b = $this->extractSingleParagraphBlock($xpath, $pNode, $zip, $relsMap, $numberingDefs, $numCounters, $extractedImagesCache);
+                    if ($b['text'] !== '') {
+                        $cellTexts[] = trim(preg_replace('/\x{00A0}/u', ' ', $b['text']));
+                        $cellHtmls[] = $b['html'] !== '' ? '<p>' . $b['html'] . '</p>' : '';
+                    }
+                    if ($cellImg === null && !empty($b['image'])) {
+                        $cellImg = $b['image'];
+                    }
+                }
+                $rowCells[] = [
+                    'text' => trim(implode("\n", $cellTexts)),
+                    'html' => trim(implode('', $cellHtmls)),
+                    'image' => $cellImg,
+                ];
+            }
+            if (!empty($rowCells)) {
+                $rawRows[] = $rowCells;
+            }
+        }
+
+        if (empty($rawRows)) {
+            return [];
+        }
+
+        // Classify whether table is a structured Matching or True/False question table
+        $tableMeta = $this->classifyStructuredTable($rawRows);
+        if ($tableMeta !== null) {
+            $items = $tableMeta['type'] === 'matching'
+                ? $this->parseMatchingTableRows($rawRows, $tableMeta)
+                : $this->parseTrueFalseTableRows($rawRows, $tableMeta);
+
+            if (!empty($items)) {
+                return [[
+                    'kind' => 'structured_table',
+                    'table_type' => $tableMeta['type'],
+                    'items' => $items,
+                ]];
+            }
+        }
+
+        // Generic table fallback: flatten cell paragraphs sequentially
+        $flat = [];
+        foreach ($rawRows as $r) {
+            foreach ($r as $c) {
+                if ($c['text'] === '' && !$c['image']) continue;
+                $lines = explode("\n", $c['text']);
+                foreach ($lines as $lIdx => $lText) {
+                    $t = trim($lText);
+                    if ($t === '' && ($lIdx > 0 || !$c['image'])) continue;
+                    $flat[] = [
+                        'kind' => 'paragraph',
+                        'text' => $t,
+                        'html' => $lIdx === 0 && $c['html'] !== '' ? $c['html'] : ($t !== '' ? e($t) : ''),
+                        'image' => $lIdx === 0 ? $c['image'] : null,
+                    ];
+                }
+            }
+        }
+        return $flat;
+    }
+
+    private function classifyStructuredTable(array $rawRows): ?array
+    {
+        if (count($rawRows) < 2) {
+            return null;
+        }
+
+        $header = $rawRows[0];
+        $normHeader = array_map(fn($c) => strtolower(trim(preg_replace('/\s+/', ' ', $c['text']))), $header);
+        $joinedHeader = implode(' | ', $normHeader);
+
+        // 1. Matching Table (e.g. "KOLOM A | JAWABAN | KOLOM B" or "No | Pernyataan | Jawaban | Pilihan Pasangan")
+        $hasMatchingHeader = str_contains($joinedHeader, 'kolom b')
+            || str_contains($joinedHeader, 'pasangan')
+            || str_contains($joinedHeader, 'pilihan jawaban')
+            || (str_contains($joinedHeader, 'kolom a') && count($header) >= 2);
+
+        if ($hasMatchingHeader) {
+            $noIdx = null;
+            $leftIdx = null;
+            $ansIdx = null;
+            $rightIdx = null;
+            foreach ($normHeader as $i => $h) {
+                if ($h === 'no' || $h === 'no.' || $h === 'nomor') $noIdx = $i;
+                elseif (str_contains($h, 'kolom a') || str_contains($h, 'pernyataan') || str_contains($h, 'istilah') || str_contains($h, 'soal')) $leftIdx = $i;
+                elseif ($h === 'jawaban' || $h === 'kunci' || $h === 'jwb') $ansIdx = $i;
+                elseif (str_contains($h, 'kolom b') || str_contains($h, 'pasangan') || str_contains($h, 'pilihan')) $rightIdx = $i;
+            }
+            if ($leftIdx !== null && $rightIdx !== null) {
+                return [
+                    'type' => 'matching',
+                    'has_header' => true,
+                    'no_idx' => $noIdx,
+                    'left_idx' => $leftIdx,
+                    'ans_idx' => $ansIdx,
+                    'right_idx' => $rightIdx,
+                ];
+            }
+        }
+
+        // 2. True / False Table (e.g. "No | Pernyataan | B | S" or "No | Pernyataan | Benar | Salah")
+        $bIdx = null;
+        $sIdx = null;
+        $tfAnsIdx = null;
+        $tfNoIdx = null;
+        $tfStmtIdx = null;
+        foreach ($normHeader as $i => $h) {
+            if ($h === 'no' || $h === 'no.' || $h === 'nomor') $tfNoIdx = $i;
+            elseif (str_contains($h, 'pernyataan') || str_contains($h, 'soal') || str_contains($h, 'kalimat')) $tfStmtIdx = $i;
+            elseif ($h === 'b' || $h === 'benar') $bIdx = $i;
+            elseif ($h === 's' || $h === 'salah') $sIdx = $i;
+            elseif ($h === 'jawaban' || $h === 'kunci' || str_contains($h, 'b/s') || str_contains($h, 'benar/salah')) $tfAnsIdx = $i;
+        }
+        if ($tfStmtIdx !== null && (($bIdx !== null && $sIdx !== null) || $tfAnsIdx !== null)) {
+            return [
+                'type' => 'true_false',
+                'has_header' => true,
+                'no_idx' => $tfNoIdx,
+                'stmt_idx' => $tfStmtIdx,
+                'b_idx' => $bIdx,
+                's_idx' => $sIdx,
+                'ans_idx' => $tfAnsIdx,
+            ];
+        }
+
+        // 3. Headerless 3 or 4-col Matching table detection via row pattern (Left numbered + Right "A. ...")
+        $colCount = count($header);
+        if ($colCount >= 3 && $colCount <= 4) {
+            $matchVotes = 0;
+            foreach ($rawRows as $r) {
+                if (count($r) !== $colCount) continue;
+                $lastText = trim($r[$colCount - 1]['text']);
+                $hasNumLeft = preg_match('/^\d{1,3}\./', trim($r[0]['text'])) || preg_match('/^\d{1,3}\./', trim($r[1]['text']));
+                if ($hasNumLeft && preg_match('/^[A-Za-z][\.\)]\s+/', $lastText)) {
+                    $matchVotes++;
+                }
+            }
+            if ($matchVotes >= 2) {
+                return [
+                    'type' => 'matching',
+                    'has_header' => false,
+                    'no_idx' => $colCount === 4 ? 0 : null,
+                    'left_idx' => $colCount === 4 ? 1 : 0,
+                    'ans_idx' => $colCount === 4 ? 2 : 1,
+                    'right_idx' => $colCount - 1,
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    private function parseMatchingTableRows(array $rawRows, array $meta): array
+    {
+        $items = [];
+        $startIdx = !empty($meta['has_header']) ? 1 : 0;
+        $seq = 1;
+
+        for ($r = $startIdx; $r < count($rawRows); $r++) {
+            $row = $rawRows[$r];
+            $noText = $meta['no_idx'] !== null ? trim($row[$meta['no_idx']]['text'] ?? '') : '';
+            $leftCell = $row[$meta['left_idx']] ?? ['text' => '', 'html' => '', 'image' => null];
+            $ansText = $meta['ans_idx'] !== null ? trim($row[$meta['ans_idx']]['text'] ?? '') : '';
+            $rightCell = $row[$meta['right_idx']] ?? ['text' => '', 'html' => '', 'image' => null];
+
+            $leftPlain = trim($leftCell['text']);
+            $leftHtml = trim($leftCell['html']);
+            $rightPlain = trim($rightCell['text']);
+
+            if ($leftPlain === '' && $rightPlain === '' && empty($leftCell['image'])) {
+                continue;
+            }
+
+            $qNum = null;
+            if (preg_match('/(\d{1,3})/', $noText, $nm)) {
+                $qNum = intval($nm[1]);
+            } elseif (preg_match('/^(\d{1,3})\s*[\.\)]\s*(.+)$/us', $leftPlain, $lm)) {
+                $qNum = intval($lm[1]);
+                $leftPlain = trim($lm[2]);
+                $leftHtml = $this->stripNumberPrefixFromHtml($leftHtml, $leftPlain);
+            }
+            if (!$qNum) {
+                $qNum = $seq;
+            }
+            $seq = $qNum + 1;
+
+            // Parse right option letter & text (e.g. "A. Sesungguhnya rahmat-Ku...")
+            $rightLetter = chr(65 + count($items));
+            $rightCleanText = $rightPlain;
+            if (preg_match('/^\(?([A-Za-z])\s*[\.\)]\s*(.+)$/us', $rightPlain, $rm)) {
+                $rightLetter = strtoupper($rm[1]);
+                $rightCleanText = trim(preg_replace('/\s+/', ' ', $rm[2]));
+            }
+
+            $ansLetter = null;
+            if (preg_match('/^([A-Za-z])(?:\b|\.)/u', $ansText, $am)) {
+                $ansLetter = strtoupper($am[1]);
+            }
+
+            $qItem = $this->initEmptyQuestion($qNum, 'matching', $leftPlain, $leftHtml ?: e($leftPlain), $leftCell['image'] ?? null);
+            $qItem['matching_right_text'] = $rightCleanText;
+            $qItem['correct_answer'] = $ansLetter ?: $rightLetter;
+            // Ensure question_text doesn't double-wrap <p><p>...</p></p> if $leftHtml already has <p>
+            if (str_starts_with($leftHtml, '<p>')) {
+                $qItem['question_text'] = $leftHtml;
+            }
+            $items[] = $qItem;
+        }
+
+        return $items;
+    }
+
+    private function parseTrueFalseTableRows(array $rawRows, array $meta): array
+    {
+        $items = [];
+        $startIdx = !empty($meta['has_header']) ? 1 : 0;
+        $seq = 1;
+
+        for ($r = $startIdx; $r < count($rawRows); $r++) {
+            $row = $rawRows[$r];
+            $noText = $meta['no_idx'] !== null ? trim($row[$meta['no_idx']]['text'] ?? '') : '';
+            $stmtCell = $row[$meta['stmt_idx']] ?? ['text' => '', 'html' => '', 'image' => null];
+
+            $stmtPlain = trim($stmtCell['text']);
+            $stmtHtml = trim($stmtCell['html']);
+            if ($stmtPlain === '' && empty($stmtCell['image'])) {
+                continue;
+            }
+
+            $qNum = null;
+            if (preg_match('/(\d{1,3})/', $noText, $nm)) {
+                $qNum = intval($nm[1]);
+            } elseif (preg_match('/^(\d{1,3})\s*[\.\)]\s*(.+)$/us', $stmtPlain, $sm)) {
+                $qNum = intval($sm[1]);
+                $stmtPlain = trim($sm[2]);
+                $stmtHtml = $this->stripNumberPrefixFromHtml($stmtHtml, $stmtPlain);
+            }
+            if (!$qNum) {
+                $qNum = $seq;
+            }
+            $seq = $qNum + 1;
+
+            $ans = 'B';
+            if ($meta['b_idx'] !== null && $meta['s_idx'] !== null) {
+                $bVal = trim($row[$meta['b_idx']]['text'] ?? '');
+                $sVal = trim($row[$meta['s_idx']]['text'] ?? '');
+                if ($sVal !== '' && $bVal === '') {
+                    $ans = 'S';
+                } elseif (preg_match('/✓|✔|v|x|s/iu', $sVal) && !preg_match('/✓|✔|v|x|b/iu', $bVal)) {
+                    $ans = 'S';
+                }
+            } elseif ($meta['ans_idx'] !== null) {
+                $ansRaw = strtoupper(trim($row[$meta['ans_idx']]['text'] ?? ''));
+                if (str_starts_with($ansRaw, 'S')) {
+                    $ans = 'S';
+                }
+            }
+
+            $qItem = $this->initEmptyQuestion($qNum, 'true_false', $stmtPlain, $stmtHtml ?: e($stmtPlain), $stmtCell['image'] ?? null);
+            $qItem['correct_answer'] = $ans;
+            if (str_starts_with($stmtHtml, '<p>')) {
+                $qItem['question_text'] = $stmtHtml;
+            }
+            $items[] = $qItem;
+        }
+
+        return $items;
+    }
+
     private function extractParagraphContent(\DOMXPath $xp, \DOMNode $pNode, ZipArchive $zip, array $relsMap, array &$imagesCache): array
     {
         $plain = '';
@@ -1046,7 +1553,7 @@ class ExamDocxService
 
     private function isSectionSubInstructionLine(string $line): bool
     {
-        return (bool) preg_match('/^(?:Pilihlah\s+(?:salah\s+satu|lebih\s+dari)|Tentukan\s+Benar|Pasangkan\s+pernyataan|Isilah\s+titik|Jawablah\s+pertanyaan|PG|PGK|BENAR\s*\/\s*SALAH|MENJODOHKAN|ISIAN\s+SINGKAT|URAIAN)$/iu', $line);
+        return (bool) preg_match('/^(?:Pilihlah\s+(?:satu|salah\s+satu|lebih\s+dari|beberapa)\s+jawaban.*|Berilah\s+tanda\s+(?:silang|centang).*|Tentukan\s+Benar.*|Pasangkan\s+pernyataan.*|Jodohkan(?:lah)?\s+.*|Isilah\s+titik.*|Jawablah\s+pertanyaan.*|PG|PGK|BENAR\s*\/\s*SALAH|MENJODOHKAN|ISIAN\s+SINGKAT|URAIAN)$/iu', $line);
     }
 
     private function detectSectionHeaderType(string $line): ?string
