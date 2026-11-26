@@ -344,31 +344,31 @@
                   </button>
                   <div class="hidden group-hover:block absolute left-0 bottom-full mb-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-xl z-30 py-1.5 text-xs text-slate-700 divide-y divide-slate-100">
                     <div class="py-1">
-                      <a :href="`/prints/exam/${pkg.id}/naskah?layout=2col`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 font-medium transition">
+                      <a :href="getPrintUrl(pkg.id, 'naskah', { layout: '2col' })" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 font-medium transition">
                         <span>📄</span>
                         <span>Naskah 2 Kolom (Hemat)</span>
                       </a>
-                      <a :href="`/prints/exam/${pkg.id}/naskah?layout=1col`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                      <a :href="getPrintUrl(pkg.id, 'naskah', { layout: '1col' })" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
                         <span>📄</span>
                         <span>Naskah 1 Kolom</span>
                       </a>
                     </div>
                     <div class="py-1">
-                      <a :href="`/prints/exam/${pkg.id}/kisi-kisi`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                      <a :href="getPrintUrl(pkg.id, 'kisi-kisi')" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
                         <span>📊</span>
                         <span>Kisi-Kisi Resmi</span>
                       </a>
-                      <a :href="`/prints/exam/${pkg.id}/kartu-soal`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                      <a :href="getPrintUrl(pkg.id, 'kartu-soal')" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
                         <span>🗂️</span>
                         <span>Kartu Soal</span>
                       </a>
                     </div>
                     <div class="py-1">
-                      <a :href="`/prints/exam/${pkg.id}/telaah`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                      <a :href="getPrintUrl(pkg.id, 'telaah')" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
                         <span>📝</span>
                         <span>Berita Acara Telaah</span>
                       </a>
-                      <a :href="`/prints/exam/${pkg.id}/kunci`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                      <a :href="getPrintUrl(pkg.id, 'kunci')" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-700 transition">
                         <span>🔑</span>
                         <span>Kunci & Rubrik Nilai</span>
                       </a>
@@ -3061,24 +3061,32 @@ const removeQuestion = async (idx) => {
   toast.success(`Butir soal nomor ${qNum} berhasil dihapus.`);
 };
 
+const getPrintUrl = (pkgId, type, params = {}) => {
+  const token = localStorage.getItem('token') || '';
+  const searchParams = new URLSearchParams(params);
+  if (token) searchParams.set('token', token);
+  const qs = searchParams.toString();
+  return `/prints/exam/${pkgId}/${type}${qs ? `?${qs}` : ''}`;
+};
+
 const previewNaskah = () => {
   if (!activePackage.value) return;
-  window.open(`/prints/exam/${activePackage.value.id}/naskah?layout=2col`, '_blank');
+  window.open(getPrintUrl(activePackage.value.id, 'naskah', { layout: '2col' }), '_blank');
 };
 
 const previewKisiKisi = () => {
   if (!activePackage.value) return;
-  window.open(`/prints/exam/${activePackage.value.id}/kisi-kisi`, '_blank');
+  window.open(getPrintUrl(activePackage.value.id, 'kisi-kisi'), '_blank');
 };
 
 const previewTelaah = () => {
   if (!activePackage.value) return;
-  window.open(`/prints/exam/${activePackage.value.id}/telaah`, '_blank');
+  window.open(getPrintUrl(activePackage.value.id, 'telaah'), '_blank');
 };
 
 const previewKunci = () => {
   if (!activePackage.value) return;
-  window.open(`/prints/exam/${activePackage.value.id}/kunci`, '_blank');
+  window.open(getPrintUrl(activePackage.value.id, 'kunci'), '_blank');
 };
 
 // Smart Auto-Generate Kisi-Kisi Engine (Multi-Subject, Arabic/Quran/Hadith Aware & Natural NLP)

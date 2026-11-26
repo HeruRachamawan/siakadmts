@@ -176,31 +176,31 @@
                     </button>
                     <div class="hidden group-hover:block absolute right-0 top-full mt-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-xl z-30 py-1.5 text-left text-xs text-slate-700 divide-y divide-slate-100">
                       <div class="py-1">
-                        <a :href="`/prints/exam/${pkg.id}/naskah?layout=2col`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 font-medium transition">
+                        <a :href="getPrintUrl(pkg.id, 'naskah', { layout: '2col' })" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 font-medium transition">
                           <span>📄</span>
                           <span>Naskah 2 Kolom (Hemat)</span>
                         </a>
-                        <a :href="`/prints/exam/${pkg.id}/naskah?layout=1col`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                        <a :href="getPrintUrl(pkg.id, 'naskah', { layout: '1col' })" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
                           <span>📄</span>
                           <span>Naskah 1 Kolom</span>
                         </a>
                       </div>
                       <div class="py-1">
-                        <a :href="`/prints/exam/${pkg.id}/kisi-kisi`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                        <a :href="getPrintUrl(pkg.id, 'kisi-kisi')" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
                           <span>📊</span>
                           <span>Kisi-Kisi Resmi</span>
                         </a>
-                        <a :href="`/prints/exam/${pkg.id}/kartu-soal`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                        <a :href="getPrintUrl(pkg.id, 'kartu-soal')" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
                           <span>🗂️</span>
                           <span>Kartu Soal</span>
                         </a>
                       </div>
                       <div class="py-1">
-                        <a :href="`/prints/exam/${pkg.id}/telaah`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                        <a :href="getPrintUrl(pkg.id, 'telaah')" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
                           <span>📝</span>
                           <span>Berita Acara Telaah</span>
                         </a>
-                        <a :href="`/prints/exam/${pkg.id}/kunci`" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                        <a :href="getPrintUrl(pkg.id, 'kunci')" target="_blank" class="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 hover:text-indigo-700 transition">
                           <span>🔑</span>
                           <span>Kunci & Rubrik Nilai</span>
                         </a>
@@ -545,6 +545,14 @@ import {
 
 const loading = ref(false);
 const packages = ref([]);
+
+const getPrintUrl = (pkgId, type, params = {}) => {
+  const token = localStorage.getItem('token') || '';
+  const searchParams = new URLSearchParams(params);
+  if (token) searchParams.set('token', token);
+  const qs = searchParams.toString();
+  return `/prints/exam/${pkgId}/${type}${qs ? `?${qs}` : ''}`;
+};
 const summary = reactive({
   total_packages: 0,
   draft: 0,

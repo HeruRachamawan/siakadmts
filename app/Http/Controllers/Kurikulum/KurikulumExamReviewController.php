@@ -220,6 +220,8 @@ class KurikulumExamReviewController extends Controller
             $q->orderBy('question_number', 'asc');
         }])->findOrFail($packageId);
 
+        $this->authorizePackagePrint($request, $package);
+
         $school = SchoolSetting::getSetting();
         $layout = $request->query('layout', '2col'); // '1col' or '2col'
         $showKeys = $request->boolean('show_keys', false);
@@ -248,6 +250,8 @@ class KurikulumExamReviewController extends Controller
             $q->orderBy('question_number', 'asc');
         }])->findOrFail($packageId);
 
+        $this->authorizePackagePrint($request, $package);
+
         $school = SchoolSetting::getSetting();
 
         return view('prints.exam_kisi_kisi', compact('package', 'school'));
@@ -261,6 +265,8 @@ class KurikulumExamReviewController extends Controller
         $package = ExamPackage::with(['classRoom', 'subject', 'academicYear', 'teacher.user', 'questions' => function ($q) {
             $q->orderBy('question_number', 'asc');
         }])->findOrFail($packageId);
+
+        $this->authorizePackagePrint($request, $package);
 
         $school = SchoolSetting::getSetting();
 
@@ -276,6 +282,8 @@ class KurikulumExamReviewController extends Controller
             $q->orderBy('question_number', 'asc');
         }])->findOrFail($packageId);
 
+        $this->authorizePackagePrint($request, $package);
+
         $school = SchoolSetting::getSetting();
 
         return view('prints.exam_telaah', compact('package', 'school'));
@@ -289,6 +297,8 @@ class KurikulumExamReviewController extends Controller
         $package = ExamPackage::with(['classRoom', 'subject', 'academicYear', 'teacher.user', 'questions' => function ($q) {
             $q->orderBy('question_number', 'asc');
         }])->findOrFail($packageId);
+
+        $this->authorizePackagePrint($request, $package);
 
         $school = SchoolSetting::getSetting();
         $allQuestions = $package->questions;
@@ -306,5 +316,47 @@ class KurikulumExamReviewController extends Controller
             'trueFalseQuestions', 'matchingQuestions',
             'shortAnswerQuestions', 'essayQuestions'
         ));
+    }
+
+    /**
+     * Authorize user access to printable exam package and answer keys.
+     */
+    protected function authorizePackagePrint(Request $request, ExamPackage $package): void
+    {
+        $user = Auth::user();
+
+        // Support fallback authentication via Sanctum token in request
+        if (! $user) {
+            $token = $request->bearerToken() ?: $request->query('token');
+            if ($token) {
+                $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+                if ($accessToken && (! $accessToken->expires_at || $accessToken->expires_at->isFuture())) {
+                    $user = $accessToken->tokenable;
+                    Auth::setUser($user);
+                }
+            }
+        }
+
+        if (! $user) {
+            abort(403, 'Akses ditolak. Silakan login terlebih dahulu untuk membuka dokumen ini.');
+        }
+
+        if ($user->role === 'student') {
+            abort(403, 'Akses ditolak. Siswa dilarang keras membuka naskah soal dan kunci jawaban ujian.');
+        }
+
+        if (in_array($user->role, ['admin', 'kurikulum', 'kepala_sekolah', 'operator'], true)) {
+            return;
+        }
+
+        if ($user->role === 'teacher') {
+            $teacher = $user->teacher;
+            if (! $teacher || (int) $package->teacher_id !== (int) $teacher->id) {
+                abort(403, 'Akses ditolak. Anda hanya memiliki izin mencetak naskah dan kunci jawaban dari paket soal milik Anda sendiri.');
+            }
+            return;
+        }
+
+        abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk membuka dokumen ini.');
     }
 }

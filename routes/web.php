@@ -15,7 +15,7 @@ Route::get('/sync-deploy/{key}', function ($key) {
 });
 
 // Print Routes for Exam Documents (Naskah, Kisi-Kisi, Kartu Soal, Telaah, Kunci)
-Route::prefix('prints/exam')->group(function () {
+Route::prefix('prints/exam')->middleware(['exam.print.auth'])->group(function () {
     Route::get('{id}/naskah', [\App\Http\Controllers\Kurikulum\KurikulumExamReviewController::class, 'printNaskah']);
     Route::get('{id}/kisi-kisi', [\App\Http\Controllers\Kurikulum\KurikulumExamReviewController::class, 'printKisiKisi']);
     Route::get('{id}/kartu-soal', [\App\Http\Controllers\Kurikulum\KurikulumExamReviewController::class, 'printKartuSoal']);

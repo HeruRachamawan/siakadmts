@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\AuthorizeExamPrint;
 use App\Http\Middleware\SetAcademicYearContext;
 use Laravel\Sanctum\SanctumServiceProvider;
 
@@ -24,7 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
         SanctumServiceProvider::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias(['role' => RoleMiddleware::class]);
+        $middleware->alias([
+            'role' => RoleMiddleware::class,
+            'exam.print.auth' => AuthorizeExamPrint::class,
+        ]);
         $middleware->api(append: [
             SetAcademicYearContext::class,
         ]);
