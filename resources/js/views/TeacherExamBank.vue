@@ -590,18 +590,31 @@
 
             <!-- Builder Kustom Pembagian Butir & Poin per Tipe Soal -->
             <div v-if="createForm.composition_preset === 'custom_distribution'" class="bg-white p-3 rounded-xl border border-indigo-200 text-xs text-slate-700 space-y-2.5 shadow-2xs">
-              <div class="flex items-center justify-between border-b border-indigo-50 pb-1.5">
-                <span class="font-bold text-indigo-950 flex items-center gap-1.5">
-                  <span>✏️ Tentukan Jumlah Butir & Poin Tiap Tipe:</span>
-                </span>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" :class="Math.abs(customTotalPoints - 100) < 0.01 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'">
-                  Total Skor: {{ customTotalPoints }} Poin
-                </span>
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-50 pb-1.5">
+                <div>
+                  <span class="font-bold text-indigo-950 flex items-center gap-1.5">
+                    <span>✏️ Atur Urutan, Jumlah Butir & Poin Tiap Tipe:</span>
+                  </span>
+                  <p class="text-[10px] text-slate-400 mt-0.5">Gunakan tombol &uarr;&darr; atau geser baris untuk mengubah urutan nomor soal (mis. Menjodohkan dulu sebelum B/S).</p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    @click="resetCustomQuestionTypeOrder"
+                    class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition cursor-pointer"
+                    title="Kembalikan ke urutan default"
+                  >
+                    Reset Urutan
+                  </button>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" :class="Math.abs(customTotalPoints - 100) < 0.01 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'">
+                    Total Skor: {{ customTotalPoints }} Poin
+                  </span>
+                </div>
               </div>
 
               <!-- Column Captions (Desktop) -->
               <div class="hidden sm:grid sm:grid-cols-[1fr_auto_auto_84px] gap-2 px-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                <span>Tipe Soal</span>
+                <span>Urutan &amp; Tipe Soal</span>
                 <span class="w-[88px] text-center">Jumlah</span>
                 <span class="w-[82px] text-center">Poin/Butir</span>
                 <span class="text-right">Bobot Nilai</span>
@@ -609,14 +622,45 @@
 
               <div class="space-y-1.5">
                 <div
-                  v-for="qt in customQuestionTypes"
+                  v-for="(qt, qIdx) in customQuestionTypes"
                   :key="qt.key"
-                  class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 bg-slate-50/80 rounded-lg border border-slate-100"
+                  draggable="true"
+                  @dragstart="onCustomTypeDragStart(qIdx)"
+                  @dragover.prevent="onCustomTypeDragOver(qIdx)"
+                  @drop.prevent="onCustomTypeDrop(qIdx)"
+                  @dragend="onCustomTypeDragEnd"
+                  class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 rounded-lg border transition"
+                  :class="[
+                    dragOverCustomTypeIndex === qIdx ? 'bg-indigo-50 border-indigo-400 ring-1 ring-indigo-300' : 'bg-slate-50/80 border-slate-100',
+                    draggedCustomTypeIndex === qIdx ? 'opacity-60' : ''
+                  ]"
                 >
                   <div class="flex items-center gap-2 min-w-0">
+                    <div class="flex flex-col gap-0.5 shrink-0">
+                      <button
+                        type="button"
+                        @click="moveCustomQuestionType(qIdx, -1)"
+                        :disabled="qIdx === 0"
+                        class="w-5 h-4 rounded bg-white border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 disabled:opacity-30 flex items-center justify-center text-[10px] font-bold text-slate-600 cursor-pointer disabled:cursor-not-allowed leading-none"
+                        title="Naikkan urutan"
+                      >&uarr;</button>
+                      <button
+                        type="button"
+                        @click="moveCustomQuestionType(qIdx, 1)"
+                        :disabled="qIdx === customQuestionTypes.length - 1"
+                        class="w-5 h-4 rounded bg-white border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 disabled:opacity-30 flex items-center justify-center text-[10px] font-bold text-slate-600 cursor-pointer disabled:cursor-not-allowed leading-none"
+                        title="Turunkan urutan"
+                      >&darr;</button>
+                    </div>
+                    <span class="text-slate-300 cursor-grab select-none text-xs font-bold shrink-0" title="Geser untuk ubah urutan">&#8942;&#8942;</span>
                     <span class="w-7 h-7 shrink-0 rounded-md font-bold text-[10px] flex items-center justify-center" :class="qt.badgeClass">{{ qt.badge }}</span>
                     <div class="min-w-0">
-                      <div class="font-bold text-slate-800 text-[11px] truncate">{{ qt.label }}</div>
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="font-bold text-slate-800 text-[11px] truncate">{{ qt.label }}</span>
+                        <span v-if="customTypeRanges[qt.key]" class="px-1.5 py-0.2 rounded bg-indigo-100/80 text-indigo-800 text-[9px] font-bold shrink-0">
+                          {{ customTypeRanges[qt.key] }}
+                        </span>
+                      </div>
                       <div class="text-[10px] text-slate-400">
                         {{ qt.isEssay ? 'Kelompok Uraian' : 'Kelompok Objektif' }} &bull; Default {{ qt.defaultPoint }} pt
                       </div>
@@ -3214,7 +3258,7 @@ const submitSplitToCorrection = async () => {
   }
 };
 
-const customQuestionTypes = [
+const DEFAULT_CUSTOM_QUESTION_TYPES = [
   { key: 'pg', badge: 'PG', shortLabel: 'PG', label: 'Pilihan Ganda Tunggal', defaultPoint: 1, badgeClass: 'bg-emerald-100 text-emerald-800', isEssay: false },
   { key: 'pg_complex', badge: 'PGK', shortLabel: 'PGK', label: 'Pilihan Ganda Kompleks', defaultPoint: 3, badgeClass: 'bg-indigo-100 text-indigo-800', isEssay: false },
   { key: 'true_false', badge: 'B/S', shortLabel: 'B/S', label: 'Benar / Salah', defaultPoint: 2, badgeClass: 'bg-purple-100 text-purple-800', isEssay: false },
@@ -3223,8 +3267,65 @@ const customQuestionTypes = [
   { key: 'essay', badge: 'ESS', shortLabel: 'Essay', label: 'Uraian / Essay', defaultPoint: 5, badgeClass: 'bg-blue-100 text-blue-800', isEssay: true },
 ];
 
+const customQuestionTypes = ref(DEFAULT_CUSTOM_QUESTION_TYPES.map(t => ({ ...t })));
+const draggedCustomTypeIndex = ref(null);
+const dragOverCustomTypeIndex = ref(null);
+
+const moveCustomQuestionType = (idx, delta) => {
+  const targetIdx = idx + delta;
+  if (targetIdx < 0 || targetIdx >= customQuestionTypes.value.length) return;
+  const arr = [...customQuestionTypes.value];
+  const [moved] = arr.splice(idx, 1);
+  arr.splice(targetIdx, 0, moved);
+  customQuestionTypes.value = arr;
+};
+
+const onCustomTypeDragStart = (idx) => {
+  draggedCustomTypeIndex.value = idx;
+};
+
+const onCustomTypeDragOver = (idx) => {
+  dragOverCustomTypeIndex.value = idx;
+};
+
+const onCustomTypeDrop = (targetIdx) => {
+  const fromIdx = draggedCustomTypeIndex.value;
+  draggedCustomTypeIndex.value = null;
+  dragOverCustomTypeIndex.value = null;
+  if (fromIdx === null || fromIdx === targetIdx) return;
+  const arr = [...customQuestionTypes.value];
+  const [moved] = arr.splice(fromIdx, 1);
+  arr.splice(targetIdx, 0, moved);
+  customQuestionTypes.value = arr;
+};
+
+const onCustomTypeDragEnd = () => {
+  draggedCustomTypeIndex.value = null;
+  dragOverCustomTypeIndex.value = null;
+};
+
+const resetCustomQuestionTypeOrder = () => {
+  customQuestionTypes.value = DEFAULT_CUSTOM_QUESTION_TYPES.map(t => ({ ...t }));
+};
+
+const customTypeRanges = computed(() => {
+  const map = {};
+  let cursor = 1;
+  customQuestionTypes.value.forEach(qt => {
+    const count = Math.max(0, parseInt(createForm.custom_counts?.[qt.key]) || 0);
+    if (count > 0) {
+      const end = cursor + count - 1;
+      map[qt.key] = count === 1 ? `No. ${cursor}` : `No. ${cursor}–${end}`;
+      cursor = end + 1;
+    } else {
+      map[qt.key] = null;
+    }
+  });
+  return map;
+});
+
 const getParsedCustomRows = () => {
-  return customQuestionTypes.map(qt => {
+  return customQuestionTypes.value.map(qt => {
     const count = Math.max(0, parseInt(createForm.custom_counts?.[qt.key]) || 0);
     const rawPt = parseFloat(createForm.custom_points?.[qt.key]);
     const point = rawPt > 0 ? rawPt : qt.defaultPoint;
@@ -4616,6 +4717,7 @@ const openCreateModal = () => {
   createForm.academic_phase = 'Fase D';
   createForm.pg_weight = 75;
   createForm.essay_weight = 25;
+  resetCustomQuestionTypeOrder();
   syncCreateCorrectionClasses();
   showCreateModal.value = true;
 };
@@ -4730,6 +4832,7 @@ const createPackage = async () => {
 
     const payload = {
       ...createForm,
+      custom_order: customQuestionTypes.value.map(qt => qt.key),
       class_room_id: resolvedClassId,
       target_grade: resolvedTargetGrade,
       execution_date: createForm.execution_month && createForm.execution_year

@@ -47,6 +47,30 @@ class ExamPackage extends Model
         return static::$splitColumnsExist;
     }
 
+    /**
+     * Merge teacher-specified question type order with default fallback types.
+     *
+     * @param array<int, string>|null $requestedOrder
+     * @param array<int, string> $defaultOrder
+     * @return array<int, string>
+     */
+    public static function resolveOrderedTypes(?array $requestedOrder, array $defaultOrder): array
+    {
+        $validSet = array_flip($defaultOrder);
+        $ordered = [];
+        foreach (is_array($requestedOrder) ? $requestedOrder : [] as $type) {
+            if (isset($validSet[$type]) && !in_array($type, $ordered, true)) {
+                $ordered[] = $type;
+            }
+        }
+        foreach ($defaultOrder as $type) {
+            if (!in_array($type, $ordered, true)) {
+                $ordered[] = $type;
+            }
+        }
+        return $ordered;
+    }
+
     public function sourcePackage()
     {
         return $this->belongsTo(ExamPackage::class, 'source_package_id');

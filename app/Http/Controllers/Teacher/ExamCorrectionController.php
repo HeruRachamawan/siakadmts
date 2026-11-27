@@ -367,6 +367,8 @@ class ExamCorrectionController extends Controller
             'essay_weight' => 'nullable|numeric|min:0|max:100',
             'description' => 'nullable|string',
             'quick_keys' => 'nullable|string', // Optional string of keys: e.g. "ABCDABCDAB..."
+            'type_order' => 'nullable|array',
+            'type_order.*' => 'nullable|string|in:pg,pg_complex,true_false,agree_disagree,matching,short_answer,essay',
         ]);
 
         $teacherId = $teacher ? $teacher->id : ($request->user()->teacher_id ?? 1);
@@ -403,23 +405,27 @@ class ExamCorrectionController extends Controller
                 'description' => $validated['description'] ?? null,
             ]);
 
-            // Build question type sequence based on teacher preferences:
-            $typesSequence = [];
-            $pgCount = intval($validated['pg_count'] ?? 0);
-            $pgComplexCount = intval($validated['pg_complex_count'] ?? 0);
-            $trueFalseCount = intval($validated['true_false_count'] ?? 0);
-            $agreeDisagreeCount = intval($validated['agree_disagree_count'] ?? 0);
-            $matchingCount = intval($validated['matching_count'] ?? 0);
-            $shortAnswerCount = intval($validated['short_answer_count'] ?? 0);
-            $essayCount = intval($validated['essay_count'] ?? 0);
+            // Build question type sequence based on teacher preferences and custom order:
+            $typeCounts = [
+                'pg' => intval($validated['pg_count'] ?? 0),
+                'pg_complex' => intval($validated['pg_complex_count'] ?? 0),
+                'true_false' => intval($validated['true_false_count'] ?? 0),
+                'agree_disagree' => intval($validated['agree_disagree_count'] ?? 0),
+                'matching' => intval($validated['matching_count'] ?? 0),
+                'short_answer' => intval($validated['short_answer_count'] ?? 0),
+                'essay' => intval($validated['essay_count'] ?? 0),
+            ];
+            $orderedTypes = ExamPackage::resolveOrderedTypes(
+                $validated['type_order'] ?? null,
+                array_keys($typeCounts)
+            );
 
-            for ($k = 0; $k < $pgCount; $k++) $typesSequence[] = 'pg';
-            for ($k = 0; $k < $pgComplexCount; $k++) $typesSequence[] = 'pg_complex';
-            for ($k = 0; $k < $trueFalseCount; $k++) $typesSequence[] = 'true_false';
-            for ($k = 0; $k < $agreeDisagreeCount; $k++) $typesSequence[] = 'agree_disagree';
-            for ($k = 0; $k < $matchingCount; $k++) $typesSequence[] = 'matching';
-            for ($k = 0; $k < $shortAnswerCount; $k++) $typesSequence[] = 'short_answer';
-            for ($k = 0; $k < $essayCount; $k++) $typesSequence[] = 'essay';
+            $typesSequence = [];
+            foreach ($orderedTypes as $tKey) {
+                for ($k = 0; $k < $typeCounts[$tKey]; $k++) {
+                    $typesSequence[] = $tKey;
+                }
+            }
 
             // Fallback if no specific breakdown was passed
             if (empty($typesSequence)) {

@@ -240,6 +240,8 @@ class ExamBankController extends Controller
             'custom_counts' => 'nullable|array',
             'custom_points' => 'nullable|array',
             'custom_points.*' => 'nullable|numeric|min:0.1|max:100',
+            'custom_order' => 'nullable|array',
+            'custom_order.*' => 'nullable|string|in:pg,pg_complex,true_false,matching,short_answer,essay',
             'kkm' => 'nullable|numeric|min:0|max:100',
             'pg_weight' => 'nullable|numeric|min:0|max:100',
             'essay_weight' => 'nullable|numeric|min:0|max:100',
@@ -388,7 +390,13 @@ class ExamBankController extends Controller
                     ],
                 ];
 
-                foreach ($typeConfigs as $qType => $cfg) {
+                $orderedTypes = ExamPackage::resolveOrderedTypes(
+                    $validated['custom_order'] ?? null,
+                    array_keys($typeConfigs)
+                );
+
+                foreach ($orderedTypes as $qType) {
+                    $cfg = $typeConfigs[$qType];
                     for ($k = 0; $k < $resolvedCounts[$qType]; $k++) {
                         $newQuestions[] = [
                             'exam_package_id' => $package->id,

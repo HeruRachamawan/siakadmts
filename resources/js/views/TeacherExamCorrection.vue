@@ -2087,236 +2087,85 @@
               </div>
             </div>
 
-            <!-- 7 Question Type Counter Cards Grid -->
+            <div class="flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500">
+              <span>Urutan kartu di bawah menentukan urutan nomor soal (geser kartu atau klik &larr;/&rarr; agar mis. Menjodohkan sebelum Benar/Salah).</span>
+              <button
+                type="button"
+                @click="resetCorrectionTypeOrder"
+                class="px-2 py-0.5 rounded-lg bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 font-bold cursor-pointer"
+              >
+                Reset Urutan
+              </button>
+            </div>
+
+            <!-- 7 Question Type Counter Cards Grid (Reorderable) -->
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              <!-- 1. PG Biasa -->
-              <div class="p-3 bg-white rounded-2xl border border-teal-200/80 space-y-1.5 text-center shadow-2xs flex flex-col justify-between">
-                <span class="block text-[10px] font-black text-teal-800 uppercase">1. Pilihan Ganda (PG)</span>
+              <div
+                v-for="(ct, ctIdx) in correctionTypes"
+                :key="ct.key"
+                draggable="true"
+                @dragstart="onCorrectionTypeDragStart(ctIdx)"
+                @dragover.prevent="onCorrectionTypeDragOver(ctIdx)"
+                @drop.prevent="onCorrectionTypeDrop(ctIdx)"
+                @dragend="onCorrectionTypeDragEnd"
+                class="p-3 bg-white rounded-2xl border space-y-1.5 text-center shadow-2xs flex flex-col justify-between transition"
+                :class="[
+                  ct.borderClass,
+                  ct.colSpanClass || '',
+                  dragOverCorrectionTypeIdx === ctIdx ? 'ring-2 ring-teal-400 bg-teal-50/30' : '',
+                  draggedCorrectionTypeIdx === ctIdx ? 'opacity-60' : ''
+                ]"
+              >
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between gap-1">
+                    <button
+                      type="button"
+                      @click="moveCorrectionType(ctIdx, -1)"
+                      :disabled="ctIdx === 0"
+                      class="w-5 h-5 rounded-md bg-slate-100 hover:bg-slate-200 disabled:opacity-30 text-[10px] font-bold text-slate-600 cursor-pointer disabled:cursor-not-allowed"
+                      title="Geser urutan lebih awal"
+                    >&larr;</button>
+                    <span class="text-[9px] font-bold text-slate-400 cursor-grab select-none" title="Geser kartu untuk ubah urutan">
+                      #{{ ctIdx + 1 }}{{ correctionTypeRanges[ct.key] ? ` &bull; ${correctionTypeRanges[ct.key]}` : '' }}
+                    </span>
+                    <button
+                      type="button"
+                      @click="moveCorrectionType(ctIdx, 1)"
+                      :disabled="ctIdx === correctionTypes.length - 1"
+                      class="w-5 h-5 rounded-md bg-slate-100 hover:bg-slate-200 disabled:opacity-30 text-[10px] font-bold text-slate-600 cursor-pointer disabled:cursor-not-allowed"
+                      title="Geser urutan lebih akhir"
+                    >&rarr;</button>
+                  </div>
+                  <span class="block text-[10px] font-black uppercase" :class="ct.titleClass">{{ ct.label }}</span>
+                </div>
                 <div class="grid grid-cols-2 gap-1.5 pt-1">
                   <div>
                     <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
                     <input
-                      v-model.number="examForm.pg_count"
+                      v-model.number="examForm[ct.countField]"
                       @input="onPointOrCountChange"
                       type="number"
                       min="0"
-                      max="100"
+                      :max="ct.maxCount"
                       class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
                     />
                   </div>
                   <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin/Butir</label>
+                    <label class="text-[9px] font-bold text-slate-500 uppercase block">{{ ct.pointLabel }}</label>
                     <input
-                      v-model.number="examForm.pg_point"
+                      v-model.number="examForm[ct.pointField]"
                       @input="onPointOrCountChange"
                       type="number"
                       min="0.5"
                       step="0.5"
                       max="100"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-teal-700 focus:ring-2 focus:ring-teal-400"
+                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black focus:ring-2 focus:ring-teal-400"
+                      :class="ct.pointClass"
                     />
                   </div>
                 </div>
-                <div v-if="examForm.pg_count > 0 && typeWeightMap.pg" class="text-[10px] font-bold text-teal-700 bg-teal-50/80 rounded-lg py-0.5 px-1 border border-teal-100">
-                  {{ typeWeightMap.pg.totalPoints }} pt &bull; {{ typeWeightMap.pg.effectivePercent }}% nilai
-                </div>
-              </div>
-
-              <!-- 2. PG Kompleks -->
-              <div class="p-3 bg-white rounded-2xl border border-purple-200/80 space-y-1.5 text-center shadow-2xs flex flex-col justify-between">
-                <span class="block text-[10px] font-black text-purple-800 uppercase">2. PG Kompleks</span>
-                <div class="grid grid-cols-2 gap-1.5 pt-1">
-                  <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
-                    <input
-                      v-model.number="examForm.pg_complex_count"
-                      @input="onPointOrCountChange"
-                      type="number"
-                      min="0"
-                      max="100"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
-                    />
-                  </div>
-                  <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin/Butir</label>
-                    <input
-                      v-model.number="examForm.pg_complex_point"
-                      @input="onPointOrCountChange"
-                      type="number"
-                      min="0.5"
-                      step="0.5"
-                      max="100"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-purple-700 focus:ring-2 focus:ring-teal-400"
-                    />
-                  </div>
-                </div>
-                <div v-if="examForm.pg_complex_count > 0 && typeWeightMap.pg_complex" class="text-[10px] font-bold text-purple-700 bg-purple-50/80 rounded-lg py-0.5 px-1 border border-purple-100">
-                  {{ typeWeightMap.pg_complex.totalPoints }} pt &bull; {{ typeWeightMap.pg_complex.effectivePercent }}% nilai
-                </div>
-              </div>
-
-              <!-- 3. Benar / Salah -->
-              <div class="p-3 bg-white rounded-2xl border border-sky-200/80 space-y-1.5 text-center shadow-2xs flex flex-col justify-between">
-                <span class="block text-[10px] font-black text-sky-800 uppercase">3. Benar / Salah</span>
-                <div class="grid grid-cols-2 gap-1.5 pt-1">
-                  <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
-                    <input
-                      v-model.number="examForm.true_false_count"
-                      @input="onPointOrCountChange"
-                      type="number"
-                      min="0"
-                      max="100"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
-                    />
-                  </div>
-                  <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin/Butir</label>
-                    <input
-                      v-model.number="examForm.true_false_point"
-                      @input="onPointOrCountChange"
-                      type="number"
-                      min="0.5"
-                      step="0.5"
-                      max="100"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-sky-700 focus:ring-2 focus:ring-teal-400"
-                    />
-                  </div>
-                </div>
-                <div v-if="examForm.true_false_count > 0 && typeWeightMap.true_false" class="text-[10px] font-bold text-sky-700 bg-sky-50/80 rounded-lg py-0.5 px-1 border border-sky-100">
-                  {{ typeWeightMap.true_false.totalPoints }} pt &bull; {{ typeWeightMap.true_false.effectivePercent }}% nilai
-                </div>
-              </div>
-
-              <!-- 4. Setuju / Tidak Setuju -->
-              <div class="p-3 bg-white rounded-2xl border border-indigo-200/80 space-y-1.5 text-center shadow-2xs flex flex-col justify-between">
-                <span class="block text-[10px] font-black text-indigo-800 uppercase">4. Setuju / Tdk</span>
-                <div class="grid grid-cols-2 gap-1.5 pt-1">
-                  <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
-                    <input
-                      v-model.number="examForm.agree_disagree_count"
-                      @input="onPointOrCountChange"
-                      type="number"
-                      min="0"
-                      max="100"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
-                    />
-                  </div>
-                  <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin/Butir</label>
-                    <input
-                      v-model.number="examForm.agree_disagree_point"
-                      @input="onPointOrCountChange"
-                      type="number"
-                      min="0.5"
-                      step="0.5"
-                      max="100"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-indigo-700 focus:ring-2 focus:ring-teal-400"
-                    />
-                  </div>
-                </div>
-                <div v-if="examForm.agree_disagree_count > 0 && typeWeightMap.agree_disagree" class="text-[10px] font-bold text-indigo-700 bg-indigo-50/80 rounded-lg py-0.5 px-1 border border-indigo-100">
-                  {{ typeWeightMap.agree_disagree.totalPoints }} pt &bull; {{ typeWeightMap.agree_disagree.effectivePercent }}% nilai
-                </div>
-              </div>
-
-              <!-- 5. Menjodohkan -->
-              <div class="p-3 bg-white rounded-2xl border border-emerald-200/80 space-y-1.5 text-center shadow-2xs flex flex-col justify-between">
-                <span class="block text-[10px] font-black text-emerald-800 uppercase">5. Menjodohkan</span>
-                <div class="grid grid-cols-2 gap-1.5 pt-1">
-                  <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
-                    <input
-                      v-model.number="examForm.matching_count"
-                      @input="onPointOrCountChange"
-                      type="number"
-                      min="0"
-                      max="100"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
-                    />
-                  </div>
-                  <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin/Butir</label>
-                    <input
-                      v-model.number="examForm.matching_point"
-                      @input="onPointOrCountChange"
-                      type="number"
-                      min="0.5"
-                      step="0.5"
-                      max="100"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-emerald-700 focus:ring-2 focus:ring-teal-400"
-                    />
-                  </div>
-                </div>
-                <div v-if="examForm.matching_count > 0 && typeWeightMap.matching" class="text-[10px] font-bold text-emerald-700 bg-emerald-50/80 rounded-lg py-0.5 px-1 border border-emerald-100">
-                  {{ typeWeightMap.matching.totalPoints }} pt &bull; {{ typeWeightMap.matching.effectivePercent }}% nilai
-                </div>
-              </div>
-
-              <!-- 6. Isian Singkat -->
-              <div class="p-3 bg-white rounded-2xl border border-blue-200/80 space-y-1.5 text-center shadow-2xs flex flex-col justify-between">
-                <span class="block text-[10px] font-black text-blue-800 uppercase">6. Isian Singkat</span>
-                <div class="grid grid-cols-2 gap-1.5 pt-1">
-                  <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
-                    <input
-                      v-model.number="examForm.short_answer_count"
-                      @input="onPointOrCountChange"
-                      type="number"
-                      min="0"
-                      max="100"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
-                    />
-                  </div>
-                  <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin/Butir</label>
-                    <input
-                      v-model.number="examForm.short_answer_point"
-                      @input="onPointOrCountChange"
-                      type="number"
-                      min="0.5"
-                      step="0.5"
-                      max="100"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-blue-700 focus:ring-2 focus:ring-teal-400"
-                    />
-                  </div>
-                </div>
-                <div v-if="examForm.short_answer_count > 0 && typeWeightMap.short_answer" class="text-[10px] font-bold text-blue-700 bg-blue-50/80 rounded-lg py-0.5 px-1 border border-blue-100">
-                  {{ typeWeightMap.short_answer.totalPoints }} pt &bull; {{ typeWeightMap.short_answer.effectivePercent }}% nilai
-                </div>
-              </div>
-
-              <!-- 7. Uraian / Essay -->
-              <div class="p-3 bg-white rounded-2xl border border-amber-200/80 space-y-1.5 text-center shadow-2xs col-span-2 sm:col-span-1 md:col-span-2 flex flex-col justify-between">
-                <span class="block text-[10px] font-black text-amber-800 uppercase">7. Uraian / Essay</span>
-                <div class="grid grid-cols-2 gap-1.5 pt-1">
-                  <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase block">Jumlah</label>
-                    <input
-                      v-model.number="examForm.essay_count"
-                      @input="onPointOrCountChange"
-                      type="number"
-                      min="0"
-                      max="50"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-slate-800 focus:ring-2 focus:ring-teal-400"
-                    />
-                  </div>
-                  <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase block">Poin Maks/Butir</label>
-                    <input
-                      v-model.number="examForm.essay_point"
-                      @input="onPointOrCountChange"
-                      type="number"
-                      min="0.5"
-                      step="0.5"
-                      max="100"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 text-center text-xs font-black text-amber-700 focus:ring-2 focus:ring-teal-400"
-                    />
-                  </div>
-                </div>
-                <div v-if="examForm.essay_count > 0 && typeWeightMap.essay" class="text-[10px] font-bold text-amber-700 bg-amber-50/80 rounded-lg py-0.5 px-1 border border-amber-100">
-                  {{ typeWeightMap.essay.totalPoints }} pt &bull; {{ typeWeightMap.essay.effectivePercent }}% nilai
+                <div v-if="examForm[ct.countField] > 0 && typeWeightMap[ct.key]" class="text-[10px] font-bold rounded-lg py-0.5 px-1 border" :class="ct.badgeClass">
+                  {{ typeWeightMap[ct.key].totalPoints }} pt &bull; {{ typeWeightMap[ct.key].effectivePercent }}% nilai
                 </div>
               </div>
             </div>
@@ -4331,6 +4180,73 @@ const examForm = reactive({
   quick_keys: ''
 });
 
+const DEFAULT_CORRECTION_TYPES = [
+  { key: 'pg', label: 'Pilihan Ganda (PG)', countField: 'pg_count', pointField: 'pg_point', maxCount: 100, pointLabel: 'Poin/Butir', borderClass: 'border-teal-200/80', titleClass: 'text-teal-800', pointClass: 'text-teal-700', badgeClass: 'text-teal-700 bg-teal-50/80 border-teal-100', colSpanClass: '' },
+  { key: 'pg_complex', label: 'PG Kompleks', countField: 'pg_complex_count', pointField: 'pg_complex_point', maxCount: 100, pointLabel: 'Poin/Butir', borderClass: 'border-purple-200/80', titleClass: 'text-purple-800', pointClass: 'text-purple-700', badgeClass: 'text-purple-700 bg-purple-50/80 border-purple-100', colSpanClass: '' },
+  { key: 'true_false', label: 'Benar / Salah', countField: 'true_false_count', pointField: 'true_false_point', maxCount: 100, pointLabel: 'Poin/Butir', borderClass: 'border-sky-200/80', titleClass: 'text-sky-800', pointClass: 'text-sky-700', badgeClass: 'text-sky-700 bg-sky-50/80 border-sky-100', colSpanClass: '' },
+  { key: 'agree_disagree', label: 'Setuju / Tdk', countField: 'agree_disagree_count', pointField: 'agree_disagree_point', maxCount: 100, pointLabel: 'Poin/Butir', borderClass: 'border-indigo-200/80', titleClass: 'text-indigo-800', pointClass: 'text-indigo-700', badgeClass: 'text-indigo-700 bg-indigo-50/80 border-indigo-100', colSpanClass: '' },
+  { key: 'matching', label: 'Menjodohkan', countField: 'matching_count', pointField: 'matching_point', maxCount: 100, pointLabel: 'Poin/Butir', borderClass: 'border-emerald-200/80', titleClass: 'text-emerald-800', pointClass: 'text-emerald-700', badgeClass: 'text-emerald-700 bg-emerald-50/80 border-emerald-100', colSpanClass: '' },
+  { key: 'short_answer', label: 'Isian Singkat', countField: 'short_answer_count', pointField: 'short_answer_point', maxCount: 100, pointLabel: 'Poin/Butir', borderClass: 'border-blue-200/80', titleClass: 'text-blue-800', pointClass: 'text-blue-700', badgeClass: 'text-blue-700 bg-blue-50/80 border-blue-100', colSpanClass: '' },
+  { key: 'essay', label: 'Uraian / Essay', countField: 'essay_count', pointField: 'essay_point', maxCount: 50, pointLabel: 'Poin Maks/Butir', borderClass: 'border-amber-200/80', titleClass: 'text-amber-800', pointClass: 'text-amber-700', badgeClass: 'text-amber-700 bg-amber-50/80 border-amber-100', colSpanClass: 'col-span-2 sm:col-span-1 md:col-span-2' },
+];
+
+const correctionTypes = ref(DEFAULT_CORRECTION_TYPES.map(t => ({ ...t })));
+const draggedCorrectionTypeIdx = ref(null);
+const dragOverCorrectionTypeIdx = ref(null);
+
+function moveCorrectionType(idx, delta) {
+  const targetIdx = idx + delta;
+  if (targetIdx < 0 || targetIdx >= correctionTypes.value.length) return;
+  const arr = [...correctionTypes.value];
+  const [moved] = arr.splice(idx, 1);
+  arr.splice(targetIdx, 0, moved);
+  correctionTypes.value = arr;
+}
+
+function onCorrectionTypeDragStart(idx) {
+  draggedCorrectionTypeIdx.value = idx;
+}
+
+function onCorrectionTypeDragOver(idx) {
+  dragOverCorrectionTypeIdx.value = idx;
+}
+
+function onCorrectionTypeDrop(targetIdx) {
+  const fromIdx = draggedCorrectionTypeIdx.value;
+  draggedCorrectionTypeIdx.value = null;
+  dragOverCorrectionTypeIdx.value = null;
+  if (fromIdx === null || fromIdx === targetIdx) return;
+  const arr = [...correctionTypes.value];
+  const [moved] = arr.splice(fromIdx, 1);
+  arr.splice(targetIdx, 0, moved);
+  correctionTypes.value = arr;
+}
+
+function onCorrectionTypeDragEnd() {
+  draggedCorrectionTypeIdx.value = null;
+  dragOverCorrectionTypeIdx.value = null;
+}
+
+function resetCorrectionTypeOrder() {
+  correctionTypes.value = DEFAULT_CORRECTION_TYPES.map(t => ({ ...t }));
+}
+
+const correctionTypeRanges = computed(() => {
+  const map = {};
+  let cursor = 1;
+  correctionTypes.value.forEach(ct => {
+    const count = Math.max(0, Number(examForm[ct.countField]) || 0);
+    if (count > 0) {
+      const end = cursor + count - 1;
+      map[ct.key] = count === 1 ? `No. ${cursor}` : `No. ${cursor}–${end}`;
+      cursor = end + 1;
+    } else {
+      map[ct.key] = null;
+    }
+  });
+  return map;
+});
+
 const objectiveTotalCount = computed(() => {
   return (Number(examForm.pg_count) || 0) +
     (Number(examForm.pg_complex_count) || 0) +
@@ -5663,6 +5579,7 @@ function openCreateModal() {
   examForm.pg_weight = 100;
   examForm.essay_weight = 0;
   examForm.quick_keys = '';
+  resetCorrectionTypeOrder();
   onExamSubjectChange();
   syncAutoWeights();
   showCreateModal.value = true;
@@ -5763,7 +5680,10 @@ async function handleExamFormSubmit() {
 async function createExam() {
   creatingExam.value = true;
   try {
-    const res = await api.post('/teacher/exam-corrections', examForm);
+    const res = await api.post('/teacher/exam-corrections', {
+      ...examForm,
+      type_order: correctionTypes.value.map(ct => ct.key)
+    });
     toast.success('Paket ujian berhasil dibuat!');
     showCreateModal.value = false;
     await fetchExams();
