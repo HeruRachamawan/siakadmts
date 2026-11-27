@@ -1029,15 +1029,23 @@
                 </label>
               </div>
             </div>
-            <!-- Ringkasan Hitung Per Tipe Soal -->
-            <div class="flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
-              <span class="text-emerald-800 mr-1">Rekap Tipe:</span>
-              <span v-if="importPreviewTypeCounts.pg" class="px-2 py-0.5 rounded-full bg-white text-emerald-700 border border-emerald-200">PG: {{ importPreviewTypeCounts.pg }}</span>
-              <span v-if="importPreviewTypeCounts.pg_complex" class="px-2 py-0.5 rounded-full bg-white text-indigo-700 border border-indigo-200">PGK: {{ importPreviewTypeCounts.pg_complex }}</span>
-              <span v-if="importPreviewTypeCounts.true_false" class="px-2 py-0.5 rounded-full bg-white text-purple-700 border border-purple-200">Benar/Salah: {{ importPreviewTypeCounts.true_false }}</span>
-              <span v-if="importPreviewTypeCounts.matching" class="px-2 py-0.5 rounded-full bg-white text-teal-700 border border-teal-200">Menjodohkan: {{ importPreviewTypeCounts.matching }}</span>
-              <span v-if="importPreviewTypeCounts.short_answer" class="px-2 py-0.5 rounded-full bg-white text-amber-700 border border-amber-200">Isian: {{ importPreviewTypeCounts.short_answer }}</span>
-              <span v-if="importPreviewTypeCounts.essay" class="px-2 py-0.5 rounded-full bg-white text-blue-700 border border-blue-200">Uraian: {{ importPreviewTypeCounts.essay }}</span>
+            <!-- Ringkasan Hitung Per Tipe Soal & Status Kunci -->
+            <div class="flex flex-wrap items-center justify-between gap-2 text-[10px] font-bold">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span class="text-emerald-800 mr-1">Rekap Tipe:</span>
+                <span v-if="importPreviewTypeCounts.pg" class="px-2 py-0.5 rounded-full bg-white text-emerald-700 border border-emerald-200">PG: {{ importPreviewTypeCounts.pg }}</span>
+                <span v-if="importPreviewTypeCounts.pg_complex" class="px-2 py-0.5 rounded-full bg-white text-indigo-700 border border-indigo-200">PGK: {{ importPreviewTypeCounts.pg_complex }}</span>
+                <span v-if="importPreviewTypeCounts.true_false" class="px-2 py-0.5 rounded-full bg-white text-purple-700 border border-purple-200">Benar/Salah: {{ importPreviewTypeCounts.true_false }}</span>
+                <span v-if="importPreviewTypeCounts.matching" class="px-2 py-0.5 rounded-full bg-white text-teal-700 border border-teal-200">Menjodohkan: {{ importPreviewTypeCounts.matching }}</span>
+                <span v-if="importPreviewTypeCounts.short_answer" class="px-2 py-0.5 rounded-full bg-white text-amber-700 border border-amber-200">Isian: {{ importPreviewTypeCounts.short_answer }}</span>
+                <span v-if="importPreviewTypeCounts.essay" class="px-2 py-0.5 rounded-full bg-white text-blue-700 border border-blue-200">Uraian: {{ importPreviewTypeCounts.essay }}</span>
+              </div>
+              <span
+                class="px-2.5 py-0.5 rounded-full border"
+                :class="importPreviewKeyedCount === importPreviewQuestions.length ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-white text-slate-700 border-slate-200'"
+              >
+                🔑 Kunci Terisi: {{ importPreviewKeyedCount }} / {{ importPreviewQuestions.length }}
+              </span>
             </div>
           </div>
 
@@ -1185,11 +1193,23 @@
                     </span>
                   </div>
                   <div class="flex items-center gap-2 text-[11px]">
-                    <span v-if="blk.q.correct_answer" class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
-                      Kunci: {{ blk.q.correct_answer }}
+                    <span v-if="blk.q.correct_answer" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                      ✓ Kunci: {{ blk.q.correct_answer }}
                     </span>
-                    <span v-else class="px-2 py-0.5 rounded bg-slate-100 text-slate-500">Kunci belum diset</span>
-                    <span class="text-slate-400 font-semibold">Bobot: {{ blk.q.score_weight }}</span>
+                    <span v-else class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+                      {{ ['pg', 'pg_complex'].includes(blk.q.question_type) ? 'Klik opsi untuk kunci' : 'Kunci belum diset' }}
+                    </span>
+                    <label class="inline-flex items-center gap-1 text-slate-500 font-semibold">
+                      <span>Bobot:</span>
+                      <input
+                        type="number"
+                        step="0.5"
+                        min="0.1"
+                        max="100"
+                        v-model.number="blk.q.score_weight"
+                        class="w-14 px-1.5 py-0.5 text-center text-[11px] font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-md focus:ring-1 focus:ring-emerald-400 focus:border-emerald-500"
+                      />
+                    </label>
                     <button
                       type="button"
                       @click="removePreviewQuestion(blk.q)"
@@ -1201,10 +1221,46 @@
                   </div>
                 </div>
                 <div class="text-slate-800 leading-relaxed" v-html="blk.q.question_text || '<i>(Soal gambar / teks kosong)</i>'"></div>
-                <div v-if="blk.q.options && ['pg', 'pg_complex'].includes(blk.q.question_type)" class="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-1 text-[11px] text-slate-600">
-                  <div v-for="(val, key) in blk.q.options" :key="key" class="px-2 py-1 rounded bg-slate-50 border border-slate-100">
-                    <strong class="text-slate-800">{{ key }}.</strong> {{ val || '-' }}
+                <div v-if="blk.q.options && ['pg', 'pg_complex'].includes(blk.q.question_type)" class="space-y-1.5 pt-1">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
+                    <button
+                      v-for="(val, key) in blk.q.options"
+                      :key="key"
+                      type="button"
+                      @click="togglePreviewOptionKey(blk.q, String(key))"
+                      class="flex items-start justify-between gap-2 text-left px-2.5 py-1.5 rounded-lg border transition cursor-pointer"
+                      :class="isPreviewOptionSelected(blk.q, String(key))
+                        ? 'bg-emerald-50 border-emerald-400 text-emerald-950 ring-1 ring-emerald-300 shadow-2xs'
+                        : 'bg-slate-50 border-slate-200/80 text-slate-700 hover:bg-emerald-50/40 hover:border-emerald-300'"
+                    >
+                      <span class="leading-snug">
+                        <strong :class="isPreviewOptionSelected(blk.q, String(key)) ? 'text-emerald-700' : 'text-slate-800'">{{ key }}.</strong>
+                        {{ val || '-' }}
+                      </span>
+                      <span
+                        v-if="isPreviewOptionSelected(blk.q, String(key))"
+                        class="shrink-0 px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[9px] font-bold uppercase tracking-wide"
+                      >
+                        Kunci
+                      </span>
+                    </button>
                   </div>
+                </div>
+                <div v-else-if="blk.q.question_type === 'short_answer'" class="pt-1">
+                  <input
+                    type="text"
+                    v-model="blk.q.correct_answer"
+                    placeholder="Ketik kunci jawaban singkat di sini (opsional)..."
+                    class="w-full px-2.5 py-1.5 text-[11px] rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-1 focus:ring-emerald-400 focus:border-emerald-500"
+                  />
+                </div>
+                <div v-else-if="blk.q.question_type === 'essay'" class="pt-1">
+                  <textarea
+                    v-model="blk.q.correct_answer"
+                    rows="2"
+                    placeholder="Ketik kunci / pedoman jawaban uraian di sini (opsional)..."
+                    class="w-full px-2.5 py-1.5 text-[11px] rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-1 focus:ring-emerald-400 focus:border-emerald-500"
+                  ></textarea>
                 </div>
               </div>
             </template>
@@ -3282,6 +3338,41 @@ const setPreviewTfKey = (tq, ans) => {
   tq.correct_answer = ans;
   tq.options = { mode: 'single', answer: ans };
 };
+
+const isPreviewOptionSelected = (q, optKey) => {
+  if (!q || !q.correct_answer) return false;
+  const target = String(optKey).trim().toUpperCase();
+  const raw = String(q.correct_answer).trim().toUpperCase();
+  if (q.question_type === 'pg_complex') {
+    return raw.split(',').map(k => k.trim()).filter(Boolean).includes(target);
+  }
+  return raw === target;
+};
+
+const togglePreviewOptionKey = (q, optKey) => {
+  if (!q) return;
+  const target = String(optKey).trim().toUpperCase();
+  if (q.question_type === 'pg_complex') {
+    const tokens = q.correct_answer
+      ? String(q.correct_answer).split(',').map(k => k.trim().toUpperCase()).filter(Boolean)
+      : [];
+    const idx = tokens.indexOf(target);
+    if (idx > -1) {
+      tokens.splice(idx, 1);
+    } else {
+      tokens.push(target);
+      tokens.sort();
+    }
+    q.correct_answer = tokens.length ? tokens.join(',') : null;
+    return;
+  }
+  const current = q.correct_answer ? String(q.correct_answer).trim().toUpperCase() : '';
+  q.correct_answer = current === target ? null : target;
+};
+
+const importPreviewKeyedCount = computed(() => {
+  return importPreviewQuestions.value.filter(q => String(q.correct_answer ?? '').trim() !== '').length;
+});
 
 const importPreviewTypeCounts = computed(() => {
   const counts = { pg: 0, pg_complex: 0, true_false: 0, matching: 0, short_answer: 0, essay: 0 };
