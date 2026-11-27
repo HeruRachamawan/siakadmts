@@ -32,6 +32,18 @@ class ExamDocxService
         'essay' => 5.00,
     ];
 
+    private const ARABIC_OPTION_MAP = [
+        'أ' => 'A',
+        'ا' => 'A',
+        'إ' => 'A',
+        'آ' => 'A',
+        'ب' => 'B',
+        'ج' => 'C',
+        'د' => 'D',
+        'هـ' => 'E',
+        'ه' => 'E',
+    ];
+
     /**
      * Generate a .docx binary file path (temp file) either as blank Template Naskah Soal
      * or exported from an existing ExamPackage.
@@ -238,7 +250,9 @@ class ExamDocxService
             $current = null;
         };
 
-        foreach ($blocks as $idx => $block) {
+        $blocks = array_values($blocks);
+        for ($idx = 0; $idx < count($blocks); $idx++) {
+            $block = $blocks[$idx];
             if (($block['kind'] ?? '') === 'structured_table') {
                 $pendingStimulus = null;
                 if ($current && !empty($current['is_unnumbered_preamble'])) {
@@ -261,7 +275,32 @@ class ExamDocxService
                 continue;
             }
 
-            $line = trim(preg_replace('/\x{00A0}/u', ' ', (string) ($block['text'] ?? '')));
+            if (($block['kind'] ?? '') === 'table_rows') {
+                $rawRows = $block['rows'] ?? [];
+                if (in_array($currentType, ['short_answer', 'essay'], true) || $this->looksLikeArabicVocabularyTable($rawRows)) {
+                    $flushCurrent();
+                    $inQuestionsArea = true;
+                    $targetTblType = in_array($currentType, ['short_answer', 'essay'], true) ? $currentType : 'short_answer';
+                    $currentType = $targetTblType;
+                    $lastTarget = null;
+                    $nextNum = !empty($questions) ? (intval(end($questions)['question_number'] ?? 0) + 1) : 1;
+                    $rowQuestions = $this->parseTableRowsAsQuestions($rawRows, $targetTblType, $nextNum);
+                    foreach ($rowQuestions as $rq) {
+                        $questions[] = $this->finalizeQuestionItem($rq);
+                    }
+                    continue;
+                }
+
+                // Otherwise splice flattened cell paragraphs back into the active block stream
+                $flatBlocks = $this->flattenTableRowsToParagraphs($rawRows);
+                if (!empty($flatBlocks)) {
+                    array_splice($blocks, $idx + 1, 0, $flatBlocks);
+                }
+                continue;
+            }
+
+            $rawLine = trim(preg_replace('/\x{00A0}/u', ' ', (string) ($block['text'] ?? '')));
+            $line = $this->normalizeLeadingArabicDigits($rawLine);
             $html = trim((string) ($block['html'] ?? ''));
             $image = $block['image'] ?? null;
 
@@ -277,8 +316,8 @@ class ExamDocxService
                 continue;
             }
 
-            // Skip banner/template guide lines
-            if ($this->isTemplateNoiseLine($line)) {
+            // Skip banner/template guide lines and closing footer instructions
+            if ($this->isTemplateNoiseLine($line) || $this->isFooterClosingLine($line)) {
                 continue;
             }
 
@@ -341,8 +380,8 @@ class ExamDocxService
                 $current = $this->initEmptyQuestion($qNum, $currentType, $qRestPlain, $qRestHtml, $image);
                 $lastTarget = 'question';
 
-                // Check if options A/B/C/D happened to be on the exact same line after question text
-                if (in_array($currentType, ['pg', 'pg_complex'], true) && preg_match('/\s+A[\.\)]\s+/u', $qRestPlain)) {
+                // Check if options A/B/C/D (or Arabic أ/ب/ج/د) happened to be on the exact same line after question text
+                if (in_array($currentType, ['pg', 'pg_complex'], true) && preg_match('/\s+(?:A|أ|ا|إ|آ)[\.\)]\s+/u', $qRestPlain)) {
                     $this->splitInlineOptionsIntoQuestion($current, $qRestPlain);
                     $lastTarget = 'option:D';
                 }
@@ -1167,7 +1206,7 @@ class ExamDocxService
         }
 
         $val = $counters[$numId][$ilvl];
-        if (in_array($fmt, ['upperLetter', 'lowerLetter'], true)) {
+        if (in_array($fmt, ['upperLetter', 'lowerLetter', 'arabicAbjad', 'arabicAlpha', 'arabic1', 'arabic2'], true)) {
             $letter = chr(64 + max(1, min(26, $val)));
             return "{$letter}.";
         }
@@ -1262,7 +1301,15 @@ class ExamDocxService
             }
         }
 
-        // Generic table fallback: flatten cell paragraphs sequentially
+        // Check if this table is an Arabic vocabulary / fill-in / essay list table, or return table_rows so parseParagraphBlocks decides using active section context
+        return [[
+            'kind' => 'table_rows',
+            'rows' => $rawRows,
+        ]];
+    }
+
+    private function flattenTableRowsToParagraphs(array $rawRows): array
+    {
         $flat = [];
         foreach ($rawRows as $r) {
             foreach ($r as $c) {
@@ -1281,6 +1328,124 @@ class ExamDocxService
             }
         }
         return $flat;
+    }
+
+    private function looksLikeArabicVocabularyTable(array $rawRows): bool
+    {
+        if (count($rawRows) < 2) {
+            return false;
+        }
+        $firstJoined = implode(' | ', array_map(fn($c) => trim((string) ($c['text'] ?? '')), $rawRows[0]));
+        if (preg_match('/المَعْنَى|المعنى|الْكَلِيْمَة|الكلمة|الرقم|الجَوّاب|الجواب|التَّحِيَّاتُ|التحيات/u', $firstJoined)) {
+            return true;
+        }
+        foreach ($rawRows as $row) {
+            foreach ($row as $cell) {
+                if (preg_match('/^[…\.ـ_\-\s]{2,}$/u', trim((string) ($cell['text'] ?? '')))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private function isVocabularyTableHeaderRow(array $row): bool
+    {
+        $nonEmpty = [];
+        foreach ($row as $c) {
+            $t = trim((string) ($c['text'] ?? ''));
+            if ($t !== '') $nonEmpty[] = $t;
+        }
+        if (empty($nonEmpty)) {
+            return true;
+        }
+        $joined = implode(' ', $nonEmpty);
+        if (preg_match('/\[(?:PG|PGK|ISIAN|URAIAN|ESSAY|BENAR|MENJODOHKAN)/iu', $joined)) {
+            return true;
+        }
+        $headerHits = 0;
+        foreach ($nonEmpty as $cellTxt) {
+            if (preg_match('/^(?:المَعْنَى|المعنى|الْكَلِيْمَة|الْكَلِمَة|الكلمة|الرقم|الجَوّاب|الجَوَاب|الجواب|التَّحِيَّاتُ|التحيات|no\.?|nomor|arti|kata|soal|pertanyaan|jawaban)$/iu', $cellTxt)) {
+                $headerHits++;
+            }
+        }
+        return $headerHits >= 2 || (count($nonEmpty) === 1 && preg_match('/^(?:المَعْنَى|الْكَلِيْمَة|الرقم|الجَوّاب|التَّحِيَّاتُ)$/u', $nonEmpty[0]));
+    }
+
+    private function parseTableRowsAsQuestions(array $rawRows, string $questionType, int $startNum): array
+    {
+        $items = [];
+        $seq = $startNum;
+        $activePromptPrefix = '';
+
+        foreach ($rawRows as $row) {
+            $cellsText = array_map(fn($c) => trim((string) ($c['text'] ?? '')), $row);
+            $joined = trim(implode(' ', array_filter($cellsText)));
+            if ($joined === '') {
+                continue;
+            }
+            if ($this->isVocabularyTableHeaderRow($row)) {
+                if (preg_match('/المَعْنَى|المعنى/u', $joined)) {
+                    $activePromptPrefix = 'Arti / Makna: ';
+                } elseif (preg_match('/الجَوّاب|الجَوَاب|الجواب/u', $joined)) {
+                    $activePromptPrefix = 'Respon / Jawaban: ';
+                }
+                continue;
+            }
+
+            $qNum = null;
+            $promptParts = [];
+            $htmlParts = [];
+            $rowImg = null;
+            foreach ($row as $cell) {
+                $t = trim((string) ($cell['text'] ?? ''));
+                $h = trim((string) ($cell['html'] ?? ''));
+                if ($rowImg === null && !empty($cell['image'])) {
+                    $rowImg = $cell['image'];
+                }
+                if ($t === '' || preg_match('/^[…\.ـ_\-\s]{2,}$/u', $t)) {
+                    continue;
+                }
+                $normT = $this->normalizeLeadingArabicDigits($t);
+                if ($qNum === null && preg_match('/^(\d{1,3})\s*[\.\)]?$/', $normT, $nm)) {
+                    $qNum = intval($nm[1]);
+                    continue;
+                }
+                if ($qNum === null && preg_match('/^(\d{1,3})\s*[\.\)]\s*(.+)$/us', $normT, $nm)) {
+                    $qNum = intval($nm[1]);
+                    $t = trim($nm[2]);
+                    $h = $this->stripNumberPrefixFromHtml($h, $t);
+                }
+                $promptParts[] = $t;
+                $htmlParts[] = $h !== '' ? $h : '<p>' . e($t) . '</p>';
+            }
+
+            $promptPlain = trim(implode(' — ', $promptParts));
+            if ($promptPlain === '' && !$rowImg) {
+                continue;
+            }
+            if (!$qNum) {
+                $qNum = $seq;
+            }
+            $seq = $qNum + 1;
+
+            if ($questionType === 'short_answer' && $activePromptPrefix !== '' && !str_contains($promptPlain, ':')) {
+                $promptPlain = $activePromptPrefix . $promptPlain;
+                $promptHtml = '<p><strong>' . e($activePromptPrefix) . '</strong>' . strip_tags(implode(' ', $htmlParts), '<b><strong><i><em><u><sup><sub>') . '</p>';
+            } else {
+                $promptHtml = implode('', $htmlParts);
+            }
+
+            $qItem = $this->initEmptyQuestion($qNum, $questionType, $promptPlain, $promptHtml, $rowImg);
+            if ($promptHtml !== '' && !str_starts_with($qItem['question_text'], '<p><p>')) {
+                $qItem['question_text'] = str_starts_with($promptHtml, '<p>') ? $promptHtml : '<p>' . $promptHtml . '</p>';
+            } else {
+                $qItem['question_text'] = $promptHtml;
+            }
+            $items[] = $qItem;
+        }
+
+        return $items;
     }
 
     private function classifyStructuredTable(array $rawRows): ?array
@@ -1587,6 +1752,31 @@ class ExamDocxService
         return (bool) preg_match('/^(?:PETUNJUK\s+UMUM|Isilah\s+nama|Pergunakan\s+ballpoint|Dahulukan\s+menjawab|Periksalah\s+pekerjaan|Berilah\s+tanda\s+silang|Lembar\s+Soal|NAMA\s*:|KELAS\s*:|HARI\s*\/?\s*TANGGAL|WAKTU\s*:|\d+\.\s*(?:Berdo|Isilah\s+identitas|Isilah\s+nama|Pergunakan|Dahulukan|Periksalah|Bacalah\s+soal))/iu', $line);
     }
 
+    private function isFooterClosingLine(string $line): bool
+    {
+        return (bool) preg_match('/^(?:kerjakan(?:\s*lah)?\s+soal\s+dengan\s+teliti|jangan\s+terburu|selamat\s+mengerjakan|semoga\s+sukses|---\s*akhir)/iu', $line);
+    }
+
+    private function normalizeLeadingArabicDigits(string $text): string
+    {
+        $converted = strtr($text, [
+            '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4',
+            '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9',
+            '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4',
+            '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9',
+        ]);
+        return $converted;
+    }
+
+    private function normalizeOptionMarker(string $rawMarker): ?string
+    {
+        $clean = trim($rawMarker);
+        if (preg_match('/^[A-Ea-e]$/', $clean)) {
+            return strtoupper($clean);
+        }
+        return self::ARABIC_OPTION_MAP[$clean] ?? null;
+    }
+
     private function isSectionSubInstructionLine(string $line): bool
     {
         return (bool) preg_match('/^(?:Pilihlah\s+(?:satu|salah\s+satu|lebih\s+dari|beberapa)\s+.*|Berilah\s+tanda\s+(?:silang|centang).*|Tentukan\s+(?:Benar|pernyataan).*|Pasangkan\s+pernyataan.*|Jodohkan(?:lah)?\s+.*|Isilah\s+(?:titik|kolom|kotak).*|Jawablah\s+pertanyaan.*|Kerjakan(?:lah)?\s+soal.*|Amati(?:lah)?\s+tabel.*|Perhatikan(?:lah)?\s+tabel.*|Petunjuk\s*:.*|Contoh\s*:.*|KOLOM\s+[AB]|JAWABAN|PG|PGK|BENAR\s*\/\s*SALAH|MENJODOHKAN|ISIAN\s+SINGKAT|URAIAN)$/iu', $line);
@@ -1601,6 +1791,16 @@ class ExamDocxService
         if (preg_match('/\[ISIAN(?:[_\s]*SINGKAT)?\]/iu', $line)) return 'short_answer';
         if (preg_match('/\[ESSAY\]|\[URAIAN\]/iu', $line)) return 'essay';
         if (preg_match('/\[PG\]/iu', $line)) return 'pg';
+
+        // Tolerant bracketed headers (e.g. missing closing bracket like "[PILIHAN GANDA" or "[URAIAN")
+        if (mb_strlen($line) <= 80 && str_contains($line, '[')) {
+            if (preg_match('/\[[^\]]*(?:pilihan\s+ganda\s+kompleks|pg\s+kompleks)/iu', $line)) return 'pg_complex';
+            if (preg_match('/\[[^\]]*(?:benar\s*\/\s*salah)/iu', $line)) return 'true_false';
+            if (preg_match('/\[[^\]]*(?:menjodohkan)/iu', $line)) return 'matching';
+            if (preg_match('/\[[^\]]*(?:isian(?:\s+singkat)?)/iu', $line)) return 'short_answer';
+            if (preg_match('/\[[^\]]*(?:uraian|essay)/iu', $line)) return 'essay';
+            if (preg_match('/\[[^\]]*(?:pilihan\s+ganda|pilihan\s+gand)/iu', $line)) return 'pg';
+        }
 
         // Roman / numbered exam paper headers: "I. Pilihlah jawaban...", "I. PG", "II. Uraian", etc.
         if (preg_match('/^(?:[IVX]+\s*\.?\s*|[A-F]\.\s*)(?:pilihlah\s+jawaban|pilihan\s+ganda\s+kompleks|pg\s+kompleks|pgk|pilihan\s+ganda|pg\b|benar\s*\/\s*salah|menjodohkan|isian\s+singkat|uraian|essay)/iu', $line)) {
@@ -1672,14 +1872,18 @@ class ExamDocxService
 
     private function tryParseOptionLine(string $line, string $html): array
     {
-        // Support multi-options on one line separated by tabs or 2+ spaces: "A. text   B. text"
-        $chunks = preg_split('/(?:\t|\s{2,})(?=\(?[A-Ea-e]\s*[\.\)])/u', $line);
+        $markerRegex = '(?:[A-Ea-e]|أ|ا|إ|آ|ب|ج|د|هـ|ه)';
+        // Support multi-options on one line separated by tabs or 2+ spaces: "A. text   B. text" or "أ. ...  ج. ..."
+        $chunks = preg_split('/(?:\t|\s{2,})(?=\(?' . $markerRegex . '\s*[\.\)])/u', $line);
         $result = [];
 
         foreach ($chunks as $chunk) {
             $chunk = trim($chunk);
-            if (preg_match('/^\(?([A-Ea-e])\s*[\.\)]\s*(.*)$/u', $chunk, $m)) {
-                $letter = strtoupper($m[1]);
+            if (preg_match('/^\(?(' . $markerRegex . ')\s*[\.\)]\s*(.*)$/u', $chunk, $m)) {
+                $letter = $this->normalizeOptionMarker($m[1]);
+                if ($letter === null) {
+                    return [];
+                }
                 $text = trim($m[2]);
                 foreach ($this->splitSequentialInlineOptions($letter, $text) as $splitLetter => $splitVal) {
                     $result[$splitLetter] = $splitVal;
@@ -1701,6 +1905,12 @@ class ExamDocxService
     private function splitSequentialInlineOptions(string $startLetter, string $text): array
     {
         $order = ['A', 'B', 'C', 'D', 'E'];
+        $arabicCounterparts = [
+            'B' => 'ب',
+            'C' => 'ج',
+            'D' => 'د',
+            'E' => 'هـ|ه',
+        ];
         $idx = array_search(strtoupper($startLetter), $order, true);
         if ($idx === false) {
             return [strtoupper($startLetter) => trim($text)];
@@ -1712,7 +1922,10 @@ class ExamDocxService
 
         while ($idx + 1 < count($order)) {
             $nextLetter = $order[$idx + 1];
-            $pattern = '/^(.*?)\s+(?:\(' . $nextLetter . '\)|' . $nextLetter . '\s*[\.\)])\s+(.+)$/su';
+            $nextAlts = isset($arabicCounterparts[$nextLetter])
+                ? '(?:' . $nextLetter . '|' . $arabicCounterparts[$nextLetter] . ')'
+                : $nextLetter;
+            $pattern = '/^(.*?)\s+(?:\(' . $nextAlts . '\)|' . $nextAlts . '\s*[\.\)])\s+(.+)$/su';
             if (preg_match($pattern, $currText, $m)) {
                 $left = trim($m[1]);
                 $right = trim($m[2]);
@@ -1734,15 +1947,18 @@ class ExamDocxService
 
     private function splitInlineOptionsIntoQuestion(array &$current, string $restPlain): void
     {
-        $parts = preg_split('/(?=\b[A-E][\.\)]\s+)/u', $restPlain);
+        $parts = preg_split('/(?=(?:\b[A-E]|(?:أ|ا|إ|آ|ب|ج|د|هـ|ه))[\.\)]\s+)/u', $restPlain);
         if (count($parts) <= 1) {
             return;
         }
         $prompt = trim(array_shift($parts));
         $current['question_text'] = '<p>' . e($prompt) . '</p>';
         foreach ($parts as $part) {
-            if (preg_match('/^([A-E])[\.\)]\s*(.*)$/u', trim($part), $m)) {
-                $current['options'][$m[1]] = trim($m[2]);
+            if (preg_match('/^([A-E]|أ|ا|إ|آ|ب|ج|د|هـ|ه)[\.\)]\s*(.*)$/u', trim($part), $m)) {
+                $letter = $this->normalizeOptionMarker($m[1]);
+                if ($letter !== null) {
+                    $current['options'][$letter] = trim($m[2]);
+                }
             }
         }
     }
