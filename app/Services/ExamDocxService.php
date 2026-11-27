@@ -378,7 +378,12 @@ class ExamDocxService
             if ($lastTarget && str_starts_with($lastTarget, 'option:')) {
                 $optLetter = substr($lastTarget, 7);
                 $existing = $current['options'][$optLetter] ?? '';
-                $current['options'][$optLetter] = trim($existing . ' ' . $line);
+                $mergedText = trim($existing . ' ' . $line);
+                $splitMap = $this->splitSequentialInlineOptions($optLetter, $mergedText);
+                foreach ($splitMap as $lKey => $lVal) {
+                    $current['options'][$lKey] = $lVal;
+                    $lastTarget = 'option:' . $lKey;
+                }
             } else {
                 // Skip pure instruction sub-heading inside section like "Pilihlah salah satu jawaban..."
                 if ($this->isSectionSubInstructionLine($line) && trim(strip_tags($current['question_text'])) === '') {
@@ -1676,7 +1681,9 @@ class ExamDocxService
             if (preg_match('/^\(?([A-Ea-e])\s*[\.\)]\s*(.*)$/u', $chunk, $m)) {
                 $letter = strtoupper($m[1]);
                 $text = trim($m[2]);
-                $result[$letter] = $text;
+                foreach ($this->splitSequentialInlineOptions($letter, $text) as $splitLetter => $splitVal) {
+                    $result[$splitLetter] = $splitVal;
+                }
             } elseif (!empty($result)) {
                 return [];
             } else {
@@ -1684,6 +1691,44 @@ class ExamDocxService
             }
         }
 
+        return $result;
+    }
+
+    /**
+     * Split sequential inline options merged on one line with a single space,
+     * e.g. "A. Teks A B. Teks B" -> ['A' => 'Teks A', 'B' => 'Teks B'].
+     */
+    private function splitSequentialInlineOptions(string $startLetter, string $text): array
+    {
+        $order = ['A', 'B', 'C', 'D', 'E'];
+        $idx = array_search(strtoupper($startLetter), $order, true);
+        if ($idx === false) {
+            return [strtoupper($startLetter) => trim($text)];
+        }
+
+        $result = [];
+        $currLetter = $order[$idx];
+        $currText = trim($text);
+
+        while ($idx + 1 < count($order)) {
+            $nextLetter = $order[$idx + 1];
+            $pattern = '/^(.*?)\s+(?:\(' . $nextLetter . '\)|' . $nextLetter . '\s*[\.\)])\s+(.+)$/su';
+            if (preg_match($pattern, $currText, $m)) {
+                $left = trim($m[1]);
+                $right = trim($m[2]);
+                // Avoid splitting on standalone single-letter initials like "H. B. Jassin"
+                if ($left !== '' && !preg_match('/(?:^|\s)[A-Z]\.$/u', $left)) {
+                    $result[$currLetter] = $left;
+                    $currLetter = $nextLetter;
+                    $currText = $right;
+                    $idx++;
+                    continue;
+                }
+            }
+            break;
+        }
+
+        $result[$currLetter] = $currText;
         return $result;
     }
 
