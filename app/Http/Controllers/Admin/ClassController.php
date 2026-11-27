@@ -25,7 +25,11 @@ class ClassController extends BaseController
 
         if ($request->boolean('all') || $request->input('all') === 'true' || $request->input('all') === '1' || $request->input('per_page') == -1) {
             $allClasses = $query->orderBy('grade_level')->orderBy('name')->get();
-            $uniqueClasses = $allClasses->unique('name')->values();
+            $uniqueClasses = $allClasses->unique('name')->values()->each(function (ClassRoom $c) {
+                if ($c->isLokalTingkatBucket()) {
+                    $c->lokal_students_count = $c->resolvedStudentsCount();
+                }
+            });
             return $this->success($uniqueClasses);
         }
 
@@ -34,6 +38,12 @@ class ClassController extends BaseController
 
         $classes = $query->orderBy('grade_level')
             ->paginate($perPage);
+
+        $classes->getCollection()->each(function (ClassRoom $c) {
+            if ($c->isLokalTingkatBucket()) {
+                $c->lokal_students_count = $c->resolvedStudentsCount();
+            }
+        });
 
         return $this->success($this->paginate($classes));
     }

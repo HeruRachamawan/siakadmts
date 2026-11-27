@@ -25,10 +25,16 @@ class GradeController extends TeacherController
             $teacherSubjects = Subject::orderBy('name')->get();
         }
 
-        $classes = ClassRoom::orderBy('name')->get();
-
         $activeYear = AcademicYear::where('is_active', true)->first()
             ?? AcademicYear::orderBy('id', 'desc')->first();
+
+        $classesQuery = ClassRoom::orderBy('grade_level')->orderBy('name');
+        if ($activeYear) {
+            $yearClasses = (clone $classesQuery)->where('academic_year_id', $activeYear->id)->get();
+            $classes = $yearClasses->isNotEmpty() ? $yearClasses : $classesQuery->get();
+        } else {
+            $classes = $classesQuery->get();
+        }
 
         return $this->success([
             'subjects' => $teacherSubjects,
@@ -54,13 +60,10 @@ class GradeController extends TeacherController
         $class = ClassRoom::findOrFail($classId);
         $subject = Subject::findOrFail($subjectId);
 
-        $students = Student::where(function ($q) use ($classId) {
-            $q->where('class_id', $classId)
-              ->orWhere('lokal_class_id', $classId);
-        })
-        ->with('user')
-        ->orderBy('full_name')
-        ->get();
+        $students = $class->resolvedStudentsQuery()
+            ->with('user')
+            ->orderBy('full_name')
+            ->get();
 
         $existingGrades = Grade::whereIn('student_id', $students->pluck('id'))
             ->where('subject_id', $subjectId)

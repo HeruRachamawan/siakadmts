@@ -55,13 +55,10 @@ class HomeroomAttendanceController extends TeacherController
 
         $date = $request->input('date', now()->toDateString());
 
-        // Get all students in the selected class (supports regular and lokal class)
-        $students = Student::where(function ($q) use ($selectedClass) {
-            $q->where('class_id', $selectedClass->id)
-              ->orWhere('lokal_class_id', $selectedClass->id);
-        })
-        ->orderBy('full_name', 'asc')
-        ->get();
+        // Get all active students in the selected class (combines grade rombels automatically for Lokal Tingkat 7/8)
+        $students = $selectedClass->resolvedStudentsQuery()
+            ->orderBy('full_name', 'asc')
+            ->get();
 
         // Fetch existing attendance records for this class and date (daily attendance with subject_id null)
         $attendances = Attendance::where('class_id', $selectedClass->id)
