@@ -1773,7 +1773,10 @@ class ExamDocxService
                         $matchedAny = true;
                     } elseif (preg_match('/^\s*bobot\s*:\s*([\d\.]+)/iu', $seg, $m)) {
                         $wt = floatval($m[1]);
-                        if ($wt > 0) $current['score_weight'] = round($wt, 2);
+                        if ($wt > 0) {
+                            $current['score_weight'] = round($wt, 2);
+                            $current['weight_explicit'] = true;
+                        }
                         $matchedAny = true;
                     } elseif (preg_match('/^\s*pasangan\s*:\s*(.+)$/iu', $seg, $m)) {
                         $current['matching_right_text'] = trim($m[1]);
@@ -1816,6 +1819,7 @@ class ExamDocxService
                 : null,
             'correct_answer' => null,
             'score_weight' => self::DEFAULT_WEIGHTS[$type] ?? 1.00,
+            'weight_explicit' => false,
             'material' => null,
             'indicator' => null,
             'cognitive_level' => $type === 'essay' ? 'L3' : (in_array($type, ['pg_complex', 'matching'], true) ? 'L2' : 'L1'),

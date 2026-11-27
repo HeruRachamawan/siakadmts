@@ -1127,6 +1127,47 @@ class ExamBankController extends Controller
                 ], 422);
             }
 
+            // Inherit initial score weights (and genuine pre-set answer keys, e.g. from Koreksi) from this package
+            $existingQuestions = $package->questions()->orderBy('question_number')->get();
+            $existingByNumber = $existingQuestions->keyBy('question_number');
+            $packageTypeWeights = [];
+            foreach ($existingQuestions as $eq) {
+                $wt = floatval($eq->score_weight);
+                if ($wt > 0 && !isset($packageTypeWeights[$eq->question_type])) {
+                    $packageTypeWeights[$eq->question_type] = round($wt, 2);
+                }
+            }
+            $hasSubmissions = $package->submissions()->exists();
+
+            foreach ($parsed['questions'] as &$qItem) {
+                $num = intval($qItem['question_number'] ?? 0);
+                $qType = $qItem['question_type'] ?? 'pg';
+                $matchedExisting = $existingByNumber->get($num);
+
+                if (empty($qItem['weight_explicit'])) {
+                    if ($matchedExisting && $matchedExisting->question_type === $qType && floatval($matchedExisting->score_weight) > 0) {
+                        $qItem['score_weight'] = round(floatval($matchedExisting->score_weight), 2);
+                    } elseif (isset($packageTypeWeights[$qType])) {
+                        $qItem['score_weight'] = $packageTypeWeights[$qType];
+                    }
+                }
+                unset($qItem['weight_explicit']);
+
+                if (empty($qItem['correct_answer']) && $matchedExisting && $matchedExisting->question_type === $qType && !empty($matchedExisting->correct_answer)) {
+                    $isBankPlaceholder = !$hasSubmissions
+                        && empty($matchedExisting->question_text)
+                        && is_array($matchedExisting->options)
+                        && (
+                            ($qType === 'true_false' && $matchedExisting->correct_answer === 'B') ||
+                            ($qType === 'matching' && $matchedExisting->correct_answer === 'A')
+                        );
+                    if (!$isBankPlaceholder) {
+                        $qItem['correct_answer'] = $matchedExisting->correct_answer;
+                    }
+                }
+            }
+            unset($qItem);
+
             return response()->json([
                 'status' => 'success',
                 'data' => $parsed,
