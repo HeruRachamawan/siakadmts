@@ -39,7 +39,9 @@ class ExamDocxService
         'آ' => 'A',
         'ب' => 'B',
         'ج' => 'C',
+        'ت' => 'C',
         'د' => 'D',
+        'ث' => 'D',
         'هـ' => 'E',
         'ه' => 'E',
     ];
@@ -1872,10 +1874,36 @@ class ExamDocxService
 
     private function tryParseOptionLine(string $line, string $html): array
     {
-        $markerRegex = '(?:[A-Ea-e]|أ|ا|إ|آ|ب|ج|د|هـ|ه)';
+        $markerRegex = '(?:[A-Ea-e]|أ|ا|إ|آ|ب|ج|ت|د|ث|هـ|ه)';
         // Support multi-options on one line separated by tabs or 2+ spaces: "A. text   B. text" or "أ. ...  ج. ..."
         $chunks = preg_split('/(?:\t|\s{2,})(?=\(?' . $markerRegex . '\s*[\.\)])/u', $line);
         $result = [];
+
+        // Two-column option recovery: when left column lost its marker (e.g. "سُلَّامٌ   ج. بُسْتَانٌ" -> A + C, B + D)
+        if (
+            count($chunks) === 2
+            && !preg_match('/^\(?' . $markerRegex . '\s*[\.\)]\s*/u', trim($chunks[0]))
+            && preg_match('/^\(?(' . $markerRegex . ')\s*[\.\)]\s*(.*)$/u', trim($chunks[1]), $rm)
+        ) {
+            $leftText = trim($chunks[0]);
+            $rightLetter = $this->normalizeOptionMarker($rm[1]);
+            $rightText = trim($rm[2]);
+            $leftMap = ['C' => 'A', 'D' => 'B', 'B' => 'A'];
+            if (
+                $leftText !== ''
+                && $rightLetter !== null
+                && isset($leftMap[$rightLetter])
+                && mb_strlen($leftText) <= 180
+                && !preg_match('/^\d{1,3}\s*[\.\)]\s+/u', $leftText)
+                && !preg_match('/(?:[?؟]|\.{3,}|…)\s*$/u', $leftText)
+            ) {
+                $result[$leftMap[$rightLetter]] = $leftText;
+                foreach ($this->splitSequentialInlineOptions($rightLetter, $rightText) as $splitLetter => $splitVal) {
+                    $result[$splitLetter] = $splitVal;
+                }
+                return $result;
+            }
+        }
 
         foreach ($chunks as $chunk) {
             $chunk = trim($chunk);
