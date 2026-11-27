@@ -301,7 +301,7 @@ class ExamDocxService
                 continue;
             }
 
-            $rawLine = trim(preg_replace('/\x{00A0}/u', ' ', (string) ($block['text'] ?? '')));
+            $rawLine = trim(preg_replace('/[\x{00A0}\x{200E}\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}\x{FEFF}]/u', ' ', (string) ($block['text'] ?? '')));
             $line = $this->normalizeLeadingArabicDigits($rawLine);
             $html = trim((string) ($block['html'] ?? ''));
             $image = $block['image'] ?? null;
@@ -1386,6 +1386,12 @@ class ExamDocxService
             if ($joined === '') {
                 continue;
             }
+            $rowSectionType = $this->detectSectionHeaderType($joined);
+            if ($rowSectionType !== null) {
+                $questionType = $rowSectionType;
+                $activePromptPrefix = '';
+                continue;
+            }
             if ($this->isVocabularyTableHeaderRow($row)) {
                 if (preg_match('/المَعْنَى|المعنى/u', $joined)) {
                     $activePromptPrefix = 'Arti / Makna: ';
@@ -1882,8 +1888,8 @@ class ExamDocxService
         // Two-column option recovery: when left column lost its marker (e.g. "سُلَّامٌ   ج. بُسْتَانٌ" -> A + C, B + D)
         if (
             count($chunks) === 2
-            && !preg_match('/^\(?' . $markerRegex . '\s*[\.\)]\s*/u', trim($chunks[0]))
-            && preg_match('/^\(?(' . $markerRegex . ')\s*[\.\)]\s*(.*)$/u', trim($chunks[1]), $rm)
+            && !preg_match('/^\(?' . $markerRegex . '\s*[\.\)]\s*/u', trim(preg_replace('/[\x{200E}\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}\x{FEFF}]/u', '', $chunks[0])))
+            && preg_match('/^\(?(' . $markerRegex . ')\s*[\.\)]\s*(.*)$/u', trim(preg_replace('/[\x{200E}\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}\x{FEFF}]/u', '', $chunks[1])), $rm)
         ) {
             $leftText = trim($chunks[0]);
             $rightLetter = $this->normalizeOptionMarker($rm[1]);
