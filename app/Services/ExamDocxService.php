@@ -373,7 +373,7 @@ class ExamDocxService
             }
 
             // Detect metadata tags ([Kunci: ...], [Materi: ...], [Indikator: ...], [Level: ...])
-            if ($current && $this->tryApplyMetadataLine($line, $current)) {
+            if ($current && $this->tryApplyMetadataLine($line, $current, $lastTarget)) {
                 continue;
             }
 
@@ -451,6 +451,9 @@ class ExamDocxService
                     $current['options'][$lKey] = $lVal;
                     $lastTarget = 'option:' . $lKey;
                 }
+            } elseif ($lastTarget === 'correct_answer') {
+                $existingKey = trim((string) ($current['correct_answer'] ?? ''));
+                $current['correct_answer'] = $existingKey !== '' ? ($existingKey . "\n" . $line) : $line;
             } else {
                 // Skip pure instruction sub-heading inside section like "Pilihlah salah satu jawaban..."
                 if ($this->isSectionSubInstructionLine($line) && trim(strip_tags($current['question_text'])) === '') {
@@ -2079,7 +2082,7 @@ class ExamDocxService
         }
     }
 
-    private function tryApplyMetadataLine(string $line, array &$current): bool
+    private function tryApplyMetadataLine(string $line, array &$current, ?string &$lastTarget = null): bool
     {
         $matchedAny = false;
 
@@ -2121,9 +2124,17 @@ class ExamDocxService
             }
         }
 
-        // Plain metadata line like "Kunci: A" or "Jawaban: B"
-        if (preg_match('/^(?:kunci\s*jawaban|kunci|jawaban)\s*[:=]\s*(.+)$/iu', $line, $m)) {
-            $current['correct_answer'] = $this->normalizeAnswerKeyForType($current['question_type'], trim($m[1]));
+        // Plain metadata line like "Kunci: A", "Jawaban: B", or "Kunci Jawaban (Skor Maksimal: 8):"
+        if (preg_match('/^(?:kunci\s*jawaban|pedoman\s*(?:penskoran|jawaban)|kunci|jawaban)(?:\s*\([^)]*\))?\s*[:=]\s*(.*)$/iu', $line, $m)) {
+            $inlineVal = trim($m[1]);
+            if ($inlineVal !== '') {
+                $current['correct_answer'] = $this->normalizeAnswerKeyForType($current['question_type'], $inlineVal);
+            }
+            if (in_array($current['question_type'], ['essay', 'short_answer'], true)) {
+                $lastTarget = 'correct_answer';
+            } else {
+                $lastTarget = null;
+            }
             return true;
         }
 
