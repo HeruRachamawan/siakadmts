@@ -4951,10 +4951,12 @@ const removeOption = (q, opt) => {
 };
 
 // --- Word Paste & Option Prefix Sanitizers ---
+const OPTION_PREFIX_RE = /^(?:\([a-eA-E]\)\s+|[a-eA-E][\.\:\)]\s+|[a-eA-E]\s+-\s+|\d+\.\s+)(?=\S)/;
+
 const cleanOptionPrefix = (str) => {
   if (!str || typeof str !== 'string') return '';
-  // Strips leading option prefixes: "a. ", "a.", "b. ", "B) ", "(b) ", "b: ", "b - ", "1. ", etc.
-  return str.replace(/^(\(?[a-eA-E0-9]\)?[\.\:\-\)]\s*)/, '').trim();
+  // Strip only genuine option/list prefixes (e.g. "a. ", "B) ", "(c) ", "1. ") when content follows; preserve "(1)", "(2)", "(1) dan (2)", etc.
+  return str.replace(OPTION_PREFIX_RE, '').trim();
 };
 
 const handleOptionPaste = (e, q, currentOpt) => {
@@ -4981,7 +4983,7 @@ const handleOptionPaste = (e, q, currentOpt) => {
     }
   } else {
     // Single line paste: if it has an option prefix, strip it automatically!
-    if (/^(\(?[a-eA-E0-9]\)?[\.\:\-\)]\s*)/.test(text.trim())) {
+    if (OPTION_PREFIX_RE.test(text.trim())) {
       e.preventDefault();
       opts[currentOpt] = cleanOptionPrefix(text.trim());
     }
@@ -4994,7 +4996,7 @@ const handleGenericTextPaste = (e, obj, field) => {
   const text = clipboardData.getData('text/plain') || '';
   if (!text) return;
 
-  if (/^(\(?[a-eA-E0-9]\)?[\.\:\-\)]\s*)/.test(text.trim())) {
+  if (OPTION_PREFIX_RE.test(text.trim())) {
     e.preventDefault();
     obj[field] = cleanOptionPrefix(text.trim());
   }
