@@ -423,6 +423,11 @@ class ExamDocxService
                 }
             }
 
+            // Detect start of a new reading stimulus / wacana meant for upcoming questions (so it does not append into previous option D)
+            if ($current && empty($current['is_unnumbered_preamble']) && $this->shouldDetachUpcomingPassage($line, $current)) {
+                $flushCurrent();
+            }
+
             // If we reach text before any question started: skip section sub-instructions (e.g. "Pilihlah satu jawaban...")
             if (!$current) {
                 if ($this->isSectionSubInstructionLine($line)) {
@@ -1842,6 +1847,20 @@ class ExamDocxService
             ];
         }
         return $subBlocks;
+    }
+
+    private function shouldDetachUpcomingPassage(string $line, array $current): bool
+    {
+        $hasOptions = !empty(array_filter($current['options'] ?? [], fn($v) => trim((string) $v) !== ''));
+        $explicitRange = (bool) preg_match('/\buntuk\s+(?:menjawab\s+)?(?:pertanyaan\s+|soal\s+)?(?:nomor|no\.?)?\s*\d+/iu', $line)
+            || (bool) preg_match('/^(?:untuk\s+soal|soal)\s+(?:nomor|no\.?)\s*\d+\s*(?:[-–]|s\.?d\.?)\s*\d+/iu', $line);
+
+        if (!$hasOptions && !$explicitRange) {
+            return false;
+        }
+
+        return $explicitRange
+            || (bool) preg_match('/^(?:bacalah|simaklah|cermati(?:lah)?|amati(?:lah)?)\s+(?:teks|bacaan|paragraf|puisi|pantun|syair|gurindam|dialog|percakapan|penggalan|kutipan|surat|cerita|cerpen|novel|drama|berita|artikel|tajuk|iklan|grafik|tabel|infografis)\b/iu', $line);
     }
 
     private function isSectionSubInstructionLine(string $line): bool
