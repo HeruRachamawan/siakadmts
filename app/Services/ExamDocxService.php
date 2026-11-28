@@ -301,7 +301,17 @@ class ExamDocxService
                 continue;
             }
 
-            $rawLine = trim(preg_replace('/[\x{00A0}\x{200E}\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}\x{FEFF}]/u', ' ', (string) ($block['text'] ?? '')));
+            // Split Word soft-breaks (Shift+Enter / <w:br/>) inside a single paragraph into individual line blocks
+            $rawBlockText = (string) ($block['text'] ?? '');
+            if (($block['kind'] ?? '') === 'paragraph' && str_contains($rawBlockText, "\n")) {
+                $subBlocks = $this->splitSoftBreakParagraphBlock($block);
+                if (count($subBlocks) > 1) {
+                    array_splice($blocks, $idx + 1, 0, $subBlocks);
+                    continue;
+                }
+            }
+
+            $rawLine = trim(preg_replace('/[\x{00A0}\x{200E}\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}\x{FEFF}]/u', ' ', $rawBlockText));
             $line = $this->normalizeLeadingArabicDigits($rawLine);
             $html = trim((string) ($block['html'] ?? ''));
             $image = $block['image'] ?? null;
@@ -373,13 +383,24 @@ class ExamDocxService
                 $qNum = intval($m[1]);
                 $qRestPlain = trim($m[2] ?? '');
 
-                $flushCurrent();
+                $preambleHtml = '';
+                $preambleImg = null;
+                if ($current && !empty($current['is_unnumbered_preamble']) && empty(array_filter($current['options'] ?? [], fn($v) => trim((string) $v) !== ''))) {
+                    $preambleHtml = trim((string) ($current['question_text'] ?? ''));
+                    $preambleImg = $current['question_image'] ?? null;
+                    $current = null;
+                } else {
+                    $flushCurrent();
+                }
                 $inQuestionsArea = true;
 
                 // Strip prefix from HTML too
                 $qRestHtml = $this->stripNumberPrefixFromHtml($html, $qRestPlain);
 
-                $current = $this->initEmptyQuestion($qNum, $currentType, $qRestPlain, $qRestHtml, $image);
+                $current = $this->initEmptyQuestion($qNum, $currentType, $qRestPlain, $qRestHtml, $image ?: $preambleImg);
+                if ($preambleHtml !== '') {
+                    $current['question_text'] = $preambleHtml . ($current['question_text'] ?? '');
+                }
                 $lastTarget = 'question';
 
                 // Check if options A/B/C/D (or Arabic أ/ب/ج/د) happened to be on the exact same line after question text
@@ -1785,9 +1806,47 @@ class ExamDocxService
         return self::ARABIC_OPTION_MAP[$clean] ?? null;
     }
 
+    private function splitSoftBreakParagraphBlock(array $block): array
+    {
+        $textLines = preg_split('/\r?\n/', (string) ($block['text'] ?? ''));
+        $htmlLines = preg_split('/<br\s*\/?>/i', (string) ($block['html'] ?? ''));
+        $useHtmlLines = is_array($htmlLines) && count($htmlLines) === count($textLines);
+
+        $subBlocks = [];
+        $imgUsed = false;
+        foreach ($textLines as $i => $tLine) {
+            $tClean = trim((string) $tLine);
+            $hClean = '';
+            if ($useHtmlLines) {
+                $candidateHtml = trim((string) ($htmlLines[$i] ?? ''));
+                // Guard against unclosed inline tags across soft breaks
+                if (substr_count($candidateHtml, '<') === substr_count($candidateHtml, '</') * 2) {
+                    $hClean = $candidateHtml;
+                }
+            }
+            if ($hClean === '' && $tClean !== '') {
+                $hClean = e($tClean);
+            }
+            $subImg = (!$imgUsed && !empty($block['image'])) ? $block['image'] : null;
+            if ($subImg !== null) {
+                $imgUsed = true;
+            }
+            if ($tClean === '' && !$subImg) {
+                continue;
+            }
+            $subBlocks[] = [
+                'kind' => 'paragraph',
+                'text' => $tClean,
+                'html' => $hClean,
+                'image' => $subImg,
+            ];
+        }
+        return $subBlocks;
+    }
+
     private function isSectionSubInstructionLine(string $line): bool
     {
-        return (bool) preg_match('/^(?:Pilihlah\s+(?:satu|salah\s+satu|lebih\s+dari|beberapa)\s+.*|Berilah\s+tanda\s+(?:silang|centang).*|Tentukan\s+(?:Benar|pernyataan).*|Pasangkan\s+pernyataan.*|Jodohkan(?:lah)?\s+.*|Isilah\s+(?:titik|kolom|kotak).*|Jawablah\s+pertanyaan.*|Kerjakan(?:lah)?\s+soal.*|Amati(?:lah)?\s+tabel.*|Perhatikan(?:lah)?\s+tabel.*|Petunjuk\s*:.*|Contoh\s*:.*|KOLOM\s+[AB]|JAWABAN|PG|PGK|BENAR\s*\/\s*SALAH|MENJODOHKAN|ISIAN\s+SINGKAT|URAIAN)$/iu', $line);
+        return (bool) preg_match('/^(?:Pilihlah\s+(?:satu|salah\s+satu|lebih\s+dari|beberapa|jawaban)\s+.*|Berilah\s+tanda\s+(?:silang|centang).*|Tentukan\s+(?:Benar|pernyataan).*|Pasangkan\s+pernyataan.*|Jodohkan(?:lah)?\s+.*|Isilah\s+(?:titik|kolom|kotak).*|Jawablah\s+pertanyaan.*|Kerjakan(?:lah)?\s+soal.*|Amati(?:lah)?\s+tabel.*|Perhatikan(?:lah)?\s+tabel.*|Petunjuk\s*:.*|Contoh\s*:.*|KOLOM\s+[AB]|JAWABAN|PG|PGK|BENAR\s*\/\s*SALAH|MENJODOHKAN|ISIAN\s+SINGKAT|URAIAN)$/iu', $line);
     }
 
     private function detectSectionHeaderType(string $line): ?string
