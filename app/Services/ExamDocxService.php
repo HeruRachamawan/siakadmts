@@ -1904,6 +1904,10 @@ class ExamDocxService
             return true;
         }
 
+        if (!empty($current['is_unnumbered_preamble']) && $delim === '.') {
+            return true;
+        }
+
         // If current is PG/PGK and already has options collected, next sequential number is definitely a new question
         $hasOptions = !empty($current['options']['A'] ?? '') || !empty($current['options']['B'] ?? '');
         if ($num === $current['question_number'] + 1) {
